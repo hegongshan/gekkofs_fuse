@@ -62,3 +62,6 @@
 # Debug files
 *.dSYM/
 
+# .idea
+*.idea/
+
