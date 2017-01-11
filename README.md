@@ -1,3 +1,0 @@
-# ada-fs
-
-fuse fs
