@@ -1,0 +1,15 @@
+
+
+# IDEA FILES #
+#####################
+.idea/
+
+# BUILD #
+#########
+
+build/
+
+# DEBUG #
+#########
+
+cmake-build-debug/
