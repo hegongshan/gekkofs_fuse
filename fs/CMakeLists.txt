@@ -13,6 +13,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(FUSE REQUIRED)
 
 include_directories(${FUSE_INCLUDE_DIR})
-set(SOURCE_FILES src/main.cpp src/log.cpp src/log.h src/main.h src/fuse_ops.h)
+set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h)
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE_LIBRARIES})

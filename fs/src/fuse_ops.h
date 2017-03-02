@@ -6,5 +6,5 @@
 #define FS_FUSE_OPS_H
 
 int adafs_getattr(const char *path, struct stat *attr);
-
+void *adafs_init(struct fuse_conn_info *conn);
 #endif //FS_FUSE_OPS_H
