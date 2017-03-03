@@ -9,10 +9,11 @@
 
 #include <fuse/fuse.h>
 #include <string>
+#include "spdlog/spdlog.h"
 
 struct adafs_data {
-    std::string     rootdir;
-    FILE            *logfile;
+    std::string         rootdir;
+    std::shared_ptr<spdlog::logger>       logger;
 };
 
 #define ADAFS_DATA ((struct adafs_data*) fuse_get_context()->private_data)

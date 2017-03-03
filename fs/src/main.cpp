@@ -36,20 +36,26 @@ int adafs_getattr(const char *path, struct stat *attr){
         attr->st_mode = S_IFREG | 0755;
         attr->st_nlink = 1;
         attr->st_size = strlen("blubb");
+        ADAFS_DATA->logger->info(ADAFS_DATA->rootdir);
         return 0;
     }
     return -ENOENT;
 }
 
 void *adafs_init(struct fuse_conn_info *conn) {
-
     return ADAFS_DATA;
+}
+
+void adafs_destroy(void *adafs_data) {
+    delete ADAFS_DATA;
 }
 
 
 static void init_adafs_ops(fuse_operations *ops) {
     ops->getattr = adafs_getattr;
+
     ops->init = adafs_init;
+    ops->destroy = adafs_destroy;
 }
 
 
@@ -59,14 +65,15 @@ int main(int argc, char *argv[]) {
     //Initialize the mapping of Fuse functions
     init_adafs_ops(&adafs_ops);
 
+    // create the adafs_data object (struct)
     auto a_data = std::make_shared<adafs_data>();
-
-
+    //set the logger and initialize it with spdlog
+    a_data->logger = spdlog::basic_logger_mt("basic_logger", "adafs.log");
+    //extract the rootdir from argv and put it into rootdir of adafs_data
     a_data->rootdir = std::string(realpath(argv[argc-2], NULL));
-
     argv[argc-2] = argv[argc-1];
     argv[argc-1] = NULL;
     argc--;
-
-    return fuse_main(argc, argv, &adafs_ops, &a_data);
+    //init fuse and give the private data for further reference.
+    return fuse_main(argc, argv, &adafs_ops, a_data.get());
 }

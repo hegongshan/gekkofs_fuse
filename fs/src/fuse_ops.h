@@ -7,4 +7,5 @@
 
 int adafs_getattr(const char *path, struct stat *attr);
 void *adafs_init(struct fuse_conn_info *conn);
+void adafs_destroy(void *);
 #endif //FS_FUSE_OPS_H
