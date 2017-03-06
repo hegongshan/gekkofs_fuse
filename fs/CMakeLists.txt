@@ -12,6 +12,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(FUSE REQUIRED)
 
+# boost dependencies #TODO VERSION UNTESTED. I USE 1.62
+find_package(Boost 1.56.0 COMPONENTS system filesystem)
+
 include_directories(${FUSE_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/util.cpp src/metadata.h src/metadata.cpp src/metadata_ops.h src/metadata_ops.cpp)
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
