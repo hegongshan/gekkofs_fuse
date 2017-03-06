@@ -9,25 +9,8 @@ using namespace std;
 
 std::shared_ptr<Metadata> md;
 
-//TODO Implement all stat functions so that getattr works as expected
-//bb_getattr(path="/", statbuf=0x8b9a8c60)
-//bb_fullpath:  rootdir = "/home/draze/ownCloud/Promotion/gogs_git/ada-fs/bbfs/playground/mountdir", path = "/", fpath = "/home/draze/ownCloud/Promotion/gogs_git/ada-fs/bbfs/playground/mountdir/"
-//lstat returned 0
-//si:
-//        st_dev = 45
-//st_ino = 4328661
-//st_mode = 040755
-//st_nlink = 2
-//st_uid = 1000
-//st_gid = 1000
-//st_rdev = 0
-//st_size = 4096
-//st_blksize = 4096
-//st_blocks = 8
-//st_atime = 0x58b1ffb8
-//st_mtime = 0x58b6cfc9
-//st_ctime = 0x58b6cfc9
 int adafs_getattr(const char *path, struct stat *attr){
+
     if (strcmp(path, "/") == 0) {
         attr->st_ino = md->getInode_no();
         attr->st_mode = md->getMode();
@@ -41,11 +24,6 @@ int adafs_getattr(const char *path, struct stat *attr){
         attr->st_mtim.tv_sec = md->getMtime_();
         attr->st_ctim.tv_sec = md->getCtime_();
         return 0;
-
-
-
-//        attr->st_mode = S_IFDIR | 0755;
-//        attr->st_nlink = 2;
     }
 
     if (strcmp(path, "/file") == 0) {

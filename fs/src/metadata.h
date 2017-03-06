@@ -23,6 +23,7 @@ private:
 
 public:
     Metadata();
+
     Metadata(mode_t mode);
 
     //Getter and Setter

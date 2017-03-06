@@ -87,20 +87,24 @@ uint32_t Metadata::getBlocks() const {
 void Metadata::setBlocks(uint32_t blocks) {
     Metadata::blocks_ = blocks;
 }
+
 //--------------------------------------------
-Metadata::Metadata() {
+// By default create a simple file
+Metadata::Metadata() : Metadata(S_IFREG | 0755) {}
 
-}
-
-Metadata::Metadata(mode_t mode) { //TODO add initializer list
+Metadata::Metadata(mode_t mode) :
+        atime_(),
+        mtime_(),
+        ctime_(),
+        uid_(fuse_get_context()->uid),
+        gid_(fuse_get_context()->gid),
+        mode_(mode),
+        inode_no_(),
+        link_count_(0),
+        size_(0),
+        blocks_(0) {
     init_ACMtime();
-    uid_ = fuse_get_context()->uid;
-    gid_ = fuse_get_context()->gid;
-    mode_ = mode;
     inode_no_ = util::generate_inode_no();
-    link_count_ = 0;
-    size_ = 0;
-    blocks_ = 0;
 }
 
 void Metadata::init_ACMtime(void) {
