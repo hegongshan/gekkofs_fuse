@@ -1,16 +1,21 @@
 #include "main.h"
+#include "metadata.h"
+#include "metadata_ops.h"
 #include "fuse_ops.h"
-
-#include <string.h>
 
 static struct fuse_operations adafs_ops;
 
 using namespace std;
 
-std::shared_ptr<Metadata> md;
+//std::shared_ptr<Metadata> md;
 
 int adafs_getattr(const char *path, struct stat *attr){
-
+    auto fpath = util::adafs_fullpath("meta/inodes"s);
+    auto md = make_shared<Metadata>();
+    md->setMode(S_IFDIR | 0755);
+    read_all_metadata(*md, 1, *fpath);
+    ADAFS_DATA->logger->info("ctime: {}", md->getAtime_());
+    ADAFS_DATA->logger->info("inode: {}", md->getInode_no());
     if (strcmp(path, "/") == 0) {
         attr->st_ino = md->getInode_no();
         attr->st_mode = md->getMode();
@@ -18,7 +23,7 @@ int adafs_getattr(const char *path, struct stat *attr){
         attr->st_uid = md->getUid();
         attr->st_gid = md->getGid();
         attr->st_size = md->getSize();
-        attr->st_blksize = 4096;
+        attr->st_blksize = ADAFS_DATA->blocksize;
         attr->st_blocks = md->getBlocks();
         attr->st_atim.tv_sec = md->getAtime_();
         attr->st_mtim.tv_sec = md->getMtime_();
@@ -37,23 +42,31 @@ int adafs_getattr(const char *path, struct stat *attr){
 
 void *adafs_init(struct fuse_conn_info *conn) {
 
-    ADAFS_DATA->logger->info("init function"s);
-    ADAFS_DATA->logger->info("uid_: {}", fuse_get_context()->uid);
-    ADAFS_DATA->logger->info("gid_: {}", fuse_get_context()->gid);
-    ADAFS_DATA->logger->info("pid: {0:d}", fuse_get_context()->pid);
-    ADAFS_DATA->logger->info("rootdir: {}", ((struct adafs_data*)fuse_get_context()->private_data)->rootdir);
+//    ADAFS_DATA->logger->info("init function"s);
+//    ADAFS_DATA->logger->info("uid_: {}", fuse_get_context()->uid);
+//    ADAFS_DATA->logger->info("gid_: {}", fuse_get_context()->gid);
+//    ADAFS_DATA->logger->info("pid: {0:d}", fuse_get_context()->pid);
+//    ADAFS_DATA->logger->info("rootdir: {}", ((struct adafs_data*)fuse_get_context()->private_data)->rootdir);
     //Initialize directory structure for metadata.
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/meta/dentries"s);
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/meta/inodes"s);
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/data/chunks"s);
+    //Init file system configuration
+    ADAFS_DATA->blocksize = 4096;
+
+
     //Init metadata
 //    if (get_metadata("/") == -ENOENT) {
 //        md = make_shared<Metadata>(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO);
-        md = make_shared<Metadata>(S_IFDIR | 0755);
+//        auto md = make_shared<Metadata>(S_IFDIR | 0755);
 //    }
+//    auto s = util::adafs_fullpath("meta/inodes");
+//
+
+//    write_all_metadata(*md, *s);
+
     ADAFS_DATA->logger->info("Survived creating Metadata object"s);
     ADAFS_DATA->logger->flush();
-
 
     return ADAFS_DATA;
 }
@@ -77,7 +90,7 @@ int main(int argc, char *argv[]) {
     init_adafs_ops(&adafs_ops);
 
     // create the adafs_data object (struct)
-    auto a_data = make_unique<adafs_data>();
+    auto a_data = make_shared<adafs_data>();
     //set the logger and initialize it with spdlog
     a_data->logger = spdlog::basic_logger_mt("basic_logger", "adafs.log");
     //extract the rootdir from argv and put it into rootdir of adafs_data

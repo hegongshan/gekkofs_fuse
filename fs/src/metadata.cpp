@@ -89,8 +89,18 @@ void Metadata::setBlocks(uint32_t blocks) {
 }
 
 //--------------------------------------------
-// By default create a simple file
-Metadata::Metadata() : Metadata(S_IFREG | 0755) {}
+// By default create an empty metadata object
+//Metadata::Metadata() : Metadata(S_IFREG | 0755) {}
+Metadata::Metadata() : atime_(),
+                       mtime_(),
+                       ctime_(),
+                       uid_(),
+                       gid_(),
+                       mode_(),
+                       inode_no_(),
+                       link_count_(),
+                       size_(),
+                       blocks_() {}
 
 Metadata::Metadata(mode_t mode) :
         atime_(),

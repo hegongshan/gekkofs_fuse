@@ -26,7 +26,7 @@ public:
 
     Metadata(mode_t mode);
 
-    //Getter and Setter
+    //Getter and Setter TODO redo getter, setter
     time_t getAtime_() const;
 
     void setAtime_(time_t atime_);
