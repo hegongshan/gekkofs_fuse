@@ -13,9 +13,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 find_package(FUSE REQUIRED)
 
 # boost dependencies #TODO VERSION UNTESTED. I USE 1.62
-find_package(Boost 1.56.0 COMPONENTS system filesystem)
+find_package(Boost 1.56.0 COMPONENTS system filesystem serialization)
 
 include_directories(${FUSE_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/util.cpp src/metadata.h src/metadata.cpp src/metadata_ops.h src/metadata_ops.cpp)
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
-target_link_libraries(adafs ${FUSE_LIBRARIES} -lpthread -lboost_system -lboost_filesystem)
+target_link_libraries(adafs ${FUSE_LIBRARIES} -lpthread -lboost_system -lboost_filesystem -lboost_serialization)

@@ -19,25 +19,25 @@ private:
     uint32_t size_;              // size_ in bytes, might be computed instead of stored
     uint32_t blocks_;            // allocated file system blocks_
 
-    void init_ACMtime(void);
+    void InitAcmTime(void);
 
 public:
     Metadata();
 
     Metadata(mode_t mode);
 
-    //Getter and Setter TODO redo getter, setter
-    time_t getAtime_() const;
+    //Getter and Setter
+    time_t getAtime() const;
 
-    void setAtime_(time_t atime_);
+    void setAtime(time_t atime);
 
-    time_t getMtime_() const;
+    time_t getMtime() const;
 
-    void setMtime_(time_t mtime_);
+    void setMtime(time_t mtime);
 
-    time_t getCtime_() const;
+    time_t getCtime() const;
 
-    void setCtime_(time_t ctime_);
+    void setCtime(time_t ctime_);
 
     void setCtime(uint32_t ctime);
 

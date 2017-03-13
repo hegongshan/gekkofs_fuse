@@ -4,27 +4,27 @@
 
 #include "metadata.h"
 
-time_t Metadata::getAtime_() const {
+time_t Metadata::getAtime() const {
     return atime_;
 }
 
-void Metadata::setAtime_(time_t atime_) {
-    Metadata::atime_ = atime_;
+void Metadata::setAtime(time_t atime) {
+    Metadata::atime_ = atime;
 }
 
-time_t Metadata::getMtime_() const {
+time_t Metadata::getMtime() const {
     return mtime_;
 }
 
-void Metadata::setMtime_(time_t mtime_) {
-    Metadata::mtime_ = mtime_;
+void Metadata::setMtime(time_t mtime) {
+    Metadata::mtime_ = mtime;
 }
 
-time_t Metadata::getCtime_() const {
+time_t Metadata::getCtime() const {
     return ctime_;
 }
 
-void Metadata::setCtime_(time_t ctime_) {
+void Metadata::setCtime(time_t ctime_) {
     Metadata::ctime_ = ctime_;
 }
 
@@ -113,11 +113,11 @@ Metadata::Metadata(mode_t mode) :
         link_count_(0),
         size_(0),
         blocks_(0) {
-    init_ACMtime();
-    inode_no_ = util::generate_inode_no();
+    InitAcmTime();
+    inode_no_ = util::GenerateInodeNo();
 }
 
-void Metadata::init_ACMtime(void) {
+void Metadata::InitAcmTime(void) {
     std::time_t time;
     std::time(&time);
     atime_ = time;
