@@ -10,23 +10,23 @@ using namespace std;
 //std::shared_ptr<Metadata> md;
 
 int adafs_getattr(const char *path, struct stat *attr){
-    auto fpath = util::AdafsFullpath("meta/inodes"s);
+    auto fpath = util::adafs_fullpath("meta/inodes"s);
     auto md = make_shared<Metadata>();
-    md->setMode(S_IFDIR | 0755);
-    md->setInode_no(1);
-    ReadAllMetadata(*md, 1, fpath);
+    md->mode(S_IFDIR | 0755);
+    md->inode_no(1);
+    read_all_metadata(*md, 1, fpath);
     if (strcmp(path, "/") == 0) {
-        attr->st_ino = md->getInode_no();
-        attr->st_mode = md->getMode();
-        attr->st_nlink = md->getLink_count();
-        attr->st_uid = md->getUid();
-        attr->st_gid = md->getGid();
-        attr->st_size = md->getSize();
+        attr->st_ino = md->inode_no();
+        attr->st_mode = md->mode();
+        attr->st_nlink = md->link_count();
+        attr->st_uid = md->uid();
+        attr->st_gid = md->gid();
+        attr->st_size = md->size();
         attr->st_blksize = ADAFS_DATA->blocksize;
-        attr->st_blocks = md->getBlocks();
-        attr->st_atim.tv_sec = md->getAtime();
-        attr->st_mtim.tv_sec = md->getMtime();
-        attr->st_ctim.tv_sec = md->getCtime();
+        attr->st_blocks = md->blocks();
+        attr->st_atim.tv_sec = md->atime();
+        attr->st_mtim.tv_sec = md->mtime();
+        attr->st_ctim.tv_sec = md->ctime();
         return 0;
     }
 
@@ -59,10 +59,10 @@ void *adafs_init(struct fuse_conn_info *conn) {
 //        md = make_shared<Metadata>(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO);
 //        auto md = make_shared<Metadata>(S_IFDIR | 0755);
 //    }
-//    auto s = util::AdafsFullpath("meta/inodes");
+//    auto s = util::adafs_fullpath("meta/inodes");
 //
 
-//    WriteAllMetadata(*md, s);
+//    write_all_metadata(*md, s);
 
     ADAFS_DATA->logger->info("Survived creating Metadata object"s);
     ADAFS_DATA->logger->flush();

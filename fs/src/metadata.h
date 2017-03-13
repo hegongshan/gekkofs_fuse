@@ -19,7 +19,7 @@ private:
     uint32_t size_;              // size_ in bytes, might be computed instead of stored
     uint32_t blocks_;            // allocated file system blocks_
 
-    void InitAcmTime(void);
+    void init_ACM_time();
 
 public:
     Metadata();
@@ -27,47 +27,45 @@ public:
     Metadata(mode_t mode);
 
     //Getter and Setter
-    time_t getAtime() const;
+    time_t atime() const;
 
-    void setAtime(time_t atime);
+    void atime(time_t atime_);
 
-    time_t getMtime() const;
+    time_t mtime() const;
 
-    void setMtime(time_t mtime);
+    void mtime(time_t mtime_);
 
-    time_t getCtime() const;
+    time_t ctime() const;
 
-    void setCtime(time_t ctime_);
+    void ctime(time_t ctime_);
 
-    void setCtime(uint32_t ctime);
+    uint32_t uid() const;
 
-    uint32_t getUid() const;
+    void uid(uint32_t uid_);
 
-    void setUid(uint32_t uid);
+    uint32_t gid() const;
 
-    uint32_t getGid() const;
+    void gid(uint32_t gid_);
 
-    void setGid(uint32_t gid);
+    uint32_t mode() const;
 
-    uint32_t getMode() const;
+    void mode(uint32_t mode_);
 
-    void setMode(uint32_t mode);
+    uint64_t inode_no() const;
 
-    uint64_t getInode_no() const;
+    void inode_no(uint64_t inode_no_);
 
-    void setInode_no(uint64_t inode_no);
+    uint32_t link_count() const;
 
-    uint32_t getLink_count() const;
+    void link_count(uint32_t link_count_);
 
-    void setLink_count(uint32_t link_count);
+    uint32_t size() const;
 
-    uint32_t getSize() const;
+    void size(uint32_t size_);
 
-    void setSize(uint32_t size);
+    uint32_t blocks() const;
 
-    uint32_t getBlocks() const;
-
-    void setBlocks(uint32_t blocks);
+    void blocks(uint32_t blocks_);
 
 };
 

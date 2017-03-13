@@ -3,16 +3,16 @@
 
 namespace util {
 
-    std::string AdafsFullpath(const std::string &path) {
+    std::string adafs_fullpath(const std::string &path) {
         return std::string(ADAFS_DATA->rootdir + "/" + path);
     }
 
-    int ResetInodeNo(void) {
+    int reset_inode_no() {
         ADAFS_DATA->inode_count = 0;
         return 0;
     }
 
-    ino_t GenerateInodeNo(void) {
+    ino_t generate_inode_no() {
         std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
         return (ino_t) ++ADAFS_DATA->inode_count;
     }

@@ -4,88 +4,84 @@
 
 #include "metadata.h"
 
-time_t Metadata::getAtime() const {
+time_t Metadata::atime() const {
     return atime_;
 }
 
-void Metadata::setAtime(time_t atime) {
-    Metadata::atime_ = atime;
+void Metadata::atime(time_t atime_) {
+    Metadata::atime_ = atime_;
 }
 
-time_t Metadata::getMtime() const {
+time_t Metadata::mtime() const {
     return mtime_;
 }
 
-void Metadata::setMtime(time_t mtime) {
-    Metadata::mtime_ = mtime;
+void Metadata::mtime(time_t mtime_) {
+    Metadata::mtime_ = mtime_;
 }
 
-time_t Metadata::getCtime() const {
+time_t Metadata::ctime() const {
     return ctime_;
 }
 
-void Metadata::setCtime(time_t ctime_) {
+void Metadata::ctime(time_t ctime_) {
     Metadata::ctime_ = ctime_;
 }
 
-void Metadata::setCtime(uint32_t ctime) {
-    Metadata::ctime_ = ctime;
-}
-
-uint32_t Metadata::getUid() const {
+uint32_t Metadata::uid() const {
     return uid_;
 }
 
-void Metadata::setUid(uint32_t uid) {
-    Metadata::uid_ = uid;
+void Metadata::uid(uint32_t uid_) {
+    Metadata::uid_ = uid_;
 }
 
-uint32_t Metadata::getGid() const {
+uint32_t Metadata::gid() const {
     return gid_;
 }
 
-void Metadata::setGid(uint32_t gid) {
-    Metadata::gid_ = gid;
+void Metadata::gid(uint32_t gid_) {
+    Metadata::gid_ = gid_;
 }
 
-uint32_t Metadata::getMode() const {
+uint32_t Metadata::mode() const {
     return mode_;
 }
 
-void Metadata::setMode(uint32_t mode) {
-    Metadata::mode_ = mode;
+void Metadata::mode(uint32_t mode_) {
+    Metadata::mode_ = mode_;
 }
 
-uint64_t Metadata::getInode_no() const {
+uint64_t Metadata::inode_no() const {
     return inode_no_;
 }
 
-void Metadata::setInode_no(uint64_t inode_no) {
-    Metadata::inode_no_ = inode_no;
+void Metadata::inode_no(uint64_t inode_no_) {
+    Metadata::inode_no_ = inode_no_;
 }
 
-uint32_t Metadata::getLink_count() const {
+uint32_t Metadata::link_count() const {
     return link_count_;
 }
 
-void Metadata::setLink_count(uint32_t link_count) {
-    Metadata::link_count_ = link_count;
+void Metadata::link_count(uint32_t link_count_) {
+    Metadata::link_count_ = link_count_;
 }
 
-uint32_t Metadata::getSize() const {
+uint32_t Metadata::size() const {
     return size_;
 }
 
-void Metadata::setSize(uint32_t size) {
-    Metadata::size_ = size;
+void Metadata::size(uint32_t size_) {
+    Metadata::size_ = size_;
 }
 
-uint32_t Metadata::getBlocks() const {
+uint32_t Metadata::blocks() const {
     return blocks_;
 }
 
-void Metadata::setBlocks(uint32_t blocks) {
-    Metadata::blocks_ = blocks;
+void Metadata::blocks(uint32_t blocks_) {
+    Metadata::blocks_ = blocks_;
 }
 
 //--------------------------------------------
@@ -113,11 +109,11 @@ Metadata::Metadata(mode_t mode) :
         link_count_(0),
         size_(0),
         blocks_(0) {
-    InitAcmTime();
-    inode_no_ = util::GenerateInodeNo();
+    init_ACM_time();
+    inode_no_ = util::generate_inode_no();
 }
 
-void Metadata::InitAcmTime(void) {
+void Metadata::init_ACM_time() {
     std::time_t time;
     std::time(&time);
     atime_ = time;

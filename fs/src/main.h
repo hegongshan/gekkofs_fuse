@@ -29,11 +29,11 @@ struct adafs_data {
 #define ADAFS_DATA ((struct adafs_data*) fuse_get_context()->private_data)
 
 namespace util {
-    std::string AdafsFullpath(const std::string &path);
+    std::string adafs_fullpath(const std::string &path);
 
-    int ResetInodeNo(void);
+    int reset_inode_no();
 
-    ino_t GenerateInodeNo(void);
+    ino_t generate_inode_no();
 }
 
 #endif //MAIN_H
