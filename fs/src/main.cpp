@@ -9,7 +9,7 @@ using namespace std;
 
 //std::shared_ptr<Metadata> md;
 
-int adafs_getattr(const char *path, struct stat *attr){
+int adafs_getattr(const char *path, struct stat *attr, struct fuse_file_info *fi){
     auto fpath = util::adafs_fullpath("meta/inodes"s);
     auto md = make_shared<Metadata>();
     md->mode(S_IFDIR | 0755);
@@ -39,7 +39,7 @@ int adafs_getattr(const char *path, struct stat *attr){
     return -ENOENT;
 }
 
-void *adafs_init(struct fuse_conn_info *conn) {
+void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
 
 //    ADAFS_DATA->logger->info("init function"s);
 //    ADAFS_DATA->logger->info("uid_: {}", fuse_get_context()->uid);
@@ -50,6 +50,7 @@ void *adafs_init(struct fuse_conn_info *conn) {
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/meta/dentries"s);
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/meta/inodes"s);
     boost::filesystem::create_directories(ADAFS_DATA->rootdir + "/data/chunks"s);
+    cfg->use_ino = 1;
     //Init file system configuration
     ADAFS_DATA->blocksize = 4096;
 
@@ -98,5 +99,7 @@ int main(int argc, char *argv[]) {
     argv[argc-1] = NULL;
     argc--;
     //init fuse and give the private data for further reference.
+    //print version
+    cout << "Fuse library version: "s + to_string(FUSE_MAJOR_VERSION) + to_string(FUSE_MINOR_VERSION) << endl;
     return fuse_main(argc, argv, &adafs_ops, a_data.get());
 }

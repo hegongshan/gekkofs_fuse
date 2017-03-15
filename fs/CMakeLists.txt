@@ -10,12 +10,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-find_package(FUSE REQUIRED)
+find_package(FUSE3 REQUIRED)
 
 # boost dependencies #TODO VERSION UNTESTED. I USE 1.62
 find_package(Boost 1.56.0 COMPONENTS system filesystem serialization)
 
-include_directories(${FUSE_INCLUDE_DIR} include/)
+include_directories(${FUSE3_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/util.cpp src/metadata.h src/metadata.cpp src/metadata_ops.h src/metadata_ops.cpp)
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
-target_link_libraries(adafs ${FUSE_LIBRARIES} -lpthread -lboost_system -lboost_filesystem -lboost_serialization)
+target_link_libraries(adafs ${FUSE3_LIBRARIES} -lpthread -lboost_system -lboost_filesystem -lboost_serialization)
