@@ -7,13 +7,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror -D_FILE_OFFSET_BITS=64")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-#find_package(PkgConfig)
 find_package(FUSE REQUIRED)
-
-#set(PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
-#
-#pkg_check_modules(FUSE fuse3)
-
 
 include_directories(${FUSE_INCLUDE_DIR})
 set(SOURCE_FILES main.c)
