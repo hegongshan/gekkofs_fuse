@@ -19,12 +19,13 @@ private:
     uint32_t size_;              // size_ in bytes, might be computed instead of stored
     uint32_t blocks_;            // allocated file system blocks_
 
-    void init_ACM_time();
 
 public:
     Metadata();
 
     Metadata(mode_t mode);
+
+    void init_ACM_time();
 
     //Getter and Setter
     time_t atime() const;

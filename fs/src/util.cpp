@@ -3,8 +3,8 @@
 
 namespace util {
 
-    std::string adafs_fullpath(const std::string &path) {
-        return std::string(ADAFS_DATA->rootdir + "/" + path);
+    bfs::path adafs_fullpath(const std::string& path) {
+        return bfs::path(std::string(ADAFS_DATA->rootdir + "/" + path));
     }
 
     int reset_inode_no() {

@@ -94,9 +94,9 @@ Metadata::Metadata() : atime_(),
                        gid_(),
                        mode_(),
                        inode_no_(),
-                       link_count_(),
-                       size_(),
-                       blocks_() {}
+                       link_count_(0),
+                       size_(0),
+                       blocks_(0) {}
 
 Metadata::Metadata(mode_t mode) :
         atime_(),
