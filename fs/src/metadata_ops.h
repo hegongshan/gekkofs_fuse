@@ -10,14 +10,12 @@
 
 using namespace std;
 
-bool write_all_metadata(const Metadata& md, const unsigned long& hash, const boost::filesystem::path& i_path);
-
-bool write_all_metadata(const Metadata& md, const unsigned long& hash, const string& i_path);
+bool write_all_metadata(const Metadata& md, const unsigned long& hash);
 
 bool read_all_metadata(Metadata& md, const uint64_t& inode, const boost::filesystem::path& i_path);
 
 template<typename T>
-bool write_metadata_field(const T& field, const unsigned long& hash, const string& fname, boost::filesystem::path path);
+bool write_metadata_field(const T& field, const unsigned long& hash, const string& fname);
 
 template<typename T>
 unique_ptr<T> read_metadata_field(const uint64_t& inode, const string& fname, boost::filesystem::path path);

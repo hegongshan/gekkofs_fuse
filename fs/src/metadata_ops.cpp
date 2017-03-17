@@ -8,23 +8,19 @@
 #include <boost/archive/binary_oarchive.hpp>
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
-bool write_all_metadata(const Metadata& md, const unsigned long& hash, const bfs::path& i_path) {
-    write_metadata_field(md.atime(), hash, "/atime"s, i_path);
-    write_metadata_field(md.mtime(), hash, "/mtime"s, i_path);
-    write_metadata_field(md.ctime(), hash, "/ctime"s, i_path);
-    write_metadata_field(md.uid(), hash, "/uid"s, i_path);
-    write_metadata_field(md.gid(), hash, "/gid"s, i_path);
-    write_metadata_field(md.mode(), hash, "/mode"s, i_path);
-    write_metadata_field(md.inode_no(), hash, "/inode_no"s, i_path);
-    write_metadata_field(md.link_count(), hash, "/link_count"s, i_path);
-    write_metadata_field(md.size(), hash, "/size"s, i_path);
-    write_metadata_field(md.blocks(), hash, "/blocks"s, i_path);
+bool write_all_metadata(const Metadata& md, const unsigned long& hash) {
+    write_metadata_field(md.atime(), hash, "/atime"s);
+    write_metadata_field(md.mtime(), hash, "/mtime"s);
+    write_metadata_field(md.ctime(), hash, "/ctime"s);
+    write_metadata_field(md.uid(), hash, "/uid"s);
+    write_metadata_field(md.gid(), hash, "/gid"s);
+    write_metadata_field(md.mode(), hash, "/mode"s);
+    write_metadata_field(md.inode_no(), hash, "/inode_no"s);
+    write_metadata_field(md.link_count(), hash, "/link_count"s);
+    write_metadata_field(md.size(), hash, "/size"s);
+    write_metadata_field(md.blocks(), hash, "/blocks"s);
 
     return true;
-}
-
-bool write_all_metadata(const Metadata& md, const unsigned long& hash, const string& i_path) {
-    return write_all_metadata(md, hash, bfs::path(i_path));
 }
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
@@ -44,7 +40,8 @@ bool read_all_metadata(Metadata& md, const uint64_t& inode, const bfs::path& i_p
 
 // TODO error handling.
 template<typename T>
-bool write_metadata_field(const T& field, const unsigned long& hash, const string& fname, bfs::path path) {
+bool write_metadata_field(const T& field, const unsigned long& hash, const string& fname) {
+    auto path = bfs::path(ADAFS_DATA->inode_path);
     path.append(to_string(hash));
     bfs::create_directories(path);
 

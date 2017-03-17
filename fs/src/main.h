@@ -25,7 +25,7 @@ struct adafs_data {
     std::string rootdir;
     // Below paths are needed for future version when we'll get rid of path hashing.
     std::string inode_path; // used
-    std::string dentry_path; // unused
+    std::string dentry_path; // used
     std::string chunk_path; // unused
 
     // Caching

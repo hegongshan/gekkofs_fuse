@@ -1,6 +1,7 @@
 #include "main.h"
 #include "metadata.h"
 #include "metadata_ops.h"
+#include "dentry_ops.h"
 #include "fuse_ops.h"
 
 static struct fuse_operations adafs_ops;
@@ -96,7 +97,10 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
         md->uid(fuse_get_context()->uid);
         md->gid(fuse_get_context()->gid);
         md->inode_no(ADAFS_ROOT_INODE);
-        write_all_metadata(*md, ADAFS_DATA->hashf("/"s), ADAFS_DATA->inode_path);
+        ADAFS_DATA->logger->info("Writing / metadata to disk..."s);
+        write_all_metadata(*md, ADAFS_DATA->hashf("/"s));
+        ADAFS_DATA->logger->info("Initializing dentry for /"s);
+        init_dentry(ADAFS_DATA->hashf("/"s));
         ADAFS_DATA->logger->info("Creating Metadata object"s);
     }
 
