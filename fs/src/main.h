@@ -17,6 +17,7 @@
 //boost libraries
 #include <boost/filesystem.hpp>
 
+#include "configure.h"
 #include "spdlog/spdlog.h"
 
 namespace bfs = boost::filesystem;

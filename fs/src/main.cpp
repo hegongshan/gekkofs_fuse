@@ -104,7 +104,6 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
         ADAFS_DATA->logger->info("Creating Metadata object"s);
     }
 
-    ADAFS_DATA->logger->flush();
 
     return ADAFS_DATA;
 }
@@ -131,6 +130,14 @@ int main(int argc, char *argv[]) {
     auto a_data = make_shared<adafs_data>();
     //set the logger and initialize it with spdlog
     a_data->logger = spdlog::basic_logger_mt("basic_logger", "adafs.log");
+#ifdef LOG_INFO
+    spdlog::set_level(spdlog::level::info);
+    a_data->logger->flush_on(spdlog::level::info);
+#else
+    spdlog::set_level(spdlog::level::off);
+#endif
+
+
     //extract the rootdir from argv and put it into rootdir of adafs_data
     a_data->rootdir = string(realpath(argv[argc-2], NULL));
     argv[argc-2] = argv[argc-1];
