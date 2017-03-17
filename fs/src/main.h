@@ -28,6 +28,7 @@ struct adafs_data {
     std::string inode_path; // used
     std::string dentry_path; // used
     std::string chunk_path; // unused
+    std::string mgmt_path;
 
     // Caching
     std::unordered_map<std::string, std::string> hashmap;
@@ -35,7 +36,7 @@ struct adafs_data {
 
     // Housekeeping
     std::shared_ptr<spdlog::logger> logger;
-    std::int64_t inode_count;
+    uint64_t inode_count;
     std::mutex inode_mutex;
     // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
     int32_t blocksize;
@@ -47,9 +48,13 @@ struct adafs_data {
 namespace util {
     boost::filesystem::path adafs_fullpath(const std::string& path);
 
-    int reset_inode_no();
+    int init_inode_no();
 
     ino_t generate_inode_no();
+
+    int read_inode_cnt();
+
+    int write_inode_cnt();
 }
 
 #endif //MAIN_H

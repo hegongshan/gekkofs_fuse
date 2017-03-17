@@ -9,4 +9,6 @@
 
 bool init_dentry(const unsigned long& hash);
 
+bool verify_dentry(const bfs::path& path);
+
 #endif //FS_DENTRY_OPS_H

@@ -93,7 +93,7 @@ Metadata::Metadata() : atime_(),
                        uid_(),
                        gid_(),
                        mode_(),
-                       inode_no_(),
+                       inode_no_(0),
                        link_count_(0),
                        size_(0),
                        blocks_(0) {}
@@ -105,7 +105,7 @@ Metadata::Metadata(mode_t mode) :
         uid_(fuse_get_context()->uid),
         gid_(fuse_get_context()->gid),
         mode_(mode),
-        inode_no_(),
+        inode_no_(0),
         link_count_(0),
         size_(0),
         blocks_(0) {
