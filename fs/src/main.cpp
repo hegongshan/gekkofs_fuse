@@ -1,4 +1,5 @@
 #include "main.h"
+#include <fuse3/fuse.h>
 #include "metadata.h"
 #include "metadata_ops.h"
 #include "dentry_ops.h"
@@ -7,56 +8,6 @@
 static struct fuse_operations adafs_ops;
 
 using namespace std;
-
-
-int adafs_getattr(const char *p, struct stat *attr, struct fuse_file_info *fi){
-
-
-    // call lookup for *path, return int (use errorcodes), put pointer to Metadata object in parameter
-    // if exist (i.e. == 0) use Metadata object, else return ENOENT
-//    auto path_s = bfs::path(path);
-//    ADAFS_DATA->logger->info(path_s);
-//    ADAFS_DATA->logger->flush();
-//    md->mode(S_IFDIR | 0755);
-//    md->inode_no(1);
-//    get_metadata(*md, path_s);
-//    read_all_metadata(*md, 1, fpath);
-
-    auto path = bfs::path(p);
-    auto md = make_shared<Metadata>();
-
-    if (get_metadata(*md, path) != -ENOENT) {
-        attr->st_ino = md->inode_no();
-        attr->st_mode = md->mode();
-        attr->st_nlink = md->link_count();
-        attr->st_uid = md->uid();
-        attr->st_gid = md->gid();
-        attr->st_size = md->size();
-        attr->st_blksize = ADAFS_DATA->blocksize;
-        attr->st_blocks = md->blocks();
-        attr->st_atim.tv_sec = md->atime();
-        attr->st_mtim.tv_sec = md->mtime();
-        attr->st_ctim.tv_sec = md->ctime();
-        return 0;
-    }
-
-    if (strcmp(p, "/file") == 0) {
-        attr->st_mode = S_IFDIR | 0755;
-        return 0;
-    }
-    if (strcmp(p, "/file/file2") == 0) {
-        auto p_dir = make_shared<struct stat>();
-        lstat("/", p_dir.get());
-        ADAFS_DATA->logger->info(p_dir->st_ino);
-        ADAFS_DATA->logger->flush();
-
-        attr->st_mode = S_IFREG | 0755;
-        attr->st_nlink = 1;
-        attr->st_size = strlen("blubb");
-        return 0;
-    }
-    return -ENOENT;
-}
 
 void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
     ADAFS_DATA->logger->info("Fuse init() enter"s);
@@ -84,7 +35,7 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
 
     auto md = make_shared<Metadata>();
 
-    // Check that root metadata exists. If not intiialize it
+    // Check that root metadata exists. If not initialize it
     if (get_metadata(*md, "/"s) == -ENOENT) {
         ADAFS_DATA->logger->info("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
@@ -99,6 +50,10 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
         init_dentry(ADAFS_DATA->hashf("/"s));
         ADAFS_DATA->logger->info("Creating Metadata object"s);
     }
+#ifdef LOG_INFO
+    else
+        ADAFS_DATA->logger->info("Metadata object exists"s);
+#endif
 
 
     return ADAFS_DATA;
@@ -111,7 +66,12 @@ void adafs_destroy(void *adafs_data) {
 
 
 static void init_adafs_ops(fuse_operations *ops) {
+    // file
     ops->getattr = adafs_getattr;
+    // directory
+    ops->opendir = adafs_opendir;
+    ops->readdir = adafs_readdir;
+    ops->releasedir = adafs_releasedir;
 
     ops->init = adafs_init;
     ops->destroy = adafs_destroy;
@@ -133,8 +93,6 @@ int main(int argc, char *argv[]) {
 #else
     spdlog::set_level(spdlog::level::off);
 #endif
-
-
     //extract the rootdir from argv and put it into rootdir of adafs_data
     a_data->rootdir = string(realpath(argv[argc-2], NULL));
     argv[argc-2] = argv[argc-1];
