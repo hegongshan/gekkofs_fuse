@@ -6,6 +6,7 @@
 #define FS_FUSE_OPS_H
 
 #include "main.h"
+#include "fuse_utils.h"
 
 // file
 int adafs_getattr(const char*, struct stat*, struct fuse_file_info*);

@@ -16,6 +16,7 @@
 
 //boost libraries
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 
 #include "configure.h"
 #include "spdlog/spdlog.h"

@@ -36,7 +36,7 @@ namespace util {
         auto i_path = bfs::path(ADAFS_DATA->mgmt_path + "/inode_count");
         bfs::ofstream ofs{i_path};
         boost::archive::binary_oarchive ba(ofs);
-        ba << (uint64_t) ADAFS_DATA->inode_count;
+        ba << ADAFS_DATA->inode_count;
 
         return 0;
     }
