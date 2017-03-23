@@ -53,12 +53,33 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
  * passes non-zero offset to the filler function.  When the buffer
  * is full (or an error happens) the filler function will return
  * '1'.
+ *
+ * ### We use version 1 ###
  */
 int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset,
                   struct fuse_file_info* fi, enum fuse_readdir_flags flags) {
-    ADAFS_DATA->logger->info("FUSE: adafs_readdir(path=\"{}\", buf={}, offset={}", p, buf, offset);
+    ADAFS_DATA->logger->info("FUSE: adafs_readdir() enter"s);
+//    ADAFS_DATA->logger->info("FUSE: adafs_readdir(path=\"{}\", buf={}, offset={}", p, buf, offset);
 //    ADAFS_DATA->logger->info("bb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)",
 //                             p, buf, filler, offset, fi);
+    auto path = bfs::path(p);
+    auto md = make_shared<Metadata>();
+    // first check that dir exists that is trying to be read. I don't know if this is actually needed,
+    // because opendir should have been called first. I guess it could have been deleted in between
+    get_metadata(*md, path);
+
+    // XXX permission check here because ls requires read permission (Do we care?)
+
+    // Read all filenames in dir entry folder for inode of md
+    auto dentries = make_shared<vector<string>>();
+    if (read_dentries(*dentries, ADAFS_DATA->hashf(path.string())) != 0)
+        return 1; // XXX problemo dedected deal with it later (I mean me)
+
+    for (auto& dentry : *dentries) {
+        // XXX I have no idea what the last parameter really does...
+        filler(buf, dentry.c_str(), NULL, 0, FUSE_FILL_DIR_PLUS);
+    }
+
     return 0;
 }
 

@@ -24,4 +24,6 @@ int get_metadata(Metadata& md, const std::string& path);
 
 int get_metadata(Metadata& md, const boost::filesystem::path& path);
 
+int read_dentries(std::vector<std::string> dir, const unsigned long hash);
+
 #endif //FS_METADATA_OPS_H

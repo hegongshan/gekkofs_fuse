@@ -90,6 +90,27 @@ int get_metadata(Metadata& md, const bfs::path& path) {
     }
 }
 
+/**
+ * Reads all directory entries in a directory with a given @hash. Returns 0 if successful.
+ * @dir is assumed to be empty
+ */
+int read_dentries(vector<string> dir, const unsigned long hash) {
+    auto path = bfs::path(ADAFS_DATA->dentry_path);
+    path /= to_string(hash);
+    if (!bfs::exists(path)) return 1;
+    // shortcut if path is empty = no files in directory
+    if (bfs::is_empty(path)) return 0;
+
+    // Below can be simplified with a C++11 range based loop? But how? :( XXX
+    bfs::directory_iterator end_dir_it;
+    for (bfs::directory_iterator dir_it(path); dir_it != end_dir_it; ++dir_it) {
+        const bfs::path cp = (*dir_it);
+        dir.push_back(cp.string());
+    }
+    return 0;
+}
+
+
 
 
 
