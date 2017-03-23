@@ -7,6 +7,6 @@
 
 #include "metadata.h"
 
-int chk_access(const Metadata& md, const int& mode);
+int chk_access(const Metadata& md, const int mode);
 
 #endif //FS_FUSE_UTILS_H

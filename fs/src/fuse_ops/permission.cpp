@@ -6,7 +6,7 @@
 
 using namespace std;
 
-int chk_access(const Metadata& md, const int& mode) {
+int chk_access(const Metadata& md, const int mode) {
     ADAFS_DATA->logger->info("chk_access() enter: md.uid: {}, fusecontextuid: {}", md.uid(), fuse_get_context()->uid);
     // root user is a god
     if (fuse_get_context()->uid == 0)

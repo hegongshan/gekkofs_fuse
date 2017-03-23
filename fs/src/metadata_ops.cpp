@@ -9,7 +9,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
-bool write_all_metadata(const Metadata& md, const unsigned long& hash) {
+bool write_all_metadata(const Metadata& md, const unsigned long hash) {
     write_metadata_field(md.atime(), hash, "/atime"s);
     write_metadata_field(md.mtime(), hash, "/mtime"s);
     write_metadata_field(md.ctime(), hash, "/ctime"s);
@@ -26,7 +26,7 @@ bool write_all_metadata(const Metadata& md, const unsigned long& hash) {
 
 // TODO error handling.
 template<typename T>
-bool write_metadata_field(const T& field, const unsigned long& hash, const string& leaf_name) {
+bool write_metadata_field(const T& field, const unsigned long hash, const string& leaf_name) {
     auto i_path = bfs::path(ADAFS_DATA->inode_path);
     i_path /= to_string(hash);
     bfs::create_directories(i_path);
@@ -43,7 +43,7 @@ bool write_metadata_field(const T& field, const unsigned long& hash, const strin
 }
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
-bool read_all_metadata(Metadata& md, const unsigned long& hash) {
+bool read_all_metadata(Metadata& md, const unsigned long hash) {
     md.atime(*read_metadata_field<time_t>(hash, "/atime"s));
     md.mtime(*read_metadata_field<time_t>(hash, "/mtime"s));
     md.ctime(*read_metadata_field<time_t>(hash, "/ctime"s));
@@ -59,7 +59,7 @@ bool read_all_metadata(Metadata& md, const unsigned long& hash) {
 
 
 template<typename T>
-unique_ptr<T> read_metadata_field(const uint64_t& hash, const string& leaf_name) {
+unique_ptr<T> read_metadata_field(const uint64_t hash, const string& leaf_name) {
     auto path = bfs::path(ADAFS_DATA->inode_path);
     path /= to_string(hash);
     path /= leaf_name;
@@ -74,7 +74,7 @@ unique_ptr<T> read_metadata_field(const uint64_t& hash, const string& leaf_name)
     return field;
 }
 
-int get_metadata(Metadata& md, const std::string& path) {
+int get_metadata(Metadata& md, const string& path) {
     return get_metadata(md, bfs::path(path));
 }
 
