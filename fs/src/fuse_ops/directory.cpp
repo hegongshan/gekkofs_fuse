@@ -4,7 +4,6 @@
 
 #include "../main.h"
 #include "../fuse_ops.h"
-#include "../metadata.h"
 #include "../metadata_ops.h"
 
 using namespace std;
@@ -38,9 +37,6 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
         default:
             return -EACCES;
     }
-
-
-    return 0;
 }
 
 /** Read directory
