@@ -83,6 +83,10 @@ int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset
     return 0;
 }
 
+/** Release directory
+ */
 int adafs_releasedir(const char*, struct fuse_file_info*) {
+    // XXX Dunno what to do with that function yet. Maybe flush dirty dentries that are in cache?
+    // At the time of this writing I don't have any cache running. So all dirty stuff is immediately written to disk.
     return 0;
 }
