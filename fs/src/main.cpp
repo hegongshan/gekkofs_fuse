@@ -1,5 +1,4 @@
 #include "main.h"
-#include <fuse3/fuse.h>
 #include "metadata.h"
 #include "metadata_ops.h"
 #include "dentry_ops.h"
@@ -69,10 +68,17 @@ void adafs_destroy(void *adafs_data) {
 static void init_adafs_ops(fuse_operations *ops) {
     // file
     ops->getattr = adafs_getattr;
+    ops->mknod = adafs_mknod;
+    ops->open = adafs_open;
+    ops->utimens = adafs_utimens;
+
     // directory
     ops->opendir = adafs_opendir;
     ops->readdir = adafs_readdir;
     ops->releasedir = adafs_releasedir;
+
+    ops->flush = adafs_flush;
+
 
     ops->init = adafs_init;
     ops->destroy = adafs_destroy;

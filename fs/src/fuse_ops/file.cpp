@@ -47,3 +47,50 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
 //    }
     return -ENOENT;
 }
+
+/** Create a file node
+ *
+ * This is called for creation of all non-directory, non-symlink
+ * nodes.  If the filesystem defines a create() method, then for
+ * regular files that will be called instead.
+ */
+int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
+
+
+    return 0;
+}
+
+/** File open operation
+ *
+ * No creation (O_CREAT, O_EXCL) and by default also no
+ * truncation (O_TRUNC) flags will be passed to open(). If an
+ * application specifies O_TRUNC, fuse first calls truncate()
+ * and then open(). Only if 'atomic_o_trunc' has been
+ * specified and kernel version is 2.6.24 or later, O_TRUNC is
+ * passed on to open.
+ *
+ * Unless the 'default_permissions' mount option is given,
+ * open should check if the operation is permitted for the
+ * given flags. Optionally open may also return an arbitrary
+ * filehandle in the fuse_file_info structure, which will be
+ * passed to all file operations.
+ */
+int adafs_open(const char* p, struct fuse_file_info* ffi) {
+    return 0;
+}
+
+/**
+ * Change the access and modification times of a file with
+ * nanosecond resolution
+ *
+ * This supersedes the old utime() interface.  New applications
+ * should use this.
+ *
+ * `fi` will always be NULL if the file is not currenly open, but
+ * may also be NULL if the file is open.
+ *
+ * See the utimensat(2) man page for details.
+ */
+int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_info* fi) {
+    return 0;
+}
