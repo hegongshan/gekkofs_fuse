@@ -59,6 +59,9 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
 int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset,
                   struct fuse_file_info* fi, enum fuse_readdir_flags flags) {
     ADAFS_DATA->logger->debug("FUSE: adafs_readdir() enter"s);
+    // XXX ls also reports the number of allocated blocks IN the directory. Non recursive. Currently not considered
+
+
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
     // first check that dir exists that is trying to be read. I don't know if this is actually needed,
@@ -72,6 +75,9 @@ int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset
     if (read_dentries(*dentries, ADAFS_DATA->hashf(path.string())) != 0)
         return 1; // XXX problemo dedected deal with it later (I mean me)
 
+    // visualizing current and parent dir
+    filler(buf, ".", NULL, 0, FUSE_FILL_DIR_PLUS);
+    filler(buf, "..", NULL, 0, FUSE_FILL_DIR_PLUS);
     for (auto& dentry : *dentries) {
         // XXX I have no idea what the last parameter really does...
         filler(buf, dentry.c_str(), NULL, 0, FUSE_FILL_DIR_PLUS);

@@ -4,11 +4,19 @@
 
 #include "../main.h"
 #include "../fuse_ops.h"
-#include "../metadata.h"
 #include "../metadata_ops.h"
 
 using namespace std;
 
+/** Get file attributes.
+ *
+ * Similar to stat().  The 'st_dev' and 'st_blksize' fields are
+ * ignored. The 'st_ino' field is ignored except if the 'use_ino'
+ * mount option is given.
+ *
+ * `fi` will always be NULL if the file is not currenly open, but
+ * may also be NULL if the file is open.
+ */
 int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
 
     auto path = bfs::path(p);
@@ -56,7 +64,20 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
  */
 int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
     ADAFS_DATA->logger->debug("FUSE: adafs_readdir() enter"s);
+    // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
+    auto path = bfs::path(p);
 
+    // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
+
+    // XXX check permissions (omittable)
+
+    // XXX create directory entry (can fail)
+    create_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
+
+    // XXX create metadata of new file
+    // mode is used here to init metadata
+    auto md = make_unique<Metadata>(mode);
+    write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
 
     return 0;
 }
@@ -77,6 +98,7 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
  * passed to all file operations.
  */
 int adafs_open(const char* p, struct fuse_file_info* ffi) {
+    // XXX ignored for now. Will be similar to opendir. Implement when implementing I/O
     return 0;
 }
 
@@ -93,5 +115,6 @@ int adafs_open(const char* p, struct fuse_file_info* ffi) {
  * See the utimensat(2) man page for details.
  */
 int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_info* fi) {
+    // XXX ignored for now. Later: Make it configurable
     return 0;
 }

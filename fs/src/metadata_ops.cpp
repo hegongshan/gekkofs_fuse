@@ -94,7 +94,7 @@ int get_metadata(Metadata& md, const bfs::path& path) {
  * Reads all directory entries in a directory with a given @hash. Returns 0 if successful.
  * @dir is assumed to be empty
  */
-int read_dentries(vector<string> dir, const unsigned long hash) {
+int read_dentries(vector<string>& dir, const unsigned long hash) {
     auto path = bfs::path(ADAFS_DATA->dentry_path);
     path /= to_string(hash);
     if (!bfs::exists(path)) return 1;
@@ -105,11 +105,30 @@ int read_dentries(vector<string> dir, const unsigned long hash) {
     bfs::directory_iterator end_dir_it;
     for (bfs::directory_iterator dir_it(path); dir_it != end_dir_it; ++dir_it) {
         const bfs::path cp = (*dir_it);
-        dir.push_back(cp.string());
+        dir.push_back(cp.filename().string());
     }
     return 0;
 }
+/**
+ * Creates an empty file in the dentry folder of the parent directory, acting as a dentry for lookup
+ * @param parent_dir
+ * @param fname
+ * @return
+ */
+int create_dentry(const unsigned long parent_dir_hash, const string& fname) {
+    // XXX Errorhandling
+    auto f_path = bfs::path(ADAFS_DATA->dentry_path);
+    f_path /= to_string(parent_dir_hash);
+    if (!bfs::exists(f_path)) return 1;
 
+    f_path /= fname;
+
+    bfs::ofstream ofs{f_path};
+
+    // XXX make sure the file has been created
+
+    return 0;
+}
 
 
 
