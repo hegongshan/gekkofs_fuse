@@ -18,6 +18,7 @@ bool init_dentry(const unsigned long& hash) {
 
     return bfs::exists(d_path);
 }
+
 /**
  * Check if the file name can be found in the directory entries of parent_dir_hash
  * @param parent_dir_hash

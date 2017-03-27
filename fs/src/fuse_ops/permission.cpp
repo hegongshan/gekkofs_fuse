@@ -15,7 +15,7 @@ int chk_access(const Metadata& md, const int mode) {
     //check user leftmost 3 bits for rwx in md->mode
     if (md.uid() == fuse_get_context()->uid) {
         ADAFS_DATA->logger->debug("Metadata UID: {}, fuse context uid: {}, mode: {}",
-                                 md.uid(), fuse_get_context()->uid, mode);
+                                  md.uid(), fuse_get_context()->uid, mode);
         // Because mode comes only with the first 3 bits used, the user bits have to be shifted to the right to compare
         if ((mode & md.mode() >> 6) == (unsigned int) mode)
             return 0;
@@ -26,7 +26,7 @@ int chk_access(const Metadata& md, const int mode) {
     //check group middle 3 bits for rwx in md->mode
     if (md.gid() == fuse_get_context()->gid) {
         ADAFS_DATA->logger->debug("Metadata GID: {}, fuse context gid: {}, mode: {}",
-                                 md.uid(), fuse_get_context()->gid, mode);
+                                  md.uid(), fuse_get_context()->gid, mode);
         if ((mode & md.mode() >> 3) == (unsigned int) mode)
             return 0;
         else

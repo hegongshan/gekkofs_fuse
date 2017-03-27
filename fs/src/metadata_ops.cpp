@@ -109,6 +109,7 @@ int read_dentries(vector<string>& dir, const unsigned long hash) {
     }
     return 0;
 }
+
 /**
  * Creates an empty file in the dentry folder of the parent directory, acting as a dentry for lookup
  * @param parent_dir

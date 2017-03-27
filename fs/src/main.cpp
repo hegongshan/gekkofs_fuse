@@ -8,7 +8,7 @@ static struct fuse_operations adafs_ops;
 
 using namespace std;
 
-void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
+void* adafs_init(struct fuse_conn_info* conn, struct fuse_config* cfg) {
     ADAFS_DATA->logger->debug("Fuse init() enter"s);
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path);
@@ -61,13 +61,13 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
     return ADAFS_DATA;
 }
 
-void adafs_destroy(void *adafs_data) {
+void adafs_destroy(void* adafs_data) {
     util::write_inode_cnt();
     delete ADAFS_DATA;
 }
 
 
-static void init_adafs_ops(fuse_operations *ops) {
+static void init_adafs_ops(fuse_operations* ops) {
     // file
     ops->getattr = adafs_getattr;
     ops->mknod = adafs_mknod;
@@ -87,8 +87,7 @@ static void init_adafs_ops(fuse_operations *ops) {
 }
 
 
-
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     //Initialize the mapping of Fuse functions
     init_adafs_ops(&adafs_ops);
 
@@ -106,9 +105,9 @@ int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::off);
 #endif
     //extract the rootdir from argv and put it into rootdir of adafs_data
-    a_data->rootdir = string(realpath(argv[argc-2], NULL));
-    argv[argc-2] = argv[argc-1];
-    argv[argc-1] = NULL;
+    a_data->rootdir = string(realpath(argv[argc - 2], NULL));
+    argv[argc - 2] = argv[argc - 1];
+    argv[argc - 1] = NULL;
     argc--;
     //set all paths
     a_data->inode_path = a_data->rootdir + "/meta/inodes"s;

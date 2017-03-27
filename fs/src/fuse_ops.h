@@ -31,6 +31,7 @@ int adafs_flush(const char*, struct fuse_file_info*);
 
 
 void* adafs_init(struct fuse_conn_info*, struct fuse_config*);
-void adafs_destroy(void *);
+
+void adafs_destroy(void*);
 
 #endif //FS_FUSE_OPS_H
