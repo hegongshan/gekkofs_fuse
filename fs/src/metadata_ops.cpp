@@ -79,7 +79,7 @@ int get_metadata(Metadata& md, const string& path) {
 }
 
 int get_metadata(Metadata& md, const bfs::path& path) {
-    ADAFS_DATA->logger->info("get_metadata() enter for path {}", path.string());
+    ADAFS_DATA->logger->debug("get_metadata() enter for path {}", path.string());
     // Verify that the file is a valid dentry of the parent dir
     if (verify_dentry(path)) {
         // Metadata for file exists

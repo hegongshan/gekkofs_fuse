@@ -7,5 +7,6 @@
 
 // Uncomment to enabled logging with info level
 #define LOG_INFO
+//#define LOG_DEBUG
 
 #endif //FS_CONFIGURE_H

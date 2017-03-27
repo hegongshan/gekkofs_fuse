@@ -9,7 +9,7 @@ static struct fuse_operations adafs_ops;
 using namespace std;
 
 void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
-    ADAFS_DATA->logger->info("Fuse init() enter"s);
+    ADAFS_DATA->logger->debug("Fuse init() enter"s);
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path);
     bfs::create_directories(ADAFS_DATA->inode_path);
@@ -36,7 +36,7 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
 
     // Check that root metadata exists. If not initialize it
     if (get_metadata(*md, "/"s) == -ENOENT) {
-        ADAFS_DATA->logger->info("Root metadata not found. Initializing..."s);
+        ADAFS_DATA->logger->debug("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
         md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // chmod 777
 //        md->mode(S_IFDIR | 0755);
@@ -44,15 +44,15 @@ void *adafs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
         md->uid(fuse_get_context()->uid);
         md->gid(fuse_get_context()->gid);
         md->inode_no(ADAFS_ROOT_INODE);
-        ADAFS_DATA->logger->info("Writing / metadata to disk..."s);
+        ADAFS_DATA->logger->debug("Writing / metadata to disk..."s);
         write_all_metadata(*md, ADAFS_DATA->hashf("/"s));
-        ADAFS_DATA->logger->info("Initializing dentry for /"s);
+        ADAFS_DATA->logger->debug("Initializing dentry for /"s);
         init_dentry(ADAFS_DATA->hashf("/"s));
-        ADAFS_DATA->logger->info("Creating Metadata object"s);
+        ADAFS_DATA->logger->debug("Creating Metadata object"s);
     }
-#ifdef LOG_INFO
+#ifdef LOG_DEBUG
     else
-        ADAFS_DATA->logger->info("Metadata object exists"s);
+        ADAFS_DATA->logger->debug("Metadata object exists"s);
 #endif
 
 
@@ -94,7 +94,10 @@ int main(int argc, char *argv[]) {
     auto a_data = make_shared<adafs_data>();
     //set the logger and initialize it with spdlog
     a_data->logger = spdlog::basic_logger_mt("basic_logger", "adafs.log");
-#ifdef LOG_INFO
+#if defined(LOG_DEBUG)
+    spdlog::set_level(spdlog::level::debug);
+    a_data->logger->flush_on(spdlog::level::debug);
+#elif defined(LOG_INFO)
     spdlog::set_level(spdlog::level::info);
     a_data->logger->flush_on(spdlog::level::info);
 #else

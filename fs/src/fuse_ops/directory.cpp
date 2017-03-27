@@ -17,7 +17,7 @@ using namespace std;
  * passed to readdir, closedir and fsyncdir.
  */
 int adafs_opendir(const char* p, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("FUSE: adafs_opendir() enter"s);
+    ADAFS_DATA->logger->debug("FUSE: adafs_opendir() enter"s);
     // XXX error handling
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
@@ -26,7 +26,7 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
 
     int access = fi->flags & O_ACCMODE;
 
-//    ADAFS_DATA->logger->info("access variable: {}", access);
+//    ADAFS_DATA->logger->debug("access variable: {}", access);
     switch (access) {
         case O_RDONLY:
             return chk_access(*md, R_OK);
@@ -58,10 +58,7 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
  */
 int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset,
                   struct fuse_file_info* fi, enum fuse_readdir_flags flags) {
-    ADAFS_DATA->logger->info("FUSE: adafs_readdir() enter"s);
-//    ADAFS_DATA->logger->info("FUSE: adafs_readdir(path=\"{}\", buf={}, offset={}", p, buf, offset);
-//    ADAFS_DATA->logger->info("bb_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)",
-//                             p, buf, filler, offset, fi);
+    ADAFS_DATA->logger->debug("FUSE: adafs_readdir() enter"s);
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
     // first check that dir exists that is trying to be read. I don't know if this is actually needed,

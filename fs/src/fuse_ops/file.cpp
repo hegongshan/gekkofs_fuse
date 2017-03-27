@@ -37,7 +37,7 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
 //    if (strcmp(p, "/file/file2") == 0) {
 //        auto p_dir = make_shared<struct stat>();
 //        lstat("/", p_dir.get());
-//        ADAFS_DATA->logger->info(p_dir->st_ino);
+//        ADAFS_DATA->logger->debug(p_dir->st_ino);
 //        ADAFS_DATA->logger->flush();
 //
 //        attr->st_mode = S_IFREG | 0755;
@@ -55,6 +55,7 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
  * regular files that will be called instead.
  */
 int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
+    ADAFS_DATA->logger->debug("FUSE: adafs_readdir() enter"s);
 
 
     return 0;
