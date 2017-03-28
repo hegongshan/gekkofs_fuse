@@ -4,7 +4,8 @@
 
 #include "../main.h"
 #include "../fuse_ops.h"
-#include "../metadata_ops.h"
+#include "../adafs_ops/metadata_ops.h"
+#include "../adafs_ops/dentry_ops.h"
 
 using namespace std;
 

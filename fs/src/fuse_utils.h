@@ -5,7 +5,7 @@
 #ifndef FS_FUSE_UTILS_H
 #define FS_FUSE_UTILS_H
 
-#include "metadata.h"
+#include "classes/metadata.h"
 
 int chk_access(const Metadata& md, const int mode);
 

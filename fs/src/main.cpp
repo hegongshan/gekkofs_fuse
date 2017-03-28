@@ -1,7 +1,7 @@
 #include "main.h"
-#include "metadata.h"
-#include "metadata_ops.h"
-#include "dentry_ops.h"
+#include "classes/metadata.h"
+#include "adafs_ops/metadata_ops.h"
+#include "adafs_ops/dentry_ops.h"
 #include "fuse_ops.h"
 
 static struct fuse_operations adafs_ops;
