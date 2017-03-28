@@ -65,6 +65,7 @@ int read_dentries(vector<string>& dir, const unsigned long hash) {
  * @return
  */
 int create_dentry(const unsigned long parent_dir_hash, const string& fname) {
+    ADAFS_DATA->logger->debug("create_dentry() enter with fname: {}", fname);
     // XXX Errorhandling
     auto f_path = bfs::path(ADAFS_DATA->dentry_path);
     f_path /= to_string(parent_dir_hash);
