@@ -94,3 +94,34 @@ int adafs_releasedir(const char* p, struct fuse_file_info* ffi) {
     // At the time of this writing I don't have any cache running. So all dirty stuff is immediately written to disk.
     return 0;
 }
+
+/** Create a directory
+ *
+ * Note that the mode argument may not have the type specification
+ * bits set, i.e. S_ISDIR(mode) can be false.  To obtain the
+ * correct directory type bits use  mode|S_IFDIR
+ * */
+int adafs_mkdir(const char *p, mode_t mode) {
+    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_mkdir() enter: name '{}' mode {}", p, mode);
+    // XXX mknod and mkdir is strikingly similar. todo merge them.
+    // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
+    auto path = bfs::path(p);
+    path.remove_trailing_separator();
+
+    // XXX check if dir exists (how can we omit this? Let's just try to create it and see if it fails)
+
+    // XXX check permissions (omittable)
+
+    // XXX create directory entry for parent directory (can fail)
+    create_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
+
+    // XXX create metadata of new file
+    // mode is used here to init metadata
+    auto md = make_unique<Metadata>(S_IFDIR | mode);
+    write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
+
+    // Init structure to hold dentries of new directory
+    init_dentry(ADAFS_DATA->hashf(path.string()));
+
+    return 0;
+}

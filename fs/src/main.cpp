@@ -78,6 +78,7 @@ static void init_adafs_ops(fuse_operations* ops) {
     ops->opendir = adafs_opendir;
     ops->readdir = adafs_readdir;
     ops->releasedir = adafs_releasedir;
+    ops->mkdir = adafs_mkdir;
 
     ops->flush = adafs_flush;
 

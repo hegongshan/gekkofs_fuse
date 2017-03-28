@@ -24,6 +24,8 @@ int adafs_readdir(const char*, void*, fuse_fill_dir_t, off_t, struct fuse_file_i
 
 int adafs_releasedir(const char*, struct fuse_file_info*);
 
+int adafs_mkdir(const char *, mode_t);
+
 //
 int adafs_flush(const char*, struct fuse_file_info*);
 

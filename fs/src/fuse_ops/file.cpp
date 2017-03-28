@@ -38,22 +38,6 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
         return 0;
     }
 
-// XXX Testing stuff below. Tobe removed later when files can be created n stuff
-//    if (strcmp(p, "/file") == 0) {
-//        attr->st_mode = S_IFDIR | 0755;
-//        return 0;
-//    }
-//    if (strcmp(p, "/file/file2") == 0) {
-//        auto p_dir = make_shared<struct stat>();
-//        lstat("/", p_dir.get());
-//        ADAFS_DATA->logger->debug(p_dir->st_ino);
-//        ADAFS_DATA->logger->flush();
-//
-//        attr->st_mode = S_IFREG | 0755;
-//        attr->st_nlink = 1;
-//        attr->st_size = strlen("blubb");
-//        return 0;
-//    }
     return -ENOENT;
 }
 
