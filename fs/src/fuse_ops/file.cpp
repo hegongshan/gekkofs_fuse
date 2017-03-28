@@ -98,9 +98,26 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
  * filehandle in the fuse_file_info structure, which will be
  * passed to all file operations.
  */
-int adafs_open(const char* p, struct fuse_file_info* ffi) {
-    // XXX ignored for now. Will be similar to opendir. Implement when implementing I/O
-    return 0;
+int adafs_open(const char* p, struct fuse_file_info* fi) {
+    ADAFS_DATA->logger->debug("FUSE: adafs_open() enter"s);
+    // XXX error handling
+    auto path = bfs::path(p);
+    auto md = make_shared<Metadata>();
+
+    get_metadata(*md, path);
+
+    int access = fi->flags & O_ACCMODE;
+
+    switch (access) {
+        case O_RDONLY:
+            return chk_access(*md, R_OK);
+        case O_WRONLY:
+            return chk_access(*md, W_OK);
+        case O_RDWR:
+            return chk_access(*md, R_OK | W_OK);
+        default:
+            return -EACCES;
+    }
 }
 
 /**

@@ -26,6 +26,7 @@
  * Filesystems shouldn't assume that flush will always be called
  * after some writes, or that if will be called at all.
  */
-int adafs_flush(const char*, struct fuse_file_info*) {
+// currently a NO-OP in ADA-FS
+int adafs_flush(const char* p, struct fuse_file_info*) {
     return 0;
 }
