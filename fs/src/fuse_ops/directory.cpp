@@ -18,7 +18,7 @@ using namespace std;
  * passed to readdir, closedir and fsyncdir.
  */
 int adafs_opendir(const char* p, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_opendir() enter: name '{}'", p);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_opendir() enter: name '{}'", p);
     // XXX error handling
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
@@ -59,7 +59,7 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
  */
 int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset,
                   struct fuse_file_info* fi, enum fuse_readdir_flags flags) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_readdir() enter: name {} readdir_flags '{}'", p, flags);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_readdir() enter: name {} readdir_flags '{}'", p, flags);
     // XXX ls also reports the number of allocated blocks IN the directory. Non recursive. Currently not considered
 
 
@@ -91,7 +91,7 @@ int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset
 /** Release directory
  */
 int adafs_releasedir(const char* p, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_releasedir() enter: name '{}'", p);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_releasedir() enter: name '{}'", p);
     // XXX Dunno what to do with that function yet. Maybe flush dirty dentries that are in cache?
     // At the time of this writing I don't have any cache running. So all dirty stuff is immediately written to disk.
     return 0;
@@ -104,7 +104,7 @@ int adafs_releasedir(const char* p, struct fuse_file_info* fi) {
  * correct directory type bits use  mode|S_IFDIR
  * */
 int adafs_mkdir(const char *p, mode_t mode) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_mkdir() enter: name '{}' mode {}", p, mode);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_mkdir() enter: name '{}' mode {}", p, mode);
     // XXX mknod and mkdir is strikingly similar. todo merge them.
     // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
     auto path = bfs::path(p);

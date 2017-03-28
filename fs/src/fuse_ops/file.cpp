@@ -19,7 +19,8 @@ using namespace std;
  * may also be NULL if the file is open.
  */
 int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info(" ##### FUSE FUNC ###### adafs_getattr() enter: name '{}' initial_inode {}", p, attr->st_ino);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_getattr() enter: name '{}' initial_inode {}", p,
+                              attr->st_ino);
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
 
@@ -48,7 +49,7 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
  * regular files that will be called instead.
  */
 int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_mknod() enter: name '{}' mode {} dev {}", p, mode, dev);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_mknod() enter: name '{}' mode {} dev {}", p, mode, dev);
     // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
     auto path = bfs::path(p);
 
@@ -83,7 +84,7 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
  * passed to all file operations.
  */
 int adafs_open(const char* p, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_open() enter: name '{}'", p);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_open() enter: name '{}'", p);
     // XXX error handling
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
@@ -117,7 +118,7 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
  * See the utimensat(2) man page for details.
  */
 int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->debug(" ##### FUSE FUNC ###### adafs_utimens() enter: name '{}'", p);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_utimens() enter: name '{}'", p);
     // XXX ignored for now. Later: Make it configurable
     return 0;
 }
