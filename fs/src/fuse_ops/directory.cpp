@@ -104,7 +104,7 @@ int adafs_releasedir(const char* p, struct fuse_file_info* fi) {
  * bits set, i.e. S_ISDIR(mode) can be false.  To obtain the
  * correct directory type bits use  mode|S_IFDIR
  * */
-int adafs_mkdir(const char *p, mode_t mode) {
+int adafs_mkdir(const char* p, mode_t mode) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_mkdir() enter: name '{}' mode {}", p, mode);
     // XXX mknod and mkdir is strikingly similar. todo merge them.
     // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
@@ -121,10 +121,18 @@ int adafs_mkdir(const char *p, mode_t mode) {
     // XXX create metadata of new file
     // mode is used here to init metadata
     auto md = make_unique<Metadata>(S_IFDIR | mode);
+    md->size(4096); // XXX just visual. size computation of directory should be done properly at some point
     write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
 
     // Init structure to hold dentries of new directory
     init_dentry(ADAFS_DATA->hashf(path.string()));
 
+    return 0;
+}
+
+/** Remove a directory */
+int adafs_rmdir(const char* p) {
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_rmdir() enter: name '{}'", p);
+    // XXX to be implemented for rmdir
     return 0;
 }

@@ -28,11 +28,16 @@ int adafs_releasedir(const char* p, struct fuse_file_info* fi);
 
 int adafs_mkdir(const char* p, mode_t mode);
 
+int adafs_rmdir(const char* p);
+
 //
 int adafs_flush(const char* p, struct fuse_file_info* fi);
 
 // permissions
 int adafs_access(const char* p, int mask);
+
+// file system miscellaneous
+int adafs_statfs(const char* p, struct statvfs* statvfs);
 
 
 void* adafs_init(struct fuse_conn_info* conn, struct fuse_config* cfg);
