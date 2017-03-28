@@ -6,6 +6,7 @@
 #include "../fuse_ops.h"
 #include "../adafs_ops/metadata_ops.h"
 #include "../adafs_ops/dentry_ops.h"
+#include "../adafs_ops/access.h"
 
 using namespace std;
 
@@ -103,6 +104,13 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
         default:
             return -EACCES;
     }
+}
+
+/** Remove a file */
+int adafs_unlink(const char* p) {
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_unlink() enter: name '{}'", p);
+    // XXX to be implemented for rm
+    return 0;
 }
 
 /**

@@ -27,7 +27,7 @@
  * after some writes, or that if will be called at all.
  */
 // currently a NO-OP in ADA-FS
-int adafs_flush(const char* p, struct fuse_file_info*) {
+int adafs_flush(const char* p, struct fuse_file_info* fi) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_flush() enter: name '{}'", p);
     return 0;
 }

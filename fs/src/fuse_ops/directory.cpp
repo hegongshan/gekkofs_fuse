@@ -6,6 +6,7 @@
 #include "../fuse_ops.h"
 #include "../adafs_ops/metadata_ops.h"
 #include "../adafs_ops/dentry_ops.h"
+#include "../adafs_ops/access.h"
 
 using namespace std;
 

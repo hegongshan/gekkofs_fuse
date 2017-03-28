@@ -72,6 +72,7 @@ static void init_adafs_ops(fuse_operations* ops) {
     ops->getattr = adafs_getattr;
     ops->mknod = adafs_mknod;
     ops->open = adafs_open;
+    ops->unlink = adafs_unlink;
     ops->utimens = adafs_utimens;
 
     // directory
@@ -82,6 +83,8 @@ static void init_adafs_ops(fuse_operations* ops) {
 
     ops->flush = adafs_flush;
 
+    // access
+    ops->access = adafs_access;
 
     ops->init = adafs_init;
     ops->destroy = adafs_destroy;

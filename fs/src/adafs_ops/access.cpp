@@ -1,13 +1,18 @@
 //
-// Created by draze on 3/19/17.
+// Created by evie on 3/28/17.
 //
 
-#include "../fuse_utils.h"
+#include "access.h"
 
-using namespace std;
-
+/**
+ *
+ * @param md
+ * @param mode
+ * @return
+ */
 int chk_access(const Metadata& md, const int mode) {
-    ADAFS_DATA->logger->debug("chk_access() enter: metadata_uid {} fusecontext_uid {}", md.uid(), fuse_get_context()->uid);
+    ADAFS_DATA->logger->debug("chk_access() enter: metadata_uid {} fusecontext_uid {}", md.uid(),
+                              fuse_get_context()->uid);
     // root user is a god
     if (fuse_get_context()->uid == 0)
         return 0;
