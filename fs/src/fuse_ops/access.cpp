@@ -4,6 +4,8 @@
 
 #include "../main.h"
 #include "../fuse_ops.h"
+#include "../adafs_ops/metadata_ops.h"
+#include "../adafs_ops/access.h"
 
 using namespace std;
 
@@ -17,8 +19,13 @@ using namespace std;
  * This method is not called under Linux kernel versions 2.4.x
  */
 int adafs_access(const char* p, int mask) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_access() enter: name '{}' mask {}", p, mask);
-    // XXX To be implemented for rm
-    return 0;
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_access() enter: name '{}' mask {}", p, mask);
+    auto path = bfs::path(p);
+
+    auto md = make_shared<Metadata>();
+    // XXX error handling
+    get_metadata(*md, path);
+
+    return chk_access(*md, mask);
 }
 

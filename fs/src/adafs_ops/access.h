@@ -8,7 +8,7 @@
 #include "../classes/metadata.h"
 
 
-int chk_access(const Metadata& md, const int mode);
+int chk_access(const Metadata& md, const int mask);
 
 
 #endif //FS_ACCESS_H
