@@ -59,7 +59,7 @@ bool read_all_metadata(Metadata& md, const unsigned long hash) {
 
 
 template<typename T>
-unique_ptr<T> read_metadata_field(const uint64_t hash, const string& leaf_name) {
+unique_ptr<T> read_metadata_field(const unsigned long hash, const string& leaf_name) {
     auto path = bfs::path(ADAFS_DATA->inode_path);
     path /= to_string(hash);
     path /= leaf_name;
@@ -88,6 +88,27 @@ int get_metadata(Metadata& md, const bfs::path& path) {
     } else {
         return -ENOENT;
     }
+}
+
+/**
+ * Returns the metadata of an object based on its hash
+ * @param path
+ * @return
+ */
+// XXX Errorhandling
+int remove_metadata(const unsigned long hash) {
+    auto i_path = bfs::path(ADAFS_DATA->inode_path);
+    i_path /= to_string(hash);
+    // XXX below could be omitted
+    if (!bfs::exists(i_path)) {
+        ADAFS_DATA->logger->error("remove_metadata() metadata_path '{}' not found", i_path.string());
+        return -ENOENT;
+    }
+
+    bfs::remove_all(i_path);
+    // XXX make sure metadata has been deleted
+
+    return 0;
 }
 
 

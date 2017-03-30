@@ -107,9 +107,25 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
 }
 
 /** Remove a file */
+// XXX Errorhandling
 int adafs_unlink(const char* p) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_unlink() enter: name '{}'", p);
-    // XXX to be implemented for rm
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_unlink() enter: name '{}'", p);
+    auto path = bfs::path(p);
+
+    // XXX I don't think we need to check if path.filename() is not root. Because unlink is only called with files
+
+    // XXX consider hardlinks
+
+    // adafs_access was called first by the VFS. Thus, path exists and access is ok (not guaranteed though!).
+    auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
+    if (!err) return err;
+
+    // XXX remove inode
+    err = remove_metadata(ADAFS_DATA->hashf(path.string()));
+    if (!err) return err;
+
+    // XXX delete unused data blocks (asynchronously)
+
     return 0;
 }
 

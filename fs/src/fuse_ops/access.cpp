@@ -24,7 +24,8 @@ int adafs_access(const char* p, int mask) {
 
     auto md = make_shared<Metadata>();
     // XXX error handling
-    get_metadata(*md, path);
+    auto err = get_metadata(*md, path);
+    if (err != 0) return err;
 
     return chk_access(*md, mask);
 }

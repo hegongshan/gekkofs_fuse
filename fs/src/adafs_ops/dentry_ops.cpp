@@ -69,13 +69,30 @@ int create_dentry(const unsigned long parent_dir_hash, const string& fname) {
     // XXX Errorhandling
     auto f_path = bfs::path(ADAFS_DATA->dentry_path);
     f_path /= to_string(parent_dir_hash);
-    if (!bfs::exists(f_path)) return 1;
+    if (!bfs::exists(f_path)) return -ENOENT;
 
     f_path /= fname;
 
     bfs::ofstream ofs{f_path};
 
     // XXX make sure the file has been created
+
+    return 0;
+}
+
+int remove_dentry(const unsigned long parent_dir_hash, const string& fname) {
+    auto f_path = bfs::path(ADAFS_DATA->dentry_path);
+    f_path /= to_string(parent_dir_hash);
+    if (!bfs::exists(f_path)) {
+        ADAFS_DATA->logger->error("remove_dentry() dentry_path '{}' not found", f_path.string());
+        return -ENOENT;
+    }
+
+    f_path /= fname;
+    // remove dentry here
+    bfs::remove(f_path);
+
+    // XXX make sure dentry has been deleted
 
     return 0;
 }

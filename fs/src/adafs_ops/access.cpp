@@ -5,7 +5,7 @@
 #include "access.h"
 
 /**
- * Checks access for mask (can be R_OK, W_OK, or R_OK | W_OK AFAIK and not verified) against metadata's mode.
+ * Checks access for mask (can be R_OK, W_OK, or X_OK (or combined) AFAIK and not verified) against metadata's mode.
  * First the mask is checked agains the 3 bits for the user, then for the 3 bits of the group, and lastly other.
  * If all three checks have failed, return -EACCESS (no access)
  * @param md

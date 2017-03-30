@@ -15,4 +15,6 @@ int read_dentries(std::vector<std::string>& dir, const unsigned long hash);
 
 int create_dentry(const unsigned long parent_dir_hash, const std::string& fname);
 
+int remove_dentry(const unsigned long parent_dir_hash, const std::string& fname);
+
 #endif //FS_DENTRY_OPS_H
