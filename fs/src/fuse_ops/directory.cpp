@@ -115,24 +115,40 @@ int adafs_mkdir(const char* p, mode_t mode) {
 
     // XXX check permissions (omittable)
 
-    // XXX create directory entry for parent directory (can fail)
+    // create directory entry for parent directory (can fail)
     create_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
 
-    // XXX create metadata of new file
+    // create metadata of new file
     // mode is used here to init metadata
     auto md = make_unique<Metadata>(S_IFDIR | mode);
     md->size(4096); // XXX just visual. size computation of directory should be done properly at some point
     write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
 
     // Init structure to hold dentries of new directory
-    init_dentry(ADAFS_DATA->hashf(path.string()));
+    init_dentry_dir(ADAFS_DATA->hashf(path.string()));
 
     return 0;
 }
 
-/** Remove a directory */
+/** Remove a directory. Has to be empty */
+// XXX errorhandling err doesnt really work with fuse...
 int adafs_rmdir(const char* p) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_rmdir() enter: name '{}'", p);
-    // XXX to be implemented for rmdir
+    auto path = bfs::path(p);
+
+    // check that directory is empty
+    if (!is_dir_empty(path)) return -ENOTEMPTY;
+
+    // remove dentry XXX duplicate code in adafs_unlink()
+    auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
+    if (err) return err;
+
+    // remove dentry directory
+    destroy_dentry_dir(ADAFS_DATA->hashf(path.string()));
+
+    // remove directory inode
+    err = remove_metadata(ADAFS_DATA->hashf(path.string()));
+    if (err) return err;
+
     return 0;
 }

@@ -49,7 +49,7 @@ void* adafs_init(struct fuse_conn_info* conn, struct fuse_config* cfg) {
         ADAFS_DATA->logger->debug("Writing / metadata to disk..."s);
         write_all_metadata(*md, ADAFS_DATA->hashf("/"s));
         ADAFS_DATA->logger->debug("Initializing dentry for /"s);
-        init_dentry(ADAFS_DATA->hashf("/"s));
+        init_dentry_dir(ADAFS_DATA->hashf("/"s));
         ADAFS_DATA->logger->debug("Creating Metadata object"s);
     }
 #ifdef LOG_DEBUG

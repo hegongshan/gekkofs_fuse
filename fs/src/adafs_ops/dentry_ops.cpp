@@ -7,16 +7,31 @@
 using namespace std;
 
 /**
- * Called when a directory is created to init the corresponding dentry dir.
+ * Initializes the dentry directory to hold future dentries
  * @param hash
  * @return
  */
-bool init_dentry(const unsigned long& hash) {
+bool init_dentry_dir(const unsigned long& hash) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path);
     d_path /= to_string(hash);
     bfs::create_directories(d_path);
 
     return bfs::exists(d_path);
+}
+
+/**
+ * Destroys the dentry directory
+ * @param hash
+ * @return true if successfully deleted
+ */
+bool destroy_dentry_dir(const unsigned long& hash) {
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path);
+    d_path /= to_string(hash);
+
+    // remove dentry dir
+    bfs::remove_all(d_path);
+
+    return !bfs::exists(d_path);
 }
 
 /**
@@ -80,6 +95,13 @@ int create_dentry(const unsigned long parent_dir_hash, const string& fname) {
     return 0;
 }
 
+/**
+ * Removes a dentry from the parent directory
+ * @param parent_dir_hash
+ * @param fname
+ * @return
+ */
+// XXX errorhandling
 int remove_dentry(const unsigned long parent_dir_hash, const string& fname) {
     auto f_path = bfs::path(ADAFS_DATA->dentry_path);
     f_path /= to_string(parent_dir_hash);
@@ -95,4 +117,24 @@ int remove_dentry(const unsigned long parent_dir_hash, const string& fname) {
     // XXX make sure dentry has been deleted
 
     return 0;
+}
+
+/**
+ * Checks if a directory has no dentries, i.e., is empty.
+ * @param adafs_path
+ * @return bool
+ */
+bool is_dir_empty(const bfs::path& adafs_path) {
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path);
+    // use hash function to path and append it to d_path
+    d_path /= to_string(ADAFS_DATA->hashf(adafs_path.string()));
+
+    return bfs::is_empty(d_path);
+}
+
+/**
+ * wraps is_dir_empty(bfs::path)
+ */
+bool is_dir_empty(const string& adafs_path) {
+    return is_dir_empty(bfs::path(adafs_path));
 }

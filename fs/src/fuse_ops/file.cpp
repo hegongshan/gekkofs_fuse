@@ -58,10 +58,10 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
 
     // XXX check permissions (omittable)
 
-    // XXX create directory entry (can fail)
+    // create directory entry (can fail)
     create_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
 
-    // XXX create metadata of new file
+    // create metadata of new file
     // mode is used here to init metadata
     auto md = make_unique<Metadata>(S_IFREG | mode);
     write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
@@ -107,7 +107,7 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
 }
 
 /** Remove a file */
-// XXX Errorhandling
+// XXX Errorhandling err doesnt really work with fuse...
 int adafs_unlink(const char* p) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_unlink() enter: name '{}'", p);
     auto path = bfs::path(p);
@@ -118,11 +118,11 @@ int adafs_unlink(const char* p) {
 
     // adafs_access was called first by the VFS. Thus, path exists and access is ok (not guaranteed though!).
     auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
-    if (!err) return err;
+    if (err) return err;
 
-    // XXX remove inode
+    // remove inode
     err = remove_metadata(ADAFS_DATA->hashf(path.string()));
-    if (!err) return err;
+    if (err) return err;
 
     // XXX delete unused data blocks (asynchronously)
 
