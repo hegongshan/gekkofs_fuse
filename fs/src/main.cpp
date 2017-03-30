@@ -82,6 +82,11 @@ static void init_adafs_ops(fuse_operations* ops) {
     ops->mkdir = adafs_mkdir;
     ops->rmdir = adafs_rmdir;
 
+    // I/O
+    ops->read = adafs_read;
+    ops->write = adafs_write;
+    ops->truncate = adafs_truncate;
+
     ops->flush = adafs_flush;
 
     // access
