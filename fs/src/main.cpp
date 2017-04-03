@@ -90,8 +90,10 @@ static void init_adafs_ops(fuse_operations* ops) {
 
     ops->flush = adafs_flush;
 
-    // access
+    // permission
     ops->access = adafs_access;
+    ops->chmod = adafs_chmod;
+    ops->chown = adafs_chown;
 
     ops->init = adafs_init;
     ops->destroy = adafs_destroy;

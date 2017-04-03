@@ -30,3 +30,28 @@ int adafs_access(const char* p, int mask) {
     return chk_access(*md, mask);
 }
 
+/** Change the permission bits of a file
+ *
+ * `fi` will always be NULL if the file is not currenly open, but
+ * may also be NULL if the file is open.
+ */
+int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi) {
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chmod() enter: name '{}' mode {}", p, mode);
+
+
+    return 0;
+}
+
+/** Change the owner and group of a file
+ *
+ * `fi` will always be NULL if the file is not currenly open, but
+ * may also be NULL if the file is open.
+ *
+ * Unless FUSE_CAP_HANDLE_KILLPRIV is disabled, this method is
+ * expected to reset the setuid and setgid bits.
+ */
+int adafs_chown(const char* p, uid_t uid, gid_t gid, struct fuse_file_info* fi) {
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chown() enter: name '{}' uid {} gid {}", p, uid, gid);
+
+    return 0;
+}

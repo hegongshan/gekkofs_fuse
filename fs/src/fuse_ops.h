@@ -33,8 +33,12 @@ int adafs_truncate(const char* p, off_t offset, struct fuse_file_info* fi);
 //
 int adafs_flush(const char* p, struct fuse_file_info* fi);
 
-// permissions
+// access
 int adafs_access(const char* p, int mask);
+
+int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi);
+
+int adafs_chown(const char* p, uid_t uid, gid_t gid, struct fuse_file_info* fi);
 
 // file system miscellaneous
 int adafs_statfs(const char* p, struct statvfs* statvfs);
