@@ -121,5 +121,13 @@ void Metadata::init_ACM_time() {
     ctime_ = time;
 }
 
-
-
+void Metadata::update_ACM_time(bool a, bool c, bool m) {
+    std::time_t time;
+    std::time(&time);
+    if (a)
+        atime_ = time;
+    if (c)
+        ctime_ = time;
+    if (m)
+        mtime_ = time;
+}

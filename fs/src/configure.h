@@ -9,4 +9,7 @@
 #define LOG_INFO
 //#define LOG_DEBUG
 
+// Uncomment if ACM time should be considered
+#define ACMtime
+
 #endif //FS_CONFIGURE_H

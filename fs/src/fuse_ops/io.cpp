@@ -4,6 +4,7 @@
 
 #include "../main.h"
 #include "../fuse_ops.h"
+#include "../adafs_ops/metadata_ops.h"
 
 /** Read data from an open file
  *
@@ -46,8 +47,29 @@ int adafs_write(const char* p, const char* buf, size_t size, off_t offset, struc
  * expected to reset the setuid and setgid bits.
  */
 int adafs_truncate(const char* p, off_t offset, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_truncate() enter: name '{}' offset {}", p, offset);
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_truncate() enter: name '{}' offset (size) {}", p, offset);
 
-    // TODO implement
+    auto path = bfs::path(p);
+    auto path_hash = ADAFS_DATA->hashf(path.string());
+    auto md = make_shared<Metadata>();
+
+    get_metadata(*md, path);
+    // XXX might need to check access here. But shouldn't access be checked through adafs_open() before?
+
+    // Check the file size limits
+    if (offset > numeric_limits<uint32_t>::max()) return -EFBIG;
+
+    // Set new size of the file
+    md->size((uint32_t) offset);
+
+    // write it to disk (XXX make it dirty later and write to disk in fsync (I believe))
+    write_metadata_field(md->size(), path_hash, md_field_map.at(Md_fields::size));
+
+#ifdef ACMtime
+    md->update_ACM_time(true, false, true);
+    write_metadata_field(md->atime(), path_hash, md_field_map.at(Md_fields::atime));
+    write_metadata_field(md->mtime(), path_hash, md_field_map.at(Md_fields::mtime));
+#endif
+
     return 0;
 }

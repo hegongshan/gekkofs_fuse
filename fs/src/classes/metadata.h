@@ -27,6 +27,8 @@ public:
 
     void init_ACM_time();
 
+    void update_ACM_time(bool a, bool c, bool m);
+
     //Getter and Setter
     time_t atime() const;
 
