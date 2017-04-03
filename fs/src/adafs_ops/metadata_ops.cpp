@@ -10,16 +10,16 @@
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
 bool write_all_metadata(const Metadata& md, const unsigned long hash) {
-    write_metadata_field(md.atime(), hash, "/atime"s);
-    write_metadata_field(md.mtime(), hash, "/mtime"s);
-    write_metadata_field(md.ctime(), hash, "/ctime"s);
-    write_metadata_field(md.uid(), hash, "/uid"s);
-    write_metadata_field(md.gid(), hash, "/gid"s);
-    write_metadata_field(md.mode(), hash, "/mode"s);
-    write_metadata_field(md.inode_no(), hash, "/inode_no"s);
-    write_metadata_field(md.link_count(), hash, "/link_count"s);
-    write_metadata_field(md.size(), hash, "/size"s);
-    write_metadata_field(md.blocks(), hash, "/blocks"s);
+    write_metadata_field(md.atime(), hash, md_field_map.at(Md_fields::atime));
+    write_metadata_field(md.mtime(), hash, md_field_map.at(Md_fields::mtime));
+    write_metadata_field(md.ctime(), hash, md_field_map.at(Md_fields::ctime));
+    write_metadata_field(md.uid(), hash, md_field_map.at(Md_fields::uid));
+    write_metadata_field(md.gid(), hash, md_field_map.at(Md_fields::gid));
+    write_metadata_field(md.mode(), hash, md_field_map.at(Md_fields::mode));
+    write_metadata_field(md.inode_no(), hash, md_field_map.at(Md_fields::inode_no));
+    write_metadata_field(md.link_count(), hash, md_field_map.at(Md_fields::link_count));
+    write_metadata_field(md.size(), hash, md_field_map.at(Md_fields::size));
+    write_metadata_field(md.blocks(), hash, md_field_map.at(Md_fields::blocks));
 
     return true;
 }
@@ -44,16 +44,16 @@ bool write_metadata_field(const T& field, const unsigned long hash, const string
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
 bool read_all_metadata(Metadata& md, const unsigned long hash) {
-    md.atime(*read_metadata_field<time_t>(hash, "/atime"s));
-    md.mtime(*read_metadata_field<time_t>(hash, "/mtime"s));
-    md.ctime(*read_metadata_field<time_t>(hash, "/ctime"s));
-    md.uid(*read_metadata_field<uint32_t>(hash, "/uid"s));
-    md.gid(*read_metadata_field<uint32_t>(hash, "/gid"s));
-    md.mode(*read_metadata_field<uint32_t>(hash, "/mode"s));
-    md.inode_no(*read_metadata_field<uint64_t>(hash, "/inode_no"s));
-    md.link_count(*read_metadata_field<uint32_t>(hash, "/link_count"s));
-    md.size(*read_metadata_field<uint32_t>(hash, "/size"s));
-    md.blocks(*read_metadata_field<uint32_t>(hash, "/blocks"s));
+    md.atime(*read_metadata_field<time_t>(hash, md_field_map.at(Md_fields::atime)));
+    md.mtime(*read_metadata_field<time_t>(hash, md_field_map.at(Md_fields::mtime)));
+    md.ctime(*read_metadata_field<time_t>(hash, md_field_map.at(Md_fields::ctime)));
+    md.uid(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::uid)));
+    md.gid(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::gid)));
+    md.mode(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::mode)));
+    md.inode_no(*read_metadata_field<uint64_t>(hash, md_field_map.at(Md_fields::inode_no)));
+    md.link_count(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::link_count)));
+    md.size(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::size)));
+    md.blocks(*read_metadata_field<uint32_t>(hash, md_field_map.at(Md_fields::blocks)));
     return true;
 }
 
