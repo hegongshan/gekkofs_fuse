@@ -74,6 +74,7 @@ static void init_adafs_ops(fuse_operations* ops) {
     ops->open = adafs_open;
     ops->unlink = adafs_unlink;
     ops->utimens = adafs_utimens;
+    ops->release = adafs_release;
 
     // directory
     ops->opendir = adafs_opendir;

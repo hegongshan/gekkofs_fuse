@@ -7,6 +7,7 @@
 #include "../adafs_ops/metadata_ops.h"
 #include "../adafs_ops/dentry_ops.h"
 #include "../adafs_ops/access.h"
+#include "../adafs_ops/io.h"
 
 using namespace std;
 
@@ -65,6 +66,9 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
     // mode is used here to init metadata
     auto md = make_unique<Metadata>(S_IFREG | mode);
     write_all_metadata(*md, ADAFS_DATA->hashf(path.string()));
+
+    // create chunk space
+    init_chunk_space(ADAFS_DATA->hashf(path.string()));
 
     return 0;
 }
@@ -125,6 +129,8 @@ int adafs_unlink(const char* p) {
     if (err) return err;
 
     // XXX delete unused data blocks (asynchronously)
+    // XXX currently just throws away the data directory on disk
+    destroy_chunk_space(ADAFS_DATA->hashf(path.string()));
 
     return 0;
 }
@@ -144,5 +150,23 @@ int adafs_unlink(const char* p) {
 int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_info* fi) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_utimens() enter: name '{}'", p);
     // XXX ignored for now. Later: Make it configurable
+    return 0;
+}
+
+/** Release an open file
+ *
+ * Release is called when there are no more references to an open
+ * file: all file descriptors are closed and all memory mappings
+ * are unmapped.
+ *
+ * For every open() call there will be exactly one release() call
+ * with the same flags and file descriptor.	 It is possible to
+ * have a file opened more than once, in which case only the last
+ * release will mean, that no more reads/writes will happen on the
+ * file.  The return value of release is ignored.
+ */
+int adafs_release(const char* p, struct fuse_file_info* fi) {
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_release() enter: name '{}'", p);
+    // XXX Dunno what this function is for yet
     return 0;
 }

@@ -13,6 +13,7 @@ int adafs_mknod(const char* p, mode_t, dev_t);
 int adafs_open(const char*, struct fuse_file_info* fi);
 int adafs_unlink(const char* p);
 int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_info* fi);
+int adafs_release(const char* p, struct fuse_file_info* fi);
 
 // directory
 int adafs_opendir(const char* p, struct fuse_file_info* fi);
