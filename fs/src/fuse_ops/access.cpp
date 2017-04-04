@@ -36,10 +36,18 @@ int adafs_access(const char* p, int mask) {
  * may also be NULL if the file is open.
  */
 int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chmod() enter: name '{}' mode {}", p, mode);
+    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chmod() enter: name '{}' mode {:o}", p, mode);
+    auto path = bfs::path(p);
+    auto md = make_shared<Metadata>();
+    auto err = get_metadata(*md, path);
 
+    if (err) return err;
 
-    return 0;
+    // for chmod only the uid matters AFAIK
+    err = chk_uid(*md);
+    if (err) return err;
+
+    return chmod(*md, mode, path);
 }
 
 /** Change the owner and group of a file

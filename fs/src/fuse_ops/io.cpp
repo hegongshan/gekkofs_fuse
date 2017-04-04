@@ -88,8 +88,9 @@ int adafs_write(const char* p, const char* buf, size_t size, off_t offset, struc
     write_metadata_field(md->size(), path_hash, md_field_map.at(Md_fields::size));
 
 #ifdef ACMtime
-    md->update_ACM_time(true, false, true);
+    md->update_ACM_time(true, true, true);
     write_metadata_field(md->atime(), path_hash, md_field_map.at(Md_fields::atime));
+    write_metadata_field(md->ctime(), path_hash, md_field_map.at(Md_fields::ctime));
     write_metadata_field(md->mtime(), path_hash, md_field_map.at(Md_fields::mtime));
 #endif
 

@@ -3,6 +3,7 @@
 //
 
 #include "access.h"
+#include "metadata_ops.h"
 
 /**
  * Checks access for mask (can be R_OK, W_OK, or X_OK (or combined) AFAIK and not verified) against metadata's mode.
@@ -12,7 +13,7 @@
  * @param mask
  * @return
  */
-int chk_access(const Metadata& md, const int mask) {
+int chk_access(const Metadata& md, int mask) {
     ADAFS_DATA->logger->debug("chk_access() enter: metadata_uid {} fusecontext_uid {}", md.uid(),
                               fuse_get_context()->uid);
     // root user is a god
@@ -44,3 +45,50 @@ int chk_access(const Metadata& md, const int mask) {
 
     return -EACCES;
 }
+
+/**
+ * Check if uid from fuse context (i.e., the caller) equals the uid from the object
+ * @param md
+ * @return
+ */
+int chk_uid(const Metadata& md) {
+
+    // root user is a god
+    if (fuse_get_context()->uid == 0)
+        return 0;
+
+    // if user is the user of md, he/she has access
+    if (fuse_get_context()->uid == md.uid())
+        return 0;
+
+    // else no access
+    return -EACCES;
+}
+
+/**
+ * Changes the mode from an object to given mode
+ * @param md
+ * @param mode
+ * @return
+ */
+// XXX error handling
+int chmod(Metadata& md, mode_t mode, const bfs::path& path) {
+
+    auto path_hash = ADAFS_DATA->hashf(path.string());
+    md.mode((uint32_t) mode);
+
+    write_metadata_field(md.mode(), path_hash, md_field_map.at(Md_fields::mode));
+
+#ifdef ACMtime
+    md.update_ACM_time(true, true, true);
+    write_metadata_field(md.atime(), path_hash, md_field_map.at(Md_fields::atime));
+    write_metadata_field(md.ctime(), path_hash, md_field_map.at(Md_fields::ctime));
+    write_metadata_field(md.mtime(), path_hash, md_field_map.at(Md_fields::mtime));
+#endif
+
+    return 0;
+}
+
+
+
+
