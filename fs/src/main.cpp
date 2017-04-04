@@ -71,6 +71,7 @@ static void init_adafs_ops(fuse_operations* ops) {
     // file
     ops->getattr = adafs_getattr;
     ops->mknod = adafs_mknod;
+    ops->create = adafs_create;
     ops->open = adafs_open;
     ops->unlink = adafs_unlink;
     ops->utimens = adafs_utimens;

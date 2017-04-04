@@ -73,6 +73,27 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
     return 0;
 }
 
+/**
+ * Create and open a file
+ *
+ * If the file does not exist, first create it with the specified
+ * mode, and then open it.
+ *
+ * If this method is not implemented or under Linux kernel
+ * versions earlier than 2.6.15, the mknod() and open() methods
+ * will be called instead.
+ */
+int adafs_create(const char* p, mode_t mode, struct fuse_file_info* fi) {
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_create() enter: name '{}' mode {}", p, mode);
+
+    auto err = static_cast<int>(adafs_mknod(p, mode, 0));
+    if (err) return err;
+#ifdef CHECK_ACCESS
+    err = adafs_open(p, fi);
+#endif
+    return err;
+}
+
 /** File open operation
  *
  * No creation (O_CREAT, O_EXCL) and by default also no
