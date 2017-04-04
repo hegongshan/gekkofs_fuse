@@ -12,6 +12,8 @@ int chk_access(const Metadata& md, int mask);
 
 int chk_uid(const Metadata& md);
 
-int chmod(Metadata& md, mode_t mode, const bfs::path& path);
+int change_access(Metadata& md, mode_t mode, const bfs::path& path);
+
+int change_permissions(Metadata& md, uid_t uid, gid_t gid, const bfs::path& path);
 
 #endif //FS_ACCESS_H

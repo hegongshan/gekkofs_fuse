@@ -20,6 +20,7 @@ using namespace std;
  */
 int adafs_opendir(const char* p, struct fuse_file_info* fi) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_opendir() enter: name '{}'", p);
+#ifdef CHECK_ACCESS
     // XXX error handling
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
@@ -39,6 +40,9 @@ int adafs_opendir(const char* p, struct fuse_file_info* fi) {
         default:
             return -EACCES;
     }
+#else
+    return 0;
+#endif
 }
 
 /** Read directory

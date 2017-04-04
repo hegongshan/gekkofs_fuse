@@ -36,18 +36,18 @@ int adafs_access(const char* p, int mask) {
  * may also be NULL if the file is open.
  */
 int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chmod() enter: name '{}' mode {:o}", p, mode);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_chmod() enter: name '{}' mode {:o}", p, mode);
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
     auto err = get_metadata(*md, path);
 
     if (err) return err;
 
-    // for chmod only the uid matters AFAIK
+    // for change_access only the uid matters AFAIK
     err = chk_uid(*md);
     if (err) return err;
 
-    return chmod(*md, mode, path);
+    return change_access(*md, mode, path);
 }
 
 /** Change the owner and group of a file
@@ -59,7 +59,16 @@ int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi) {
  * expected to reset the setuid and setgid bits.
  */
 int adafs_chown(const char* p, uid_t uid, gid_t gid, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_chown() enter: name '{}' uid {} gid {}", p, uid, gid);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_chown() enter: name '{}' uid {} gid {}", p, uid, gid);
+    auto path = bfs::path(p);
+    auto md = make_shared<Metadata>();
+    auto err = get_metadata(*md, path);
 
-    return 0;
+    if (err) return err;
+
+    // any ownership change requires the user of the object
+    err = chk_uid(*md);
+    if (err) return err;
+
+    return change_permissions(*md, uid, gid, path);
 }

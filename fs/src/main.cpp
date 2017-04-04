@@ -38,7 +38,7 @@ void* adafs_init(struct fuse_conn_info* conn, struct fuse_config* cfg) {
     if (get_metadata(*md, "/"s) == -ENOENT) {
         ADAFS_DATA->logger->debug("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
-        md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // chmod 777
+        md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // change_access 777
         md->size(4096); // XXX just visual. size computation of directory should be done properly at some point
 //        md->mode(S_IFDIR | 0755);
         // XXX The gid and uid is the root user for some reason. Should be the user that mounted fuse.

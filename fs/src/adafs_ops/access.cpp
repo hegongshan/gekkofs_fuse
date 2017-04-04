@@ -61,18 +61,18 @@ int chk_uid(const Metadata& md) {
     if (fuse_get_context()->uid == md.uid())
         return 0;
 
-    // else no access
-    return -EACCES;
+    // else no permission
+    return -EPERM;
 }
 
 /**
- * Changes the mode from an object to given mode
+ * Changes the mode from an object to a given mode. Permissions are NOT checked here
  * @param md
  * @param mode
  * @return
  */
 // XXX error handling
-int chmod(Metadata& md, mode_t mode, const bfs::path& path) {
+int change_access(Metadata& md, mode_t mode, const bfs::path& path) {
 
     auto path_hash = ADAFS_DATA->hashf(path.string());
     md.mode((uint32_t) mode);
@@ -89,6 +89,44 @@ int chmod(Metadata& md, mode_t mode, const bfs::path& path) {
     return 0;
 }
 
+/**
+ * Changes the uid and gid from an object to a given mode. Only root can actually change gid and uid for now.
+ * Normal users can't change the uid because they only have one.
+ * And currently normal users can't change the group either.
+ * @param md
+ * @param uid
+ * @param gid
+ * @param path
+ * @return
+ */
+int change_permissions(Metadata& md, uid_t uid, gid_t gid, const bfs::path& path) {
+    auto path_hash = ADAFS_DATA->hashf(path.string());
 
+    // XXX Users should be able to change the group to whatever groups they're belonging to. For now group can only
+    // XXX be changed to the active group they're belonging to.
+    if (fuse_get_context()->gid != gid)
+        return -EPERM;
+    // if nothing changed, nothing to do
+    if (md.uid() == uid && md.gid() == gid)
+        return 0;
+
+    // root can do anything
+    if (fuse_get_context()->uid == 0) {
+        md.uid(uid);
+        md.gid(gid);
+        write_metadata_field(md.gid(), path_hash, md_field_map.at(Md_fields::gid));
+        write_metadata_field(md.uid(), path_hash, md_field_map.at(Md_fields::uid));
+
+#ifdef ACMtime
+        md.update_ACM_time(true, true, true);
+        write_metadata_field(md.atime(), path_hash, md_field_map.at(Md_fields::atime));
+        write_metadata_field(md.ctime(), path_hash, md_field_map.at(Md_fields::ctime));
+        write_metadata_field(md.mtime(), path_hash, md_field_map.at(Md_fields::mtime));
+#endif
+        return 0;
+    }
+    // if we get here, users what to change uid or gid to something else which is not permitted
+    return -EPERM;
+}
 
 

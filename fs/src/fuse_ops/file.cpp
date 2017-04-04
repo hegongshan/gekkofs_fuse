@@ -90,6 +90,7 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
  */
 int adafs_open(const char* p, struct fuse_file_info* fi) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_open() enter: name '{}'", p);
+#ifdef CHECK_ACCESS
     // XXX error handling
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
@@ -108,6 +109,9 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
         default:
             return -EACCES;
     }
+#else
+    return 0;
+#endif
 }
 
 /** Remove a file */
