@@ -1,0 +1,17 @@
+
+
+# IDEA FILES #
+#####################
+.idea/
+
+# BUILD #
+#########
+
+build/
+
+# DEBUG #
+#########
+
+cmake-build-debug/
+cmake-build-release/
+playground/
