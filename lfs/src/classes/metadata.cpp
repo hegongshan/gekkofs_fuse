@@ -110,7 +110,7 @@ Metadata::Metadata(mode_t mode, fuse_req_t& req) :
         size_(0),
         blocks_(0) {
     init_ACM_time();
-    inode_no_ = util::generate_inode_no();
+//    inode_no_ = util::generate_inode_no();
 }
 
 void Metadata::init_ACM_time() {

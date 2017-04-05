@@ -45,16 +45,16 @@ struct adafs_data {
 
 #define ADAFS_ROOT_INODE 1
 
-namespace util {
-    boost::filesystem::path adafs_fullpath(const std::string& path);
-
-    int init_inode_no();
-
-    ino_t generate_inode_no();
-
-    int read_inode_cnt();
-
-    int write_inode_cnt();
-}
+//namespace util {
+//    boost::filesystem::path adafs_fullpath(const std::string& path);
+//
+//    int init_inode_no();
+//
+//    ino_t generate_inode_no();
+//
+//    int read_inode_cnt();
+//
+//    int write_inode_cnt();
+//}
 
 #endif //MAIN_H
