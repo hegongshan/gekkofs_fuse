@@ -26,6 +26,24 @@ int adafs_getattr(const char* p, struct stat* attr, struct fuse_file_info* fi) {
     auto path = bfs::path(p);
     auto md = make_shared<Metadata>();
 
+// uncomment when mdtest.files should return 0 without actually checking if its there
+//    if (path.filename().string().find("file.mdtest") == 0) {
+//        auto md = make_unique<Metadata>(S_IFREG | 664);
+//        md->init_ACM_time();
+//        attr->st_ino = md->inode_no();
+//        attr->st_mode = md->mode();
+//        attr->st_nlink = md->link_count();
+//        attr->st_uid = md->uid();
+//        attr->st_gid = md->gid();
+//        attr->st_size = md->size();
+//        attr->st_blksize = ADAFS_DATA->blocksize;
+//        attr->st_blocks = md->blocks();
+//        attr->st_atim.tv_sec = md->atime();
+//        attr->st_mtim.tv_sec = md->mtime();
+//        attr->st_ctim.tv_sec = md->ctime();
+//        return 0;
+//    }
+
     if (get_metadata(*md, path) != -ENOENT) {
         attr->st_ino = md->inode_no();
         attr->st_mode = md->mode();
@@ -54,6 +72,9 @@ int adafs_mknod(const char* p, mode_t mode, dev_t dev) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_mknod() enter: name '{}' mode {} dev {}", p, mode, dev);
     // XXX Errorhandling and beware of transactions. saving dentry and metadata have to be atomic
     auto path = bfs::path(p);
+// uncomment if file creates done with mdtest should return immediately without creating the file
+//    if (path.filename().string().find("file.mdtest") == 0)
+//        return 0;
 
     // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
 
@@ -114,6 +135,9 @@ int adafs_open(const char* p, struct fuse_file_info* fi) {
 #ifdef CHECK_ACCESS
     // XXX error handling
     auto path = bfs::path(p);
+// uncomment if file creates done with mdtest should return immediately without creating the file
+//    if (path.filename().string().find("file.mdtest") == 0)
+//        return 0;
     auto md = make_shared<Metadata>();
 
     get_metadata(*md, path);
@@ -191,7 +215,7 @@ int adafs_utimens(const char* p, const struct timespec tv[2], struct fuse_file_i
  * file.  The return value of release is ignored.
  */
 int adafs_release(const char* p, struct fuse_file_info* fi) {
-    ADAFS_DATA->logger->info("##### FUSE FUNC ###### adafs_release() enter: name '{}'", p);
+    ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_release() enter: name '{}'", p);
     // XXX Dunno what this function is for yet
     return 0;
 }

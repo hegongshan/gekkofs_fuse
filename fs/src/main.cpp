@@ -57,13 +57,11 @@ void* adafs_init(struct fuse_conn_info* conn, struct fuse_config* cfg) {
         ADAFS_DATA->logger->debug("Metadata object exists"s);
 #endif
 
-
     return ADAFS_DATA;
 }
 
 void adafs_destroy(void* adafs_data) {
     util::write_inode_cnt();
-    delete ADAFS_DATA;
 }
 
 
@@ -131,5 +129,9 @@ int main(int argc, char* argv[]) {
     //print version
     cout << "Fuse library version: "s + to_string(FUSE_MAJOR_VERSION) + to_string(FUSE_MINOR_VERSION) << endl;
     //init fuse and give the private data struct for further reference.
-    return fuse_main(argc, argv, &adafs_ops, a_data.get());
+    cout << "initializing fuse..." << endl;
+    auto err = fuse_main(argc, argv, &adafs_ops, a_data.get());
+    cout << "about to close fuse" << endl;
+
+    return err;
 }
