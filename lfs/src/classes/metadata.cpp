@@ -98,19 +98,33 @@ Metadata::Metadata() : atime_(),
                        size_(0),
                        blocks_(0) {}
 
-Metadata::Metadata(mode_t mode, fuse_req_t& req) :
+Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, fuse_req_t& req) :
         atime_(),
         mtime_(),
         ctime_(),
-        uid_(fuse_req_ctx(req)->uid),
-        gid_(fuse_req_ctx(req)->gid),
+        uid_(uid),
+        gid_(uid),
         mode_(mode),
         inode_no_(0),
         link_count_(0),
         size_(0),
         blocks_(0) {
     init_ACM_time();
-//    inode_no_ = util::generate_inode_no();
+    inode_no_ = util::generate_inode_no(ADAFS_DATA(req)->inode_mutex, ADAFS_DATA(req)->inode_count);
+}
+
+Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, uint64_t inode) :
+        atime_(),
+        mtime_(),
+        ctime_(),
+        uid_(uid),
+        gid_(gid),
+        mode_(mode),
+        inode_no_(inode),
+        link_count_(0),
+        size_(0),
+        blocks_(0) {
+    init_ACM_time();
 }
 
 void Metadata::init_ACM_time() {

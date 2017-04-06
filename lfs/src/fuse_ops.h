@@ -8,7 +8,7 @@
 #include "main.h"
 
 // file
-
+void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
 
 
 // directory
@@ -30,8 +30,8 @@
 // file system miscellaneous
 
 
-void adafs_init(void* adafs_data, struct fuse_conn_info* conn);
+void adafs_ll_init(void* adafs_data, struct fuse_conn_info* conn);
 
-void adafs_destroy(void* adafs_data);
+void adafs_ll_destroy(void* adafs_data);
 
 #endif //FS_FUSE_OPS_H

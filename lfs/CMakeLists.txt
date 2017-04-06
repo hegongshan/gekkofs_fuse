@@ -19,6 +19,6 @@ find_package(FUSE3 REQUIRED)
 find_package(Boost 1.56.0 COMPONENTS system filesystem serialization)
 
 include_directories(${FUSE3_INCLUDE_DIR} include/)
-set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/classes/metadata.h src/classes/metadata.cpp)
+set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/classes/metadata.h src/classes/metadata.cpp src/util.cpp src/fuse_ops/file.cpp)
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)

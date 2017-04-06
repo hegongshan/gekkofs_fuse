@@ -43,18 +43,20 @@ struct adafs_data {
     int32_t blocksize;
 };
 
-#define ADAFS_ROOT_INODE 1
 
-//namespace util {
+#define ADAFS_ROOT_INODE 1
+#define ADAFS_DATA(req) ((struct adafs_data *) fuse_req_userdata(req))
+
+namespace util {
 //    boost::filesystem::path adafs_fullpath(const std::string& path);
-//
-//    int init_inode_no();
-//
-//    ino_t generate_inode_no();
-//
-//    int read_inode_cnt();
-//
-//    int write_inode_cnt();
-//}
+
+    int init_inode_no(struct adafs_data& adata);
+
+    ino_t generate_inode_no(std::mutex& inode_mutex, uint64_t inode_count);
+
+    int read_inode_cnt(struct adafs_data& adafs_data);
+
+    int write_inode_cnt(struct adafs_data& adafs_data);
+}
 
 #endif //MAIN_H

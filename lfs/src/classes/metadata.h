@@ -23,7 +23,9 @@ private:
 public:
     Metadata();
 
-    Metadata(mode_t mode, fuse_req_t& req);
+    Metadata(mode_t mode, uint32_t uid, uint32_t gid, fuse_req_t& req);
+
+    Metadata(mode_t mode, uint32_t uid, uint32_t gid, uint64_t inode);
 
     void init_ACM_time();
 
