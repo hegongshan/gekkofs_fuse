@@ -12,7 +12,7 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
 
 
 // directory
-
+void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name);
 
 
 // I/O

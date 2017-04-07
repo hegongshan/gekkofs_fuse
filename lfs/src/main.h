@@ -24,30 +24,32 @@
 namespace bfs = boost::filesystem;
 
 struct adafs_data {
-    std::string rootdir;
-    // Below paths are needed for future version when we'll get rid of path hashing.
-    std::string inode_path; // used
-    std::string dentry_path; // used
-    std::string chunk_path; // unused
-    std::string mgmt_path;
-
     // Caching
     std::unordered_map<std::string, std::string> hashmap;
     std::hash<std::string> hashf;
-
     // Housekeeping
-    std::shared_ptr<spdlog::logger> logger;
     uint64_t inode_count;
     std::mutex inode_mutex;
     // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
     int32_t blocksize;
 };
 
+namespace Fs_paths {
+    extern std::string rootdir;
+    extern std::string inode_path;
+    extern std::string dentry_path;
+    extern std::string chunk_path;
+    extern std::string mgmt_path;
+}
+// logging instance
+extern std::shared_ptr<spdlog::logger> spdlogger;
 
 #define ADAFS_ROOT_INODE 1
+// This is the official way to get the userdata from fuse
 #define ADAFS_DATA(req) ((struct adafs_data *) fuse_req_userdata(req))
 
-namespace util {
+
+namespace Util {
 //    boost::filesystem::path adafs_fullpath(const std::string& path);
 
     int init_inode_no(struct adafs_data& adata);
