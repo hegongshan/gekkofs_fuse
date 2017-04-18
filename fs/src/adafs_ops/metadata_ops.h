@@ -10,6 +10,9 @@
 
 using namespace std;
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 // mapping of enum to string to get the file names for metadata
 enum class Md_fields { atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks };
 
@@ -28,13 +31,41 @@ const std::map<Md_fields, std::string> md_field_map = {
 
 bool write_all_metadata(const Metadata& md, const unsigned long hash);
 
+// TODO error handling.
 template<typename T>
-bool write_metadata_field(const T& field, const unsigned long hash, const string& leaf_name);
+bool write_metadata_field(const T& field, const unsigned long hash, const string& leaf_name) {
+    auto i_path = bfs::path(ADAFS_DATA->inode_path);
+    i_path /= to_string(hash);
+    bfs::create_directories(i_path);
+
+    i_path /= leaf_name;
+    // for some reason auto ofs = bfs::ofstream(file); does not work. That is why I use the old style.
+    // std::basic_ofstream does not encounter this problem
+    bfs::ofstream ofs{i_path};
+    // write to disk in binary form
+    boost::archive::binary_oarchive ba(ofs);
+    ba << field;
+
+    return true;
+}
 
 bool read_all_metadata(Metadata& md, const unsigned long hash);
 
 template<typename T>
-unique_ptr<T> read_metadata_field(const unsigned long hash, const string& leaf_name);
+unique_ptr<T> read_metadata_field(const unsigned long hash, const string& leaf_name) {
+    auto path = bfs::path(ADAFS_DATA->inode_path);
+    path /= to_string(hash);
+    path /= leaf_name;
+    if (!bfs::exists(path)) return nullptr;
+
+    bfs::ifstream ifs{path};
+    //fast error checking
+    //ifs.good()
+    boost::archive::binary_iarchive ba(ifs);
+    auto field = make_unique<T>();
+    ba >> *field;
+    return field;
+}
 
 int get_metadata(Metadata& md, const std::string& path);
 
