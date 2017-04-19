@@ -19,7 +19,7 @@ using namespace std;
  * @param name the name to look up
  */
 void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
-    spdlogger->debug("adafs_ll_lookup() enter: parent_inode {} name \"{}\"", parent, name);
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_lookup() enter: parent_inode {} name \"{}\"", parent, name);
 
     fuse_reply_err(req, ENOENT);
 }

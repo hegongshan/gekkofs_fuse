@@ -5,8 +5,7 @@
 #include "metadata_ops.h"
 #include "dentry_ops.h"
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
+
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
 bool write_all_metadata(const Metadata& md, const uint64_t inode) {
@@ -20,22 +19,6 @@ bool write_all_metadata(const Metadata& md, const uint64_t inode) {
     write_metadata_field(md.link_count(), md_field_map.at(Md_fields::link_count), inode);
     write_metadata_field(md.size(), md_field_map.at(Md_fields::size), inode);
     write_metadata_field(md.blocks(), md_field_map.at(Md_fields::blocks), inode);
-
-    return true;
-}
-
-// TODO error handling.
-template<typename T>
-bool write_metadata_field(const T& field, const string& field_name, const uint64_t inode) {
-    auto i_path = bfs::path(Fs_paths::inode_path);
-    i_path /= to_string(inode);
-    bfs::create_directories(i_path);
-    i_path /= field_name;
-
-    bfs::ofstream ofs{i_path};
-    // write to disk in binary form
-    boost::archive::binary_oarchive ba(ofs);
-    ba << field;
 
     return true;
 }
@@ -55,25 +38,8 @@ bool read_all_metadata(Metadata& md, const uint64_t inode) {
     return true;
 }
 
-
-template<typename T>
-unique_ptr<T> read_metadata_field(const string& field_name, const uint64_t inode) {
-    auto path = bfs::path(Fs_paths::inode_path);
-    path /= to_string(inode);
-    path /= field_name;
-    if (!bfs::exists(path)) return nullptr;
-
-    bfs::ifstream ifs{path};
-    //fast error checking
-    //ifs.good()
-    boost::archive::binary_iarchive ba(ifs);
-    auto field = make_unique<T>();
-    ba >> *field;
-    return field;
-}
-
 int get_metadata(Metadata& md, const uint64_t inode) {
-    spdlogger->debug("get_metadata() enter for inode {}", inode);
+    ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
     // Verify that the file is a valid dentry of the parent dir XXX put back in later when we have dentry ops
 //    if (verify_dentry(inode)) {
 //        // Metadata for file exists
@@ -82,7 +48,7 @@ int get_metadata(Metadata& md, const uint64_t inode) {
 //    } else {
 //        return -ENOENT;
 //    }
-    auto path = bfs::path(Fs_paths::inode_path);
+    auto path = bfs::path(ADAFS_DATA->inode_path());
     path /= to_string(inode);
     if (bfs::exists(path)) {
         read_all_metadata(md, inode);

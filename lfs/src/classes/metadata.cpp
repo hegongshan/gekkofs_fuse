@@ -103,14 +103,14 @@ Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, fuse_req_t& req) :
         mtime_(),
         ctime_(),
         uid_(uid),
-        gid_(uid),
+        gid_(gid),
         mode_(mode),
         inode_no_(0),
         link_count_(0),
         size_(0),
         blocks_(0) {
     init_ACM_time();
-    inode_no_ = Util::generate_inode_no(ADAFS_DATA(req)->inode_mutex, ADAFS_DATA(req)->inode_count);
+    inode_no_ = Util::generate_inode_no(PRIV_DATA(req)->inode_mutex, PRIV_DATA(req)->inode_count);
 }
 
 Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, uint64_t inode) :

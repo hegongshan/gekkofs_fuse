@@ -31,7 +31,7 @@ using namespace std;
  * @param fi for future use, currently always NULL
  */
 void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
-    spdlogger->debug("adafs_ll_getattr() enter: inode {}", ino);
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_getattr() enter: inode {}", ino);
     auto attr = make_unique<struct stat>();
     auto md = make_shared<Metadata>();
     auto err = get_metadata(*md, ino);
@@ -42,7 +42,7 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
         attr->st_uid = md->uid();
         attr->st_gid = md->gid();
         attr->st_size = md->size();
-        attr->st_blksize = ADAFS_DATA(req)->blocksize;
+        attr->st_blksize = ADAFS_DATA->blocksize();
         attr->st_blocks = md->blocks();
         attr->st_atim.tv_sec = md->atime();
         attr->st_mtim.tv_sec = md->mtime();

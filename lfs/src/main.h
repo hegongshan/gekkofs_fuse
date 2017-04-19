@@ -20,45 +20,32 @@
 
 #include "configure.h"
 #include "spdlog/spdlog.h"
+#include "classes/fs_data.h"
 
 namespace bfs = boost::filesystem;
 
-struct adafs_data {
-    // Caching
-    std::unordered_map<std::string, std::string> hashmap;
-    std::hash<std::string> hashf;
-    // Housekeeping
+
+// XXX This might get moved to the FsData class when I figure out how to use the inode mutex from there...
+struct priv_data {
+
     uint64_t inode_count;
     std::mutex inode_mutex;
-    // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
-    int32_t blocksize;
+
 };
 
-namespace Fs_paths {
-    extern std::string rootdir;
-    extern std::string inode_path;
-    extern std::string dentry_path;
-    extern std::string chunk_path;
-    extern std::string mgmt_path;
-}
-// logging instance
-extern std::shared_ptr<spdlog::logger> spdlogger;
-
 #define ADAFS_ROOT_INODE 1
-// This is the official way to get the userdata from fuse
-#define ADAFS_DATA(req) ((struct adafs_data *) fuse_req_userdata(req))
-
+// This is the official way to get the userdata from fuse but its unusable because req has to be dragged everywhere
+#define PRIV_DATA(req) ((struct priv_data *) fuse_req_userdata(req))
+#define ADAFS_DATA ((FsData*) FsData::getInstance())
 
 namespace Util {
-//    boost::filesystem::path adafs_fullpath(const std::string& path);
-
-    int init_inode_no(struct adafs_data& adata);
+    int init_inode_no(priv_data& pdata);
 
     ino_t generate_inode_no(std::mutex& inode_mutex, uint64_t inode_count);
 
-    int read_inode_cnt(struct adafs_data& adafs_data);
+    int read_inode_cnt(priv_data& pdata);
 
-    int write_inode_cnt(struct adafs_data& adafs_data);
+    int write_inode_cnt(priv_data& pdata);
 }
 
 #endif //MAIN_H

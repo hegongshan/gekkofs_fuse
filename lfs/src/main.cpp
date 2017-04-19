@@ -7,15 +7,6 @@ static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
 
-namespace Fs_paths {
-    string rootdir;
-    string inode_path;
-    string dentry_path;
-    string chunk_path;
-    string mgmt_path;
-}
-
-shared_ptr<spdlog::logger> spdlogger;
 
 /**
  * Initialize filesystem
@@ -33,36 +24,36 @@ shared_ptr<spdlog::logger> spdlogger;
  *
  * @param userdata the user data passed to fuse_session_new()
  */
-void adafs_ll_init(void* adata, struct fuse_conn_info* conn) {
+void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // necessary to set certain fields in fuse priv struct
-    auto adafs_data = (struct adafs_data*) adata;
+    auto priv_data = (struct priv_data*) pdata;
 
-    spdlogger->debug("adafs_ll_init() enter"s);
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_init() enter"s);
     // Make sure directory structure exists
-    bfs::create_directories(Fs_paths::dentry_path);
-    bfs::create_directories(Fs_paths::inode_path);
-    bfs::create_directories(Fs_paths::chunk_path);
-    bfs::create_directories(Fs_paths::mgmt_path);
+    bfs::create_directories(ADAFS_DATA->dentry_path());
+    bfs::create_directories(ADAFS_DATA->inode_path());
+    bfs::create_directories(ADAFS_DATA->chunk_path());
+    bfs::create_directories(ADAFS_DATA->mgmt_path());
 
     // Check if fs already has some data and read the inode count
-    if (bfs::exists(Fs_paths::mgmt_path + "/inode_count"))
-        Util::read_inode_cnt(*adafs_data);
+    if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
+        Util::read_inode_cnt(*priv_data);
     else
-        Util::init_inode_no(*adafs_data);
+        Util::init_inode_no(*priv_data);
 
     //Init file system configuration
-    adafs_data->blocksize = 4096;
+    ADAFS_DATA->blocksize(4096);
 
     // Init unordered_map for caching metadata that was already looked up XXX use later
-    adafs_data->hashmap = unordered_map<string, string>();
-    adafs_data->hashf = hash<string>();
+    ADAFS_DATA->hashmap(unordered_map<string, string>());
+    ADAFS_DATA->hashf(hash<string>());
 
 //    md = make_shared<Metadata>();
     auto md = make_shared<Metadata>();
 
     // Check that root metadata exists. If not initialize it
-    if (get_metadata(*md, ADAFS_ROOT_INODE) == -ENOENT) {
-        spdlogger->debug("Root metadata not found. Initializing..."s);
+    if (get_metadata(*md, ADAFS_ROOT_INODE) == ENOENT) {
+        ADAFS_DATA->spdlogger()->debug("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
         md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // change_access 777
         md->size(4096); // XXX just visual. size computation of directory should be done properly at some point
@@ -70,15 +61,15 @@ void adafs_ll_init(void* adata, struct fuse_conn_info* conn) {
         md->uid(0); // hardcoded root XXX
         md->gid(0); // hardcoded root XXX
         md->inode_no(ADAFS_ROOT_INODE);
-        spdlogger->debug("Writing / metadata to disk..."s);
+        ADAFS_DATA->spdlogger()->debug("Writing / metadata to disk..."s);
         write_all_metadata(*md, ADAFS_ROOT_INODE);
-        spdlogger->debug("Initializing dentry for /"s);
-//        init_dentry_dir(adafs_data->hashf("/"s)); // XXX uncomment when we have support for dentries
-        spdlogger->debug("Creating Metadata object"s);
+        ADAFS_DATA->spdlogger()->debug("Initializing dentry for /"s);
+//        init_dentry_dir(priv_data->hashf("/"s)); // XXX uncomment when we have support for dentries
+        ADAFS_DATA->spdlogger()->debug("Creating Metadata object"s);
     }
 #ifdef LOG_DEBUG
     else
-        spdlogger->debug("Metadata object exists"s);
+        ADAFS_DATA->spdlogger()->debug("Metadata object exists"s);
 #endif
 
 }
@@ -92,9 +83,9 @@ void adafs_ll_init(void* adata, struct fuse_conn_info* conn) {
  *
  * @param userdata the user data passed to fuse_session_new()
  */
-void adafs_ll_destroy(void* adata) {
-    auto adafs_data = (struct adafs_data*) adata;
-    Util::write_inode_cnt(*adafs_data);
+void adafs_ll_destroy(void* pdata) {
+    auto priv_data = (struct priv_data*) pdata;
+    Util::write_inode_cnt(*priv_data);
 }
 
 static void init_adafs_ops(fuse_lowlevel_ops* ops) {
@@ -140,28 +131,28 @@ int main(int argc, char* argv[]) {
     init_adafs_ops(&adafs_ops);
 
     // create the private data struct
-    auto a_data = make_shared<adafs_data>();
+    auto a_data = make_shared<priv_data>();
 //    //set the spdlogger and initialize it with spdlog
-    spdlogger = spdlog::basic_logger_mt("basic_logger", "adafs.log");
+    ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", "adafs.log"));
 #if defined(LOG_DEBUG)
     spdlog::set_level(spdlog::level::debug);
-    spdlogger->flush_on(spdlog::level::debug);
+    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::debug);
 #elif defined(LOG_INFO)
     spdlog::set_level(spdlog::level::info);
-    spdlogger->flush_on(spdlog::level::info);
+    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::info);
 #else
     spdlog::set_level(spdlog::level::off);
 #endif
     //extract the rootdir from argv and put it into rootdir of adafs_data
-    Fs_paths::rootdir = string(realpath(argv[argc - 2], NULL));
+    ADAFS_DATA->rootdir(string(realpath(argv[argc - 2], NULL)));
     argv[argc - 2] = argv[argc - 1];
     argv[argc - 1] = NULL;
     argc--;
     //set all paths
-    Fs_paths::inode_path = Fs_paths::rootdir + "/meta/inodes"s;
-    Fs_paths::dentry_path = Fs_paths::rootdir + "/meta/dentries"s;
-    Fs_paths::chunk_path = Fs_paths::rootdir + "/data/chunks"s;
-    Fs_paths::mgmt_path = Fs_paths::rootdir + "/mgmt"s;
+    ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s);
+    ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s);
+    ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
+    ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
     // Fuse stuff starts here in C style... ########################################################################
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
