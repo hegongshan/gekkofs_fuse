@@ -40,14 +40,7 @@ bool read_all_metadata(Metadata& md, const uint64_t inode) {
 
 int get_metadata(Metadata& md, const uint64_t inode) {
     ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
-    // Verify that the file is a valid dentry of the parent dir XXX put back in later when we have dentry ops
-//    if (verify_dentry(inode)) {
-//        // Metadata for file exists
-//        read_all_metadata(req, md, ADAFS_DATA->hashf(inode));
-//        return 0;
-//    } else {
-//        return -ENOENT;
-//    }
+    // Verify that the file's inode exists
     auto path = bfs::path(ADAFS_DATA->inode_path());
     path /= to_string(inode);
     if (bfs::exists(path)) {

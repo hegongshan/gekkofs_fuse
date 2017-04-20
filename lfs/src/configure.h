@@ -10,7 +10,7 @@
 #define LOG_DEBUG
 
 // If ACM time should be considered
-//#define ACMtime
+#define ACMtime
 
 // If access permissions should be checked while opening a file
 //#define CHECK_ACCESS

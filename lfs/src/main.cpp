@@ -1,6 +1,7 @@
 #include "main.h"
 #include "classes/metadata.h"
 #include "adafs_ops/metadata_ops.h"
+#include "adafs_ops/dentry_ops.h"
 #include "fuse_ops.h"
 
 static struct fuse_lowlevel_ops adafs_ops;
@@ -64,7 +65,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
         ADAFS_DATA->spdlogger()->debug("Writing / metadata to disk..."s);
         write_all_metadata(*md, ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->debug("Initializing dentry for /"s);
-//        init_dentry_dir(priv_data->hashf("/"s)); // XXX uncomment when we have support for dentries
+        init_dentry_dir(ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->debug("Creating Metadata object"s);
     }
 #ifdef LOG_DEBUG
@@ -94,6 +95,9 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
 
     // directory
     ops->lookup = adafs_ll_lookup;
+    ops->opendir = adafs_ll_opendir;
+    ops->readdir = adafs_ll_readdir;
+    ops->releasedir = adafs_ll_releasedir;
 
     // I/O
 

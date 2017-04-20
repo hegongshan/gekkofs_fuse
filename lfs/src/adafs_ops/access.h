@@ -8,9 +8,9 @@
 #include "../classes/metadata.h"
 
 
-int chk_access(const Metadata& md, int mask);
+int chk_access(const fuse_req_t& req, const Metadata& md, int mask);
 
-int chk_uid(const Metadata& md);
+int chk_uid(const fuse_req_t& req, const Metadata& md);
 
 int change_access(Metadata& md, mode_t mode, const bfs::path& path);
 

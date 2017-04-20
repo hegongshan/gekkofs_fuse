@@ -7,20 +7,18 @@
 
 #include "../main.h"
 
-bool init_dentry_dir(const unsigned long& hash);
+bool init_dentry_dir(const uint64_t inode);
 
-bool destroy_dentry_dir(const unsigned long& hash);
+bool destroy_dentry_dir(const uint64_t inode);
 
-bool verify_dentry(const bfs::path& path);
+bool verify_dentry(const uint64_t inode);
 
-int read_dentries(std::vector<std::string>& dir, const unsigned long hash);
+int read_dentries(const uint64_t p_inode, const unsigned long inode);
 
-int create_dentry(const unsigned long parent_dir_hash, const std::string& fname);
+int create_dentry(const unsigned long p_inode, const uint64_t inode);
 
-int remove_dentry(const unsigned long parent_dir_hash, const std::string& fname);
+int remove_dentry(const unsigned long p_inode, const uint64_t inode);
 
-bool is_dir_empty(const bfs::path& adafs_path);
-
-bool is_dir_empty(const std::string& adafs_path);
+bool is_dir_empty(const uint64_t inode);
 
 #endif //FS_DENTRY_OPS_H
