@@ -41,11 +41,11 @@ int adafs_chmod(const char* p, mode_t mode, struct fuse_file_info* fi) {
     auto md = make_shared<Metadata>();
     auto err = get_metadata(*md, path);
 
-    if (err) return err;
+    if (err != 0) return err;
 
     // for change_access only the uid matters AFAIK
     err = chk_uid(*md);
-    if (err) return err;
+    if (err != 0) return err;
 
     return change_access(*md, mode, path);
 }
@@ -64,11 +64,11 @@ int adafs_chown(const char* p, uid_t uid, gid_t gid, struct fuse_file_info* fi) 
     auto md = make_shared<Metadata>();
     auto err = get_metadata(*md, path);
 
-    if (err) return err;
+    if (err != 0) return err;
 
     // any ownership change requires the user of the object
     err = chk_uid(*md);
-    if (err) return err;
+    if (err != 0) return err;
 
     return change_permissions(*md, uid, gid, path);
 }

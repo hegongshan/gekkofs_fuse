@@ -145,14 +145,14 @@ int adafs_rmdir(const char* p) {
 
     // remove dentry XXX duplicate code in adafs_unlink()
     auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
-    if (err) return err;
+    if (err != 0) return err;
 
     // remove dentry directory
     destroy_dentry_dir(ADAFS_DATA->hashf(path.string()));
 
     // remove directory inode
     err = remove_metadata(ADAFS_DATA->hashf(path.string()));
-    if (err) return err;
+    if (err != 0) return err;
 
     return 0;
 }
