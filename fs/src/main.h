@@ -43,7 +43,7 @@ struct adafs_data {
     int32_t blocksize;
 };
 
-#define ADAFS_DATA ((struct adafs_data*) fuse_get_context()->private_data)
+#define ADAFS_DATA ( static_cast<adafs_data*>(fuse_get_context()->private_data))
 #define ADAFS_ROOT_INODE 1
 
 namespace util {

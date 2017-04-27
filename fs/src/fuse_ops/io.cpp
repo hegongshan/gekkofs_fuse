@@ -76,10 +76,10 @@ int adafs_write(const char* p, const char* buf, size_t size, off_t offset, struc
     // Set new size of the file
     if (fi->flags & O_APPEND) {
         truncate(chnk_path.c_str(), md->size() + size);
-        md->size(md->size() + (uint32_t) size);
+        md->size(md->size() + static_cast<uint32_t>(size));
     } else {
         truncate(chnk_path.c_str(), size);
-        md->size((uint32_t) size);
+        md->size(static_cast<uint32_t>(size));
     }
 
     close(fd);
