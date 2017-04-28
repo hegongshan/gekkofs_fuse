@@ -8,7 +8,10 @@
 #define FUSE_USE_VERSION 30
 
 
+extern "C" {
 #include <fuse3/fuse.h>
+}
+
 #include <string>
 #include <iostream>
 #include <cstdint>
