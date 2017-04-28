@@ -64,12 +64,11 @@ int read_dentries(vector<string>& dir, const unsigned long hash) {
     // shortcut if path is empty = no files in directory
     if (bfs::is_empty(path)) return 0;
 
-    // Below can be simplified with a C++11 range based loop? But how? :( XXX
-    bfs::directory_iterator end_dir_it;
-    for (bfs::directory_iterator dir_it(path); dir_it != end_dir_it; ++dir_it) {
-        const bfs::path cp = (*dir_it);
-        dir.push_back(cp.filename().string());
+    auto dir_it = bfs::directory_iterator(path);
+    for (const auto& it : dir_it) {
+        dir.push_back(it.path().filename().string());
     }
+
     return 0;
 }
 
