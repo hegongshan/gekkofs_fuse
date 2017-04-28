@@ -84,7 +84,7 @@ int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset
     // visualizing current and parent dir
     filler(buf, ".", nullptr, 0, FUSE_FILL_DIR_PLUS);
     filler(buf, "..", nullptr, 0, FUSE_FILL_DIR_PLUS);
-    for (auto& dentry : *dentries) {
+    for (const auto& dentry : *dentries) {
         // XXX I have no idea what the last parameter really does...
         ADAFS_DATA->logger->debug("readdir entries: dentry: {}", dentry);
         filler(buf, dentry.c_str(), nullptr, 0, FUSE_FILL_DIR_PLUS);

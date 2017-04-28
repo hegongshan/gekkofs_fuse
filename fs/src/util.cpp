@@ -16,7 +16,7 @@ namespace util {
 
     ino_t generate_inode_no() {
         std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
-        return (ino_t) ++ADAFS_DATA->inode_count;
+        return static_cast<ino_t>(++ADAFS_DATA->inode_count);
     }
 
     // XXX error handling
