@@ -8,7 +8,10 @@
 #define FUSE_USE_VERSION 30
 
 
+extern "C" {
 #include <fuse3/fuse.h>
+}
+
 #include <string>
 #include <iostream>
 #include <cstdint>
@@ -43,11 +46,11 @@ struct adafs_data {
     int32_t blocksize;
 };
 
-#define ADAFS_DATA ((struct adafs_data*) fuse_get_context()->private_data)
+#define ADAFS_DATA ( static_cast<adafs_data*>(fuse_get_context()->private_data))
 #define ADAFS_ROOT_INODE 1
 
 namespace util {
-    boost::filesystem::path adafs_fullpath(const std::string& path);
+    bfs::path adafs_fullpath(const std::string& path);
 
     int init_inode_no();
 

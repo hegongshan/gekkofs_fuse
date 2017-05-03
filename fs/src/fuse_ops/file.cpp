@@ -108,7 +108,7 @@ int adafs_create(const char* p, mode_t mode, struct fuse_file_info* fi) {
     ADAFS_DATA->logger->debug("##### FUSE FUNC ###### adafs_create() enter: name '{}' mode {}", p, mode);
 
     auto err = static_cast<int>(adafs_mknod(p, mode, 0));
-    if (err) return err;
+    if (err != 0) return err;
 #ifdef CHECK_ACCESS
     err = adafs_open(p, fi);
 #endif
@@ -171,11 +171,11 @@ int adafs_unlink(const char* p) {
 
     // adafs_access was called first by the VFS. Thus, path exists and access is ok (not guaranteed though!).
     auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
-    if (err) return err;
+    if (err != 0) return err;
 
     // remove inode
     err = remove_metadata(ADAFS_DATA->hashf(path.string()));
-    if (err) return err;
+    if (err != 0) return err;
 
     // XXX delete unused data blocks (asynchronously)
     // XXX currently just throws away the data directory on disk

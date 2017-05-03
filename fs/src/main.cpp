@@ -117,9 +117,9 @@ int main(int argc, char* argv[]) {
     spdlog::set_level(spdlog::level::off);
 #endif
     //extract the rootdir from argv and put it into rootdir of adafs_data
-    a_data->rootdir = string(realpath(argv[argc - 2], NULL));
+    a_data->rootdir = string(realpath(argv[argc - 2], nullptr));
     argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = NULL;
+    argv[argc - 1] = nullptr;
     argc--;
     //set all paths
     a_data->inode_path = a_data->rootdir + "/meta/inodes"s;

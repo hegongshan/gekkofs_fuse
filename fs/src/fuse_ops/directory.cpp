@@ -82,12 +82,12 @@ int adafs_readdir(const char* p, void* buf, fuse_fill_dir_t filler, off_t offset
         return 1; // XXX problemo dedected deal with it later (I mean me)
 
     // visualizing current and parent dir
-    filler(buf, ".", NULL, 0, FUSE_FILL_DIR_PLUS);
-    filler(buf, "..", NULL, 0, FUSE_FILL_DIR_PLUS);
-    for (auto& dentry : *dentries) {
+    filler(buf, ".", nullptr, 0, FUSE_FILL_DIR_PLUS);
+    filler(buf, "..", nullptr, 0, FUSE_FILL_DIR_PLUS);
+    for (const auto& dentry : *dentries) {
         // XXX I have no idea what the last parameter really does...
         ADAFS_DATA->logger->debug("readdir entries: dentry: {}", dentry);
-        filler(buf, dentry.c_str(), NULL, 0, FUSE_FILL_DIR_PLUS);
+        filler(buf, dentry.c_str(), nullptr, 0, FUSE_FILL_DIR_PLUS);
     }
 
     return 0;
@@ -145,14 +145,14 @@ int adafs_rmdir(const char* p) {
 
     // remove dentry XXX duplicate code in adafs_unlink()
     auto err = remove_dentry(ADAFS_DATA->hashf(path.parent_path().string()), path.filename().string());
-    if (err) return err;
+    if (err != 0) return err;
 
     // remove dentry directory
     destroy_dentry_dir(ADAFS_DATA->hashf(path.string()));
 
     // remove directory inode
     err = remove_metadata(ADAFS_DATA->hashf(path.string()));
-    if (err) return err;
+    if (err != 0) return err;
 
     return 0;
 }
