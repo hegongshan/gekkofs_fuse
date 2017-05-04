@@ -165,6 +165,39 @@ void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
         // Read all filenames in dir entry folder for inode of md
 //    auto dentries = make_shared<vector<string>>();
 
+        /**
+         * Alright, so what I need to do here is the following:
+         * Every entry that is retrieved out of the dentries in the directory needs the
+         * inode number and the mode (not sure which yet). This means that this information
+         * has to be somewhere where the dentries are located. However, ls is not a focus on the file system
+         * and is allowed to take longer. If applictions really need ls a lot (which we will see in the application
+         * anaylsis) than it can still be changed.
+         * In a NoSQL database a range query on the dentry table can be done on the dir inode. This should then return the inode numbers,
+         * the modes, gid, uid, and the names of all the files that are in the directory. I am not sure what the tiny struct is
+         * actually used for. XXX Investigate what readdir actually needs.
+         *
+         * For now, we use the file system as the database. The structure here is slightly different. The metadata
+         * of the files is still based on the inode. In the dentry folder the inode of the dir is containing all the
+         * files in the directory. Each file is represented as a file. The name of the file is the file name.
+         * Extended attributes could be used for inode number, mode, gid, and uid. Or we just write it in there. first line inode
+         * second line modes, etc...
+         *
+         * Lookup could be configured to actually get the rest of the metadata or leave most of it empty and just use
+         * the information from readdir, IF we can get this information there because it is a separate call...
+         *
+         * First time readdir is called, all information is fetched once and put into a cache. Then the cache is
+         * iterated with a counter how many files are already iterated. This is because readdir can only add a size_t
+         * number of files before readdir has to be called again. Then it needs to be remembered. In the first
+         * implementation we just call the file system multiple times and use the offset as a counter which will be
+         * slow but whatever.
+         *
+         * Summary:
+         * readdir: fetch dentries by dir inode number. get names, mode, and inode numbers of files and add it to fuse_add_direntry
+         * getdirattr: call do_lookup(inode)
+         * lookup: read dentry with parent inode and filename. Hopefully, this information is still in cache. If required
+         *          call do_lookup(file inode).
+         */
+
         // # first testentry
         auto st = make_unique<struct stat>();
         st->st_ino = 2;

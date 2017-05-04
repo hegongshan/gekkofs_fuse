@@ -547,8 +547,8 @@ static void stackfs_ll_lookup(fuse_req_t req, fuse_ino_t parent,
     char *fullPath = NULL;
     double attr_val;
 
-//    StackFS_trace("Lookup called on name : %s, parent ino : %llu",
-//    							name, parent);
+    StackFS_trace("Lookup called on name : %s, parent ino : %llu",
+    							name, parent);
     fullPath = (char *)malloc(PATH_MAX);
     construct_full_path(req, parent, fullPath, name);
 
@@ -593,8 +593,8 @@ static void stackfs_ll_getattr(fuse_req_t req, fuse_ino_t ino,
     (void) fi;
     double attr_val;
 
-    //StackFS_trace("Getattr called on name : %s and inode : %llu",
-    //			lo_name(req, ino), lo_inode(req, ino)->ino);
+    StackFS_trace("Getattr called on name : %s and inode : %llu",
+    			lo_name(req, ino), lo_inode(req, ino)->ino);
     attr_val = lo_attr_valid_time(req);
     //generate_start_time(req);
     res = stat(lo_name(req, ino), &buf);
@@ -614,8 +614,8 @@ static void stackfs_ll_setattr(fuse_req_t req, fuse_ino_t ino,
     struct stat buf;
     double attr_val;
 
-    //StackFS_trace("Setattr called on name : %s and inode : %llu",
-    //			lo_name(req, ino), lo_inode(req, ino)->ino);
+    StackFS_trace("Setattr called on name : %s and inode : %llu",
+    			lo_name(req, ino), lo_inode(req, ino)->ino);
     attr_val = lo_attr_valid_time(req);
     //generate_start_time(req);
     if (to_set & FUSE_SET_ATTR_SIZE) {
@@ -660,8 +660,8 @@ static void stackfs_ll_create(fuse_req_t req, fuse_ino_t parent,
     char *fullPath = NULL;
     double attr_val;
 
-    //StackFS_trace("Create called on %s and parent ino : %llu",
-    //				name, lo_inode(req, parent)->ino);
+    StackFS_trace("Create called on %s and parent ino : %llu",
+    				name, lo_inode(req, parent)->ino);
 
     fullPath = (char *)malloc(PATH_MAX);
     construct_full_path(req, parent, fullPath, name);
@@ -742,8 +742,8 @@ static void stackfs_ll_mkdir(fuse_req_t req, fuse_ino_t parent,
     char *fullPath = NULL;
     double attr_val;
 
-    //StackFS_trace("Mkdir called with name : %s, parent ino : %llu",
-    //				name, lo_inode(req, parent)->ino);
+    StackFS_trace("Mkdir called with name : %s, parent ino : %llu",
+    				name, lo_inode(req, parent)->ino);
 
     fullPath = (char *)malloc(PATH_MAX);
     construct_full_path(req, parent, fullPath, name);
@@ -826,9 +826,9 @@ static void stackfs_ll_open(fuse_req_t req, fuse_ino_t ino,
     //generate_end_time(req);
     //populate_time(req);
 
-    //StackFS_trace("Open called on name : %s and fuse inode : %llu kernel inode : %llu fd : %d",
-    //		lo_name(req, ino), get_higher_fuse_inode_no(req, ino), get_lower_fuse_inode_no(req, ino), fd);
-    //StackFS_trace("Open name : %s and inode : %llu", lo_name(req, ino), get_lower_fuse_inode_no(req, ino));
+//    StackFS_trace("Open called on name : %s and fuse inode : %llu kernel inode : %llu fd : %d",
+//    		lo_name(req, ino), get_higher_fuse_inode_no(req, ino), get_lower_fuse_inode_no(req, ino), fd);
+    StackFS_trace("Open name : %s and inode : %llu", lo_name(req, ino), get_lower_fuse_inode_no(req, ino));
 
     if (fd == -1)
         return (void) fuse_reply_err(req, errno);
@@ -844,8 +844,8 @@ static void stackfs_ll_opendir(fuse_req_t req, fuse_ino_t ino,
     DIR *dp;
     struct lo_dirptr *d;
 
-    //StackFS_trace("Opendir called on name : %s and inode : %llu",
-    //			lo_name(req, ino), lo_inode(req, ino)->ino);
+    StackFS_trace("Opendir called on name : %s and inode : %llu",
+    			lo_name(req, ino), lo_inode(req, ino)->ino);
 
     //generate_start_time(req);
     dp = opendir(lo_name(req, ino));
@@ -923,8 +923,8 @@ static void stackfs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
     int err;
     (void) ino;
 
-    //StackFS_trace("Readdir called on name : %s and inode : %llu",
-    //			lo_name(req, ino), lo_inode(req, ino)->ino);
+    StackFS_trace("Readdir called on name : %s and inode : %llu",
+    			lo_name(req, ino), lo_inode(req, ino)->ino);
     d = lo_dirptr(fi);
     buf = malloc(size*sizeof(char));
     if (!buf)
@@ -996,8 +996,8 @@ static void stackfs_ll_release(fuse_req_t req, fuse_ino_t ino,
 {
     (void) ino;
 
-    //StackFS_trace("Release called on name : %s and inode : %llu fd : %d ",
-    //		lo_name(req, ino), lo_inode(req, ino)->ino, fi->fh);
+    StackFS_trace("Release called on name : %s and inode : %llu fd : %d ",
+    		lo_name(req, ino), lo_inode(req, ino)->ino, fi->fh);
     //generate_start_time(req);
     close(fi->fh);
     //generate_end_time(req);
@@ -1012,8 +1012,8 @@ static void stackfs_ll_releasedir(fuse_req_t req, fuse_ino_t ino,
     struct lo_dirptr *d;
     (void) ino;
 
-    //StackFS_trace("Releasedir called on name : %s and inode : %llu",
-    //			lo_name(req, ino), lo_inode(req, ino)->ino);
+    StackFS_trace("Releasedir called on name : %s and inode : %llu",
+    			lo_name(req, ino), lo_inode(req, ino)->ino);
     d = lo_dirptr(fi);
     //generate_start_time(req);
     closedir(d->dp);
@@ -1097,8 +1097,8 @@ static void stackfs_ll_rmdir(fuse_req_t req, fuse_ino_t parent,
     int res;
     char *fullPath = NULL;
 
-    //StackFS_trace("rmdir called with name : %s, parent inode : %llu",
-    //				name, lo_inode(req, parent)->ino);
+    StackFS_trace("rmdir called with name : %s, parent inode : %llu",
+    				name, lo_inode(req, parent)->ino);
     fullPath = (char *)malloc(PATH_MAX);
     construct_full_path(req, parent, fullPath, name);
     //generate_start_time(req);
