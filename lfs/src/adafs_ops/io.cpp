@@ -24,7 +24,7 @@ int init_chunk_space(const unsigned long hash) {
     chnk_path /= "data"s;
     bfs::ofstream ofs{chnk_path};
 
-    return bfs::exists(chnk_path);
+    return static_cast<int>(bfs::exists(chnk_path));
 }
 /**
  * Remove the directory in the chunk dir of a file.
@@ -39,5 +39,5 @@ int destroy_chunk_space(const unsigned long hash) {
     // create chunk dir
     bfs::remove_all(chnk_path);
 
-    return !bfs::exists(chnk_path);
+    return static_cast<int>(!bfs::exists(chnk_path));
 }

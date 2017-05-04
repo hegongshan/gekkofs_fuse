@@ -12,7 +12,7 @@ namespace Util {
 
     ino_t generate_inode_no(std::mutex& inode_mutex, uint64_t inode_count) {
         std::lock_guard<std::mutex> inode_lock(inode_mutex);
-        return (ino_t) ++inode_count;
+        return static_cast<ino_t>(++inode_count);
     }
 
     // XXX error handling

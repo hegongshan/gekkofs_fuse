@@ -24,7 +24,7 @@ int chk_access(const fuse_req_t& req, const Metadata& md, int mask) {
     //check user leftmost 3 bits for rwx in md->mode
     if (md.uid() == fuse_req_ctx(req)->uid) {
         // Because mode comes only with the first 3 bits used, the user bits have to be shifted to the right to compare
-        if ((mask & md.mode() >> 6) == (unsigned int) mask)
+        if ((mask & md.mode() >> 6) == static_cast<unsigned int>(mask))
             return 0;
         else
             return EACCES;
@@ -32,7 +32,7 @@ int chk_access(const fuse_req_t& req, const Metadata& md, int mask) {
 
     //check group middle 3 bits for rwx in md->mode
     if (md.gid() == fuse_req_ctx(req)->gid) {
-        if ((mask & md.mode() >> 3) == (unsigned int) mask)
+        if ((mask & md.mode() >> 3) == static_cast<unsigned int>(mask))
             return 0;
         else
             return EACCES;
@@ -40,7 +40,7 @@ int chk_access(const fuse_req_t& req, const Metadata& md, int mask) {
 
     //check other rightmost 3 bits for rwx in md->mode.
     // Because they are the rightmost bits they don't need to be shifted
-    if ((mask & md.mode()) == (unsigned int) mask) {
+    if ((mask & md.mode()) == static_cast<unsigned int>(mask)) {
         return 0;
     }
 

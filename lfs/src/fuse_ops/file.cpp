@@ -35,7 +35,7 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
     auto attr = make_unique<struct stat>();
     auto md = make_shared<Metadata>();
     auto err = get_metadata(*md, ino);
-    if (!err) {
+    if (err == 0) {
         attr->st_ino = md->inode_no();
         attr->st_mode = md->mode();
         attr->st_nlink = md->link_count();

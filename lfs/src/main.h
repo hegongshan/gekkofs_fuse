@@ -35,8 +35,8 @@ struct priv_data {
 
 #define ADAFS_ROOT_INODE 1
 // This is the official way to get the userdata from fuse but its unusable because req has to be dragged everywhere
-#define PRIV_DATA(req) ((struct priv_data *) fuse_req_userdata(req))
-#define ADAFS_DATA ((FsData*) FsData::getInstance())
+#define PRIV_DATA(req) (static_cast<priv_data*>(fuse_req_userdata(req)))
+#define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
 
 namespace Util {
     int init_inode_no(priv_data& pdata);
