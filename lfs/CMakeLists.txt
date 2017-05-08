@@ -16,7 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 # required packages
 find_package(FUSE3 REQUIRED)
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
-find_package(Boost 1.62.0 REQUIRED COMPONENTS system filesystem serialization)
+find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 
 include_directories(${FUSE3_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/configure.h
@@ -24,7 +24,7 @@ set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/configure.h
         src/adafs_ops/metadata_ops.h src/adafs_ops/dentry_ops.h src/adafs_ops/access.h
 
         src/util.cpp
-        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp
+        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp
         src/adafs_ops/metadata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
 
         )

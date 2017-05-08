@@ -38,6 +38,12 @@ bool read_all_metadata(Metadata& md, const uint64_t inode) {
     return true;
 }
 
+/**
+ * Gets the metadata via its inode and puts it into an Metadata object.
+ * @param md
+ * @param inode
+ * @return err
+ */
 int get_metadata(Metadata& md, const uint64_t inode) {
     ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
     // Verify that the file's inode exists
@@ -47,7 +53,40 @@ int get_metadata(Metadata& md, const uint64_t inode) {
         read_all_metadata(md, inode);
         return 0;
     } else
-        return ENOENT;
+        return -ENOENT;
+}
+
+/**
+ * Gets the metadata via its inode and puts it into the stat struct.
+ *
+ * @param req
+ * @param attr
+ * @param inode
+ * @return err
+ */
+int get_attr(struct stat& attr, const uint64_t inode) {
+
+    // XXX look in cache first
+    auto md = make_shared<Metadata>();
+    auto err = get_metadata(*md, inode);
+
+    metadata_to_stat(*md, attr);
+
+    return err;
+}
+
+void metadata_to_stat(const Metadata& md, struct stat& attr) {
+    attr.st_ino = md.inode_no();
+    attr.st_mode = md.mode();
+    attr.st_nlink = md.link_count();
+    attr.st_uid = md.uid();
+    attr.st_gid = md.gid();
+    attr.st_size = md.size();
+    attr.st_blksize = ADAFS_DATA->blocksize();
+    attr.st_blocks = md.blocks();
+    attr.st_atim.tv_sec = md.atime();
+    attr.st_mtim.tv_sec = md.mtime();
+    attr.st_ctim.tv_sec = md.ctime();
 }
 
 /**
@@ -71,7 +110,27 @@ int get_metadata(Metadata& md, const uint64_t inode) {
 //    return 0;
 //}
 
+int create_node(fuse_req_t& req, struct fuse_entry_param& fep, uint64_t parent, const string& name, mode_t mode) {
 
+    // create metadata of new file (this will also create a new inode number)
+    // mode is used here to init metadata
+    auto md = make_shared<Metadata>(S_IFREG | mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, req);
+
+    // create directory entry (can fail) in adafs
+    create_dentry(parent, md->inode_no(), name, mode);
+
+    // write metadata
+    write_all_metadata(*md, md->inode_no());
+
+    // create dentry for Linux
+    fep.entry_timeout = 1.0;
+    fep.attr_timeout = 1.0;
+    fep.ino = md->inode_no();
+    //fill fep->attr with the metadata information
+    metadata_to_stat(*md, fep.attr);
+
+    return 0;
+}
 
 
 

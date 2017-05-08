@@ -2,6 +2,8 @@
 // Created by evie on 3/17/17.
 //
 
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include "dentry_ops.h"
 
 using namespace std;
@@ -81,23 +83,58 @@ int read_dentries(const uint64_t p_inode, const unsigned long inode) {
 }
 
 /**
+ * Gets the inode of a directory entry
+ * @param req
+ * @param parent_inode
+ * @param name
+ * @return inode
+ */
+uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) {
+
+    uint64_t inode;
+    // XXX error handling
+    // TODO look into cache first
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
+    d_path /= to_string(p_inode);
+    // XXX check if this is needed later
+    d_path /= name;
+
+    if (!bfs::exists(d_path))
+        return static_cast<uint64_t>(-ENOENT);
+
+    bfs::ifstream ifs{d_path};
+    //read inode from disk
+    boost::archive::binary_iarchive ba(ifs);
+    ba >> inode;
+    ADAFS_DATA->spdlogger()->debug("the inode that was gotten from do_lookup: {}", inode);
+
+    return inode;
+}
+
+
+/**
  * Creates an empty file in the dentry folder of the parent directory, acting as a dentry for lookup
  * @param parent_dir
- * @param inode
+ * @param name
  * @return
  */
-int create_dentry(const unsigned long p_inode, const uint64_t inode) {
+int create_dentry(const uint64_t p_inode, const uint64_t inode, const string& name, mode_t mode) {
 //    ADAFS_DATA->logger->debug("create_dentry() enter with fname: {}", inode);
-//    // XXX Errorhandling
-//    auto f_path = bfs::path(ADAFS_DATA->dentry_path);
-//    f_path /= to_string(p_inode);
-//    if (!bfs::exists(f_path)) return -ENOENT;
-//
-//    f_path /= inode;
-//
-//    bfs::ofstream ofs{f_path};
-//
-//    // XXX make sure the file has been created
+    // XXX Errorhandling
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
+    d_path /= to_string(p_inode);
+    // XXX check if this is needed later
+//    if (!bfs::exists(d_path)) return -ENOENT;
+
+    d_path /= name;
+
+    bfs::ofstream ofs{d_path};
+    // write to disk in binary form
+    boost::archive::binary_oarchive ba(ofs);
+    ba << inode;
+    ba << mode;
+
+    // XXX make sure the file has been created
 
     return 0;
 }

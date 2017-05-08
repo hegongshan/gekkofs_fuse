@@ -5,6 +5,7 @@
 #include "../main.h"
 #include "../fuse_ops.h"
 #include "../adafs_ops/metadata_ops.h"
+#include "../adafs_ops/dentry_ops.h"
 #include "../adafs_ops/access.h"
 
 using namespace std;
@@ -23,39 +24,43 @@ using namespace std;
 void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_lookup() enter: parent_inode {} name \"{}\"", parent, name);
 
-    auto md = make_shared<Metadata>();
-    get_metadata(*md, 1);
-    auto fep = make_unique<struct fuse_entry_param>();
 
+    //get inode no first (either from cache or disk) with parent inode and name
+    auto inode = do_lookup(req, parent, string(name));
+    if (inode < 1) {
+        fuse_reply_err(req, static_cast<int>(inode));
+        return;
+    }
+
+    auto fep = make_shared<struct fuse_entry_param>();
+    get_attr(fep->attr, inode);
+    fep->ino = fep->attr.st_ino;
     fep->entry_timeout = 1.0;
     fep->attr_timeout = 1.0;
 
+//    if (strcmp(name, "test123") == 0) {
+//        fep->ino = 2;
+//        fep->attr.st_ino = 2;
+//        ADAFS_DATA->spdlogger()->debug("I am inside test123"s);
+//    } else if (strcmp(name, "test456") == 0) {
+//        fep->ino = 3;
+//        fep->attr.st_ino = 3;
+//        ADAFS_DATA->spdlogger()->debug("I am inside test456"s);
+//    } else {
+//
+//        fuse_reply_err(req, ENOENT);
+//    }
 
-    fep->attr.st_mode = md->mode();
-    fep->attr.st_nlink = md->link_count();
-    fep->attr.st_uid = md->uid();
-    fep->attr.st_gid = md->gid();
-    fep->attr.st_size = md->size();
-    fep->attr.st_blksize = ADAFS_DATA->blocksize();
-    fep->attr.st_blocks = md->blocks();
-    fep->attr.st_atim.tv_sec = md->atime();
-    fep->attr.st_mtim.tv_sec = md->mtime();
-    fep->attr.st_ctim.tv_sec = md->ctime();
+    fuse_reply_entry(req, fep.get());
 
-    if (strcmp(name, "test123") == 0) {
-        fep->ino = 2;
-        fep->attr.st_ino = 2;
-        ADAFS_DATA->spdlogger()->debug("I am inside test123"s);
-        fuse_reply_entry(req, fep.get());
-    } else if (strcmp(name, "test456") == 0) {
-        fep->ino = 3;
-        fep->attr.st_ino = 3;
-        ADAFS_DATA->spdlogger()->debug("I am inside test456"s);
-        fuse_reply_entry(req, fep.get());
-    } else {
 
-        fuse_reply_err(req, ENOENT);
-    }
+    /* for ENOENTs
+     * if (err == -ENOENT && f->conf.negative_timeout != 0.0) {
+			e.ino = 0;
+			e.entry_timeout = f->conf.negative_timeout;
+			err = 0;
+		}
+     */
 
 }
 
@@ -82,7 +87,7 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
 	 */
 void adafs_ll_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_opendir() enter: inode {}", ino);
-#ifdef CHECK_ACCESS
+#ifdef CHECK_ACCESS //TODO
     // XXX error handling
     auto md = make_shared<Metadata>();
 

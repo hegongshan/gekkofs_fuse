@@ -9,7 +9,11 @@
 
 // file
 void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
-
+void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi);
+void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi);
+void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, dev_t rdev);
+void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
+void adafs_ll_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
 // directory
 void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name);
@@ -23,8 +27,8 @@ void adafs_ll_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* 
 
 
 
-//
-
+// sync
+void adafs_ll_flush(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
 
 // access

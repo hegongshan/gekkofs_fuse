@@ -92,6 +92,11 @@ void adafs_ll_destroy(void* pdata) {
 static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     // file
     ops->getattr = adafs_ll_getattr;
+    ops->setattr = adafs_ll_setattr;
+    ops->create = adafs_ll_create;
+    ops->mknod = adafs_ll_mknod;
+    ops->open = adafs_ll_open;
+    ops->release = adafs_ll_release;
 
     // directory
     ops->lookup = adafs_ll_lookup;
@@ -100,6 +105,9 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->releasedir = adafs_ll_releasedir;
 
     // I/O
+
+    // sync
+    ops->flush = adafs_ll_flush;
 
     // permission
 

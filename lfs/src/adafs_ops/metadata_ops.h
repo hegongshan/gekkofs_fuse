@@ -69,6 +69,12 @@ unique_ptr<T> read_metadata_field(const string& field_name, const uint64_t inode
 
 int get_metadata(Metadata& md, const uint64_t inode);
 
+int get_attr(struct stat& attr, const uint64_t inode);
+
+void metadata_to_stat(const Metadata& md, struct stat& attr);
+
 //int remove_metadata(const unsigned long hash);
+
+int create_node(fuse_req_t& req, struct fuse_entry_param& fep, uint64_t parent, const string& name, mode_t mode);
 
 #endif //FS_METADATA_OPS_H
