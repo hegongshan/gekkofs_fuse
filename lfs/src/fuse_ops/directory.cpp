@@ -29,8 +29,9 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
 
     //get inode no first (either from cache or disk) with parent inode and name
     auto inode = do_lookup(req, parent, string(name));
-    if (inode < 1) {
-        fuse_reply_err(req, static_cast<int>(inode));
+    // XXX I DON'T like how this is handled with static_cast. like double negation and large int usage for int ERRcodes
+    if (static_cast<int>(inode) < 1) {
+        fuse_reply_err(req, static_cast<int>(-inode));
         return;
     }
 

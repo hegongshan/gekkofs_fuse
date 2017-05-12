@@ -26,7 +26,7 @@ set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/configure.h
         src/adafs_ops/metadata_ops.h src/adafs_ops/dentry_ops.h src/adafs_ops/access.h
 
         src/util.cpp
-        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp
+        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp
         src/adafs_ops/metadata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
 
         )

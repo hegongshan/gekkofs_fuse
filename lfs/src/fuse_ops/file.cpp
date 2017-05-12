@@ -222,6 +222,40 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t 
 }
 
 /**
+ * Remove a file
+ *
+ * If the file's inode's lookup count is non-zero, the file
+ * system is expected to postpone any removal of the inode
+ * until the lookup count reaches zero (see description of the
+ * forget function).
+ *
+ * Valid replies:
+ *   fuse_reply_err
+ *
+ * @param req request handle
+ * @param parent inode number of the parent directory
+ * @param name to remove
+ */
+void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
+    // XXX errorhandling
+    /*
+     * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
+     * for removal. If forget is then called, the file should be really removed. (see forget comments)
+     * Any fuse comments that increment the lookup count will show the file as deleted after unlink and before/after forget.
+     * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
+     */
+
+    // XXX Remove denty
+
+    // XXX Remove inode
+
+    // XXX delete data blocks (asynchronously)
+
+    fuse_reply_err(req, 0);
+}
+
+/**
  * Open a file
  *
  * Open flags are available in fi->flags.  Creation (O_CREAT,

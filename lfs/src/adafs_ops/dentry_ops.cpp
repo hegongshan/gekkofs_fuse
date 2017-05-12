@@ -135,7 +135,6 @@ uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) 
     d_path /= to_string(p_inode);
     // XXX check if this is needed later
     d_path /= name;
-
     if (!bfs::exists(d_path))
         return static_cast<uint64_t>(-ENOENT);
 

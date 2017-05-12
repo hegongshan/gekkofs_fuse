@@ -95,6 +95,7 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->setattr = adafs_ll_setattr;
     ops->create = adafs_ll_create;
     ops->mknod = adafs_ll_mknod;
+    ops->unlink = adafs_ll_unlink;
     ops->open = adafs_ll_open;
     ops->release = adafs_ll_release;
 
@@ -110,6 +111,7 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->flush = adafs_ll_flush;
 
     // permission
+    ops->access = adafs_ll_access;
 
     ops->init = adafs_ll_init;
     ops->destroy = adafs_ll_destroy;
