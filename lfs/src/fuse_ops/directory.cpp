@@ -8,6 +8,8 @@
 #include "../adafs_ops/dentry_ops.h"
 #include "../adafs_ops/access.h"
 
+#include "../classes/dentry.h"
+
 using namespace std;
 
 /**
@@ -37,19 +39,6 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     fep->ino = fep->attr.st_ino;
     fep->entry_timeout = 1.0;
     fep->attr_timeout = 1.0;
-
-//    if (strcmp(name, "test123") == 0) {
-//        fep->ino = 2;
-//        fep->attr.st_ino = 2;
-//        ADAFS_DATA->spdlogger()->debug("I am inside test123"s);
-//    } else if (strcmp(name, "test456") == 0) {
-//        fep->ino = 3;
-//        fep->attr.st_ino = 3;
-//        ADAFS_DATA->spdlogger()->debug("I am inside test456"s);
-//    } else {
-//
-//        fuse_reply_err(req, ENOENT);
-//    }
 
     fuse_reply_entry(req, fep.get());
 
@@ -152,90 +141,57 @@ void adafs_ll_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
 void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_readdir() enter: inode {} size {} offset {}", ino, size, off);
 
-//    auto md = make_shared<Metadata>();
-    // first check that dir exists that is trying to be read. I don't know if this is actually needed,
-    // because opendir should have been called first. I guess it could have been deleted in between
-//    auto err = get_metadata(*md, ino);
-    // XXX permission check here because ls requires read permission (Do we care?)
-    if (ino == 1 && off < 2) {
-
-
+    // XXX this'll break for large dirs as only the entries are shown that can fit in the buffer TODO later
+    if (off == 0) {
+        auto off_cnt = off;
+        // XXX can this be done in c++11 style?
+//        auto buf2 = make_unique<array<char, size>>();
+//        auto p2 = make_shared<char>();
         char* buf = new char[size](); // buffer, holding the dentries
         char* p; // pointer pointing on the current buffer entry
         size_t remaining_size; // remaining available size
 
+//        p2 = buf2;
         p = buf;
         remaining_size = size;
         size_t entry_size;
-        // Read all filenames in dir entry folder for inode of md
-//    auto dentries = make_shared<vector<string>>();
 
-        /**
-         * Alright, so what I need to do here is the following:
-         * Every entry that is retrieved out of the dentries in the directory needs the
-         * inode number and the mode (not sure which yet). This means that this information
-         * has to be somewhere where the dentries are located. However, ls is not a focus on the file system
-         * and is allowed to take longer. If applictions really need ls a lot (which we will see in the application
-         * anaylsis) than it can still be changed.
-         * In a NoSQL database a range query on the dentry table can be done on the dir inode. This should then return the inode numbers,
-         * the modes, gid, uid, and the names of all the files that are in the directory. I am not sure what the tiny struct is
-         * actually used for. XXX Investigate what readdir actually needs.
-         *
-         * For now, we use the file system as the database. The structure here is slightly different. The metadata
-         * of the files is still based on the inode. In the dentry folder the inode of the dir is containing all the
-         * files in the directory. Each file is represented as a file. The name of the file is the file name.
-         * Extended attributes could be used for inode number, mode, gid, and uid. Or we just write it in there. first line inode
-         * second line modes, etc...
-         *
-         * Lookup could be configured to actually get the rest of the metadata or leave most of it empty and just use
-         * the information from readdir, IF we can get this information there because it is a separate call...
-         *
-         * First time readdir is called, all information is fetched once and put into a cache. Then the cache is
-         * iterated with a counter how many files are already iterated. This is because readdir can only add a size_t
-         * number of files before readdir has to be called again. Then it needs to be remembered. In the first
-         * implementation we just call the file system multiple times and use the offset as a counter which will be
-         * slow but whatever.
-         *
-         * Summary:
-         * readdir: fetch dentries by dir inode number. get names, mode, and inode numbers of files and add it to fuse_add_direntry
-         * getdirattr: call do_lookup(inode)
-         * lookup: read dentry with parent inode and filename. Hopefully, this information is still in cache. If required
-         *          call do_lookup(file inode).
-         */
+        auto dentries = make_shared<vector<Dentry>>();
 
-        // # first testentry
-        auto st = make_unique<struct stat>();
-        st->st_ino = 2;
-        st->st_mode = S_IRWXO;
-        ADAFS_DATA->spdlogger()->debug("First fuse_add_direntry"s);
-        entry_size = fuse_add_direntry(req, p, remaining_size, "test123", st.get(), 1);
+        get_dentries(*dentries, ino);
+        //getdentries here
+        for (const auto& dentry : *dentries) {
+            ADAFS_DATA->spdlogger()->trace("readdir dentry: name {} inode {} mode {:o}", dentry.name(), dentry.inode(), dentry.mode());
 
-        p += entry_size; // move pointer
-        remaining_size -= entry_size; // subtract entry size from remaining size
+            /*
+             * Generate tiny stat with inode and mode information.
+             * This information is necessary so that the entry shows up later at all.
+             * The inode and mode information does not seem to impact correctness since lookup is setting
+             * the correct inode again. However, it is unclear if the kernel uses this information for optimizations.
+             */
+            auto attr = make_unique<struct stat>();
+            attr->st_ino = dentry.inode();
+            attr->st_mode = dentry.mode(); // only bits 12-15 are used (i.e., file type)
+            // add directory entry giving it to fuse and getting the actual entry size information
+            entry_size = fuse_add_direntry(req, p, remaining_size, dentry.name().c_str(), attr.get(), ++off_cnt);
 
-        // # second testentry
-        auto st2 = make_unique<struct stat>();
-        st2->st_ino = 3;
-        st2->st_mode = S_IRWXO;
+            if (entry_size > remaining_size)
+                break;
 
-        ADAFS_DATA->spdlogger()->debug("Second fuse_add_direntry"s);
-        fuse_add_direntry(req, p, remaining_size, "test456", st2.get(), 2);
-
-        p += entry_size; // move pointer
-        remaining_size -= entry_size; // subtract entry size from remaining size
+            p += entry_size; // move pointer
+            remaining_size -= entry_size; // subtract entry size from remaining size
+        }
 
         fuse_reply_buf(req, buf, size - remaining_size);
         free(buf);
-    } else if (off == 2) {
+
+    } else {
+        // return no entry, i.e., finished with readdir
         char* buf = new char[size]();
         size_t remaining_size = size;
         fuse_reply_buf(req, buf, size - remaining_size);
         free(buf);
-    } else {
-        fuse_reply_err(req, 1);
-
     }
-    return;
 }
 
 /**

@@ -6,6 +6,8 @@
 #define FS_DENTRY_OPS_H
 
 #include "../main.h"
+#include "../classes/dentry.h"
+
 
 bool init_dentry_dir(const uint64_t inode);
 
@@ -14,6 +16,8 @@ bool destroy_dentry_dir(const uint64_t inode);
 bool verify_dentry(const uint64_t inode);
 
 int read_dentries(const uint64_t p_inode, const unsigned long inode);
+
+int get_dentries(std::vector<Dentry>& dentries, const uint64_t dir_inode);
 
 uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const std::string& name);
 

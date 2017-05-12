@@ -53,7 +53,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     auto md = make_shared<Metadata>();
 
     // Check that root metadata exists. If not initialize it
-    if (get_metadata(*md, ADAFS_ROOT_INODE) == ENOENT) {
+    if (get_metadata(*md, ADAFS_ROOT_INODE) == -ENOENT) {
         ADAFS_DATA->spdlogger()->debug("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
         md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // change_access 777
@@ -146,7 +146,10 @@ int main(int argc, char* argv[]) {
     auto a_data = make_shared<priv_data>();
 //    //set the spdlogger and initialize it with spdlog
     ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", "adafs.log"));
-#if defined(LOG_DEBUG)
+#if defined(LOG_TRACE)
+    spdlog::set_level(spdlog::level::trace);
+    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::trace);
+#elif defined(LOG_DEBUG)
     spdlog::set_level(spdlog::level::debug);
     ADAFS_DATA->spdlogger()->flush_on(spdlog::level::debug);
 #elif defined(LOG_INFO)

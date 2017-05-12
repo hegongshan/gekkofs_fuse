@@ -6,6 +6,8 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include "dentry_ops.h"
 
+#include "../classes/dentry.h"
+
 using namespace std;
 
 /**
@@ -83,6 +85,41 @@ int read_dentries(const uint64_t p_inode, const unsigned long inode) {
 }
 
 /**
+ * Reads all directory entries in a directory for the given inode. Returns 0 if successful. The dentries vector is not
+ * cleared before it is used.
+ * @param dentries assumed to be empty
+ * @param dir_inode
+ * @return
+ */
+int get_dentries(vector<Dentry>& dentries, const uint64_t dir_inode) {
+    ADAFS_DATA->spdlogger()->debug("get_dentries: inode {}", dir_inode);
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
+    d_path /= to_string(dir_inode);
+    // shortcut if path is empty = no files in directory
+    if (bfs::is_empty(d_path)) return 0;
+
+    auto dir_it = bfs::directory_iterator(d_path);
+    for (const auto& it : dir_it) {
+        auto dentry = make_shared<Dentry>(it.path().filename().string());
+        // retrieve inode number and mode in dentry
+        uint64_t inode;
+        mode_t mode;
+        d_path /= it.path().filename();
+        bfs::ifstream ifs{d_path};
+        boost::archive::binary_iarchive ba(ifs);
+        ba >> inode;
+        ba >> mode;
+        dentry->inode(inode);
+        dentry->mode(mode);
+        // append dentry to dentries vector
+        dentries.push_back(*dentry);
+        d_path.remove_filename();
+    }
+
+    return 0;
+}
+
+/**
  * Gets the inode of a directory entry
  * @param req
  * @param parent_inode
@@ -106,7 +143,7 @@ uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) 
     //read inode from disk
     boost::archive::binary_iarchive ba(ifs);
     ba >> inode;
-    ADAFS_DATA->spdlogger()->debug("the inode that was gotten from do_lookup: {}", inode);
+    ADAFS_DATA->spdlogger()->debug("do_lookup: p_inode {} name {} resolved_inode {}", p_inode, name, inode);
 
     return inode;
 }

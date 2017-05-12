@@ -21,6 +21,8 @@ find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 include_directories(${FUSE3_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.h src/fuse_ops.h src/configure.h
         src/classes/metadata.h src/classes/metadata.cpp src/classes/fs_data.h src/classes/fs_data.cpp
+        src/classes/dentry.h src/classes/dentry.cpp
+
         src/adafs_ops/metadata_ops.h src/adafs_ops/dentry_ops.h src/adafs_ops/access.h
 
         src/util.cpp
