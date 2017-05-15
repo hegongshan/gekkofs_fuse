@@ -11,7 +11,7 @@ class Dentry {
 
 private:
     std::string name_;
-    uint64_t inode_;
+    fuse_ino_t inode_;
     mode_t mode_; // file type code (6 bits) + permission bits (9 bits rwx(user)rwx(group)rwx(others)
 
 public:
@@ -19,15 +19,15 @@ public:
 
     Dentry(const std::string& name_);
 
-    Dentry(const std::string &name_, uint64_t inode_, mode_t mode_);
+    Dentry(const std::string& name_, fuse_ino_t inode_, mode_t mode_);
 
     const std::string& name() const;
 
     void name(const std::string& name_);
 
-    uint64_t inode() const;
+    fuse_ino_t inode() const;
 
-    void inode(uint64_t inode_);
+    void inode(fuse_ino_t inode_);
 
     mode_t mode() const;
 

@@ -13,14 +13,15 @@ using namespace std;
 /**
  * Initializes the dentry directory to hold future dentries
  * @param inode
- * @return
+ * @return err
  */
 bool init_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
     d_path /= to_string(inode);
     bfs::create_directories(d_path);
     // XXX This might not be needed as it is another access to the underlying file system
-    return bfs::exists(d_path);
+//    return bfs::exists(d_path);
+    return 0;
 }
 
 /**

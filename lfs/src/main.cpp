@@ -103,6 +103,8 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->lookup = adafs_ll_lookup;
     ops->opendir = adafs_ll_opendir;
     ops->readdir = adafs_ll_readdir;
+    ops->mkdir = adafs_ll_mkdir;
+    ops->rmdir = adafs_ll_rmdir;
     ops->releasedir = adafs_ll_releasedir;
 
     // I/O

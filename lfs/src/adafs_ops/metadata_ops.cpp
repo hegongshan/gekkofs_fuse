@@ -106,12 +106,23 @@ int remove_metadata(const fuse_ino_t inode) {
     return 0;
 }
 
+/**
+ * Creates a new node (file or directory) in the file system. Fills given fuse_entry_param.
+ * @param req
+ * @param fep
+ * @param parent
+ * @param name
+ * @param mode
+ * @return err
+ */
 int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
-
     // create metadata of new file (this will also create a new inode number)
     // mode is used here to init metadata
-    auto md = make_shared<Metadata>(S_IFREG | mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, req);
-
+    auto md = make_shared<Metadata>(mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, req);
+    if ((mode & S_IFDIR) == S_IFDIR) {
+        md->size(
+                ADAFS_DATA->blocksize()); // XXX just visual. size computation of directory should be done properly at some point
+    }
     // create directory entry (can fail) in adafs
     create_dentry(parent, md->inode_no(), name, mode);
 

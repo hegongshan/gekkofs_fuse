@@ -197,6 +197,65 @@ void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 }
 
 /**
+ * Create a directory
+ *
+ * Valid replies:
+ *   fuse_reply_entry
+ *   fuse_reply_err
+ *
+ * @param req request handle
+ * @param parent inode number of the parent directory
+ * @param name to create
+ * @param mode with which to create the new file
+ */
+void adafs_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_mkdir() enter: p_inode {} name {} mode {:o}", parent, name, mode);
+    auto fep = make_shared<fuse_entry_param>();
+    // XXX check if dir exists (how can we omit this? Let's just try to create it and see if it fails)
+
+    // XXX check if we need permission check
+
+    // XXX all this below stuff needs to be atomic. reroll if error happens
+    // create metadata for the new dir and adds the dentry to the parent dir
+    auto err = create_node(req, *fep, parent, string(name), S_IFDIR | mode);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
+    // Init structure to hold dentries of new directory
+    err = init_dentry_dir(fep->ino);
+
+    // return new dentry
+    if (err == 0) {
+        fuse_reply_entry(req, fep.get());
+    } else {
+        fuse_reply_err(req, err);
+    }
+}
+
+/**
+ * Remove a directory
+ *
+ * If the directory's inode's lookup count is non-zero, the
+ * file system is expected to postpone any removal of the
+ * inode until the lookup count reaches zero (see description
+ * of the forget function).
+ *
+ * Valid replies:
+ *   fuse_reply_err
+ *
+ * @param req request handle
+ * @param parent inode number of the parent directory
+ * @param name to remove
+ */
+void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
+
+    // TODO
+    fuse_reply_err(req, 0);
+}
+
+/**
  * Release an open directory
  *
  * For every opendir call there will be exactly one releasedir

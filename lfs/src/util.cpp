@@ -10,9 +10,9 @@ namespace Util {
         return 0;
     }
 
-    fuse_ino_t generate_inode_no(std::mutex& inode_mutex, fuse_ino_t inode_count) {
-        std::lock_guard<std::mutex> inode_lock(inode_mutex);
-        return static_cast<fuse_ino_t>(++inode_count);
+    fuse_ino_t generate_inode_no(fuse_req_t& req) {
+        std::lock_guard<std::mutex> inode_lock(PRIV_DATA(req)->inode_mutex);
+        return static_cast<fuse_ino_t>(++PRIV_DATA(req)->inode_count);
     }
 
     // XXX error handling

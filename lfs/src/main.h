@@ -42,7 +42,7 @@ struct priv_data {
 namespace Util {
     int init_inode_no(priv_data& pdata);
 
-    fuse_ino_t generate_inode_no(std::mutex& inode_mutex, fuse_ino_t inode_count);
+    fuse_ino_t generate_inode_no(fuse_req_t& req);
 
     int read_inode_cnt(priv_data& pdata);
 

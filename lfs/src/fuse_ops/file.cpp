@@ -172,7 +172,7 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t
     // XXX check permissions (omittable)
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
-    auto err = create_node(req, *fep, parent, string(name), mode);
+    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
 
     // XXX create chunk space
     if (err == 0)
@@ -208,7 +208,7 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t 
     // XXX check permissions (omittable)
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
-    auto err = create_node(req, *fep, parent, string(name), mode);
+    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
 
     // XXX create chunk space
 
@@ -233,11 +233,11 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t 
  *   fuse_reply_err
  *
  * @param req request handle
- * @param p_inode inode number of the parent directory
+ * @param parent inode number of the parent directory
  * @param name to remove
  */
-void adafs_ll_unlink(fuse_req_t req, fuse_ino_t p_inode, const char *name) {
-    ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", p_inode, name);
+void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
     fuse_ino_t inode;
     int err;
 
@@ -250,7 +250,7 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t p_inode, const char *name) {
      */
 
     // Remove denty returns <err, inode_of_dentry> pair
-    tie(err, inode) = remove_dentry(p_inode, name);
+    tie(err, inode) = remove_dentry(parent, name);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;
