@@ -53,7 +53,7 @@ int get_metadata(Metadata& md, const uint64_t inode) {
         read_all_metadata(md, inode);
         return 0;
     } else
-        return -ENOENT;
+        return ENOENT;
 }
 
 /**

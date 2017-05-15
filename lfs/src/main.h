@@ -34,6 +34,7 @@ struct priv_data {
 };
 
 #define ADAFS_ROOT_INODE 1
+#define INVALID_INODE static_cast<uint64_t>(0)
 // This is the official way to get the userdata from fuse but its unusable because req has to be dragged everywhere
 #define PRIV_DATA(req) (static_cast<priv_data*>(fuse_req_userdata(req)))
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))

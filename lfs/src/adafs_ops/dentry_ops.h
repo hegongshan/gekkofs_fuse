@@ -19,7 +19,7 @@ int read_dentries(const uint64_t p_inode, const unsigned long inode);
 
 int get_dentries(std::vector<Dentry>& dentries, const uint64_t dir_inode);
 
-uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const std::string& name);
+std::pair<int, uint64_t> do_lookup(fuse_req_t& req, const uint64_t p_inode, const std::string& name);
 
 int create_dentry(const uint64_t p_inode, const uint64_t inode, const std::string& name, mode_t mode);
 

@@ -53,7 +53,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     auto md = make_shared<Metadata>();
 
     // Check that root metadata exists. If not initialize it
-    if (get_metadata(*md, ADAFS_ROOT_INODE) == -ENOENT) {
+    if (get_metadata(*md, ADAFS_ROOT_INODE) == ENOENT) {
         ADAFS_DATA->spdlogger()->debug("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
         md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // change_access 777

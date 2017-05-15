@@ -10,6 +10,7 @@
 
 #include "../classes/dentry.h"
 
+
 using namespace std;
 
 /**
@@ -28,10 +29,11 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
 
 
     //get inode no first (either from cache or disk) with parent inode and name
-    auto inode = do_lookup(req, parent, string(name));
-    // XXX I DON'T like how this is handled with static_cast. like double negation and large int usage for int ERRcodes
-    if (static_cast<int>(inode) < 1) {
-        fuse_reply_err(req, static_cast<int>(-inode));
+    auto lookup_pair = do_lookup(req, parent, string(name));
+    auto err = lookup_pair.first;
+    auto inode = lookup_pair.second;
+    if (err != 0) {
+        fuse_reply_err(req, err);
         return;
     }
 

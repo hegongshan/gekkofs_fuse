@@ -124,9 +124,9 @@ int get_dentries(vector<Dentry>& dentries, const uint64_t dir_inode) {
  * @param req
  * @param parent_inode
  * @param name
- * @return inode
+ * @return pair<err, inode>
  */
-uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) {
+pair<int, uint64_t> do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) {
 
     uint64_t inode;
     // XXX error handling
@@ -136,7 +136,7 @@ uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) 
     // XXX check if this is needed later
     d_path /= name;
     if (!bfs::exists(d_path))
-        return static_cast<uint64_t>(-ENOENT);
+        return make_pair(ENOENT, INVALID_INODE);
 
     bfs::ifstream ifs{d_path};
     //read inode from disk
@@ -144,7 +144,7 @@ uint64_t do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) 
     ba >> inode;
     ADAFS_DATA->spdlogger()->debug("do_lookup: p_inode {} name {} resolved_inode {}", p_inode, name, inode);
 
-    return inode;
+    return make_pair(0, inode);
 }
 
 
