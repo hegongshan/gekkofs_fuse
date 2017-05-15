@@ -28,13 +28,13 @@ namespace bfs = boost::filesystem;
 // XXX This might get moved to the FsData class when I figure out how to use the inode mutex from there...
 struct priv_data {
 
-    uint64_t inode_count;
+    fuse_ino_t inode_count;
     std::mutex inode_mutex;
 
 };
 
-#define ADAFS_ROOT_INODE 1
-#define INVALID_INODE static_cast<uint64_t>(0)
+#define ADAFS_ROOT_INODE static_cast<fuse_ino_t>(1)
+#define INVALID_INODE static_cast<fuse_ino_t>(0)
 // This is the official way to get the userdata from fuse but its unusable because req has to be dragged everywhere
 #define PRIV_DATA(req) (static_cast<priv_data*>(fuse_req_userdata(req)))
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
@@ -42,7 +42,7 @@ struct priv_data {
 namespace Util {
     int init_inode_no(priv_data& pdata);
 
-    ino_t generate_inode_no(std::mutex& inode_mutex, uint64_t inode_count);
+    fuse_ino_t generate_inode_no(std::mutex& inode_mutex, fuse_ino_t inode_count);
 
     int read_inode_cnt(priv_data& pdata);
 

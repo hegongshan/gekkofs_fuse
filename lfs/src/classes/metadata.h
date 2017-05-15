@@ -11,21 +11,21 @@ private:
     time_t atime_;             // access time. gets updated on file access unless mounted with noatime
     time_t mtime_;             // modify time. gets updated when file content is modified.
     time_t ctime_;             // change time. gets updated when the file attributes are changed AND when file content is modified.
-    uint32_t uid_;
-    uint32_t gid_;
-    uint32_t mode_;
-    uint64_t inode_no_;
-    uint32_t link_count_;        // number of names for this inode (hardlinks)
-    uint32_t size_;              // size_ in bytes, might be computed instead of stored
-    uint32_t blocks_;            // allocated file system blocks_
+    uid_t uid_;
+    gid_t gid_;
+    mode_t mode_;
+    fuse_ino_t inode_no_;
+    nlink_t link_count_;       // number of names for this inode (hardlinks)
+    off_t size_;               // size_ in bytes, might be computed instead of stored
+    blkcnt_t blocks_;          // allocated file system blocks_
 
 
 public:
     Metadata();
 
-    Metadata(mode_t mode, uint32_t uid, uint32_t gid, fuse_req_t& req);
+    Metadata(mode_t mode, uid_t uid, gid_t gid, fuse_req_t& req);
 
-    Metadata(mode_t mode, uint32_t uid, uint32_t gid, uint64_t inode);
+    Metadata(mode_t mode, uid_t uid, gid_t gid, fuse_ino_t inode);
 
     void init_ACM_time();
 
@@ -44,33 +44,33 @@ public:
 
     void ctime(time_t ctime_);
 
-    uint32_t uid() const;
+    uid_t uid() const;
 
-    void uid(uint32_t uid_);
+    void uid(uid_t uid_);
 
-    uint32_t gid() const;
+    gid_t gid() const;
 
-    void gid(uint32_t gid_);
+    void gid(gid_t gid_);
 
-    uint32_t mode() const;
+    mode_t mode() const;
 
-    void mode(uint32_t mode_);
+    void mode(mode_t mode_);
 
-    uint64_t inode_no() const;
+    fuse_ino_t inode_no() const;
 
-    void inode_no(uint64_t inode_no_);
+    void inode_no(fuse_ino_t inode_no_);
 
-    uint32_t link_count() const;
+    nlink_t link_count() const;
 
-    void link_count(uint32_t link_count_);
+    void link_count(nlink_t link_count_);
 
-    uint32_t size() const;
+    off_t size() const;
 
-    void size(uint32_t size_);
+    void size(off_t size_);
 
-    uint32_t blocks() const;
+    blkcnt_t blocks() const;
 
-    void blocks(uint32_t blocks_);
+    void blocks(blkcnt_t blocks_);
 
 };
 

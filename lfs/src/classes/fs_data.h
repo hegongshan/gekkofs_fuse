@@ -17,7 +17,7 @@ private:
     std::hash<std::string> hashf_;
 
     // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
-    int32_t blocksize_;
+    blksize_t blocksize_;
 
     //logger
     std::shared_ptr<spdlog::logger> spdlogger_;
@@ -49,9 +49,9 @@ public:
 
     void hashf(const std::hash<std::string>& hashf_);
 
-    int32_t blocksize() const;
+    blksize_t blocksize() const;
 
-    void blocksize(int32_t blocksize_);
+    void blocksize(blksize_t blocksize_);
 
     const std::shared_ptr<spdlog::logger>& spdlogger() const;
 

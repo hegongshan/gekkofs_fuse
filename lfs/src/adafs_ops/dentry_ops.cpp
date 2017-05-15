@@ -15,7 +15,7 @@ using namespace std;
  * @param inode
  * @return
  */
-bool init_dentry_dir(const uint64_t inode) {
+bool init_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
     d_path /= to_string(inode);
     bfs::create_directories(d_path);
@@ -28,7 +28,7 @@ bool init_dentry_dir(const uint64_t inode) {
  * @param inode
  * @return true if successfully deleted
  */
-bool destroy_dentry_dir(const uint64_t inode) {
+bool destroy_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
     d_path /= to_string(inode);
 
@@ -44,7 +44,7 @@ bool destroy_dentry_dir(const uint64_t inode) {
  * @param fname
  * @return
  */
-bool verify_dentry(const uint64_t inode) {
+bool verify_dentry(const fuse_ino_t inode) {
     // XXX do I need this?
     return false;
 //    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
@@ -68,7 +68,7 @@ bool verify_dentry(const uint64_t inode) {
  * Reads all directory entries in a directory with a given @hash. Returns 0 if successful.
  * @dir is assumed to be empty
  */
-int read_dentries(const uint64_t p_inode, const unsigned long inode) {
+int read_dentries(const fuse_ino_t p_inode, const fuse_ino_t inode) {
 //    auto path = bfs::path(ADAFS_DATA->dentry_path());
 //    path /= to_string(inode);
 //    if (!bfs::exists(path)) return 1;
@@ -91,7 +91,7 @@ int read_dentries(const uint64_t p_inode, const unsigned long inode) {
  * @param dir_inode
  * @return
  */
-int get_dentries(vector<Dentry>& dentries, const uint64_t dir_inode) {
+int get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
     ADAFS_DATA->spdlogger()->debug("get_dentries: inode {}", dir_inode);
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
     d_path /= to_string(dir_inode);
@@ -126,9 +126,9 @@ int get_dentries(vector<Dentry>& dentries, const uint64_t dir_inode) {
  * @param name
  * @return pair<err, inode>
  */
-pair<int, uint64_t> do_lookup(fuse_req_t& req, const uint64_t p_inode, const string& name) {
+pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const string& name) {
 
-    uint64_t inode;
+    fuse_ino_t inode;
     // XXX error handling
     // TODO look into cache first
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
@@ -154,7 +154,7 @@ pair<int, uint64_t> do_lookup(fuse_req_t& req, const uint64_t p_inode, const str
  * @param name
  * @return
  */
-int create_dentry(const uint64_t p_inode, const uint64_t inode, const string& name, mode_t mode) {
+int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
 //    ADAFS_DATA->logger->debug("create_dentry() enter with fname: {}", inode);
     // XXX Errorhandling
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
@@ -182,7 +182,7 @@ int create_dentry(const uint64_t p_inode, const uint64_t inode, const string& na
  * @return
  */
 // XXX errorhandling
-int remove_dentry(const unsigned long p_inode, const uint64_t inode) {
+int remove_dentry(const unsigned long p_inode, const fuse_ino_t inode) {
 //    auto f_path = bfs::path(ADAFS_DATA->dentry_path());
 //    f_path /= to_string(p_inode);
 //    if (!bfs::exists(f_path)) {
@@ -204,7 +204,7 @@ int remove_dentry(const unsigned long p_inode, const uint64_t inode) {
  * @param inode
  * @return bool
  */
-bool is_dir_empty(const uint64_t inode) {
+bool is_dir_empty(const fuse_ino_t inode) {
 //    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
 //    // use hash function to path and append it to d_path
 //    d_path /= to_string(ADAFS_DATA->hashf(inode.string()));

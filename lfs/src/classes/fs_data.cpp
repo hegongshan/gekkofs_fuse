@@ -20,11 +20,11 @@ void FsData::hashf(const std::hash<std::string>& hashf_) {
     FsData::hashf_ = hashf_;
 }
 
-int32_t FsData::blocksize() const {
+blksize_t FsData::blocksize() const {
     return blocksize_;
 }
 
-void FsData::blocksize(int32_t blocksize_) {
+void FsData::blocksize(blksize_t blocksize_) {
     FsData::blocksize_ = blocksize_;
 }
 

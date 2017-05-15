@@ -77,7 +77,7 @@ int chk_uid(const fuse_req_t& req, const Metadata& md) {
 int change_access(Metadata& md, mode_t mode, const bfs::path& path) {
 
 //    auto path_hash = ADAFS_DATA->hashf(path.string());
-//    md.mode((uint32_t) mode);
+//    md.mode((mode_t) mode);
 //
 //    write_metadata_field(md.mode(), path_hash, md_field_map.at(Md_fields::mode));
 //

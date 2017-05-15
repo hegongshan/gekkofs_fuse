@@ -8,7 +8,7 @@
 
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
-bool write_all_metadata(const Metadata& md, const uint64_t inode) {
+bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     write_metadata_field(md.atime(), md_field_map.at(Md_fields::atime), inode);
     write_metadata_field(md.mtime(), md_field_map.at(Md_fields::mtime), inode);
     write_metadata_field(md.ctime(), md_field_map.at(Md_fields::ctime), inode);
@@ -24,17 +24,17 @@ bool write_all_metadata(const Metadata& md, const uint64_t inode) {
 }
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
-bool read_all_metadata(Metadata& md, const uint64_t inode) {
+bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
     md.atime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::atime), inode));
     md.mtime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::mtime), inode));
     md.ctime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::ctime), inode));
-    md.uid(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::uid), inode));
-    md.gid(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::gid), inode));
-    md.mode(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::mode), inode));
-    md.inode_no(*read_metadata_field<uint64_t>(md_field_map.at(Md_fields::inode_no), inode));
-    md.link_count(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::link_count), inode));
-    md.size(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::size), inode));
-    md.blocks(*read_metadata_field<uint32_t>(md_field_map.at(Md_fields::blocks), inode));
+    md.uid(*read_metadata_field<uid_t>(md_field_map.at(Md_fields::uid), inode));
+    md.gid(*read_metadata_field<gid_t>(md_field_map.at(Md_fields::gid), inode));
+    md.mode(*read_metadata_field<mode_t>(md_field_map.at(Md_fields::mode), inode));
+    md.inode_no(*read_metadata_field<fuse_ino_t>(md_field_map.at(Md_fields::inode_no), inode));
+    md.link_count(*read_metadata_field<nlink_t>(md_field_map.at(Md_fields::link_count), inode));
+    md.size(*read_metadata_field<off_t>(md_field_map.at(Md_fields::size), inode));
+    md.blocks(*read_metadata_field<blkcnt_t>(md_field_map.at(Md_fields::blocks), inode));
     return true;
 }
 
@@ -44,7 +44,7 @@ bool read_all_metadata(Metadata& md, const uint64_t inode) {
  * @param inode
  * @return err
  */
-int get_metadata(Metadata& md, const uint64_t inode) {
+int get_metadata(Metadata& md, const fuse_ino_t inode) {
     ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
     // Verify that the file's inode exists
     auto path = bfs::path(ADAFS_DATA->inode_path());
@@ -64,7 +64,7 @@ int get_metadata(Metadata& md, const uint64_t inode) {
  * @param inode
  * @return err
  */
-int get_attr(struct stat& attr, const uint64_t inode) {
+int get_attr(struct stat& attr, const fuse_ino_t inode) {
 
     // XXX look in cache first
     auto md = make_shared<Metadata>();
@@ -110,7 +110,7 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
 //    return 0;
 //}
 
-int create_node(fuse_req_t& req, struct fuse_entry_param& fep, uint64_t parent, const string& name, mode_t mode) {
+int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
 
     // create metadata of new file (this will also create a new inode number)
     // mode is used here to init metadata

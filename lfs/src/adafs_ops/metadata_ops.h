@@ -30,11 +30,11 @@ const std::map<Md_fields, std::string> md_field_map = {
         {Md_fields::blocks,     "/blocks"}
 };
 
-bool write_all_metadata(const Metadata& md, const uint64_t inode);
+bool write_all_metadata(const Metadata& md, const fuse_ino_t inode);
 
 // TODO error handling.
 template<typename T>
-bool write_metadata_field(const T& field, const string& field_name, const uint64_t inode) {
+bool write_metadata_field(const T& field, const string& field_name, const fuse_ino_t inode) {
     auto i_path = bfs::path(ADAFS_DATA->inode_path());
     i_path /= to_string(inode);
     bfs::create_directories(i_path);
@@ -48,11 +48,11 @@ bool write_metadata_field(const T& field, const string& field_name, const uint64
     return true;
 }
 
-bool read_all_metadata(Metadata& md, const uint64_t inode);
+bool read_all_metadata(Metadata& md, const fuse_ino_t inode);
 
 // TODO error handling
 template<typename T>
-unique_ptr<T> read_metadata_field(const string& field_name, const uint64_t inode) {
+unique_ptr<T> read_metadata_field(const string& field_name, const fuse_ino_t inode) {
     auto path = bfs::path(ADAFS_DATA->inode_path());
     path /= to_string(inode);
     path /= field_name;
@@ -67,14 +67,14 @@ unique_ptr<T> read_metadata_field(const string& field_name, const uint64_t inode
     return field;
 }
 
-int get_metadata(Metadata& md, const uint64_t inode);
+int get_metadata(Metadata& md, const fuse_ino_t inode);
 
-int get_attr(struct stat& attr, const uint64_t inode);
+int get_attr(struct stat& attr, const fuse_ino_t inode);
 
 void metadata_to_stat(const Metadata& md, struct stat& attr);
 
 //int remove_metadata(const unsigned long hash);
 
-int create_node(fuse_req_t& req, struct fuse_entry_param& fep, uint64_t parent, const string& name, mode_t mode);
+int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode);
 
 #endif //FS_METADATA_OPS_H

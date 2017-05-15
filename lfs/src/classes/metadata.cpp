@@ -28,59 +28,59 @@ void Metadata::ctime(time_t ctime_) {
     Metadata::ctime_ = ctime_;
 }
 
-uint32_t Metadata::uid() const {
+uid_t Metadata::uid() const {
     return uid_;
 }
 
-void Metadata::uid(uint32_t uid_) {
+void Metadata::uid(uid_t uid_) {
     Metadata::uid_ = uid_;
 }
 
-uint32_t Metadata::gid() const {
+gid_t Metadata::gid() const {
     return gid_;
 }
 
-void Metadata::gid(uint32_t gid_) {
+void Metadata::gid(gid_t gid_) {
     Metadata::gid_ = gid_;
 }
 
-uint32_t Metadata::mode() const {
+mode_t Metadata::mode() const {
     return mode_;
 }
 
-void Metadata::mode(uint32_t mode_) {
+void Metadata::mode(mode_t mode_) {
     Metadata::mode_ = mode_;
 }
 
-uint64_t Metadata::inode_no() const {
+fuse_ino_t Metadata::inode_no() const {
     return inode_no_;
 }
 
-void Metadata::inode_no(uint64_t inode_no_) {
+void Metadata::inode_no(fuse_ino_t inode_no_) {
     Metadata::inode_no_ = inode_no_;
 }
 
-uint32_t Metadata::link_count() const {
+nlink_t Metadata::link_count() const {
     return link_count_;
 }
 
-void Metadata::link_count(uint32_t link_count_) {
+void Metadata::link_count(nlink_t link_count_) {
     Metadata::link_count_ = link_count_;
 }
 
-uint32_t Metadata::size() const {
+off_t Metadata::size() const {
     return size_;
 }
 
-void Metadata::size(uint32_t size_) {
+void Metadata::size(off_t size_) {
     Metadata::size_ = size_;
 }
 
-uint32_t Metadata::blocks() const {
+blkcnt_t Metadata::blocks() const {
     return blocks_;
 }
 
-void Metadata::blocks(uint32_t blocks_) {
+void Metadata::blocks(blkcnt_t blocks_) {
     Metadata::blocks_ = blocks_;
 }
 
@@ -113,7 +113,7 @@ Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, fuse_req_t& req) :
     inode_no_ = Util::generate_inode_no(PRIV_DATA(req)->inode_mutex, PRIV_DATA(req)->inode_count);
 }
 
-Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid, uint64_t inode) :
+Metadata::Metadata(mode_t mode, uid_t uid, gid_t gid, fuse_ino_t inode) :
         atime_(),
         mtime_(),
         ctime_(),

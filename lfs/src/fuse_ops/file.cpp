@@ -248,6 +248,7 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
 
     // XXX Remove denty
 
+
     // XXX Remove inode
 
     // XXX delete data blocks (asynchronously)

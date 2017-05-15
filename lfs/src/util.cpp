@@ -10,9 +10,9 @@ namespace Util {
         return 0;
     }
 
-    ino_t generate_inode_no(std::mutex& inode_mutex, uint64_t inode_count) {
+    fuse_ino_t generate_inode_no(std::mutex& inode_mutex, fuse_ino_t inode_count) {
         std::lock_guard<std::mutex> inode_lock(inode_mutex);
-        return static_cast<ino_t>(++inode_count);
+        return static_cast<fuse_ino_t>(++inode_count);
     }
 
     // XXX error handling
@@ -20,7 +20,7 @@ namespace Util {
         auto i_path = bfs::path(ADAFS_DATA->mgmt_path() + "/inode_count");
         bfs::ifstream ifs{i_path};
         boost::archive::binary_iarchive ba(ifs);
-        uint64_t inode_count;
+        fuse_ino_t inode_count;
         ba >> inode_count;
         pdata.inode_count = inode_count;
 
