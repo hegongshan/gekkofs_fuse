@@ -27,16 +27,16 @@ bool init_dentry_dir(const fuse_ino_t inode) {
 /**
  * Destroys the dentry directory
  * @param inode
- * @return true if successfully deleted
+ * @return 0 if successfully deleted
  */
-bool destroy_dentry_dir(const fuse_ino_t inode) {
+int destroy_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
     d_path /= to_string(inode);
 
     // remove dentry dir
     bfs::remove_all(d_path);
 
-    return !bfs::exists(d_path);
+    return 0;
 }
 
 /**
@@ -202,15 +202,16 @@ pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name
 }
 
 /**
- * Checks if a directory has no dentries, i.e., is empty.
+ * Checks if a directory has no dentries, i.e., is empty. Returns zero if empty, or err code.
  * @param inode
- * @return bool
+ * @return err
  */
-bool is_dir_empty(const fuse_ino_t inode) {
-//    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-//    // use hash function to path and append it to d_path
-//    d_path /= to_string(ADAFS_DATA->hashf(inode.string()));
-//
-//    return bfs::is_empty(d_path);
-    return false;
+int is_dir_empty(const fuse_ino_t inode) {
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
+    d_path /= to_string(inode);
+    if (bfs::is_empty(d_path))
+        return 0;
+    else
+        return ENOTEMPTY;
+
 }

@@ -11,7 +11,7 @@
 
 bool init_dentry_dir(const fuse_ino_t inode);
 
-bool destroy_dentry_dir(const fuse_ino_t inode);
+int destroy_dentry_dir(const fuse_ino_t inode);
 
 bool verify_dentry(const fuse_ino_t inode);
 
@@ -25,6 +25,6 @@ int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const std::s
 
 std::pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const std::string &name);
 
-bool is_dir_empty(const fuse_ino_t inode);
+int is_dir_empty(const fuse_ino_t inode);
 
 #endif //FS_DENTRY_OPS_H

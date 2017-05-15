@@ -250,8 +250,47 @@ void adafs_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
  * @param name to remove
  */
 void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_rmdir() enter: p_inode {} name {}", parent, name);
+    // XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
+    // XXX see adafs_ll_unlink
+    int err;
+    fuse_ino_t inode;
 
-    // TODO
+    // get inode of file
+    tie(err, inode) = do_lookup(req, parent, name);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
+    // check if dir is empty
+    err = is_dir_empty(inode);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
+    // remove dentry from parent dir
+    tie(err, inode) = remove_dentry(parent, name);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
+    // remove dentry structure of dir
+    err = destroy_dentry_dir(inode);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
+    // remove metadata (inode) of dir
+    err = remove_metadata(inode);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+
     fuse_reply_err(req, 0);
 }
 
