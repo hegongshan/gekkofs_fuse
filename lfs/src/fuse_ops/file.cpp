@@ -233,11 +233,14 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t 
  *   fuse_reply_err
  *
  * @param req request handle
- * @param parent inode number of the parent directory
+ * @param p_inode inode number of the parent directory
  * @param name to remove
  */
-void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
-    ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
+void adafs_ll_unlink(fuse_req_t req, fuse_ino_t p_inode, const char *name) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", p_inode, name);
+    fuse_ino_t inode;
+    int err;
+
     // XXX errorhandling
     /*
      * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
@@ -246,10 +249,18 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
      * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
      */
 
-    // XXX Remove denty
-
-
-    // XXX Remove inode
+    // Remove denty returns <err, inode_of_dentry> pair
+    tie(err, inode) = remove_dentry(p_inode, name);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
+    // Remove inode
+    err = remove_metadata(inode);
+    if (err != 0) {
+        fuse_reply_err(req, err);
+        return;
+    }
 
     // XXX delete data blocks (asynchronously)
 

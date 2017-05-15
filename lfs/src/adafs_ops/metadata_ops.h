@@ -73,7 +73,7 @@ int get_attr(struct stat& attr, const fuse_ino_t inode);
 
 void metadata_to_stat(const Metadata& md, struct stat& attr);
 
-//int remove_metadata(const unsigned long hash);
+int remove_metadata(const fuse_ino_t inode);
 
 int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode);
 

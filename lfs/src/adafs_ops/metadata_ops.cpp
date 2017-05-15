@@ -90,25 +90,21 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
 }
 
 /**
- * Returns the metadata of an object based on its hash
- * @param path
- * @return
+ * Removes the metadata of a file based on the inode. The function does not check if the inode path exists. This should
+ * be done by the get_metadata() (implicit or explicit)
+ * @param inode
+ * @return err
  */
-// XXX Errorhandling
-//int remove_metadata(const unsigned long hash) {
-//    auto i_path = bfs::path(ADAFS_DATA->inode_path);
-//    i_path /= to_string(hash);
-//    // XXX below could be omitted
-//    if (!bfs::exists(i_path)) {
-//        ADAFS_DATA->spdlogger->error("remove_metadata() metadata_path '{}' not found", i_path.string());
-//        return -ENOENT;
-//    }
-//
-//    bfs::remove_all(i_path);
-//    // XXX make sure metadata has been deleted
-//
-//    return 0;
-//}
+int remove_metadata(const fuse_ino_t inode) {
+    // XXX Errorhandling
+    auto i_path = bfs::path(ADAFS_DATA->inode_path());
+    i_path /= to_string(inode);
+
+    bfs::remove_all(i_path);
+    // XXX make sure metadata has been deleted
+
+    return 0;
+}
 
 int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
 

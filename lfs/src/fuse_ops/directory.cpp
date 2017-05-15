@@ -26,12 +26,11 @@ using namespace std;
  */
 void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_lookup() enter: parent_inode {} name \"{}\"", parent, name);
+    int err;
+    fuse_ino_t inode;
 
-
-    //get inode no first (either from cache or disk) with parent inode and name
-    auto lookup_pair = do_lookup(req, parent, string(name));
-    auto err = lookup_pair.first;
-    auto inode = lookup_pair.second;
+    //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
+    tie(err, inode) = do_lookup(req, parent, string(name));
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

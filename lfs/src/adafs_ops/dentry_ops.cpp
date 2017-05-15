@@ -142,7 +142,6 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
     //read inode from disk
     boost::archive::binary_iarchive ba(ifs);
     ba >> inode;
-    ADAFS_DATA->spdlogger()->debug("do_lookup: p_inode {} name {} resolved_inode {}", p_inode, name, inode);
 
     return make_pair(0, inode);
 }
@@ -176,27 +175,29 @@ int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string
 }
 
 /**
- * Removes a dentry from the parent directory
+ * Removes a dentry from the parent directory. It is not tested if the parent inode path exists. This should have been
+ * done by do_lookup preceeding this call (impicit or explicit).
  * @param p_inode
- * @param inode
- * @return
+ * @param name
+ * @return pair<err, inode>
  */
 // XXX errorhandling
-int remove_dentry(const unsigned long p_inode, const fuse_ino_t inode) {
-//    auto f_path = bfs::path(ADAFS_DATA->dentry_path());
-//    f_path /= to_string(p_inode);
-//    if (!bfs::exists(f_path)) {
-//        ADAFS_DATA->logger->error("remove_dentry() dentry_path '{}' not found", f_path.string());
-//        return -ENOENT;
-//    }
-//
-//    f_path /= inode;
-//    // remove dentry here
-//    bfs::remove(f_path);
-//
-//    // XXX make sure dentry has been deleted
+pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name) {
+    int inode; // file inode to be read from dentry before deletion
+    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
+    d_path /= to_string(p_inode);
+    d_path /= name;
 
-    return 0;
+    // retrieve inode number of dentry
+    bfs::ifstream ifs{d_path};
+    boost::archive::binary_iarchive ba(ifs);
+    ba >> inode;
+
+    bfs::remove(d_path);
+
+    // XXX make sure dentry has been deleted
+
+    return make_pair(0, inode);
 }
 
 /**

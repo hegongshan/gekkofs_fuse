@@ -23,7 +23,7 @@ std::pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, 
 
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const std::string& name, mode_t mode);
 
-int remove_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode);
+std::pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const std::string &name);
 
 bool is_dir_empty(const fuse_ino_t inode);
 
