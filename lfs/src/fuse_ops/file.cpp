@@ -71,7 +71,7 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
  * @param to_set bit mask of attributes which should be set
  * @param fi file information, or NULL
  */
-void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {
+void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_set, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_setattr() enter: inode {} to_set {}", ino, to_set);
     // TODO to be implemented if required
 
@@ -162,7 +162,7 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_
 	 * @param mode file type and mode with which to create the new file
 	 * @param fi file information
 	 */
-void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi) {
+void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_create() enter: parent_inode {} name {} mode {:o}", parent, name, mode);
 
     auto fep = make_shared<fuse_entry_param>();
@@ -198,8 +198,9 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t
  * @param mode file type and mode with which to create the new file
  * @param rdev the device number (only valid if created file is a device)
  */
-void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, dev_t rdev) {
-    ADAFS_DATA->spdlogger()->debug("adafs_ll_mknod() enter: parent_inode {} name {} mode {:o} dev {}", parent, name, mode, rdev);
+void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode, dev_t rdev) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_mknod() enter: parent_inode {} name {} mode {:o} dev {}", parent, name,
+                                   mode, rdev);
 
     auto fep = make_shared<fuse_entry_param>();
 
@@ -214,7 +215,7 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t 
 
 
     // return new dentry
-    if(err == 0) {
+    if (err == 0) {
         fuse_reply_entry(req, fep.get());
     } else {
         fuse_reply_err(req, err);
@@ -304,12 +305,22 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
  * @param ino the inode number
  * @param fi file information
  */
-void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_open() enter: inode {}", ino);
-    // TODO to be implemented
-    // I think this is used for optimizing what'll happen with the file in the future through fi
+
+#ifdef CHECK_ACCESS
+    auto err = open_chk_access(req, ino, fi->flags);
+
+    if (err != 0)
+        fuse_reply_err(req, err);
+    else
+        fuse_reply_open(req, fi);
+#else
+    // access permitted without checking
     fuse_reply_open(req, fi);
-//    fuse_reply_err(req, 0);
+#endif
+
+
 }
 
 /**
@@ -336,7 +347,7 @@ void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
  * @param ino the inode number
  * @param fi file information
  */
-void adafs_ll_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+void adafs_ll_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_release() enter: inode {}", ino);
     // TODO to be implemented if required
     fuse_reply_err(req, 0);

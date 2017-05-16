@@ -6,6 +6,37 @@
 #include "metadata_ops.h"
 
 /**
+ * chk_access wrapper for opendir and open.
+ * @param req
+ * @param ino
+ * @param flags from fuse_file_info
+ * @return err
+ */
+int open_chk_access(fuse_req_t& req, fuse_ino_t ino, int flags) {
+    // XXX error handling
+    auto md = make_shared<Metadata>();
+
+    auto err = get_metadata(*md, ino);
+
+    if (err != 0) return err;
+
+    int access = flags & O_ACCMODE; // flags & 3. 0 = R, 1 = W, 2 = RW
+
+    ADAFS_DATA->spdlogger()->debug("access {} flags {}", access, flags);
+    switch (access) {
+        case O_RDONLY:
+            return chk_access(req, *md, R_OK);
+        case O_WRONLY:
+            return chk_access(req, *md, W_OK);
+        case O_RDWR:
+            return chk_access(req, *md, R_OK | W_OK);
+        default:
+            return EACCES;
+    }
+
+}
+
+/**
  * Checks access for mask (can be R_OK, W_OK, or X_OK (or combined) AFAIK and not verified) against metadata's mode.
  * First the mask is checked agains the 3 bits for the user, then for the 3 bits of the group, and lastly other.
  * If all three checks have failed, return EACCESS (no access)
@@ -15,8 +46,8 @@
  * @return
  */
 int chk_access(const fuse_req_t& req, const Metadata& md, int mask) {
-    ADAFS_DATA->spdlogger()->debug("chk_access() enter: metadata_uid {} fusecontext_uid {}", md.uid(),
-                                   fuse_req_ctx(req)->uid);
+    ADAFS_DATA->spdlogger()->debug("chk_access() enter: metadata_uid {} fusecontext_uid {} mask {}", md.uid(),
+                                   fuse_req_ctx(req)->uid, mask);
     // root user is a god
     if (fuse_req_ctx(req)->uid == 0)
         return 0;

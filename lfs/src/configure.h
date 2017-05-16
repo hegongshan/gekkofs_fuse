@@ -14,6 +14,6 @@
 #define ACMtime
 
 // If access permissions should be checked while opening a file
-//#define CHECK_ACCESS
+#define CHECK_ACCESS
 
 #endif //FS_CONFIGURE_H

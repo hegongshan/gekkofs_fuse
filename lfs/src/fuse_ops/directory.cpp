@@ -78,35 +78,13 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
 	 */
 void adafs_ll_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_opendir() enter: inode {}", ino);
-#ifdef CHECK_ACCESS //TODO
-    // XXX error handling
-    auto md = make_shared<Metadata>();
+#ifdef CHECK_ACCESS
+    auto err = open_chk_access(req, ino, fi->flags);
 
-    auto err = get_metadata(*md, ino);
-
-    if (!err) {
-        int access = fi->flags & O_ACCMODE;
-
-//    ADAFS_DATA->logger->debug("access variable: {}", access);
-        switch (access) {
-            case O_RDONLY:
-                err = chk_access(req, *md, R_OK);
-                break;
-            case O_WRONLY:
-                err = chk_access(req, *md, W_OK);
-                break;
-            case O_RDWR:
-                err = chk_access(req, *md, R_OK | W_OK);
-                break;
-            default:
-                err = EACCES;
-        }
-    }
-    if (err)
+    if (err != 0)
         fuse_reply_err(req, err);
     else
         fuse_reply_open(req, fi);
-
 #else
     // access permitted without checking
     fuse_reply_open(req, fi);

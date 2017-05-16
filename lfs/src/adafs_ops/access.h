@@ -7,6 +7,7 @@
 
 #include "../classes/metadata.h"
 
+int open_chk_access(fuse_req_t& req, fuse_ino_t ino, int flags);
 
 int chk_access(const fuse_req_t& req, const Metadata& md, int mask);
 
