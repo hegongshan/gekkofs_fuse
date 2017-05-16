@@ -17,7 +17,7 @@ using namespace std;
  */
 bool init_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(inode);
+    d_path /= fmt::FormatInt(inode).c_str();
     bfs::create_directories(d_path);
     // XXX This might not be needed as it is another access to the underlying file system
 //    return bfs::exists(d_path);
@@ -31,7 +31,7 @@ bool init_dentry_dir(const fuse_ino_t inode) {
  */
 int destroy_dentry_dir(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(inode);
+    d_path /= fmt::FormatInt(inode).c_str();
 
     // remove dentry dir
     bfs::remove_all(d_path);
@@ -55,10 +55,10 @@ bool verify_dentry(const fuse_ino_t inode) {
 //
 //
 //    if (inode.has_parent_path()) { // non-root
-//        d_path /= to_string(ADAFS_DATA->hashf(inode.parent_path().string()));
+//        d_path /= fmt::FormatInt(ADAFS_DATA->hashf(inode.parent_path().string()));
 //        d_path /= inode.filename(); // root
 //    } else {
-//        d_path /= to_string(ADAFS_DATA->hashf(inode.string()));
+//        d_path /= fmt::FormatInt(ADAFS_DATA->hashf(inode.string()));
 //    }
 //    // if file path exists leaf name is a valid dentry of parent_dir
 //    return bfs::exists(d_path);
@@ -71,7 +71,7 @@ bool verify_dentry(const fuse_ino_t inode) {
  */
 int read_dentries(const fuse_ino_t p_inode, const fuse_ino_t inode) {
 //    auto path = bfs::path(ADAFS_DATA->dentry_path());
-//    path /= to_string(inode);
+//    path /= fmt::FormatInt(inode);
 //    if (!bfs::exists(path)) return 1;
 //    // shortcut if path is empty = no files in directory
 //    if (bfs::is_empty(path)) return 0;
@@ -95,7 +95,7 @@ int read_dentries(const fuse_ino_t p_inode, const fuse_ino_t inode) {
 int get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
     ADAFS_DATA->spdlogger()->debug("get_dentries: inode {}", dir_inode);
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(dir_inode);
+    d_path /= fmt::FormatInt(dir_inode).c_str();
     // shortcut if path is empty = no files in directory
     if (bfs::is_empty(d_path)) return 0;
 
@@ -133,7 +133,7 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
     // XXX error handling
     // TODO look into cache first
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(p_inode);
+    d_path /= fmt::FormatInt(p_inode).c_str();
     // XXX check if this is needed later
     d_path /= name;
     if (!bfs::exists(d_path))
@@ -158,7 +158,7 @@ int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string
 //    ADAFS_DATA->logger->debug("create_dentry() enter with fname: {}", inode);
     // XXX Errorhandling
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(p_inode);
+    d_path /= fmt::FormatInt(p_inode).c_str();
     // XXX check if this is needed later
 //    if (!bfs::exists(d_path)) return -ENOENT;
 
@@ -186,7 +186,7 @@ int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string
 pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name) {
     int inode; // file inode to be read from dentry before deletion
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(p_inode);
+    d_path /= fmt::FormatInt(p_inode).c_str();
     d_path /= name;
 
     // retrieve inode number of dentry
@@ -208,7 +208,7 @@ pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name
  */
 int is_dir_empty(const fuse_ino_t inode) {
     auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= to_string(inode);
+    d_path /= fmt::FormatInt(inode).c_str();
     if (bfs::is_empty(d_path))
         return 0;
     else

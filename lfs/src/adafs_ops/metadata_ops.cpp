@@ -48,7 +48,7 @@ int get_metadata(Metadata& md, const fuse_ino_t inode) {
     ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
     // Verify that the file's inode exists
     auto path = bfs::path(ADAFS_DATA->inode_path());
-    path /= to_string(inode);
+    path /= fmt::FormatInt(inode).c_str();
     if (bfs::exists(path)) {
         read_all_metadata(md, inode);
         return 0;
@@ -98,7 +98,7 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
 int remove_metadata(const fuse_ino_t inode) {
     // XXX Errorhandling
     auto i_path = bfs::path(ADAFS_DATA->inode_path());
-    i_path /= to_string(inode);
+    i_path /= fmt::FormatInt(inode).c_str();
 
     bfs::remove_all(i_path);
     // XXX make sure metadata has been deleted

@@ -36,7 +36,7 @@ bool write_all_metadata(const Metadata& md, const fuse_ino_t inode);
 template<typename T>
 bool write_metadata_field(const T& field, const string& field_name, const fuse_ino_t inode) {
     auto i_path = bfs::path(ADAFS_DATA->inode_path());
-    i_path /= to_string(inode);
+    i_path /= fmt::FormatInt(inode).c_str();
     bfs::create_directories(i_path);
     i_path /= field_name;
 
@@ -54,7 +54,7 @@ bool read_all_metadata(Metadata& md, const fuse_ino_t inode);
 template<typename T>
 unique_ptr<T> read_metadata_field(const string& field_name, const fuse_ino_t inode) {
     auto path = bfs::path(ADAFS_DATA->inode_path());
-    path /= to_string(inode);
+    path /= fmt::FormatInt(inode).c_str();
     path /= field_name;
     if (!bfs::exists(path)) return nullptr;
 

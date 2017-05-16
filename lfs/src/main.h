@@ -20,6 +20,7 @@
 
 #include "configure.h"
 #include "spdlog/spdlog.h"
+#include "spdlog/fmt/fmt.h"
 #include "classes/fs_data.h"
 
 namespace bfs = boost::filesystem;
