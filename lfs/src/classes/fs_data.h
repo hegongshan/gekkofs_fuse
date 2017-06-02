@@ -5,7 +5,7 @@
 #ifndef LFS_FS_DATA_H
 #define LFS_FS_DATA_H
 
-#include "../main.h"
+#include "../main.hpp"
 
 class FsData {
 

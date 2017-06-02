@@ -2,8 +2,8 @@
 // Created by evie on 5/12/17.
 //
 
-#include "../main.h"
-#include "../fuse_ops.h"
+#include "../main.hpp"
+#include "../fuse_ops.hpp"
 
 /**
  * Check file access permissions

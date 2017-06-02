@@ -2,11 +2,11 @@
 // Created by evie on 4/7/17.
 //
 
-#include "../main.h"
-#include "../fuse_ops.h"
-#include "../adafs_ops/metadata_ops.h"
-#include "../adafs_ops/dentry_ops.h"
-#include "../adafs_ops/access.h"
+#include "../main.hpp"
+#include "../fuse_ops.hpp"
+#include "../adafs_ops/mdata_ops.hpp"
+#include "../adafs_ops/dentry_ops.hpp"
+#include "../adafs_ops/access.hpp"
 
 #include "../classes/dentry.h"
 

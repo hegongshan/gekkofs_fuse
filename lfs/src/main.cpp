@@ -1,8 +1,8 @@
-#include "main.h"
+#include "main.hpp"
 #include "classes/metadata.h"
-#include "adafs_ops/metadata_ops.h"
-#include "adafs_ops/dentry_ops.h"
-#include "fuse_ops.h"
+#include "adafs_ops/mdata_ops.hpp"
+#include "adafs_ops/dentry_ops.hpp"
+#include "fuse_ops.hpp"
 
 static struct fuse_lowlevel_ops adafs_ops;
 

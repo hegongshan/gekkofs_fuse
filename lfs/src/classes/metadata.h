@@ -2,7 +2,7 @@
 #ifndef FS_METADATA_H
 #define FS_METADATA_H
 
-#include "../main.h"
+#include "../main.hpp"
 
 //TODO we might want to replace this with GOOGLE PROTOBUF
 class Metadata {

@@ -4,7 +4,7 @@
 
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
-#include "dentry_ops.h"
+#include "dentry_ops.hpp"
 
 #include "../classes/dentry.h"
 

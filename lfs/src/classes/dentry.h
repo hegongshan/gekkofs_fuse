@@ -5,7 +5,7 @@
 #ifndef LFS_DEnTRY_H
 #define LFS_DEnTRY_H
 
-#include "../main.h"
+#include "../main.hpp"
 
 class Dentry {
 

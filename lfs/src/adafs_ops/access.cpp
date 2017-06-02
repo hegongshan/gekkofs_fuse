@@ -2,8 +2,8 @@
 // Created by evie on 3/28/17.
 //
 
-#include "access.h"
-#include "metadata_ops.h"
+#include "access.hpp"
+#include "mdata_ops.hpp"
 
 /**
  * chk_access wrapper for opendir and open.

@@ -7,20 +7,24 @@
 
 #define FUSE_USE_VERSION 30
 
-
-#include <fuse3/fuse_lowlevel.h>
+extern "C" {
+    #include <fuse3/fuse_lowlevel.h>
+};
+// std libs
 #include <string>
 #include <iostream>
 #include <cstdint>
 #include <unordered_map>
 
-//boost libraries
+// boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 
-#include "configure.h"
+#include "configure.hpp"
+// third party libs
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
+// classes
 #include "classes/fs_data.h"
 
 namespace bfs = boost::filesystem;

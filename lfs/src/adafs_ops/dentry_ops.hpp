@@ -5,7 +5,7 @@
 #ifndef FS_DENTRY_OPS_H
 #define FS_DENTRY_OPS_H
 
-#include "../main.h"
+#include "../main.hpp"
 #include "../classes/dentry.h"
 
 

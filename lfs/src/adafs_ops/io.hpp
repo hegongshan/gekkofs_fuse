@@ -5,7 +5,7 @@
 #ifndef FS_IO_H
 #define FS_IO_H
 
-#include "../main.h"
+#include "../main.hpp"
 
 int init_chunk_space(const unsigned long hash);
 

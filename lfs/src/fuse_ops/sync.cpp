@@ -2,8 +2,8 @@
 // Created by draze on 5/7/17.
 //
 
-#include "../main.h"
-#include "../fuse_ops.h"
+#include "../main.hpp"
+#include "../fuse_ops.hpp"
 
 
 /**

@@ -5,7 +5,7 @@
 #ifndef FS_METADATA_OPS_H
 #define FS_METADATA_OPS_H
 
-#include "../main.h"
+#include "../main.hpp"
 #include "../classes/metadata.h"
 
 #include <boost/archive/binary_iarchive.hpp>

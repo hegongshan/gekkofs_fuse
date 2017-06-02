@@ -5,7 +5,7 @@
 #ifndef FS_FUSE_OPS_H
 #define FS_FUSE_OPS_H
 
-#include "main.h"
+#include "main.hpp"
 
 // file
 void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
