@@ -13,21 +13,16 @@
 
 using namespace std;
 
+template <typename E>
+constexpr typename std::underlying_type<E>::type to_underlying(E e) {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
+
 // mapping of enum to string to get the file names for metadata
 enum class Md_fields { atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks };
 
-// TODO make static so that it is resolved at compile time
-const std::map<Md_fields, std::string> md_field_map = {
-        {Md_fields::atime,      "/atime"},
-        {Md_fields::mtime,      "/mtime"},
-        {Md_fields::ctime,      "/ctime"},
-        {Md_fields::uid,        "/uid"},
-        {Md_fields::gid,        "/gid"},
-        {Md_fields::mode,       "/mode"},
-        {Md_fields::inode_no,   "/inode_no"},
-        {Md_fields::link_count, "/link_count"},
-        {Md_fields::size,       "/size"},
-        {Md_fields::blocks,     "/blocks"}
+const std::array<std::string, 10> md_field_map = {
+        "/atime"s, "/mtime"s, "/ctime"s, "/uid"s, "/gid"s, "/mode"s, "/inode_no"s, "/link_count"s, "/size"s, "/blocks"s
 };
 
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode);

@@ -9,32 +9,32 @@
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
-    write_metadata_field(md.atime(), md_field_map.at(Md_fields::atime), inode);
-    write_metadata_field(md.mtime(), md_field_map.at(Md_fields::mtime), inode);
-    write_metadata_field(md.ctime(), md_field_map.at(Md_fields::ctime), inode);
-    write_metadata_field(md.uid(), md_field_map.at(Md_fields::uid), inode);
-    write_metadata_field(md.gid(), md_field_map.at(Md_fields::gid), inode);
-    write_metadata_field(md.mode(), md_field_map.at(Md_fields::mode), inode);
-    write_metadata_field(md.inode_no(), md_field_map.at(Md_fields::inode_no), inode);
-    write_metadata_field(md.link_count(), md_field_map.at(Md_fields::link_count), inode);
-    write_metadata_field(md.size(), md_field_map.at(Md_fields::size), inode);
-    write_metadata_field(md.blocks(), md_field_map.at(Md_fields::blocks), inode);
+    write_metadata_field(md.atime(), std::get<to_underlying(Md_fields::atime)>(md_field_map), inode);
+    write_metadata_field(md.mtime(), std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode);
+    write_metadata_field(md.ctime(), std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode);
+    write_metadata_field(md.uid(), std::get<to_underlying(Md_fields::uid)>(md_field_map), inode);
+    write_metadata_field(md.gid(), std::get<to_underlying(Md_fields::gid)>(md_field_map), inode);
+    write_metadata_field(md.mode(), std::get<to_underlying(Md_fields::mode)>(md_field_map), inode);
+    write_metadata_field(md.inode_no(), std::get<to_underlying(Md_fields::inode_no)>(md_field_map), inode);
+    write_metadata_field(md.link_count(), std::get<to_underlying(Md_fields::link_count)>(md_field_map), inode);
+    write_metadata_field(md.size(), std::get<to_underlying(Md_fields::size)>(md_field_map), inode);
+    write_metadata_field(md.blocks(), std::get<to_underlying(Md_fields::blocks)>(md_field_map), inode);
 
     return true;
 }
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
 bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
-    md.atime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::atime), inode));
-    md.mtime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::mtime), inode));
-    md.ctime(*read_metadata_field<time_t>(md_field_map.at(Md_fields::ctime), inode));
-    md.uid(*read_metadata_field<uid_t>(md_field_map.at(Md_fields::uid), inode));
-    md.gid(*read_metadata_field<gid_t>(md_field_map.at(Md_fields::gid), inode));
-    md.mode(*read_metadata_field<mode_t>(md_field_map.at(Md_fields::mode), inode));
-    md.inode_no(*read_metadata_field<fuse_ino_t>(md_field_map.at(Md_fields::inode_no), inode));
-    md.link_count(*read_metadata_field<nlink_t>(md_field_map.at(Md_fields::link_count), inode));
-    md.size(*read_metadata_field<off_t>(md_field_map.at(Md_fields::size), inode));
-    md.blocks(*read_metadata_field<blkcnt_t>(md_field_map.at(Md_fields::blocks), inode));
+    md.atime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::atime)>(md_field_map), inode));
+    md.mtime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode));
+    md.ctime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode));
+    md.uid(*read_metadata_field<uid_t>(std::get<to_underlying(Md_fields::uid)>(md_field_map), inode));
+    md.gid(*read_metadata_field<gid_t>(std::get<to_underlying(Md_fields::gid)>(md_field_map), inode));
+    md.mode(*read_metadata_field<mode_t>(std::get<to_underlying(Md_fields::mode)>(md_field_map), inode));
+    md.inode_no(*read_metadata_field<fuse_ino_t>(std::get<to_underlying(Md_fields::inode_no)>(md_field_map), inode));
+    md.link_count(*read_metadata_field<nlink_t>(std::get<to_underlying(Md_fields::link_count)>(md_field_map), inode));
+    md.size(*read_metadata_field<off_t>(std::get<to_underlying(Md_fields::size)>(md_field_map), inode));
+    md.blocks(*read_metadata_field<blkcnt_t>(std::get<to_underlying(Md_fields::blocks)>(md_field_map), inode));
     return true;
 }
 
