@@ -6,7 +6,7 @@
 #define FS_CONFIGURE_H
 
 // To enabled logging with info level
-//#define LOG_INFO
+#define LOG_INFO
 //#define LOG_DEBUG
 //#define LOG_TRACE
 

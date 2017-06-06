@@ -15,10 +15,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # required packages
 find_package(FUSE3 REQUIRED)
+# Rocksdb dependencies
+find_package(LZ4 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(gflags REQUIRED)
+find_package(snappy REQUIRED)
+find_package(ZStd REQUIRED)
+find_package(RocksDB REQUIRED)
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
 find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 
-include_directories(${FUSE3_INCLUDE_DIR} include/)
+include_directories(${FUSE3_INCLUDE_DIR} ${ROCKSDB_INCLUDE_DIR} include/)
 set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         src/classes/metadata.h src/classes/metadata.cpp src/classes/fs_data.h src/classes/fs_data.cpp
         src/classes/dentry.h src/classes/dentry.cpp
@@ -31,4 +39,6 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
 
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
-target_link_libraries(adafs ${FUSE3_LIBRARIES} -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)
+target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
+        ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${LZ4_LIBRARY} ${BZIP2_LIBRARIES} ${gflags_LIBRARIES} ${ZStd_LIBRARIES}
+        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)

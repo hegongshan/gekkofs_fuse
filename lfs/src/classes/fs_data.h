@@ -29,6 +29,11 @@ private:
     std::string chunk_path_;
     std::string mgmt_path_;
 
+    // rocksdb
+    rocksdb::DB* rdb_;
+//    std::shared_ptr<rocksdb::DB> rdb_;
+    rocksdb::Options rdb_options_;
+    std::string rdb_path_;
 
 public:
     static FsData* getInstance() {
@@ -76,6 +81,22 @@ public:
     const std::string& mgmt_path() const;
 
     void mgmt_path(const std::string& mgmt_path_);
+
+    rocksdb::DB* rdb();
+
+    void rdb(rocksdb::DB* rdb_);
+
+//    std::shared_ptr<rocksdb::DB>& rdb();
+//
+//    void rdb(const std::shared_ptr<rocksdb::DB>& rdb);
+
+    const rocksdb::Options& rdb_options() const;
+
+    void rdb_options(const rocksdb::Options& rdb_options);
+
+    const std::string& rdb_path() const;
+
+    void rdb_path(const std::string& rdb_path);
 
 };
 

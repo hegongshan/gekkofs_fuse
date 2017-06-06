@@ -24,6 +24,11 @@ extern "C" {
 // third party libs
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/fmt.h"
+// rocksdb
+#include <rocksdb/db.h>
+#include <rocksdb/slice.h>
+#include <rocksdb/options.h>
+
 // classes
 #include "classes/fs_data.h"
 
