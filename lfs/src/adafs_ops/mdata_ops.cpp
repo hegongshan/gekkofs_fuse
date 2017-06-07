@@ -9,34 +9,35 @@
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
-    db_put(fmt::FormatInt(inode).str(), md.atime());
-    write_metadata_field(md.atime(), std::get<to_underlying(Md_fields::atime)>(md_field_map), inode);
-    write_metadata_field(md.mtime(), std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode);
-    write_metadata_field(md.ctime(), std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode);
-    write_metadata_field(md.uid(), std::get<to_underlying(Md_fields::uid)>(md_field_map), inode);
-    write_metadata_field(md.gid(), std::get<to_underlying(Md_fields::gid)>(md_field_map), inode);
-    write_metadata_field(md.mode(), std::get<to_underlying(Md_fields::mode)>(md_field_map), inode);
-    write_metadata_field(md.inode_no(), std::get<to_underlying(Md_fields::inode_no)>(md_field_map), inode);
-    write_metadata_field(md.link_count(), std::get<to_underlying(Md_fields::link_count)>(md_field_map), inode);
-    write_metadata_field(md.size(), std::get<to_underlying(Md_fields::size)>(md_field_map), inode);
-    write_metadata_field(md.blocks(), std::get<to_underlying(Md_fields::blocks)>(md_field_map), inode);
+    auto inode_key = fmt::FormatInt(inode).str();
 
+    db_put_mdata((inode_key + "atime"s).c_str(), md.atime());
+    db_put_mdata((inode_key + "mtime"s).c_str(), md.mtime());
+    db_put_mdata((inode_key + "ctime"s).c_str(), md.ctime());
+    db_put_mdata((inode_key + "uid"s).c_str(), md.uid());
+    db_put_mdata((inode_key + "gid"s).c_str(), md.gid());
+    db_put_mdata((inode_key + "mode"s).c_str(), md.mode());
+    db_put_mdata((inode_key + "inodeno"s).c_str(), md.inode_no());
+    db_put_mdata((inode_key + "linkcnt"s).c_str(), md.link_count());
+    db_put_mdata((inode_key + "size"s).c_str(), md.size());
+    db_put_mdata((inode_key + "blocks"s).c_str(), md.blocks());
     return true;
 }
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
 bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
-    auto re = db_get(fmt::FormatInt(inode).str());
-    md.atime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::atime)>(md_field_map), inode));
-    md.mtime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode));
-    md.ctime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode));
-    md.uid(*read_metadata_field<uid_t>(std::get<to_underlying(Md_fields::uid)>(md_field_map), inode));
-    md.gid(*read_metadata_field<gid_t>(std::get<to_underlying(Md_fields::gid)>(md_field_map), inode));
-    md.mode(*read_metadata_field<mode_t>(std::get<to_underlying(Md_fields::mode)>(md_field_map), inode));
-    md.inode_no(*read_metadata_field<fuse_ino_t>(std::get<to_underlying(Md_fields::inode_no)>(md_field_map), inode));
-    md.link_count(*read_metadata_field<nlink_t>(std::get<to_underlying(Md_fields::link_count)>(md_field_map), inode));
-    md.size(*read_metadata_field<off_t>(std::get<to_underlying(Md_fields::size)>(md_field_map), inode));
-    md.blocks(*read_metadata_field<blkcnt_t>(std::get<to_underlying(Md_fields::blocks)>(md_field_map), inode));
+    auto inode_key = fmt::FormatInt(inode).str();
+
+    md.atime(db_get_mdata<time_t>((inode_key + "atime"s).c_str()));
+    md.mtime(db_get_mdata<time_t>((inode_key + "mtime"s).c_str()));
+    md.ctime(db_get_mdata<time_t>((inode_key + "ctime"s).c_str()));
+    md.uid(db_get_mdata<uid_t>((inode_key + "uid"s).c_str()));
+    md.gid(db_get_mdata<gid_t>((inode_key + "gid"s).c_str()));
+    md.mode(db_get_mdata<mode_t>((inode_key + "mode"s).c_str()));
+    md.inode_no(db_get_mdata<fuse_ino_t>((inode_key + "inodeno"s).c_str()));
+    md.link_count(db_get_mdata<nlink_t>((inode_key + "linkcnt"s).c_str()));
+    md.size(db_get_mdata<off_t>((inode_key + "size"s).c_str()));
+    md.blocks(db_get_mdata<blkcnt_t>((inode_key + "blocks"s).c_str()));
     return true;
 }
 
@@ -51,7 +52,8 @@ int get_metadata(Metadata& md, const fuse_ino_t inode) {
     // Verify that the file's inode exists
     auto path = bfs::path(ADAFS_DATA->inode_path());
     path /= fmt::FormatInt(inode).c_str();
-    if (bfs::exists(path)) {
+    // TODO CHECK FOR DENTRY INSTEAD and remove the db_mdata_exists function!
+    if (db_mdata_exists((fmt::FormatInt(inode).str() + "mtime"s).c_str())) {
         read_all_metadata(md, inode);
         return 0;
     } else

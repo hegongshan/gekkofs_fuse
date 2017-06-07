@@ -9,7 +9,7 @@
 
 extern "C" {
     #include <fuse3/fuse_lowlevel.h>
-};
+}
 // std libs
 #include <string>
 #include <iostream>

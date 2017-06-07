@@ -7,14 +7,36 @@
 using namespace rocksdb;
 using namespace std;
 
-bool db_put(const string key, const time_t val) {
+inline const string db_get_mdata_helper(const char* key) {
     auto db = ADAFS_DATA->rdb().get();
-    return db->Put(WriteOptions(), key, fmt::FormatInt(val).c_str()).ok();
+    string val_str;
+    db->Get(ReadOptions(), key, &val_str);
+    return val_str;
 }
 
-time_t db_get(const string key) {
+template<>
+unsigned long db_get_mdata<unsigned long>(const char* key) {
+    return stoul(db_get_mdata_helper(key));
+}
+
+template<>
+long db_get_mdata<long>(const char* key) {
+    return stol(db_get_mdata_helper(key));
+}
+
+template<>
+unsigned int db_get_mdata<unsigned int>(const char* key) {
+    return static_cast<unsigned int>(stoul(db_get_mdata_helper(key)));
+}
+
+bool db_dentry_exists(const char* key) {
+//    auto db = ADAFS_DATA->rdb().get();
+    //TODO
+    return true;
+}
+
+bool db_mdata_exists(const char* key) {
     auto db = ADAFS_DATA->rdb().get();
-    string val_s;
-    db->Get(ReadOptions(), key, &val_s);
-    return static_cast<time_t>(stol(val_s));
+    string val_str;
+    return db->Get(ReadOptions(), key, &val_str).ok();
 }
