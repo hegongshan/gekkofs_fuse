@@ -76,13 +76,13 @@ void FsData::mgmt_path(const std::string& mgmt_path_) {
     FsData::mgmt_path_ = mgmt_path_;
 }
 
-rocksdb::DB* FsData::rdb() {
-    return rdb_;
-}
-
-void FsData::rdb(rocksdb::DB* rdb_) {
-    FsData::rdb_ = rdb_;
-}
+//rocksdb::DB* FsData::rdb() {
+//    return rdb_;
+//}
+//
+//void FsData::rdb(rocksdb::DB* rdb_) {
+//    FsData::rdb_ = rdb_;
+//}
 
 const rocksdb::Options& FsData::rdb_options() const {
     return rdb_options_;
@@ -100,11 +100,11 @@ void FsData::rdb_path(const std::string& rdb_path) {
     FsData::rdb_path_ = rdb_path;
 }
 
-//std::shared_ptr<rocksdb::DB>& FsData::rdb() {
-//    return rdb_;
-//}
-//
-//void FsData::rdb(const std::shared_ptr<rocksdb::DB>& rdb) {
-//    FsData::rdb_ = rdb;
-//}
+const std::shared_ptr<rocksdb::DB>& FsData::rdb() const {
+    return rdb_;
+}
+
+void FsData::rdb(const std::shared_ptr<rocksdb::DB>& rdb) {
+    FsData::rdb_ = rdb;
+}
 

@@ -7,13 +7,11 @@
 static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
-using namespace rocksdb;
 
 bool init_rocksdb() {
-
-    DB* db;
+    rocksdb::DB* db;
     ADAFS_DATA->rdb_path(ADAFS_DATA->rootdir() + "/meta/rocksdb"s);
-    Options options;
+    rocksdb::Options options;
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
@@ -22,16 +20,17 @@ bool init_rocksdb() {
     ADAFS_DATA->rdb_options(options);
     ADAFS_DATA->spdlogger()->info("RocksDB options set. About to connect...");
     // open DB
-    Status s = DB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &db);
-    delete db;
+    auto s = rocksdb::DB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &db);
+
     if (s.ok()) {
+        shared_ptr<rocksdb::DB> s_db(db);
+        ADAFS_DATA->rdb(s_db);
         ADAFS_DATA->spdlogger()->info("RocksDB connection established.");
         return true;
     } else {
         ADAFS_DATA->spdlogger()->info("[ERROR] RocksDB connection FAILURE. Exiting...");
         return false;
     }
-
 }
 
 /**

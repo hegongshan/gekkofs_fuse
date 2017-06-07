@@ -30,8 +30,8 @@ private:
     std::string mgmt_path_;
 
     // rocksdb
-    rocksdb::DB* rdb_;
-//    std::shared_ptr<rocksdb::DB> rdb_;
+//    rocksdb::DB* rdb_;
+    std::shared_ptr<rocksdb::DB> rdb_; //single rocksdb instance
     rocksdb::Options rdb_options_;
     std::string rdb_path_;
 
@@ -82,13 +82,13 @@ public:
 
     void mgmt_path(const std::string& mgmt_path_);
 
-    rocksdb::DB* rdb();
-
-    void rdb(rocksdb::DB* rdb_);
-
-//    std::shared_ptr<rocksdb::DB>& rdb();
+//    rocksdb::DB* rdb();
 //
-//    void rdb(const std::shared_ptr<rocksdb::DB>& rdb);
+//    void rdb(rocksdb::DB* rdb_);
+
+    const std::shared_ptr<rocksdb::DB>& rdb() const;
+
+    void rdb(const std::shared_ptr<rocksdb::DB>& rdb);
 
     const rocksdb::Options& rdb_options() const;
 

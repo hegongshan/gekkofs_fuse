@@ -9,6 +9,7 @@
 
 // TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
+    db_put(fmt::FormatInt(inode).str(), md.atime());
     write_metadata_field(md.atime(), std::get<to_underlying(Md_fields::atime)>(md_field_map), inode);
     write_metadata_field(md.mtime(), std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode);
     write_metadata_field(md.ctime(), std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode);
@@ -25,6 +26,7 @@ bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
 
 // TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
 bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
+    auto re = db_get(fmt::FormatInt(inode).str());
     md.atime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::atime)>(md_field_map), inode));
     md.mtime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::mtime)>(md_field_map), inode));
     md.ctime(*read_metadata_field<time_t>(std::get<to_underlying(Md_fields::ctime)>(md_field_map), inode));

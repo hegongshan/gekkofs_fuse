@@ -7,6 +7,7 @@
 
 #include "../main.hpp"
 #include "../classes/metadata.h"
+#include "db_ops.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
