@@ -10,7 +10,6 @@ using namespace std;
 // TODO error handling.
 int write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
-
     db_put_mdata(db_build_mdata_key(
             inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime());
     db_put_mdata(db_build_mdata_key(

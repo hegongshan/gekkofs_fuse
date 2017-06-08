@@ -31,7 +31,7 @@ unsigned int db_get_mdata<unsigned int>(const string& key) {
 
 bool db_delete_mdata(const string& key) {
     auto db = ADAFS_DATA->rdb();
-    return db->Delete(WriteOptions(), key).ok();
+    return db->Delete(ADAFS_DATA->rdb_write_options(), key).ok();
 }
 
 bool db_dentry_exists(const fuse_ino_t p_inode, const string& name, string& val) {
@@ -50,7 +50,7 @@ bool db_mdata_exists(const fuse_ino_t inode) {
 
 bool db_put_dentry(const string& key, const string& val) {
     auto db = ADAFS_DATA->rdb();
-    return db->Put(WriteOptions(), key, val).ok();
+    return db->Put(ADAFS_DATA->rdb_write_options(), key, val).ok();
 }
 
 void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
@@ -92,7 +92,8 @@ pair<bool, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, cons
     db->Get(ReadOptions(), key, &val);
     auto pos = val.find("_");
 
-    return make_pair(db->Delete(WriteOptions(), key).ok() ? 0 : 1, static_cast<fuse_ino_t>(stoul(val.substr(0, pos))));
+    return make_pair(db->Delete(ADAFS_DATA->rdb_write_options(), key).ok() ? 0 : 1,
+                     static_cast<fuse_ino_t>(stoul(val.substr(0, pos))));
 }
 
 /**

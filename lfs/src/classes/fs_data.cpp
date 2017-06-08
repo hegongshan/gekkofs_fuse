@@ -124,3 +124,11 @@ void FsData::txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb
     FsData::txn_rdb_options_ = tx_rdb_options;
 }
 
+const rocksdb::WriteOptions& FsData::rdb_write_options() const {
+    return rdb_write_options_;
+}
+
+void FsData::rdb_write_options(const rocksdb::WriteOptions& rdb_write_options) {
+    FsData::rdb_write_options_ = rdb_write_options;
+}
+

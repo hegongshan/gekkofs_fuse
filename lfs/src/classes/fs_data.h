@@ -35,6 +35,7 @@ private:
     std::shared_ptr<rocksdb::OptimisticTransactionDB> txn_rdb_;
     rocksdb::Options rdb_options_;
     rocksdb::OptimisticTransactionOptions txn_rdb_options_; // needed for snapshots
+    rocksdb::WriteOptions rdb_write_options_;
     std::string rdb_path_;
 
 public:
@@ -108,6 +109,9 @@ public:
 
     void txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb_options);
 
+    const rocksdb::WriteOptions& rdb_write_options() const;
+
+    void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
 };
 
 

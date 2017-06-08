@@ -16,4 +16,7 @@
 // If access permissions should be checked while opening a file
 //#define CHECK_ACCESS
 
+// Write-ahead logging of rocksdb
+//#define RDB_WOL
+
 #endif //FS_CONFIGURE_H

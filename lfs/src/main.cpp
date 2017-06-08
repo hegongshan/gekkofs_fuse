@@ -17,8 +17,12 @@ bool init_rocksdb() {
     options.OptimizeLevelStyleCompaction();
     // create the DB if it's not already present
     options.create_if_missing = true;
-
+    rocksdb::WriteOptions write_options{};
+#ifndef RDB_WOL
+    write_options.disableWAL = true;
+#endif
     ADAFS_DATA->rdb_options(options);
+    ADAFS_DATA->rdb_write_options(write_options);
     rocksdb::OptimisticTransactionDB* txn_db;
     rocksdb::OptimisticTransactionOptions txn_options{};
     ADAFS_DATA->txn_rdb_options(txn_options);
