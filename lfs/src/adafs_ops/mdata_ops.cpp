@@ -11,18 +11,27 @@ using namespace std;
 int write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
 
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map)), md.mtime());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map)), md.ctime());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map)), md.uid());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map)), md.gid());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map)), md.mode());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)),
-                 md.inode_no());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map)),
-                 md.link_count());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map)), md.size());
-    db_put_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map)), md.blocks());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map)), md.mtime());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map)), md.ctime());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map)), md.uid());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map)), md.gid());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map)), md.mode());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)), md.inode_no());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map)), md.link_count());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map)), md.size());
+    db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map)), md.blocks());
+
     return 0;
 }
 
@@ -36,15 +45,18 @@ int read_all_metadata(Metadata& md, const fuse_ino_t inode) {
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map))));
     md.ctime(db_get_mdata<time_t>(
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map))));
-    md.uid(db_get_mdata<uid_t>(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map))));
-    md.gid(db_get_mdata<gid_t>(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map))));
+    md.uid(db_get_mdata<uid_t>(
+            db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map))));
+    md.gid(db_get_mdata<gid_t>(
+            db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map))));
     md.mode(db_get_mdata<mode_t>(
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map))));
     md.inode_no(db_get_mdata<fuse_ino_t>(
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map))));
     md.link_count(db_get_mdata<nlink_t>(
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map))));
-    md.size(db_get_mdata<off_t>(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map))));
+    md.size(db_get_mdata<off_t>(
+            db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map))));
     md.blocks(db_get_mdata<blkcnt_t>(
             db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map))));
     return 0;

@@ -17,14 +17,21 @@ bool init_rocksdb() {
     options.OptimizeLevelStyleCompaction();
     // create the DB if it's not already present
     options.create_if_missing = true;
+
     ADAFS_DATA->rdb_options(options);
+    rocksdb::OptimisticTransactionDB* txn_db;
+    rocksdb::OptimisticTransactionOptions txn_options{};
+    ADAFS_DATA->txn_rdb_options(txn_options);
     ADAFS_DATA->spdlogger()->info("RocksDB options set. About to connect...");
     // open DB
-    auto s = rocksdb::DB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &db);
+    auto s_txn = rocksdb::OptimisticTransactionDB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &txn_db);
 
-    if (s.ok()) {
+    if (s_txn.ok()) {
+        db = txn_db->GetBaseDB(); // db connection for db operations without transactions
         shared_ptr<rocksdb::DB> s_db(db);
         ADAFS_DATA->rdb(s_db);
+        shared_ptr<rocksdb::OptimisticTransactionDB> s_txn_db(txn_db);
+        ADAFS_DATA->txn_rdb(s_txn_db);
         ADAFS_DATA->spdlogger()->info("RocksDB connection established.");
         return true;
     } else {

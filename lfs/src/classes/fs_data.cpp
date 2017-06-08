@@ -76,14 +76,6 @@ void FsData::mgmt_path(const std::string& mgmt_path_) {
     FsData::mgmt_path_ = mgmt_path_;
 }
 
-//rocksdb::DB* FsData::rdb() {
-//    return rdb_;
-//}
-//
-//void FsData::rdb(rocksdb::DB* rdb_) {
-//    FsData::rdb_ = rdb_;
-//}
-
 const rocksdb::Options& FsData::rdb_options() const {
     return rdb_options_;
 }
@@ -106,5 +98,29 @@ const std::shared_ptr<rocksdb::DB>& FsData::rdb() const {
 
 void FsData::rdb(const std::shared_ptr<rocksdb::DB>& rdb) {
     FsData::rdb_ = rdb;
+}
+
+const std::shared_ptr<rocksdb::OptimisticTransactionDB>& FsData::txn_rdb() const {
+    return txn_rdb_;
+}
+
+void FsData::txn_rdb(const std::shared_ptr<rocksdb::OptimisticTransactionDB>& tx_rdb) {
+    FsData::txn_rdb_ = tx_rdb;
+}
+
+const std::shared_ptr<rocksdb::DB>& FsData::rdb_crt() const {
+    return rdb_crt_;
+}
+
+void FsData::rdb_crt(const std::shared_ptr<rocksdb::DB>& rdb_crt) {
+    FsData::rdb_crt_ = rdb_crt;
+}
+
+const rocksdb::OptimisticTransactionOptions& FsData::txn_rdb_options() const {
+    return txn_rdb_options_;
+}
+
+void FsData::txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb_options) {
+    FsData::txn_rdb_options_ = tx_rdb_options;
 }
 

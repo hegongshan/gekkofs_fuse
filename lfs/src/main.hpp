@@ -28,6 +28,8 @@ extern "C" {
 #include <rocksdb/db.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/options.h>
+#include <rocksdb/utilities/transaction.h>
+#include <rocksdb/utilities/optimistic_transaction_db.h>
 
 // classes
 #include "classes/fs_data.h"

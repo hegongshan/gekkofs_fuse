@@ -3,8 +3,6 @@
 //
 
 #include "db_ops.hpp"
-#include "../adafs_ops/mdata_ops.hpp"
-
 
 using namespace rocksdb;
 using namespace std;
@@ -52,7 +50,7 @@ bool db_mdata_exists(const fuse_ino_t inode) {
 
 bool db_put_dentry(const string& key, const string& val) {
     auto db = ADAFS_DATA->rdb();
-    return db->Put(rocksdb::WriteOptions(), key, val).ok();
+    return db->Put(WriteOptions(), key, val).ok();
 }
 
 void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {

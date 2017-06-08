@@ -243,6 +243,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     }
 
     // check if dir is empty
+    // TODO THIS IS VEEEEEEEERY SLOW! Doing a RangeScan is not the right approach here!
     err = is_dir_empty(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
@@ -251,13 +252,6 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
 
     // remove dentry from parent dir
     tie(err, inode) = remove_dentry(parent, name);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
-    // remove dentry structure of dir
-    err = destroy_dentry_dir(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

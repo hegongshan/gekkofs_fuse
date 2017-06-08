@@ -33,13 +33,13 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
 
         src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp
 
-        src/db/db_ops.hpp src/db/util.hpp
+        src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/util.hpp
 
         src/util.cpp
         src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp
         src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
 
-        src/db/db_ops.cpp src/db/util.cpp
+        src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/util.cpp
 
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)

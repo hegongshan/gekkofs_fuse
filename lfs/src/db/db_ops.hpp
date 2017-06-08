@@ -11,8 +11,8 @@
 
 template<typename T>
 bool db_put_mdata(const std::string& key, const T val) {
-    auto db = ADAFS_DATA->rdb().get();
     auto val_str = fmt::FormatInt(val).c_str();
+    auto db = ADAFS_DATA->rdb();
     return db->Put(rocksdb::WriteOptions(), key, val_str).ok();
 }
 
