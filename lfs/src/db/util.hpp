@@ -23,6 +23,10 @@ const std::array<std::string, 10> md_field_map = {
         "_atime"s, "_mtime"s, "_ctime"s, "_uid"s, "_gid"s, "_mode"s, "_inodeno"s, "_lnkcnt"s, "_size"s, "_blkcnt"s
 };
 
+bool init_rocksdb();
+
+void optimize_rocksdb(rocksdb::Options& options);
+
 std::string db_build_dentry_key(const fuse_ino_t inode, const std::string& name);
 
 std::string db_build_dentry_prefix(const fuse_ino_t inode);

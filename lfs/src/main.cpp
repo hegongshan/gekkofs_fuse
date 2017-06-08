@@ -8,42 +8,6 @@ static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
 
-bool init_rocksdb() {
-    rocksdb::DB* db;
-    ADAFS_DATA->rdb_path(ADAFS_DATA->rootdir() + "/meta/rocksdb"s);
-    rocksdb::Options options;
-    // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
-    options.IncreaseParallelism();
-    options.OptimizeLevelStyleCompaction();
-    // create the DB if it's not already present
-    options.create_if_missing = true;
-    rocksdb::WriteOptions write_options{};
-#ifndef RDB_WOL
-    write_options.disableWAL = true;
-#endif
-    ADAFS_DATA->rdb_options(options);
-    ADAFS_DATA->rdb_write_options(write_options);
-    rocksdb::OptimisticTransactionDB* txn_db;
-    rocksdb::OptimisticTransactionOptions txn_options{};
-    ADAFS_DATA->txn_rdb_options(txn_options);
-    ADAFS_DATA->spdlogger()->info("RocksDB options set. About to connect...");
-    // open DB
-    auto s_txn = rocksdb::OptimisticTransactionDB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &txn_db);
-
-    if (s_txn.ok()) {
-        db = txn_db->GetBaseDB(); // db connection for db operations without transactions
-        shared_ptr<rocksdb::DB> s_db(db);
-        ADAFS_DATA->rdb(s_db);
-        shared_ptr<rocksdb::OptimisticTransactionDB> s_txn_db(txn_db);
-        ADAFS_DATA->txn_rdb(s_txn_db);
-        ADAFS_DATA->spdlogger()->info("RocksDB connection established.");
-        return true;
-    } else {
-        ADAFS_DATA->spdlogger()->info("[ERROR] RocksDB connection FAILURE. Exiting...");
-        return false;
-    }
-}
-
 /**
  * Initialize filesystem
  *
