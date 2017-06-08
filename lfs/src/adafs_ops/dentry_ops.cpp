@@ -3,7 +3,8 @@
 //
 
 #include "dentry_ops.hpp"
-#include "db_ops.hpp"
+#include "../db/db_ops.hpp"
+#include "../db/util.hpp"
 
 using namespace std;
 
@@ -120,11 +121,9 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
  * @return
  */
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
-
-    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
-    auto val = fmt::FormatInt(inode).str() + "_"s + fmt::FormatInt(mode).str();
     // XXX check later if we need to check if dentry of father already exists
-    return db_put_dentry(key, val);
+    // put dentry for key, value
+    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode));
 }
 
 /**

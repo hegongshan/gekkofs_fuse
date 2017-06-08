@@ -7,21 +7,22 @@
 
 #include "../main.hpp"
 #include "../classes/metadata.h"
-#include "db_ops.hpp"
+#include "../db/db_ops.hpp"
+#include "../db/util.hpp"
 
 using namespace std;
 
-template <typename E>
-constexpr typename std::underlying_type<E>::type to_underlying(E e) {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
-// mapping of enum to string to get the file names for metadata
-enum class Md_fields { atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks };
-
-const std::array<std::string, 10> md_field_map = {
-        "_atime"s, "_mtime"s, "_ctime"s, "_uid"s, "_gid"s, "_mode"s, "_inodeno"s, "_lnkcnt"s, "_size"s, "_blkcnt"s
-};
+//template <typename E>
+//constexpr typename std::underlying_type<E>::type to_underlying(E e) {
+//    return static_cast<typename std::underlying_type<E>::type>(e);
+//}
+//
+//// mapping of enum to string to get the db_keys for metadata
+//enum class Md_fields { atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks };
+//
+//const std::array<std::string, 10> md_field_map = {
+//        "_atime"s, "_mtime"s, "_ctime"s, "_uid"s, "_gid"s, "_mode"s, "_inodeno"s, "_lnkcnt"s, "_size"s, "_blkcnt"s
+//};
 
 int write_all_metadata(const Metadata& md, const fuse_ino_t inode);
 

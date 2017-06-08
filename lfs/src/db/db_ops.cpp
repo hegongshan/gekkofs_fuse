@@ -3,7 +3,7 @@
 //
 
 #include "db_ops.hpp"
-#include "mdata_ops.hpp"
+#include "../adafs_ops/mdata_ops.hpp"
 
 
 using namespace rocksdb;
@@ -38,7 +38,7 @@ bool db_delete_mdata(const string& key) {
 
 bool db_dentry_exists(const fuse_ino_t p_inode, const string& name, string& val) {
     auto db = ADAFS_DATA->rdb();
-    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
+    auto key = db_build_dentry_key(p_inode, name);
     return db->Get(rocksdb::ReadOptions(), key, &val).ok();
 }
 
@@ -46,7 +46,7 @@ bool db_mdata_exists(const fuse_ino_t inode) {
     auto db = ADAFS_DATA->rdb();
     string val_str;
     return db->Get(ReadOptions(),
-                   fmt::FormatInt(inode).str() + std::get<to_underlying(Md_fields::atime)>(md_field_map),
+                   db_build_mdata_key(inode, std::get<to_underlying(Md_fields::atime)>(md_field_map)),
                    &val_str).ok();
 }
 
@@ -61,7 +61,7 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
     size_t pos;
     auto delim = "_"s;
     auto db = ADAFS_DATA->rdb();
-    auto prefix = "d_"s + fmt::FormatInt(dir_inode).str();
+    auto prefix = db_build_dentry_prefix(dir_inode);
     // Do RangeScan on parent inode
     auto dentry_iter = db->NewIterator(rocksdb::ReadOptions());
     for (dentry_iter->Seek(prefix);
@@ -88,7 +88,7 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
 }
 
 pair<bool, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, const string& name) {
-    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
+    auto key = db_build_dentry_key(p_inode, name);
     auto db = ADAFS_DATA->rdb();
     string val;
     db->Get(ReadOptions(), key, &val);
@@ -105,7 +105,7 @@ pair<bool, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, cons
 bool db_is_dir_empty(const fuse_ino_t inode) {
     auto dir_empty = true;
     auto db = ADAFS_DATA->rdb();
-    auto prefix = "d_"s + fmt::FormatInt(inode).str();
+    auto prefix = db_build_dentry_prefix(inode);
     auto dentry_iter = db->NewIterator(rocksdb::ReadOptions());
     for (dentry_iter->Seek(prefix);
          dentry_iter->Valid() && dentry_iter->key().starts_with(prefix); dentry_iter->Next()) {
