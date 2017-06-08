@@ -30,9 +30,14 @@ unsigned int db_get_mdata<unsigned int>(const string& key) {
     return static_cast<unsigned int>(stoul(db_get_mdata_helper(key)));
 }
 
+//void db_delete_mdata() {
+//    auto db = ADAFS_DATA->rdb().get();
+//    db->DeleteRange()
+//}
+
 bool db_dentry_exists(const fuse_ino_t p_inode, const string& name, string& val) {
     auto db = ADAFS_DATA->rdb().get();
-    auto key = fmt::FormatInt(p_inode).str() + "_d_" + name;
+    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
     return db->Get(rocksdb::ReadOptions(), key, &val).ok();
 }
 
@@ -53,7 +58,7 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
     size_t pos;
     auto delim = "_"s;
     auto db = ADAFS_DATA->rdb();
-    auto prefix = fmt::FormatInt(dir_inode).str() + "_d"s;
+    auto prefix = "d_"s + fmt::FormatInt(dir_inode).str();
     // Do RangeScan on parent inode
     auto dentry_iter = db->NewIterator(rocksdb::ReadOptions());
     for (dentry_iter->Seek(prefix);
@@ -62,8 +67,9 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
         val = dentry_iter->value().ToString();
 
         // Retrieve filename from key
-        pos = key.find(delim); // Split <ParentInode_d_filename> by _
-        key.erase(0, pos + 3); // Erase ParentInode + _d_
+        key.erase(0, 2); // Erase prefix <d_>
+        pos = key.find(delim); // Split <ParentInode_filename> by _
+        key.erase(0, pos + 1); // Erase ParentInode + _
         Dentry dentry{key}; // key holds only filename
 
         // Retrieve inode and mode from val

@@ -125,8 +125,8 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
  */
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
 
-    auto key = fmt::FormatInt(p_inode).str() + "_d_" + name;
-    auto val = fmt::FormatInt(inode).str() + "_" + fmt::FormatInt(mode).str();
+    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
+    auto val = fmt::FormatInt(inode).str() + "_"s + fmt::FormatInt(mode).str();
     // XXX check later if we need to check if dentry of father already exists
     return db_put_dentry(key, val);
 }
