@@ -23,7 +23,7 @@ string db_build_dentry_key(const fuse_ino_t inode, const string& name) {
  * @return
  */
 string db_build_dentry_prefix(const fuse_ino_t inode) {
-    return ("d_"s + fmt::FormatInt(inode).str());
+    return ("d_"s + fmt::FormatInt(inode).str() + "_"s);
 }
 
 string db_build_dentry_value(const fuse_ino_t inode, const mode_t mode) {

@@ -64,8 +64,10 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
     auto dentry_iter = db->NewIterator(rocksdb::ReadOptions());
     for (dentry_iter->Seek(prefix);
          dentry_iter->Valid() && dentry_iter->key().starts_with(prefix); dentry_iter->Next()) {
+        ADAFS_DATA->spdlogger()->trace("Dentry:");
         key = dentry_iter->key().ToString();
         val = dentry_iter->value().ToString();
+        ADAFS_DATA->spdlogger()->trace("key '{}' value '{}'", key, val);
 
         // Retrieve filename from key
         key.erase(0, 2); // Erase prefix <d_>
@@ -79,7 +81,7 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
         val.erase(0, pos + 1); // Erase inode + delim
         dentry.mode(static_cast<mode_t>(stoul(val))); // val holds only mode
         // append dentry to dentries vector
-        ADAFS_DATA->spdlogger()->trace("Retrieved dentry: name {} inode {} mode {}", dentry.name(), dentry.inode(),
+        ADAFS_DATA->spdlogger()->trace("Formatted: name {} inode {} mode {:o}", dentry.name(), dentry.inode(),
                                        dentry.mode());
         dentries.push_back(dentry);
     }

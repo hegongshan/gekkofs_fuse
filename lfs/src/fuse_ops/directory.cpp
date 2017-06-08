@@ -141,8 +141,6 @@ void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
         get_dentries(*dentries, ino);
         //getdentries here
         for (const auto& dentry : *dentries) {
-            ADAFS_DATA->spdlogger()->trace("readdir dentry: name {} inode {} mode {:o}", dentry.name(), dentry.inode(), dentry.mode());
-
             /*
              * Generate tiny stat with inode and mode information.
              * This information is necessary so that the entry shows up later at all.
