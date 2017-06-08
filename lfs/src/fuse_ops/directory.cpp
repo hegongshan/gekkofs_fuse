@@ -232,6 +232,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     // XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
     // XXX see adafs_ll_unlink
     int err;
+
     fuse_ino_t inode;
 
     // get inode of file
@@ -263,7 +264,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     }
 
     // remove metadata (inode) of dir
-    err = remove_metadata(inode);
+    err = remove_all_metadata(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

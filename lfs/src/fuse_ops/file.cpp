@@ -257,7 +257,7 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
         return;
     }
     // Remove inode
-    err = remove_metadata(inode);
+    err = remove_all_metadata(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

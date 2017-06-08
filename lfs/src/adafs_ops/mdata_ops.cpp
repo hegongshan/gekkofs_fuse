@@ -6,9 +6,8 @@
 #include "dentry_ops.hpp"
 
 
-
-// TODO error handling. Each read_metadata_field should check for boolean, i.e., if I/O failed.
-bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
+// TODO error handling.
+int write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
 
     db_put_mdata(inode_key + std::get<to_underlying(Md_fields::atime)>(md_field_map), md.atime());
@@ -21,11 +20,11 @@ bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     db_put_mdata(inode_key + std::get<to_underlying(Md_fields::link_count)>(md_field_map), md.link_count());
     db_put_mdata(inode_key + std::get<to_underlying(Md_fields::size)>(md_field_map), md.size());
     db_put_mdata(inode_key + std::get<to_underlying(Md_fields::blocks)>(md_field_map), md.blocks());
-    return true;
+    return 0;
 }
 
-// TODO error handling. Each read_metadata_field should check for nullptr, i.e., if I/O failed.
-bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
+// TODO error handling.
+int read_all_metadata(Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
 
     md.atime(db_get_mdata<time_t>(inode_key + std::get<to_underlying(Md_fields::atime)>(md_field_map)));
@@ -38,7 +37,29 @@ bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
     md.link_count(db_get_mdata<nlink_t>(inode_key + std::get<to_underlying(Md_fields::link_count)>(md_field_map)));
     md.size(db_get_mdata<off_t>(inode_key + std::get<to_underlying(Md_fields::size)>(md_field_map)));
     md.blocks(db_get_mdata<blkcnt_t>(inode_key + std::get<to_underlying(Md_fields::blocks)>(md_field_map)));
-    return true;
+    return 0;
+}
+
+/**
+ * Removes the metadata of a file based on the inode. The function does not check if the inode exists. This should
+ * be done by the get_metadata() (implicit or explicit)
+ * @param inode
+ * @return err
+ */
+int remove_all_metadata(const fuse_ino_t inode) {
+    // TODO error handling
+    auto inode_key = fmt::FormatInt(inode).str();
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::atime)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::mtime)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::ctime)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::uid)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::gid)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::mode)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::inode_no)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::link_count)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::size)>(md_field_map));
+    db_delete_mdata(inode_key + std::get<to_underlying(Md_fields::blocks)>(md_field_map));
+    return 0;
 }
 
 /**
@@ -88,23 +109,6 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
     attr.st_atim.tv_sec = md.atime();
     attr.st_mtim.tv_sec = md.mtime();
     attr.st_ctim.tv_sec = md.ctime();
-}
-
-/**
- * Removes the metadata of a file based on the inode. The function does not check if the inode path exists. This should
- * be done by the get_metadata() (implicit or explicit)
- * @param inode
- * @return err
- */
-int remove_metadata(const fuse_ino_t inode) {
-    // XXX Errorhandling
-    auto i_path = bfs::path(ADAFS_DATA->inode_path());
-    i_path /= fmt::FormatInt(inode).c_str();
-
-    bfs::remove_all(i_path);
-    // XXX make sure metadata has been deleted
-
-    return 0;
 }
 
 /**

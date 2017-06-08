@@ -10,7 +10,7 @@ using namespace rocksdb;
 using namespace std;
 
 inline const string db_get_mdata_helper(const string& key) {
-    auto db = ADAFS_DATA->rdb().get();
+    auto db = ADAFS_DATA->rdb();
     string val_str;
     db->Get(ReadOptions(), key, &val_str);
     return val_str;
@@ -31,19 +31,19 @@ unsigned int db_get_mdata<unsigned int>(const string& key) {
     return static_cast<unsigned int>(stoul(db_get_mdata_helper(key)));
 }
 
-//void db_delete_mdata() {
-//    auto db = ADAFS_DATA->rdb().get();
-//    db->DeleteRange()
-//}
+bool db_delete_mdata(const string& key) {
+    auto db = ADAFS_DATA->rdb();
+    return db->Delete(WriteOptions(), key).ok();
+}
 
 bool db_dentry_exists(const fuse_ino_t p_inode, const string& name, string& val) {
-    auto db = ADAFS_DATA->rdb().get();
+    auto db = ADAFS_DATA->rdb();
     auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
     return db->Get(rocksdb::ReadOptions(), key, &val).ok();
 }
 
 bool db_mdata_exists(const fuse_ino_t inode) {
-    auto db = ADAFS_DATA->rdb().get();
+    auto db = ADAFS_DATA->rdb();
     string val_str;
     return db->Get(ReadOptions(),
                    fmt::FormatInt(inode).str() + std::get<to_underlying(Md_fields::atime)>(md_field_map),
@@ -51,7 +51,7 @@ bool db_mdata_exists(const fuse_ino_t inode) {
 }
 
 bool db_put_dentry(const string& key, const string& val) {
-    auto db = ADAFS_DATA->rdb().get();
+    auto db = ADAFS_DATA->rdb();
     return db->Put(rocksdb::WriteOptions(), key, val).ok();
 }
 
@@ -81,10 +81,38 @@ void db_get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
         val.erase(0, pos + 1); // Erase inode + delim
         dentry.mode(static_cast<mode_t>(stoul(val))); // val holds only mode
         // append dentry to dentries vector
-        ADAFS_DATA->spdlogger()->info("Retrieved dentry: name {} inode {} mode {}", dentry.name(), dentry.inode(),
-                                      dentry.mode());
+        ADAFS_DATA->spdlogger()->trace("Retrieved dentry: name {} inode {} mode {}", dentry.name(), dentry.inode(),
+                                       dentry.mode());
         dentries.push_back(dentry);
     }
+}
+
+pair<bool, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, const string& name) {
+    auto key = "d_"s + fmt::FormatInt(p_inode).str() + "_"s + name;
+    auto db = ADAFS_DATA->rdb();
+    string val;
+    db->Get(ReadOptions(), key, &val);
+    auto pos = val.find("_");
+
+    return make_pair(db->Delete(WriteOptions(), key).ok() ? 0 : 1, static_cast<fuse_ino_t>(stoul(val.substr(0, pos))));
+}
+
+/**
+ * Returns true if no dentries can be found for the prefix <d_ParentInode>
+ * @param inode
+ * @return bool
+ */
+bool db_is_dir_empty(const fuse_ino_t inode) {
+    auto dir_empty = true;
+    auto db = ADAFS_DATA->rdb();
+    auto prefix = "d_"s + fmt::FormatInt(inode).str();
+    auto dentry_iter = db->NewIterator(rocksdb::ReadOptions());
+    for (dentry_iter->Seek(prefix);
+         dentry_iter->Valid() && dentry_iter->key().starts_with(prefix); dentry_iter->Next()) {
+        dir_empty = false;
+        break;
+    }
+    return dir_empty;
 }
 
 

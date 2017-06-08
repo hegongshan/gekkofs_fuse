@@ -2,12 +2,8 @@
 // Created by evie on 3/17/17.
 //
 
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include "dentry_ops.hpp"
 #include "db_ops.hpp"
-
-#include "../classes/dentry.h"
 
 using namespace std;
 
@@ -132,29 +128,16 @@ int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string
 }
 
 /**
- * Removes a dentry from the parent directory. It is not tested if the parent inode path exists. This should have been
+ * Removes a dentry from the parent directory. It is not tested if the parent inode exists. This should have been
  * done by do_lookup preceeding this call (impicit or explicit).
+ * Currently just a wrapper for the db operation
  * @param p_inode
  * @param name
  * @return pair<err, inode>
  */
 // XXX errorhandling
-pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name) {
-    int inode; // file inode to be read from dentry before deletion
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(p_inode).c_str();
-    d_path /= name;
-
-    // retrieve inode number of dentry
-    bfs::ifstream ifs{d_path};
-    boost::archive::binary_iarchive ba(ifs);
-    ba >> inode;
-
-    bfs::remove(d_path);
-
-    // XXX make sure dentry has been deleted
-
-    return make_pair(0, inode);
+pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string& name) {
+    return db_delete_dentry_get_inode(p_inode, name);
 }
 
 /**
@@ -163,11 +146,5 @@ pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name
  * @return err
  */
 int is_dir_empty(const fuse_ino_t inode) {
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(inode).c_str();
-    if (bfs::is_empty(d_path))
-        return 0;
-    else
-        return ENOTEMPTY;
-
+    return db_is_dir_empty(inode) ? 0 : ENOTEMPTY;
 }
