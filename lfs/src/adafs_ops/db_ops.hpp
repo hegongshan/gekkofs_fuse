@@ -20,7 +20,7 @@ T db_get_mdata(const std::string& key);
 
 bool db_dentry_exists(const fuse_ino_t p_inode, const std::string& name, std::string& val);
 
-bool db_mdata_exists(const std::string& key);
+bool db_mdata_exists(const fuse_ino_t inode);
 
 bool db_put_dentry(const std::string& key, const std::string& val);
 

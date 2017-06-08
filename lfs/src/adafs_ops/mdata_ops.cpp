@@ -11,16 +11,16 @@
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
 
-    db_put_mdata(inode_key + "atime"s, md.atime());
-    db_put_mdata(inode_key + "mtime"s, md.mtime());
-    db_put_mdata(inode_key + "ctime"s, md.ctime());
-    db_put_mdata(inode_key + "uid"s, md.uid());
-    db_put_mdata(inode_key + "gid"s, md.gid());
-    db_put_mdata(inode_key + "mode"s, md.mode());
-    db_put_mdata(inode_key + "inodeno"s, md.inode_no());
-    db_put_mdata(inode_key + "linkcnt"s, md.link_count());
-    db_put_mdata(inode_key + "size"s, md.size());
-    db_put_mdata(inode_key + "blocks"s, md.blocks());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::atime)>(md_field_map), md.atime());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::mtime)>(md_field_map), md.mtime());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::ctime)>(md_field_map), md.ctime());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::uid)>(md_field_map), md.uid());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::gid)>(md_field_map), md.gid());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::mode)>(md_field_map), md.mode());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::inode_no)>(md_field_map), md.inode_no());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::link_count)>(md_field_map), md.link_count());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::size)>(md_field_map), md.size());
+    db_put_mdata(inode_key + std::get<to_underlying(Md_fields::blocks)>(md_field_map), md.blocks());
     return true;
 }
 
@@ -28,16 +28,16 @@ bool write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
 bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
     auto inode_key = fmt::FormatInt(inode).str();
 
-    md.atime(db_get_mdata<time_t>(inode_key + "atime"s));
-    md.mtime(db_get_mdata<time_t>(inode_key + "mtime"s));
-    md.ctime(db_get_mdata<time_t>(inode_key + "ctime"s));
-    md.uid(db_get_mdata<uid_t>(inode_key + "uid"s));
-    md.gid(db_get_mdata<gid_t>(inode_key + "gid"s));
-    md.mode(db_get_mdata<mode_t>(inode_key + "mode"s));
-    md.inode_no(db_get_mdata<fuse_ino_t>(inode_key + "inodeno"s));
-    md.link_count(db_get_mdata<nlink_t>(inode_key + "linkcnt"s));
-    md.size(db_get_mdata<off_t>(inode_key + "size"s));
-    md.blocks(db_get_mdata<blkcnt_t>(inode_key + "blocks"s));
+    md.atime(db_get_mdata<time_t>(inode_key + std::get<to_underlying(Md_fields::atime)>(md_field_map)));
+    md.mtime(db_get_mdata<time_t>(inode_key + std::get<to_underlying(Md_fields::mtime)>(md_field_map)));
+    md.ctime(db_get_mdata<time_t>(inode_key + std::get<to_underlying(Md_fields::ctime)>(md_field_map)));
+    md.uid(db_get_mdata<uid_t>(inode_key + std::get<to_underlying(Md_fields::uid)>(md_field_map)));
+    md.gid(db_get_mdata<gid_t>(inode_key + std::get<to_underlying(Md_fields::gid)>(md_field_map)));
+    md.mode(db_get_mdata<mode_t>(inode_key + std::get<to_underlying(Md_fields::mode)>(md_field_map)));
+    md.inode_no(db_get_mdata<fuse_ino_t>(inode_key + std::get<to_underlying(Md_fields::inode_no)>(md_field_map)));
+    md.link_count(db_get_mdata<nlink_t>(inode_key + std::get<to_underlying(Md_fields::link_count)>(md_field_map)));
+    md.size(db_get_mdata<off_t>(inode_key + std::get<to_underlying(Md_fields::size)>(md_field_map)));
+    md.blocks(db_get_mdata<blkcnt_t>(inode_key + std::get<to_underlying(Md_fields::blocks)>(md_field_map)));
     return true;
 }
 
@@ -50,7 +50,7 @@ bool read_all_metadata(Metadata& md, const fuse_ino_t inode) {
 int get_metadata(Metadata& md, const fuse_ino_t inode) {
     ADAFS_DATA->spdlogger()->debug("get_metadata() enter for inode {}", inode);
     // Verify that the file's inode exists
-    if (db_mdata_exists((fmt::FormatInt(inode).str() + "mtime"s).c_str())) {
+    if (db_mdata_exists(inode)) {
         read_all_metadata(md, inode);
         return 0;
     } else

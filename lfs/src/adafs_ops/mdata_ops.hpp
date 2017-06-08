@@ -23,7 +23,7 @@ constexpr typename std::underlying_type<E>::type to_underlying(E e) {
 enum class Md_fields { atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks };
 
 const std::array<std::string, 10> md_field_map = {
-        "/atime"s, "/mtime"s, "/ctime"s, "/uid"s, "/gid"s, "/mode"s, "/inode_no"s, "/link_count"s, "/size"s, "/blocks"s
+        "_atime"s, "_mtime"s, "_ctime"s, "_uid"s, "_gid"s, "_mode"s, "_inodeno"s, "_lnkcnt"s, "_size"s, "_blkcnt"s
 };
 
 bool write_all_metadata(const Metadata& md, const fuse_ino_t inode);

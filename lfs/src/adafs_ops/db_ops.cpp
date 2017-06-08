@@ -3,6 +3,7 @@
 //
 
 #include "db_ops.hpp"
+#include "mdata_ops.hpp"
 
 
 using namespace rocksdb;
@@ -41,10 +42,12 @@ bool db_dentry_exists(const fuse_ino_t p_inode, const string& name, string& val)
     return db->Get(rocksdb::ReadOptions(), key, &val).ok();
 }
 
-bool db_mdata_exists(const string& key) {
+bool db_mdata_exists(const fuse_ino_t inode) {
     auto db = ADAFS_DATA->rdb().get();
     string val_str;
-    return db->Get(ReadOptions(), key, &val_str).ok();
+    return db->Get(ReadOptions(),
+                   fmt::FormatInt(inode).str() + std::get<to_underlying(Md_fields::atime)>(md_field_map),
+                   &val_str).ok();
 }
 
 bool db_put_dentry(const string& key, const string& val) {
