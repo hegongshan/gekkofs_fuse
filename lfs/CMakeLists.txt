@@ -19,7 +19,7 @@ find_package(FUSE3 REQUIRED)
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
-find_package(gflags REQUIRED)
+find_package(GFlags REQUIRED)
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(RocksDB REQUIRED)
@@ -44,5 +44,5 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
-        ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${LZ4_LIBRARY} ${BZIP2_LIBRARIES} ${gflags_LIBRARIES} ${ZStd_LIBRARIES}
+        ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
         -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)
