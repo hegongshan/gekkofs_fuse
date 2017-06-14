@@ -22,12 +22,12 @@ find_path(MARGO_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         )
 
 find_path(MARGO_INCLUDE_DIR margo.h
         HINTS
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         /usr
         /usr/local
         /usr/local/adafs
@@ -37,7 +37,7 @@ find_path(MARGO_INCLUDE_DIR margo.h
 
 find_library(MARGO_LIBRARY margo
         HINTS
-        /home/evie/adafs/install/lib
+        $ENV{HOME}/adafs/install/lib
         /usr
         /usr/local
         /usr/local/adafs

@@ -3,12 +3,12 @@ find_path(MERCURY_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         )
 
 find_path(MERCURY_INCLUDE_DIR mercury.h
         HINTS
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         /usr
         /usr/local
         /usr/local/adafs
@@ -19,7 +19,7 @@ find_path(MERCURY_INCLUDE_DIR mercury.h
 find_library(MERCURY_LIBRARY
         NAMES mercury
         HINTS
-        /home/evie/adafs/install/lib
+        $ENV{HOME}/adafs/install/lib
         /usr
         /usr/local
         /usr/local/adafs

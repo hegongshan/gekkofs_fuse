@@ -3,12 +3,12 @@ find_path(ABT_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         )
 
 find_path(ABT_INCLUDE_DIR abt.h
         HINTS
-        /home/evie/adafs/install
+        $ENV{HOME}/adafs/install
         /usr
         /usr/local
         /usr/local/adafs
@@ -18,7 +18,7 @@ find_path(ABT_INCLUDE_DIR abt.h
 
 find_library(ABT_LIBRARY abt
         HINTS
-        /home/evie/adafs/install/lib
+        $ENV{HOME}/adafs/install/lib
         /usr
         /usr/local
         /usr/local/adafs

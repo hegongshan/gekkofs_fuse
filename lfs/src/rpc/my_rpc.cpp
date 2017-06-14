@@ -38,15 +38,32 @@ static void my_rpc_ult(hg_handle_t handle) {
     // Register local target buffer for bulk access
     hgi = HG_Get_info(handle);
     assert(hgi);
-//    ret = HG_Bulk_create(hgi->hg_class, 1, &buffer, &size, HG_BULK_WRITE_ONLY, &bulk_handle);
-//    assert(ret == 0);
+    ret = HG_Bulk_create(hgi->hg_class, 1, &buffer, &size, HG_BULK_WRITE_ONLY, &bulk_handle);
+    assert(ret == 0);
 
     // Retrieve the Margo instance that has been associated with a Mercury class
     margo_id = margo_hg_class_to_instance(hgi->hg_class);
 
     // do bulk transfer from client to server
-//    ret = margo_bulk_transfer(margo_id, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, size);
-//    assert(ret == 0);
+    ret = margo_bulk_transfer(margo_id, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, size);
+    assert(ret == 0);
+#if 1
+    int fd;
+    char filename[256];
+#endif
+    /* write to a file; would be done with abt-io if we enabled it */
+#if 1
+    auto aid = abt_io_init(0);
+    sprintf(filename, "/tmp/margo-%d.txt", in.input_val);
+    fd = abt_io_open(aid, filename, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
+    assert(fd > -1);
+
+    auto a_ret = abt_io_pwrite(aid, fd, buffer, 512, 0);
+    assert(a_ret == 512);
+
+    abt_io_close(aid, fd);
+    abt_io_finalize(aid);
+#endif
 
     HG_Free_input(handle, &in);
     auto hret = HG_Respond(handle, nullptr, nullptr, &out);

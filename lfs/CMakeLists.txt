@@ -30,6 +30,7 @@ find_package(Mercury REQUIRED)
 find_package(MercuryUtil REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
+find_package(AbtIO REQUIRED)
 find_package(Margo REQUIRED)
 
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
@@ -37,7 +38,7 @@ find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 
 include_directories(${FUSE3_INCLUDE_DIR} ${ROCKSDB_INCLUDE_DIR} include/
         # margo paths
-        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS}
+        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
         )
 set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         src/classes/metadata.h src/classes/metadata.cpp src/classes/fs_data.h src/classes/fs_data.cpp
@@ -62,5 +63,5 @@ target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
         # rocksdb libs
         ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
         # margo libs
-        ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
+        ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${ABT_IO_LIBRARIES} ${MARGO_LIBRARIES}
         -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)

@@ -26,7 +26,7 @@ find_path(ROCKSDB_DIR
 
 find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
         HINTS
-        /home/evie/adafs/git/rocksdb
+        $ENV{HOME}/adafs/git/rocksdb
         /usr
         /usr/local
         /usr/local/adafs
@@ -36,7 +36,7 @@ find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
 
 find_library(ROCKSDB_LIBRARY rocksdb
         HINTS
-        /home/evie/adafs/git/rocksdb
+        $ENV{HOME}/adafs/git/rocksdb
         /usr
         /usr/local
         /usr/local/adafs
