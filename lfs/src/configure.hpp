@@ -6,7 +6,7 @@
 #define FS_CONFIGURE_H
 
 // To enabled logging with info level
-//#define LOG_INFO
+#define LOG_INFO
 //#define LOG_DEBUG
 //#define LOG_TRACE
 
@@ -15,5 +15,8 @@
 
 // If access permissions should be checked while opening a file
 //#define CHECK_ACCESS
+
+// Write-ahead logging of rocksdb
+//#define RDB_WOL
 
 #endif //FS_CONFIGURE_H

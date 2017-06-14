@@ -172,6 +172,7 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t
     // XXX check permissions (omittable)
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
+
     auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
 
     // XXX create chunk space
@@ -257,7 +258,7 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
         return;
     }
     // Remove inode
-    err = remove_metadata(inode);
+    err = remove_all_metadata(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

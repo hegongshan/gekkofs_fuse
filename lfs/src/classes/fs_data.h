@@ -29,6 +29,14 @@ private:
     std::string chunk_path_;
     std::string mgmt_path_;
 
+    // rocksdb
+    std::shared_ptr<rocksdb::DB> rdb_;
+    std::shared_ptr<rocksdb::DB> rdb_crt_; // additional db instance (currently not used)
+    std::shared_ptr<rocksdb::OptimisticTransactionDB> txn_rdb_;
+    rocksdb::Options rdb_options_;
+    rocksdb::OptimisticTransactionOptions txn_rdb_options_; // needed for snapshots
+    rocksdb::WriteOptions rdb_write_options_;
+    std::string rdb_path_;
 
 public:
     static FsData* getInstance() {
@@ -77,6 +85,33 @@ public:
 
     void mgmt_path(const std::string& mgmt_path_);
 
+    const std::shared_ptr<rocksdb::DB>& rdb() const;
+
+    void rdb(const std::shared_ptr<rocksdb::DB>& rdb);
+
+    const rocksdb::Options& rdb_options() const;
+
+    void rdb_options(const rocksdb::Options& rdb_options);
+
+    const std::string& rdb_path() const;
+
+    void rdb_path(const std::string& rdb_path);
+
+    const std::shared_ptr<rocksdb::OptimisticTransactionDB>& txn_rdb() const;
+
+    void txn_rdb(const std::shared_ptr<rocksdb::OptimisticTransactionDB>& tx_rdb);
+
+    const std::shared_ptr<rocksdb::DB>& rdb_crt() const;
+
+    void rdb_crt(const std::shared_ptr<rocksdb::DB>& rdb_crt);
+
+    const rocksdb::OptimisticTransactionOptions& txn_rdb_options() const;
+
+    void txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb_options);
+
+    const rocksdb::WriteOptions& rdb_write_options() const;
+
+    void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
 };
 
 

@@ -2,11 +2,9 @@
 // Created by evie on 3/17/17.
 //
 
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/binary_iarchive.hpp>
 #include "dentry_ops.hpp"
-
-#include "../classes/dentry.h"
+#include "../db/db_ops.hpp"
+#include "../db/util.hpp"
 
 using namespace std;
 
@@ -90,35 +88,11 @@ int read_dentries(const fuse_ino_t p_inode, const fuse_ino_t inode) {
  * cleared before it is used.
  * @param dentries assumed to be empty
  * @param dir_inode
- * @return
  */
-int get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
-    ADAFS_DATA->spdlogger()->debug("get_dentries: inode {}", dir_inode);
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(dir_inode).c_str();
-    // shortcut if path is empty = no files in directory
-    if (bfs::is_empty(d_path)) return 0;
-
-    auto dir_it = bfs::directory_iterator(d_path);
-    for (const auto& it : dir_it) {
-        auto dentry = make_shared<Dentry>(it.path().filename().string());
-        // retrieve inode number and mode in dentry
-        uint64_t inode;
-        mode_t mode;
-        d_path /= it.path().filename();
-        bfs::ifstream ifs{d_path};
-        boost::archive::binary_iarchive ba(ifs);
-        ba >> inode;
-        ba >> mode;
-        dentry->inode(inode);
-        dentry->mode(mode);
-        // append dentry to dentries vector
-        dentries.push_back(*dentry);
-        d_path.remove_filename();
-    }
-
-    return 0;
+void get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
+    db_get_dentries(dentries, dir_inode);
 }
+
 
 /**
  * Gets the inode of a directory entry
@@ -128,21 +102,13 @@ int get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
  * @return pair<err, inode>
  */
 pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const string& name) {
-
-    fuse_ino_t inode;
-    // XXX error handling
-    // TODO look into cache first
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(p_inode).c_str();
-    // XXX check if this is needed later
-    d_path /= name;
-    if (!bfs::exists(d_path))
+    string val; // will we filled by dentry exist check
+    if (db_dentry_exists(p_inode, name, val) == 0) { // dentry NOT found
         return make_pair(ENOENT, INVALID_INODE);
+    }
 
-    bfs::ifstream ifs{d_path};
-    //read inode from disk
-    boost::archive::binary_iarchive ba(ifs);
-    ba >> inode;
+    auto pos = val.find("_");
+    auto inode = static_cast<fuse_ino_t>(stoul(val.substr(0, pos)));
 
     return make_pair(0, inode);
 }
@@ -155,50 +121,22 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
  * @return
  */
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
-//    ADAFS_DATA->logger->debug("create_dentry() enter with fname: {}", inode);
-    // XXX Errorhandling
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(p_inode).c_str();
-    // XXX check if this is needed later
-//    if (!bfs::exists(d_path)) return -ENOENT;
-
-    d_path /= name;
-
-    bfs::ofstream ofs{d_path};
-    // write to disk in binary form
-    boost::archive::binary_oarchive ba(ofs);
-    ba << inode;
-    ba << mode;
-
-    // XXX make sure the file has been created
-
-    return 0;
+    // XXX check later if we need to check if dentry of father already exists
+    // put dentry for key, value
+    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode));
 }
 
 /**
- * Removes a dentry from the parent directory. It is not tested if the parent inode path exists. This should have been
+ * Removes a dentry from the parent directory. It is not tested if the parent inode exists. This should have been
  * done by do_lookup preceeding this call (impicit or explicit).
+ * Currently just a wrapper for the db operation
  * @param p_inode
  * @param name
  * @return pair<err, inode>
  */
 // XXX errorhandling
-pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name) {
-    int inode; // file inode to be read from dentry before deletion
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(p_inode).c_str();
-    d_path /= name;
-
-    // retrieve inode number of dentry
-    bfs::ifstream ifs{d_path};
-    boost::archive::binary_iarchive ba(ifs);
-    ba >> inode;
-
-    bfs::remove(d_path);
-
-    // XXX make sure dentry has been deleted
-
-    return make_pair(0, inode);
+pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string& name) {
+    return db_delete_dentry_get_inode(p_inode, name);
 }
 
 /**
@@ -207,11 +145,5 @@ pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const string &name
  * @return err
  */
 int is_dir_empty(const fuse_ino_t inode) {
-    auto d_path = bfs::path(ADAFS_DATA->dentry_path());
-    d_path /= fmt::FormatInt(inode).c_str();
-    if (bfs::is_empty(d_path))
-        return 0;
-    else
-        return ENOTEMPTY;
-
+    return db_is_dir_empty(inode) ? 0 : ENOTEMPTY;
 }

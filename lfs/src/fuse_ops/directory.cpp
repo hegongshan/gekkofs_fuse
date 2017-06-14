@@ -141,8 +141,6 @@ void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
         get_dentries(*dentries, ino);
         //getdentries here
         for (const auto& dentry : *dentries) {
-            ADAFS_DATA->spdlogger()->trace("readdir dentry: name {} inode {} mode {:o}", dentry.name(), dentry.inode(), dentry.mode());
-
             /*
              * Generate tiny stat with inode and mode information.
              * This information is necessary so that the entry shows up later at all.
@@ -232,6 +230,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     // XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
     // XXX see adafs_ll_unlink
     int err;
+
     fuse_ino_t inode;
 
     // get inode of file
@@ -242,6 +241,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     }
 
     // check if dir is empty
+    // TODO THIS IS VEEEEEEEERY SLOW! Doing a RangeScan is not the right approach here!
     err = is_dir_empty(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
@@ -255,15 +255,8 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
         return;
     }
 
-    // remove dentry structure of dir
-    err = destroy_dentry_dir(inode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
     // remove metadata (inode) of dir
-    err = remove_metadata(inode);
+    err = remove_all_metadata(inode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

@@ -8,7 +8,6 @@ static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
 
-
 /**
  * Initialize filesystem
  *
@@ -29,12 +28,16 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // necessary to set certain fields in fuse priv struct
     auto priv_data = (struct priv_data*) pdata;
 
-    ADAFS_DATA->spdlogger()->debug("adafs_ll_init() enter"s);
+    ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
     bfs::create_directories(ADAFS_DATA->inode_path());
     bfs::create_directories(ADAFS_DATA->chunk_path());
     bfs::create_directories(ADAFS_DATA->mgmt_path());
+
+    // Initialize rocksdb
+    auto err = init_rocksdb();
+    assert(err);
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
@@ -52,9 +55,10 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
 //    md = make_shared<Metadata>();
     auto md = make_shared<Metadata>();
 
+    ADAFS_DATA->spdlogger()->info("Checking root metadata...");
     // Check that root metadata exists. If not initialize it
     if (get_metadata(*md, ADAFS_ROOT_INODE) == ENOENT) {
-        ADAFS_DATA->spdlogger()->debug("Root metadata not found. Initializing..."s);
+        ADAFS_DATA->spdlogger()->info("Root metadata not found. Initializing..."s);
         md->init_ACM_time();
         md->mode(S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO); // change_access 777
         md->size(4096); // XXX just visual. size computation of directory should be done properly at some point
@@ -62,15 +66,15 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
         md->uid(0); // hardcoded root XXX
         md->gid(0); // hardcoded root XXX
         md->inode_no(ADAFS_ROOT_INODE);
-        ADAFS_DATA->spdlogger()->debug("Writing / metadata to disk..."s);
+        ADAFS_DATA->spdlogger()->info("Writing / metadata to disk..."s);
         write_all_metadata(*md, ADAFS_ROOT_INODE);
-        ADAFS_DATA->spdlogger()->debug("Initializing dentry for /"s);
+        ADAFS_DATA->spdlogger()->info("Initializing dentry for /"s);
         init_dentry_dir(ADAFS_ROOT_INODE);
-        ADAFS_DATA->spdlogger()->debug("Creating Metadata object"s);
+        ADAFS_DATA->spdlogger()->info("Creating Metadata object"s);
     }
-#ifdef LOG_DEBUG
+#ifdef LOG_INFO
     else
-        ADAFS_DATA->spdlogger()->debug("Metadata object exists"s);
+        ADAFS_DATA->spdlogger()->info("Root metadata found"s);
 #endif
 
 }

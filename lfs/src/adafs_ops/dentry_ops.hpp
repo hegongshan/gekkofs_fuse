@@ -17,13 +17,13 @@ bool verify_dentry(const fuse_ino_t inode);
 
 int read_dentries(const fuse_ino_t p_inode, const fuse_ino_t inode);
 
-int get_dentries(std::vector<Dentry>& dentries, const fuse_ino_t dir_inode);
+void get_dentries(std::vector<Dentry>& dentries, const fuse_ino_t dir_inode);
 
 std::pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const std::string& name);
 
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const std::string& name, mode_t mode);
 
-std::pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const std::string &name);
+std::pair<int, fuse_ino_t> remove_dentry(const fuse_ino_t p_inode, const std::string& name);
 
 int is_dir_empty(const fuse_ino_t inode);
 
