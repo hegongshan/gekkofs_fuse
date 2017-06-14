@@ -9,7 +9,7 @@
 #include "../classes/metadata.h"
 #include "../db/db_ops.hpp"
 #include "../db/db_txn_ops.hpp"
-#include "../db/util.hpp"
+#include "../db/db_util.hpp"
 
 using namespace std;
 

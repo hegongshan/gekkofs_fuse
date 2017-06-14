@@ -7,7 +7,7 @@
 
 #include "../main.hpp"
 #include "../classes/dentry.h"
-#include "util.hpp"
+#include "db_util.hpp"
 
 template<typename T>
 bool db_put_mdata(const std::string& key, const T val) {

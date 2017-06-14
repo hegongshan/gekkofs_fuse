@@ -3,6 +3,7 @@
 #include "adafs_ops/mdata_ops.hpp"
 #include "adafs_ops/dentry_ops.hpp"
 #include "fuse_ops.hpp"
+#include "rpc/rpc_util.hpp"
 
 static struct fuse_lowlevel_ops adafs_ops;
 
@@ -38,6 +39,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // Initialize rocksdb
     auto err = init_rocksdb();
     assert(err);
+    // Initialize margo server
+//    err = init_margo_server();
+//    assert(err);
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))

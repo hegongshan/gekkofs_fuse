@@ -4,7 +4,7 @@
 
 #include "dentry_ops.hpp"
 #include "../db/db_ops.hpp"
-#include "../db/util.hpp"
+#include "../db/db_util.hpp"
 
 using namespace std;
 

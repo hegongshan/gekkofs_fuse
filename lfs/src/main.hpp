@@ -19,7 +19,7 @@ extern "C" {
 // boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-
+// adafs
 #include "configure.hpp"
 // third party libs
 #include "spdlog/spdlog.h"
@@ -30,6 +30,13 @@ extern "C" {
 #include <rocksdb/options.h>
 #include <rocksdb/utilities/transaction.h>
 #include <rocksdb/utilities/optimistic_transaction_db.h>
+// margo
+extern "C" {
+#include <abt.h>
+#include <abt-snoozer.h>
+#include <margo.h>
+}
+
 
 // classes
 #include "classes/fs_data.h"
