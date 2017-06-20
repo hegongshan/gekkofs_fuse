@@ -41,6 +41,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     assert(err);
     // Initialize margo server
 //    err = init_margo_server();
+//    err = init_margo_client();
 //    assert(err);
 
     // Check if fs already has some data and read the inode count

@@ -30,8 +30,16 @@ find_package(Mercury REQUIRED)
 find_package(MercuryUtil REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
-find_package(AbtIO REQUIRED)
 find_package(Margo REQUIRED)
+# Optional dependencies
+find_package(AbtIO)
+option(WITH_AbtIO "AbtIO enabled" ON)
+if (WITH_AbtIO)
+    add_definitions(-DUSE_AbtIO=1)
+else ()
+    add_definitions(-DUSE_AbtIO=0)
+endif ()
+
 
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
 find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
@@ -56,7 +64,7 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # db src
         src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
         # rpc src
-        src/rpc/rpc_util.cpp src/rpc/my_rpc.cpp
+        src/rpc/rpc_util.cpp src/rpc/rpcs.cpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}

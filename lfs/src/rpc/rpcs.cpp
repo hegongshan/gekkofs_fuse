@@ -47,12 +47,12 @@ static void my_rpc_ult(hg_handle_t handle) {
     // do bulk transfer from client to server
     ret = margo_bulk_transfer(margo_id, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, size);
     assert(ret == 0);
-#if 1
+#ifdef USE_AbtIO
     int fd;
     char filename[256];
 #endif
     /* write to a file; would be done with abt-io if we enabled it */
-#if 1
+#ifdef USE_AbtIO
     auto aid = abt_io_init(0);
     sprintf(filename, "/tmp/margo-%d.txt", in.input_val);
     fd = abt_io_open(aid, filename, O_WRONLY | O_CREAT, S_IWUSR | S_IRUSR);
@@ -104,3 +104,28 @@ static void my_rpc_shutdown_ult(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(my_rpc_shutdown_ult)
+
+static void my_rpc_minimal(hg_handle_t handle) {
+    my_rpc_minimal_in_t in;
+    my_rpc_minimal_out_t out;
+    // Get input
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+
+    ADAFS_DATA->spdlogger()->info("Got simple RPC with input {}", in.input);
+    // Get hg_info handle
+    auto hgi = HG_Get_info(handle);
+    // extract margo id from hg_info (needed to know where to send response)
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // Create output and send it
+    out.output = in.input * 2;
+    ADAFS_DATA->spdlogger()->info("Sending output {}", out.output);
+    auto hret = margo_respond(mid, handle, &out);
+    assert(hret == HG_SUCCESS);
+    // Destroy handle when finished
+    HG_Destroy(handle);
+
+}
+
+DEFINE_MARGO_RPC_HANDLER(my_rpc_minimal)
