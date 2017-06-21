@@ -25,8 +25,6 @@ using namespace std;
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
-    // necessary to set certain fields in fuse priv struct
-    auto priv_data = (struct priv_data*) pdata;
 
     ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
     // Make sure directory structure exists
@@ -41,9 +39,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
-        Util::read_inode_cnt(*priv_data);
+        Util::read_inode_cnt();
     else
-        Util::init_inode_no(*priv_data);
+        Util::init_inode_no();
 
     //Init file system configuration
     ADAFS_DATA->blocksize(4096);
@@ -89,8 +87,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_destroy(void* pdata) {
-    auto priv_data = (struct priv_data*) pdata;
-    Util::write_inode_cnt(*priv_data);
+    Util::write_inode_cnt();
 }
 
 static void init_adafs_ops(fuse_lowlevel_ops* ops) {
@@ -150,8 +147,6 @@ int main(int argc, char* argv[]) {
     //Initialize the mapping of Fuse functions
     init_adafs_ops(&adafs_ops);
 
-    // create the private data struct
-    auto a_data = make_shared<priv_data>();
 //    //set the spdlogger and initialize it with spdlog
     ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", "adafs.log"));
 #if defined(LOG_TRACE)
@@ -200,7 +195,7 @@ int main(int argc, char* argv[]) {
     }
 
     // creating a low level session
-    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), a_data.get());
+    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), nullptr);
 
     if (se == NULL) {
         err_cleanup1(opts, args);

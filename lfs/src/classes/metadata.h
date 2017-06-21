@@ -23,7 +23,7 @@ private:
 public:
     Metadata();
 
-    Metadata(mode_t mode, uid_t uid, gid_t gid, fuse_req_t& req);
+    Metadata(mode_t mode, uint32_t uid, uint32_t gid);
 
     Metadata(mode_t mode, uid_t uid, gid_t gid, fuse_ino_t inode);
 

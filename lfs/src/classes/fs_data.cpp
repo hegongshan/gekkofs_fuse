@@ -4,6 +4,8 @@
 
 #include "fs_data.h"
 
+// getter/setter
+
 const std::unordered_map<std::string, std::string>& FsData::hashmap() const {
     return hashmap_;
 }
@@ -131,4 +133,20 @@ const rocksdb::WriteOptions& FsData::rdb_write_options() const {
 void FsData::rdb_write_options(const rocksdb::WriteOptions& rdb_write_options) {
     FsData::rdb_write_options_ = rdb_write_options;
 }
+
+fuse_ino_t FsData::inode_count() const {
+    return inode_count_;
+}
+
+void FsData::inode_count(fuse_ino_t inode_count) {
+    FsData::inode_count_ = inode_count;
+}
+
+// Utility member functions
+
+fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
+    FsData::inode_count_ += count;
+    return FsData::inode_count_;
+}
+
 

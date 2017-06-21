@@ -144,7 +144,7 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
 int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
     // create metadata of new file (this will also create a new inode number)
     // mode is used here to init metadata
-    auto md = make_shared<Metadata>(mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, req);
+    auto md = make_shared<Metadata>(mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid);
     if ((mode & S_IFDIR) == S_IFDIR) {
         md->size(
                 ADAFS_DATA->blocksize()); // XXX just visual. size computation of directory should be done properly at some point
