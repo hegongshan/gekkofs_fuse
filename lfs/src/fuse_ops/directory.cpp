@@ -8,7 +8,7 @@
 #include "../adafs_ops/dentry_ops.hpp"
 #include "../adafs_ops/access.hpp"
 
-#include "../classes/dentry.h"
+#include "../classes/dentry.hpp"
 
 
 using namespace std;

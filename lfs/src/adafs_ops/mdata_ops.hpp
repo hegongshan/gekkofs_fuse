@@ -6,7 +6,7 @@
 #define FS_METADATA_OPS_H
 
 #include "../main.hpp"
-#include "../classes/metadata.h"
+#include "../classes/metadata.hpp"
 #include "../db/db_ops.hpp"
 #include "../db/db_txn_ops.hpp"
 #include "../db/db_util.hpp"

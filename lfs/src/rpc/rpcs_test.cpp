@@ -2,7 +2,7 @@
 // Created by evie on 6/14/17.
 //
 
-#include "rpcs.hpp"
+#include "rpcs_test.hpp"
 
 using namespace std;
 

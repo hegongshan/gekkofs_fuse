@@ -39,13 +39,15 @@ extern "C" {
 }
 
 // classes
-#include "classes/fs_data.h"
+#include "classes/fs_data.hpp"
+#include "classes/rpc_data.hpp"
 
 namespace bfs = boost::filesystem;
 
 #define ADAFS_ROOT_INODE static_cast<fuse_ino_t>(1)
 #define INVALID_INODE static_cast<fuse_ino_t>(0)
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
+#define RPC_DATA (static_cast<RPCData*>(RPCData::getInstance()))
 
 namespace Util {
     int init_inode_no();

@@ -2,8 +2,8 @@
 // Created by evie on 6/8/17.
 //
 
-#ifndef LFS_UTIL_HPP
-#define LFS_UTIL_HPP
+#ifndef LFS_DB_UTIL_HPP
+#define LFS_DB_UTIL_HPP
 
 #include "../main.hpp"
 
@@ -39,4 +39,4 @@ string db_build_mdata_key(const string& inode, const string& field);
 
 std::vector<std::string> db_build_all_mdata_keys(const fuse_ino_t inode);
 
-#endif //LFS_UTIL_HPP
+#endif //LFS_DB_UTIL_HPP

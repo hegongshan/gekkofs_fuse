@@ -5,7 +5,7 @@
 #ifndef FS_ACCESS_H
 #define FS_ACCESS_H
 
-#include "../classes/metadata.h"
+#include "../classes/metadata.hpp"
 
 int open_chk_access(fuse_req_t& req, fuse_ino_t ino, int flags);
 

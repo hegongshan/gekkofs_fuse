@@ -6,7 +6,7 @@
 #define FS_DENTRY_OPS_H
 
 #include "../main.hpp"
-#include "../classes/dentry.h"
+#include "../classes/dentry.hpp"
 
 
 bool init_dentry_dir(const fuse_ino_t inode);

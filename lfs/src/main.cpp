@@ -1,8 +1,9 @@
 #include "main.hpp"
-#include "classes/metadata.h"
+#include "classes/metadata.hpp"
 #include "adafs_ops/mdata_ops.hpp"
 #include "adafs_ops/dentry_ops.hpp"
 #include "fuse_ops.hpp"
+#include "rpc/rpc_util_test.hpp"
 #include "rpc/rpc_util.hpp"
 
 static struct fuse_lowlevel_ops adafs_ops;
@@ -37,10 +38,12 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // Initialize rocksdb
     auto err = init_rocksdb();
     assert(err);
-    // Initialize margo server
-//    err = init_margo_server();
-//    err = init_margo_client();
-//    assert(err);
+    err = init_argobots();
+    assert(err);
+    err = init_rpc_server();
+    assert(err);
+    err = init_rpc_client();
+    assert(err);
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
@@ -92,6 +95,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_destroy(void* pdata) {
+    destroy_argobots();
+    destroy_rpc_server();
+    destroy_rpc_client();
     Util::write_inode_cnt();
 }
 

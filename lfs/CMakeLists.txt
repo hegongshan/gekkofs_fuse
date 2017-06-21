@@ -49,22 +49,27 @@ include_directories(${FUSE3_INCLUDE_DIR} ${ROCKSDB_INCLUDE_DIR} include/
         ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
         )
 set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
-        src/classes/metadata.h src/classes/metadata.cpp src/classes/fs_data.h src/classes/fs_data.cpp
-        src/classes/dentry.h src/classes/dentry.cpp
+        # classes header
+        src/classes/metadata.hpp src/classes/fs_data.hpp src/classes/dentry.hpp src/classes/rpc_data.hpp
         # adafs_ops header
         src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp
         # db header
         src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/db_util.hpp
         # rpc header
-        src/rpc/rpcs.hpp src/rpc/rpc_util.hpp
+        src/rpc/rpcs_test.hpp src/rpc/rpc_util_test.hpp src/rpc/rpc_util.hpp
 
+        # util
         src/util.cpp
+        # fuse ops
         src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp
+        # classes
+        src/classes/metadata.cpp src/classes/fs_data.cpp src/classes/dentry.cpp src/classes/rpc_data.cpp
+        # adafs_ops
         src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
         # db src
         src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
         # rpc src
-        src/rpc/rpc_util.cpp src/rpc/rpcs.cpp
+        src/rpc/rpc_util_test.cpp src/rpc/rpcs_test.cpp src/rpc/rpc_util.cpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}

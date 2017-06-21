@@ -6,7 +6,7 @@
 #define LFS_DB_OPS_HPP
 
 #include "../main.hpp"
-#include "../classes/dentry.h"
+#include "../classes/dentry.hpp"
 #include "db_util.hpp"
 
 template<typename T>
