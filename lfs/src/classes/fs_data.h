@@ -16,6 +16,9 @@ private:
     std::unordered_map<std::string, std::string> hashmap_;
     std::hash<std::string> hashf_;
 
+    // inodes
+    fuse_ino_t inode_count_;
+
     // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
     blksize_t blocksize_;
 
@@ -39,6 +42,10 @@ private:
     std::string rdb_path_;
 
 public:
+
+    // mutex has a deleted method to assign an existing mutex. As such it cannot use getter or setters
+    std::mutex inode_mutex;
+
     static FsData* getInstance() {
         static FsData instance;
         return &instance;
@@ -56,6 +63,10 @@ public:
     const std::hash<std::string>& hashf() const;
 
     void hashf(const std::hash<std::string>& hashf_);
+
+    fuse_ino_t inode_count() const;
+
+    void inode_count(fuse_ino_t inode_count);
 
     blksize_t blocksize() const;
 
@@ -112,6 +123,10 @@ public:
     const rocksdb::WriteOptions& rdb_write_options() const;
 
     void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
+
+    // Utility member functions
+
+    fuse_ino_t raise_inode_count(fuse_ino_t count);
 };
 
 
