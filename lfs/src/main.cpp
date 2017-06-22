@@ -3,8 +3,9 @@
 #include "adafs_ops/mdata_ops.hpp"
 #include "adafs_ops/dentry_ops.hpp"
 #include "fuse_ops.hpp"
-#include "rpc/rpc_util_test.hpp"
 #include "rpc/rpc_util.hpp"
+
+#include "rpc/client/c_metadata.hpp"
 
 static struct fuse_lowlevel_ops adafs_ops;
 
@@ -44,6 +45,8 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     assert(err);
     err = init_rpc_client();
     assert(err);
+
+    send_minimal_rpc();
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
@@ -95,9 +98,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_destroy(void* pdata) {
-    destroy_argobots();
     destroy_rpc_server();
     destroy_rpc_client();
+    destroy_argobots();
     Util::write_inode_cnt();
 }
 

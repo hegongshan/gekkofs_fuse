@@ -56,7 +56,9 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # db header
         src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/db_util.hpp
         # rpc header
-        src/rpc/rpcs_test.hpp src/rpc/rpc_util_test.hpp src/rpc/rpc_util.hpp
+        src/rpc/rpcs_test.hpp src/rpc/rpc_util_test.hpp src/rpc/rpc_util.hpp src/rpc/rpc_types.hpp src/rpc/rpc_defs.hpp
+        # rpcs header
+        src/rpc/client/c_metadata.hpp
 
         # util
         src/util.cpp
@@ -70,6 +72,8 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
         # rpc src
         src/rpc/rpc_util_test.cpp src/rpc/rpcs_test.cpp src/rpc/rpc_util.cpp
+        # rpcs src
+        src/rpc/server/s_metadata.cpp src/rpc/client/c_metadata.cpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}

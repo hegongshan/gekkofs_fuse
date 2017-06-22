@@ -36,3 +36,27 @@ hg_context_t* RPCData::client_hg_context() const {
 void RPCData::client_hg_context(hg_context_t* client_hg_context) {
     RPCData::client_hg_context_ = client_hg_context;
 }
+
+margo_instance* RPCData::server_mid() {
+    return server_mid_;
+}
+
+void RPCData::server_mid(margo_instance* server_mid) {
+    RPCData::server_mid_ = server_mid;
+}
+
+margo_instance* RPCData::client_mid() {
+    return client_mid_;
+}
+
+void RPCData::client_mid(margo_instance* client_mid) {
+    RPCData::client_mid_ = client_mid;
+}
+
+hg_id_t RPCData::rpc_minimal_id() const {
+    return rpc_minimal_id_;
+}
+
+void RPCData::rpc_minimal_id(hg_id_t rpc_minimal_id) {
+    RPCData::rpc_minimal_id_ = rpc_minimal_id;
+}

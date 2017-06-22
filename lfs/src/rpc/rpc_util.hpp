@@ -9,13 +9,17 @@
 
 bool init_argobots();
 
-bool destroy_argobots();
+void destroy_argobots();
 
 bool init_rpc_server();
+
+void register_server_rpcs(hg_class_t* hg_class);
 
 void destroy_rpc_server();
 
 bool init_rpc_client();
+
+void register_client_rpcs(hg_class_t* hg_class);
 
 void destroy_rpc_client();
 
