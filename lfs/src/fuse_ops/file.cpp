@@ -185,7 +185,7 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
 
-    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
+    auto err = create_node(*fep, parent, string(name), fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // XXX create chunk space
     if (err == 0)
@@ -222,7 +222,7 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
     // XXX check permissions (omittable)
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
-    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
+    auto err = create_node(*fep, parent, string(name), fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // XXX create chunk space
 

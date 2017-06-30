@@ -141,10 +141,11 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
  * @param mode
  * @return err
  */
-int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
+int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, const uid_t uid, const gid_t gid,
+                mode_t mode) {
     // create metadata of new file (this will also create a new inode number)
     // mode is used here to init metadata
-    auto md = make_shared<Metadata>(mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid);
+    auto md = make_shared<Metadata>(mode, uid, gid);
     if ((mode & S_IFDIR) == S_IFDIR) {
         md->size(
                 ADAFS_DATA->blocksize()); // XXX just visual. size computation of directory should be done properly at some point

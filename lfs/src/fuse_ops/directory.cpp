@@ -193,7 +193,7 @@ void adafs_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
 
     // XXX all this below stuff needs to be atomic. reroll if error happens
     // create metadata for the new dir and adds the dentry to the parent dir
-    auto err = create_node(req, *fep, parent, string(name), S_IFDIR | mode);
+    auto err = create_node(*fep, parent, string(name), fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFDIR | mode);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;
