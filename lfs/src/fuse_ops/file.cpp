@@ -2,12 +2,14 @@
 // Created by evie on 4/6/17.
 //
 
+#include <mercury_types.h>
 #include "../main.hpp"
 #include "../fuse_ops.hpp"
 #include "../adafs_ops/mdata_ops.hpp"
 #include "../adafs_ops/dentry_ops.hpp"
 #include "../adafs_ops/access.hpp"
 #include "../adafs_ops/io.hpp"
+#include "../rpc/client/c_metadata.hpp"
 
 using namespace std;
 
@@ -164,6 +166,16 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_
 	 */
 void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_create() enter: parent_inode {} name {} mode {:o}", parent, name, mode);
+// XXX Below rpc example. Temporary of course
+//    using ns = chrono::nanoseconds;
+//    using get_time = chrono::steady_clock;
+//    auto start_t = get_time::now();
+//    send_minimal_rpc(nullptr);
+//    auto end_t = get_time::now();
+//    auto diff = end_t - start_t;
+//
+//    auto diff_count = chrono::duration_cast<ns>(diff).count();
+//    ADAFS_DATA->spdlogger()->info("TIME SPENT: {} microseconds", (diff_count / 1000));
 
     auto fep = make_shared<fuse_entry_param>();
 

@@ -5,6 +5,7 @@
 #include "rpc_util.hpp"
 #include "rpc_types.hpp"
 #include "rpc_defs.hpp"
+#include "client/c_metadata.hpp"
 
 using namespace std;
 
@@ -35,15 +36,22 @@ bool init_argobots() {
  * Shuts down Argobots
  */
 void destroy_argobots() {
-    ABT_finalize();
+    ADAFS_DATA->spdlogger()->info("About to shut Argobots down"s);
+    auto ret = ABT_finalize();
+    if (ret == ABT_SUCCESS) {
+        ADAFS_DATA->spdlogger()->info("Argobots successfully shutdown.");
+    } else {
+        ADAFS_DATA->spdlogger()->info("Argobots shutdown FAILED with err code {}", ret);
+    }
 }
+
 
 /**
  * Initializes the Mercury and Margo server
  * @return
  */
 bool init_rpc_server() {
-    auto protocol_port = "cci+tcp://3344"s;
+    auto protocol_port = "cci+tcp://localhost:1234"s;
 
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
@@ -92,7 +100,7 @@ bool init_rpc_server() {
 
     /* MARGO PART */
     ADAFS_DATA->spdlogger()->info("Initializing Margo server...");
-    // Start Margo TODO set first two parameters later.
+    // Start Margo
     auto mid = margo_init(0, 0, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->info("[ERR]: margo_init failed to initialize the Margo server");
@@ -102,14 +110,13 @@ bool init_rpc_server() {
     }
     ADAFS_DATA->spdlogger()->info("Success.");
 
-    // register RPCs TODO
-    register_server_rpcs(hg_class);
-
-
     // Put context and class into RPC_data object
     RPC_DATA->server_hg_class(hg_class);
     RPC_DATA->server_hg_context(hg_context);
     RPC_DATA->server_mid(mid);
+
+    // register RPCs
+    register_server_rpcs();
 
     return true;
 }
@@ -118,13 +125,12 @@ bool init_rpc_server() {
  * Register the rpcs for the server. There is no need to store rpc ids for the server
  * @param hg_class
  */
-void register_server_rpcs(hg_class_t* hg_class) {
+void register_server_rpcs() {
+    auto hg_class = RPC_DATA->server_hg_class();
     MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal_handler);
 }
 
 void destroy_rpc_server() {
-    //  XXX hangs for some reason.
-//    margo_finalize(RPC_DATA->server_mid());
     HG_Context_destroy(RPC_DATA->server_hg_context());
     HG_Finalize(RPC_DATA->server_hg_class());
 }
@@ -156,7 +162,7 @@ bool init_rpc_client() {
 
     /* MARGO PART */
     ADAFS_DATA->spdlogger()->info("Initializing Margo client ...");
-    // Start Margo TODO set first two parameters later.
+    // Start Margo
     auto mid = margo_init(0, 0, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->info("[ERR]: margo_init failed to initialize the Margo client");
@@ -166,14 +172,12 @@ bool init_rpc_client() {
     }
     ADAFS_DATA->spdlogger()->info("Success.");
 
-    register_client_rpcs(hg_class);
-
     // Put context and class into RPC_data object
     RPC_DATA->client_hg_class(hg_class);
     RPC_DATA->client_hg_context(hg_context);
     RPC_DATA->client_mid(mid);
 
-//    margo_finalize(RPC_DATA->client_mid());
+    register_client_rpcs();
 
     return true;
 }
@@ -182,13 +186,12 @@ bool init_rpc_client() {
  * Register rpcs for the client and add the rpc id to rpc_data
  * @param hg_class
  */
-void register_client_rpcs(hg_class_t* hg_class) {
+void register_client_rpcs() {
+    auto hg_class = RPC_DATA->client_hg_class();
     RPC_DATA->rpc_minimal_id(MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr));
 }
 
 void destroy_rpc_client() {
-    //  XXX hangs for some reason.
-//    margo_finalize(RPC_DATA->client_mid());
     HG_Context_destroy(RPC_DATA->client_hg_context());
     HG_Finalize(RPC_DATA->client_hg_class());
 }

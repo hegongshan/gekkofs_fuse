@@ -30,11 +30,14 @@ private:
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
 
+
 public:
     static RPCData* getInstance() {
         static RPCData instance;
         return &instance;
     }
+
+    hg_addr_t svr_addr_ = HG_ADDR_NULL; // XXX TEMPORARY! server addresses will be put into a LRU map
 
     RPCData(RPCData const&) = delete;
 

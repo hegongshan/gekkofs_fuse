@@ -46,6 +46,10 @@ public:
     // mutex has a deleted method to assign an existing mutex. As such it cannot use getter or setters
     std::mutex inode_mutex;
 
+    std::mutex m;
+    std::condition_variable cv;
+
+
     static FsData* getInstance() {
         static FsData instance;
         return &instance;

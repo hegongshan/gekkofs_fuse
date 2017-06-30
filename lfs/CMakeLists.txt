@@ -26,19 +26,20 @@ find_package(RocksDB REQUIRED)
 # margo dependencies
 find_package(Libev REQUIRED)
 find_package(CCI REQUIRED)
+#find_package(BMI REQUIRED)
 find_package(Mercury REQUIRED)
 find_package(MercuryUtil REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 # Optional dependencies
-find_package(AbtIO)
-option(WITH_AbtIO "AbtIO enabled" ON)
-if (WITH_AbtIO)
-    add_definitions(-DUSE_AbtIO=1)
-else ()
-    add_definitions(-DUSE_AbtIO=0)
-endif ()
+#find_package(AbtIO)
+#option(WITH_AbtIO "AbtIO enabled" ON)
+#if (WITH_AbtIO)
+#    add_definitions(-DUSE_AbtIO=1)
+#else ()
+#    add_definitions(-DUSE_AbtIO=0)
+#endif ()
 
 
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
@@ -56,7 +57,8 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # db header
         src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/db_util.hpp
         # rpc header
-        src/rpc/rpcs_test.hpp src/rpc/rpc_util_test.hpp src/rpc/rpc_util.hpp src/rpc/rpc_types.hpp src/rpc/rpc_defs.hpp
+        src/rpc/rpc_util.hpp src/rpc/rpc_types.hpp src/rpc/rpc_defs.hpp
+
         # rpcs header
         src/rpc/client/c_metadata.hpp
 
@@ -71,7 +73,8 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # db src
         src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
         # rpc src
-        src/rpc/rpc_util_test.cpp src/rpc/rpcs_test.cpp src/rpc/rpc_util.cpp
+        src/rpc/rpc_util.cpp
+
         # rpcs src
         src/rpc/server/s_metadata.cpp src/rpc/client/c_metadata.cpp
         )
@@ -80,5 +83,5 @@ target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
         # rocksdb libs
         ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
         # margo libs
-        ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${ABT_IO_LIBRARIES} ${MARGO_LIBRARIES}
+        ${CCI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${ABT_IO_LIBRARIES} ${MARGO_LIBRARIES}
         -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)

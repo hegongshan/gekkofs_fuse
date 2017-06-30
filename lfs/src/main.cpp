@@ -1,3 +1,5 @@
+
+#include <future>
 #include "main.hpp"
 #include "classes/metadata.hpp"
 #include "adafs_ops/mdata_ops.hpp"
@@ -5,12 +7,35 @@
 #include "fuse_ops.hpp"
 #include "rpc/rpc_util.hpp"
 
-#include "rpc/client/c_metadata.hpp"
 
 static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
 
+/**
+ * Initializes the rpc environment: Mercury with Argobots = Margo
+ * This must be run in a dedicated thread!
+ */
+void init_rpc_env(promise<bool> rpc_promise) {
+    auto ret = init_argobots();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    ret = init_rpc_server();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    auto mid = RPC_DATA->server_mid();
+    ret = init_rpc_client();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    rpc_promise.set_value(true);
+    margo_wait_for_finalize(mid);
+}
 /**
  * Initialize filesystem
  *
@@ -39,14 +64,14 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // Initialize rocksdb
     auto err = init_rocksdb();
     assert(err);
-    err = init_argobots();
-    assert(err);
-    err = init_rpc_server();
-    assert(err);
-    err = init_rpc_client();
-    assert(err);
-
-    send_minimal_rpc();
+    // Starting RPC environment
+    promise<bool> rpc_promise;
+    future<bool> rpc_future = rpc_promise.get_future();
+    thread t1(init_rpc_env, move(rpc_promise));
+    rpc_future.wait(); // wait for RPC environment to be initialized
+    assert(rpc_future.get()); // get potential error during RPC init and exit if future holds false
+    ADAFS_DATA->spdlogger()->info("RPC environment successfully started");
+    t1.detach(); // detach rpc thread for independent operation. This is mandatory for the Margo framework!
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
@@ -98,9 +123,18 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_destroy(void* pdata) {
-    destroy_rpc_server();
-    destroy_rpc_client();
-    destroy_argobots();
+    ADAFS_DATA->spdlogger()->info("Shutting down..."s);
+    // Shutting down RPC environment XXX LATER
+//    margo_finalize(RPC_DATA->client_mid());
+//    ADAFS_DATA->spdlogger()->info("Margo client finalized");
+//    margo_finalize(RPC_DATA->server_mid());
+//    ADAFS_DATA->spdlogger()->info("Margo server finalized");
+//    destroy_argobots();
+//    ADAFS_DATA->spdlogger()->info("Argobots shut down"s);
+//    destroy_rpc_client();
+//    ADAFS_DATA->spdlogger()->info("Client shut down"s);
+//    destroy_rpc_server();
+//    ADAFS_DATA->spdlogger()->info("Server shut down"s);
     Util::write_inode_cnt();
 }
 
