@@ -11,6 +11,12 @@
 static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
+namespace po = boost::program_options;
+
+struct tmp_fuse_usr {
+    std::vector<std::string> hosts;
+    std::string hostfile;
+};
 
 /**
  * Initializes the rpc environment: Mercury with Argobots = Margo
@@ -53,8 +59,12 @@ void init_rpc_env(promise<bool> rpc_promise) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
-
     ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
+
+    // parse additional arguments to adafs
+    auto fuse_data = static_cast<tmp_fuse_usr*>(pdata);
+    ADAFS_DATA->hosts(fuse_data->hosts);
+
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
     bfs::create_directories(ADAFS_DATA->inode_path());
@@ -209,12 +219,60 @@ int main(int argc, char* argv[]) {
 #else
     spdlog::set_level(spdlog::level::off);
 #endif
-    //extract the rootdir from argv and put it into rootdir of adafs_data
-    // TODO pointer modification = dangerous. need another solution
-    ADAFS_DATA->rootdir(string(realpath(argv[argc - 2], nullptr)));
-    argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = nullptr;
-    argc--;
+
+    // Parse input
+    auto fuse_argc = 1;
+    vector<string> fuse_argv;
+    fuse_argv.push_back(move(argv[0]));
+    auto fuse_struct = make_unique<tmp_fuse_usr>();
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+            ("help,h", "Help message")
+            ("foreground,f", "Run Fuse instance in foreground. (Fuse parameter)")
+            ("mountdir,m", po::value<string>(), "User Fuse mountdir. (Fuse parameter)")
+            ("rootdir,r", po::value<string>(), "ADA-FS data directory")
+            ("hostsfile", po::value<string>(), "Path to the hosts_ file for all fs participants")
+            ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        cout << desc << "\n";
+        return 1;
+    }
+
+    if (vm.count("foreground")) {
+        fuse_argc++;
+        fuse_argv.push_back("-f"s);
+    }
+    if (vm.count("mountdir")) {
+        fuse_argc++;
+        fuse_argv.push_back(vm["mountdir"].as<string>());
+    }
+    if (vm.count("rootdir")) {
+        ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
+    }
+
+    // XXX Hostfile parsing here...
+    if (vm.count("hosts")) {
+        auto hosts = vm["hosts"].as<string>();
+        // split comma separated host string
+        boost::tokenizer<> tok(hosts);
+        for (auto&& s : tok) {
+            fuse_struct->hosts.push_back(s);
+        }
+    }
+
+    // convert fuse_argv into char* []
+    char* fuse_argv_c[10] = {0};
+    for (unsigned int i = 0; i < fuse_argv.size(); ++i) {
+        char* tmp_c = new char[fuse_argv[i].size() + 1];
+        std::strcpy(tmp_c, fuse_argv[i].c_str());
+        fuse_argv_c[i] = tmp_c;
+    }
+
     //set all paths
     ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s);
     ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s);
@@ -222,7 +280,7 @@ int main(int argc, char* argv[]) {
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
     // Fuse stuff starts here in C style... ########################################################################
-    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    struct fuse_args args = FUSE_ARGS_INIT(fuse_argc, fuse_argv_c);
     struct fuse_session* se;
     struct fuse_cmdline_opts opts;
     int err = -1;
@@ -243,7 +301,7 @@ int main(int argc, char* argv[]) {
     }
 
     // creating a low level session
-    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), nullptr);
+    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), fuse_struct.get());
 
     if (se == NULL) {
         err_cleanup1(opts, args);

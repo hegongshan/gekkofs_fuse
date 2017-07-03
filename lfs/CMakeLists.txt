@@ -84,4 +84,4 @@ target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
         ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
         # margo libs
         ${CCI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${ABT_IO_LIBRARIES} ${MARGO_LIBRARIES}
-        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)
+        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)

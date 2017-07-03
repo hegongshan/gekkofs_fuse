@@ -20,6 +20,8 @@ extern "C" {
 // boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/program_options.hpp>
+#include <boost/tokenizer.hpp>
 // adafs
 #include "configure.hpp"
 // third party libs
@@ -39,8 +41,6 @@ extern "C" {
 #include <margo.h>
 #include <mercury.h>
 }
-
-#include <condition_variable>
 
 // classes
 #include "classes/fs_data.hpp"

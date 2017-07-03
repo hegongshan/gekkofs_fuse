@@ -32,6 +32,9 @@ private:
     std::string chunk_path_;
     std::string mgmt_path_;
 
+    // hosts_
+    std::vector<std::string> hosts_;
+
     // rocksdb
     std::shared_ptr<rocksdb::DB> rdb_;
     std::shared_ptr<rocksdb::DB> rdb_crt_; // additional db instance (currently not used)
@@ -45,9 +48,6 @@ public:
 
     // mutex has a deleted method to assign an existing mutex. As such it cannot use getter or setters
     std::mutex inode_mutex;
-
-    std::mutex m;
-    std::condition_variable cv;
 
 
     static FsData* getInstance() {
@@ -127,6 +127,10 @@ public:
     const rocksdb::WriteOptions& rdb_write_options() const;
 
     void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
+
+    const std::vector<std::string>& hosts() const;
+
+    void hosts(const std::vector<std::string>& hosts);
 
     // Utility member functions
 
