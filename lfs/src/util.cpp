@@ -19,7 +19,7 @@ namespace Util {
             ADAFS_DATA->spdlogger()->error("Hostname was not found in given parameters. Exiting ...");
             assert(false);
         }
-        // hostname was found in given hostlist
+        // hostname was found in given hostlist TODO doublecheck calculation
         auto my_hostnr = ADAFS_DATA->hosts().at(ADAFS_DATA->hostname());
         auto inode_max_chunk = std::numeric_limits<fuse_ino_t>::max();
         auto first_inode = static_cast<fuse_ino_t>(((inode_max_chunk / n_hosts) * my_hostnr) + 1);
@@ -50,7 +50,7 @@ namespace Util {
         auto i_path = bfs::path(ADAFS_DATA->mgmt_path() + "/inode_count");
         bfs::ofstream ofs{i_path};
         boost::archive::binary_oarchive ba(ofs);
-        fuse_ino_t inode = ADAFS_DATA->inode_count();
+        auto inode = ADAFS_DATA->inode_count();
         ba << inode;
 
         return 0;

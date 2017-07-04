@@ -6,6 +6,7 @@
 #define LFS_RPC_DATA_HPP
 
 #include "../main.hpp"
+#include "extern/lrucache/LRUCache11.hpp"
 
 class RPCData {
 
@@ -25,6 +26,8 @@ private:
     // Margo IDs. They can also be used to retrieve the Mercury classes and contexts that were created at init time
     margo_instance_id server_mid_;
     margo_instance_id client_mid_;
+
+    lru11::Cache<std::string, hg_addr_t> address_cache_{32768, 4096}; // XXX Set values are not based on anything...
 
     // TODO RPC client IDs
     // RPC client IDs
@@ -70,6 +73,8 @@ public:
     hg_id_t rpc_minimal_id() const;
 
     void rpc_minimal_id(hg_id_t rpc_minimal_id);
+
+    lru11::Cache<std::string, hg_addr_t>& address_cache();
 };
 
 

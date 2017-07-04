@@ -60,3 +60,8 @@ hg_id_t RPCData::rpc_minimal_id() const {
 void RPCData::rpc_minimal_id(hg_id_t rpc_minimal_id) {
     RPCData::rpc_minimal_id_ = rpc_minimal_id;
 }
+
+lru11::Cache<std::string, hg_addr_t>& RPCData::address_cache() {
+    return address_cache_;
+}
+

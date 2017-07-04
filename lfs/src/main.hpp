@@ -25,8 +25,8 @@ extern "C" {
 // adafs
 #include "configure.hpp"
 // third party libs
-#include "spdlog/spdlog.h"
-#include "spdlog/fmt/fmt.h"
+#include "extern/spdlog/spdlog.h"
+#include "extern/spdlog/fmt/fmt.h"
 // rocksdb
 #include <rocksdb/db.h>
 #include <rocksdb/slice.h>
