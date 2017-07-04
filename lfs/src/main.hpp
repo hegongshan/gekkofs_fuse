@@ -63,6 +63,8 @@ namespace Util {
     int write_inode_cnt();
 
     std::string get_my_hostname();
+
+    size_t get_rpc_node(std::string to_hash);
 }
 
 #endif //MAIN_H

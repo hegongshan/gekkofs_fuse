@@ -104,3 +104,30 @@ void send_minimal_rpc(void* arg) {
 
     ADAFS_DATA->spdlogger()->debug("minimal RPC is done.");
 }
+
+bool rpc_send_create(const uint64_t recipient, const fuse_ino_t parent, const string& name,
+                     const uid_t uid, const gid_t gid, const mode_t mode, fuse_ino_t& new_inode) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_create_in_t in;
+    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+    if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
+        ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
+        return false;
+    }
+    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_minimal_id(), &handle);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("creating handle FAILED");
+        return false;
+    }
+    int send_ret = HG_FALSE;
+    for (int i = 1; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 5000);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return true;
+}

@@ -61,7 +61,24 @@ void RPCData::rpc_minimal_id(hg_id_t rpc_minimal_id) {
     RPCData::rpc_minimal_id_ = rpc_minimal_id;
 }
 
-lru11::Cache<std::string, hg_addr_t>& RPCData::address_cache() {
+lru11::Cache<uint64_t, hg_addr_t>& RPCData::address_cache() {
     return address_cache_;
+}
+
+// Utility functions
+
+bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+    if (address_cache_.tryGet(hostid, svr_addr)) {
+        //found
+        return true;
+    } else {
+        // not found, manual lookup and add address mapping to LRU cache
+        auto hostname = ADAFS_DATA->hosts().at(hostid); // convert hostid to hostname
+        margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
+        if (svr_addr == HG_ADDR_NULL)
+            return false;
+        address_cache_.insert(hostid, svr_addr);
+        return true;
+    }
 }
 

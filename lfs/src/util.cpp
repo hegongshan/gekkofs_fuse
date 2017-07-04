@@ -14,15 +14,9 @@ namespace Util {
             ADAFS_DATA->inode_count(1);
             return 0;
         }
-        // Multiple hosts are part of the filesystem. check if hostname is part of it.
-        if (ADAFS_DATA->hosts().find(ADAFS_DATA->hostname()) == ADAFS_DATA->hosts().end()) {
-            ADAFS_DATA->spdlogger()->error("Hostname was not found in given parameters. Exiting ...");
-            assert(false);
-        }
         // hostname was found in given hostlist TODO doublecheck calculation
-        auto my_hostnr = ADAFS_DATA->hosts().at(ADAFS_DATA->hostname());
         auto inode_max_chunk = std::numeric_limits<fuse_ino_t>::max();
-        auto first_inode = static_cast<fuse_ino_t>(((inode_max_chunk / n_hosts) * my_hostnr) + 1);
+        auto first_inode = static_cast<fuse_ino_t>(((inode_max_chunk / n_hosts) * ADAFS_DATA->host_id()) + 1);
         ADAFS_DATA->inode_count(first_inode);
         return 0;
     }
@@ -66,5 +60,8 @@ namespace Util {
         return ret == 0 ? string(hostname) : ""s;
     }
 
+    size_t get_rpc_node(string to_hash) {
+        return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
+    }
 
 }

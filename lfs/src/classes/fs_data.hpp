@@ -35,8 +35,10 @@ private:
     std::string mgmt_path_;
 
     // hosts_
-    std::map<std::string, unsigned int> hosts_;
-    std::string hostname_;
+    std::map<uint64_t, std::string> hosts_;
+    uint64_t host_id_; // my host number
+    size_t host_size_;
+    int rpc_port_;
 
     // rocksdb
     std::shared_ptr<rocksdb::DB> rdb_;
@@ -131,13 +133,21 @@ public:
 
     void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
 
-    const std::map<std::string, unsigned int>& hosts() const;
+    const std::map<uint64_t, std::string>& hosts() const;
 
-    void hosts(const std::map<std::string, unsigned int>& hosts);
+    void hosts(const std::map<uint64_t, std::string>& hosts);
 
-    const std::string& hostname() const;
+    const uint64_t& host_id() const;
 
-    unsigned long hostname(const std::string& hostname);
+    void host_id(const uint64_t& host_id);
+
+    size_t host_size() const;
+
+    void host_size(size_t host_size);
+
+    int rpc_port() const;
+
+    void rpc_port(int rpc_port);
 
     // Utility member functions
 

@@ -14,8 +14,10 @@ using namespace std;
 namespace po = boost::program_options;
 
 struct tmp_fuse_usr {
-    std::map<std::string, unsigned int> hosts;
+    // Map host nr to host
+    std::map<uint64_t, std::string> hosts;
     std::string hostfile;
+    uint64_t host_nr;
 };
 
 /**
@@ -65,12 +67,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // parse additional arguments to adafs
     auto fuse_data = static_cast<tmp_fuse_usr*>(pdata);
     ADAFS_DATA->hosts(fuse_data->hosts);
-
-    auto hostname_size = ADAFS_DATA->hostname(Util::get_my_hostname());
-    if (hostname_size == 0) {
-        ADAFS_DATA->spdlogger()->error("Unable to read the machine's hostname");
-        assert(hostname_size != 0);
-    }
+    ADAFS_DATA->host_id(fuse_data->host_nr);
+    ADAFS_DATA->host_size(fuse_data->hosts.size());
+    ADAFS_DATA->rpc_port(RPCPORT);
 
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
@@ -100,7 +99,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     ADAFS_DATA->blocksize(4096);
 
     // Init unordered_map for caching metadata that was already looked up XXX use later
-    ADAFS_DATA->hashmap(unordered_map<string, string>());
+    ADAFS_DATA->hashmap(unordered_map<string, string>()); //unused
     ADAFS_DATA->hashf(hash<string>());
 
 //    md = make_shared<Metadata>();
@@ -262,15 +261,29 @@ int main(int argc, const char* argv[]) {
         ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
     }
 
-    // XXX Hostfile parsing here...
+    // TODO Hostfile parsing here...
     if (vm.count("hosts")) {
         auto hosts = vm["hosts"].as<string>();
-        unsigned int i = 0;
+        uint64_t i = 0;
+        auto found_hostname = false;
+        auto hostname = Util::get_my_hostname();
+        if (hostname.size() == 0) {
+            cerr << "Unable to read the machine's hostname" << endl;
+            assert(hostname.size() != 0);
+        }
         // split comma separated host string
         boost::tokenizer<> tok(hosts);
         for (auto&& s : tok) {
-            fuse_struct->hosts[s] = i;
+            fuse_struct->hosts[i] = s;
+            if (hostname == s) {
+                fuse_struct->host_nr = i;
+                found_hostname = true;
+            }
             i++;
+        }
+        if (!found_hostname) {
+            cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
+            assert(found_hostname);
         }
     }
 

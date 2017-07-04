@@ -142,28 +142,46 @@ void FsData::inode_count(fuse_ino_t inode_count) {
     FsData::inode_count_ = inode_count;
 }
 
-const std::map<std::string, unsigned int>& FsData::hosts() const {
+const std::map<uint64_t, std::string>& FsData::hosts() const {
     return hosts_;
 }
 
-void FsData::hosts(const std::map<std::string, unsigned int>& hosts) {
+void FsData::hosts(const std::map<uint64_t, std::string>& hosts) {
     FsData::hosts_ = hosts;
 }
 
-const std::string& FsData::hostname() const {
-    return hostname_;
+const uint64_t& FsData::host_id() const {
+    return host_id_;
 }
 
-unsigned long FsData::hostname(const std::string& hostname) {
-    FsData::hostname_ = hostname;
-    return hostname.size();
+void FsData::host_id(const uint64_t& host_id) {
+    FsData::host_id_ = host_id;
 }
+
+size_t FsData::host_size() const {
+    return host_size_;
+}
+
+void FsData::host_size(size_t host_size) {
+    FsData::host_size_ = host_size;
+}
+
+int FsData::rpc_port() const {
+    return rpc_port_;
+}
+
+void FsData::rpc_port(int rpc_port) {
+    FsData::rpc_port_ = rpc_port;
+}
+
 // Utility member functions
 
 fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
     FsData::inode_count_ += count;
     return FsData::inode_count_;
 }
+
+
 
 
 

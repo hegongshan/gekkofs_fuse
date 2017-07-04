@@ -27,7 +27,7 @@ private:
     margo_instance_id server_mid_;
     margo_instance_id client_mid_;
 
-    lru11::Cache<std::string, hg_addr_t> address_cache_{32768, 4096}; // XXX Set values are not based on anything...
+    lru11::Cache<uint64_t, hg_addr_t> address_cache_{32768, 4096}; // XXX Set values are not based on anything...
 
     // TODO RPC client IDs
     // RPC client IDs
@@ -74,7 +74,11 @@ public:
 
     void rpc_minimal_id(hg_id_t rpc_minimal_id);
 
-    lru11::Cache<std::string, hg_addr_t>& address_cache();
+    lru11::Cache<uint64_t, hg_addr_t>& address_cache();
+
+    // Utility functions
+
+    bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr);
 };
 
 
