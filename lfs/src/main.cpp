@@ -1,6 +1,6 @@
 
-#include <future>
 #include "main.hpp"
+#include <future>
 #include "classes/metadata.hpp"
 #include "adafs_ops/mdata_ops.hpp"
 #include "adafs_ops/dentry_ops.hpp"
@@ -14,7 +14,7 @@ using namespace std;
 namespace po = boost::program_options;
 
 struct tmp_fuse_usr {
-    std::vector<std::string> hosts;
+    std::map<std::string, unsigned int> hosts;
     std::string hostfile;
 };
 
@@ -42,6 +42,7 @@ void init_rpc_env(promise<bool> rpc_promise) {
     rpc_promise.set_value(true);
     margo_wait_for_finalize(mid);
 }
+
 /**
  * Initialize filesystem
  *
@@ -64,6 +65,12 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // parse additional arguments to adafs
     auto fuse_data = static_cast<tmp_fuse_usr*>(pdata);
     ADAFS_DATA->hosts(fuse_data->hosts);
+
+    auto hostname_size = ADAFS_DATA->hostname(Util::get_my_hostname());
+    if (hostname_size == 0) {
+        ADAFS_DATA->spdlogger()->error("Unable to read the machine's hostname");
+        assert(hostname_size != 0);
+    }
 
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
@@ -200,7 +207,7 @@ void err_cleanup3(fuse_session& se) {
  * @param argv
  * @return
  */
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
 
     //Initialize the mapping of Fuse functions
     init_adafs_ops(&adafs_ops);
@@ -258,10 +265,12 @@ int main(int argc, char* argv[]) {
     // XXX Hostfile parsing here...
     if (vm.count("hosts")) {
         auto hosts = vm["hosts"].as<string>();
+        unsigned int i = 0;
         // split comma separated host string
         boost::tokenizer<> tok(hosts);
         for (auto&& s : tok) {
-            fuse_struct->hosts.push_back(s);
+            fuse_struct->hosts[s] = i;
+            i++;
         }
     }
 

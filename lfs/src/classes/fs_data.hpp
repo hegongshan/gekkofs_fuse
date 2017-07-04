@@ -6,6 +6,8 @@
 #define LFS_FS_DATA_H
 
 #include "../main.hpp"
+#include <map>
+
 
 class FsData {
 
@@ -33,7 +35,8 @@ private:
     std::string mgmt_path_;
 
     // hosts_
-    std::vector<std::string> hosts_;
+    std::map<std::string, unsigned int> hosts_;
+    std::string hostname_;
 
     // rocksdb
     std::shared_ptr<rocksdb::DB> rdb_;
@@ -128,9 +131,13 @@ public:
 
     void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
 
-    const std::vector<std::string>& hosts() const;
+    const std::map<std::string, unsigned int>& hosts() const;
 
-    void hosts(const std::vector<std::string>& hosts);
+    void hosts(const std::map<std::string, unsigned int>& hosts);
+
+    const std::string& hostname() const;
+
+    unsigned long hostname(const std::string& hostname);
 
     // Utility member functions
 

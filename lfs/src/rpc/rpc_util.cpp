@@ -19,13 +19,13 @@ bool init_argobots() {
     // We need no arguments to init
     auto argo_err = ABT_init(0, nullptr);
     if (argo_err != 0) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: ABT_init() Failed to init Argobots (client)");
+        ADAFS_DATA->spdlogger()->error("ABT_init() Failed to init Argobots (client)");
         return false;
     }
     // Set primary execution stream to idle without polling. Normally xstreams cannot sleep. This is what ABT_snoozer does
     argo_err = ABT_snoozer_xstream_self_set();
     if (argo_err != 0) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: ABT_snoozer_xstream_self_set()  (client)");
+        ADAFS_DATA->spdlogger()->error("ABT_snoozer_xstream_self_set()  (client)");
         return false;
     }
     ADAFS_DATA->spdlogger()->info("Success.");
@@ -41,7 +41,7 @@ void destroy_argobots() {
     if (ret == ABT_SUCCESS) {
         ADAFS_DATA->spdlogger()->info("Argobots successfully shutdown.");
     } else {
-        ADAFS_DATA->spdlogger()->info("Argobots shutdown FAILED with err code {}", ret);
+        ADAFS_DATA->spdlogger()->error("Argobots shutdown FAILED with err code {}", ret);
     }
 }
 
@@ -66,13 +66,13 @@ bool init_rpc_server() {
     // Init Mercury layer (must be finalized when finished)
     hg_class = HG_Init(protocol_port.c_str(), HG_TRUE);
     if (hg_class == nullptr) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Init() Failed to init Mercury server layer");
+        ADAFS_DATA->spdlogger()->error("HG_Init() Failed to init Mercury server layer");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Context_create() Failed to create Mercury server context");
+        ADAFS_DATA->spdlogger()->error("HG_Context_create() Failed to create Mercury server context");
         HG_Finalize(hg_class);
         return false;
     }
@@ -80,7 +80,7 @@ bool init_rpc_server() {
     // Figure out what address this server is listening on (must be freed when finished)
     auto hg_ret = HG_Addr_self(hg_class, &addr_self);
     if (hg_ret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Addr_self() Failed to retrieve server address");
+        ADAFS_DATA->spdlogger()->error("HG_Addr_self() Failed to retrieve server address");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         return false;
@@ -88,7 +88,7 @@ bool init_rpc_server() {
     // Convert the address to a cstring (with \0 terminator).
     hg_ret = HG_Addr_to_string(hg_class, addr_self_cstring, &addr_self_cstring_sz, addr_self);
     if (hg_ret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Addr_to_string Failed to convert address to cstring");
+        ADAFS_DATA->spdlogger()->error("HG_Addr_to_string Failed to convert address to cstring");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         HG_Addr_free(hg_class, addr_self);
@@ -103,7 +103,7 @@ bool init_rpc_server() {
     // Start Margo
     auto mid = margo_init(0, 0, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: margo_init failed to initialize the Margo server");
+        ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo server");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         return false;
@@ -148,13 +148,13 @@ bool init_rpc_client() {
     hg_context_t* hg_context;
     hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Init() Failed to init Mercury client layer");
+        ADAFS_DATA->spdlogger()->error("HG_Init() Failed to init Mercury client layer");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        ADAFS_DATA->spdlogger()->info("[ERR]: HG_Context_create() Failed to create Mercury client context");
+        ADAFS_DATA->spdlogger()->error("HG_Context_create() Failed to create Mercury client context");
         HG_Finalize(hg_class);
         return false;
     }

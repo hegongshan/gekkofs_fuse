@@ -61,6 +61,8 @@ namespace Util {
     int read_inode_cnt();
 
     int write_inode_cnt();
+
+    std::string get_my_hostname();
 }
 
 #endif //MAIN_H

@@ -3,15 +3,33 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include "main.hpp"
 
+using namespace std;
+
 namespace Util {
 
     int init_inode_no() {
-        ADAFS_DATA->inode_count(1);
+        auto n_hosts = ADAFS_DATA->hosts().size();
+        // We are working locally. Start with inode 1
+        if (n_hosts == 0) {
+            ADAFS_DATA->inode_count(1);
+            return 0;
+        }
+        // Multiple hosts are part of the filesystem. check if hostname is part of it.
+        if (ADAFS_DATA->hosts().find(ADAFS_DATA->hostname()) == ADAFS_DATA->hosts().end()) {
+            ADAFS_DATA->spdlogger()->error("Hostname was not found in given parameters. Exiting ...");
+            assert(false);
+        }
+        // hostname was found in given hostlist
+        auto my_hostnr = ADAFS_DATA->hosts().at(ADAFS_DATA->hostname());
+        auto inode_max_chunk = std::numeric_limits<fuse_ino_t>::max();
+        auto first_inode = static_cast<fuse_ino_t>(((inode_max_chunk / n_hosts) * my_hostnr) + 1);
+        ADAFS_DATA->inode_count(first_inode);
         return 0;
     }
 
     fuse_ino_t generate_inode_no() {
         std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
+        // TODO check that our inode counter is within boundaries of inode numbers in the given node
         return ADAFS_DATA->raise_inode_count(1);
     }
 
@@ -36,6 +54,16 @@ namespace Util {
         ba << inode;
 
         return 0;
+    }
+
+    /**
+     * Returns the machine's hostname
+     * @return
+     */
+    string get_my_hostname() {
+        char hostname[1024];
+        auto ret = gethostname(hostname, 1024);
+        return ret == 0 ? string(hostname) : ""s;
     }
 
 

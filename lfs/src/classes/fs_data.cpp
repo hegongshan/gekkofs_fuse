@@ -142,20 +142,29 @@ void FsData::inode_count(fuse_ino_t inode_count) {
     FsData::inode_count_ = inode_count;
 }
 
-const std::vector<std::string>& FsData::hosts() const {
+const std::map<std::string, unsigned int>& FsData::hosts() const {
     return hosts_;
 }
 
-void FsData::hosts(const std::vector<std::string>& hosts) {
+void FsData::hosts(const std::map<std::string, unsigned int>& hosts) {
     FsData::hosts_ = hosts;
 }
 
+const std::string& FsData::hostname() const {
+    return hostname_;
+}
+
+unsigned long FsData::hostname(const std::string& hostname) {
+    FsData::hostname_ = hostname;
+    return hostname.size();
+}
 // Utility member functions
 
 fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
     FsData::inode_count_ += count;
     return FsData::inode_count_;
 }
+
 
 
 
