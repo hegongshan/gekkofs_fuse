@@ -38,7 +38,7 @@ private:
     std::map<uint64_t, std::string> hosts_;
     uint64_t host_id_; // my host number
     size_t host_size_;
-    int rpc_port_;
+    std::string rpc_port_;
 
     // rocksdb
     std::shared_ptr<rocksdb::DB> rdb_;
@@ -145,9 +145,9 @@ public:
 
     void host_size(size_t host_size);
 
-    int rpc_port() const;
+    std::string rpc_port() const;
 
-    void rpc_port(int rpc_port);
+    void rpc_port(std::string rpc_port);
 
     // Utility member functions
 

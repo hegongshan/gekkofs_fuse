@@ -11,5 +11,7 @@
 
 DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create)
+
 
 #endif //LFS_RPC_DEFS_HPP

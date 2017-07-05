@@ -51,7 +51,7 @@ void destroy_argobots() {
  * @return
  */
 bool init_rpc_server() {
-    auto protocol_port = "cci+tcp://localhost:1234"s;
+    auto protocol_port = "cci+tcp://localhost:" + to_string(RPCPORT);
 
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
@@ -128,6 +128,7 @@ bool init_rpc_server() {
 void register_server_rpcs() {
     auto hg_class = RPC_DATA->server_hg_class();
     MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_create", rpc_create_in_t, rpc_create_out_t, rpc_srv_create_handler);
 }
 
 void destroy_rpc_server() {
@@ -163,7 +164,8 @@ bool init_rpc_client() {
     /* MARGO PART */
     ADAFS_DATA->spdlogger()->info("Initializing Margo client ...");
     // Start Margo
-    auto mid = margo_init(0, 0, hg_context);
+    auto mid = margo_init(0, 0,
+                          hg_context); // TODO if the progress thread is set to 1, we do not consume 100% of one core. INVESTIGATE LATER
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->info("[ERR]: margo_init failed to initialize the Margo client");
         HG_Context_destroy(hg_context);
@@ -189,6 +191,8 @@ bool init_rpc_client() {
 void register_client_rpcs() {
     auto hg_class = RPC_DATA->client_hg_class();
     RPC_DATA->rpc_minimal_id(MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr));
+    RPC_DATA->rpc_srv_create_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_create", rpc_create_in_t, rpc_create_in_t, nullptr));
 }
 
 void destroy_rpc_client() {

@@ -60,8 +60,4 @@ namespace Util {
         return ret == 0 ? string(hostname) : ""s;
     }
 
-    size_t get_rpc_node(string to_hash) {
-        return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
-    }
-
 }

@@ -38,8 +38,9 @@ extern "C" {
 #include <abt.h>
 #include <abt-snoozer.h>
 //#include <abt-io.h>
+//#include <mercury.h>
+#include <mercury_proc_string.h>
 #include <margo.h>
-#include <mercury.h>
 }
 
 // classes
@@ -63,8 +64,6 @@ namespace Util {
     int write_inode_cnt();
 
     std::string get_my_hostname();
-
-    size_t get_rpc_node(std::string to_hash);
 }
 
 #endif //MAIN_H

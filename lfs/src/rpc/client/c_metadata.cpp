@@ -3,6 +3,7 @@
 //
 
 #include "c_metadata.hpp"
+#include "../rpc_types.hpp"
 
 using namespace std;
 
@@ -105,29 +106,50 @@ void send_minimal_rpc(void* arg) {
     ADAFS_DATA->spdlogger()->debug("minimal RPC is done.");
 }
 
-bool rpc_send_create(const uint64_t recipient, const fuse_ino_t parent, const string& name,
-                     const uid_t uid, const gid_t gid, const mode_t mode, fuse_ino_t& new_inode) {
+int rpc_send_create(const size_t recipient, const fuse_ino_t parent, const string& name,
+                    const uid_t uid, const gid_t gid, const mode_t mode, fuse_ino_t& new_inode) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_create_in_t in;
+    rpc_create_out_t out;
+    // Fill in
+    in.uid = uid;
+    in.gid = gid;
+    in.mode = mode;
+    in.filename = name.c_str();
+    in.parent_inode = parent;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
         ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
-        return false;
+        return 1;
     }
-    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_minimal_id(), &handle);
+    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_create_id(), &handle);
     if (ret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("creating handle FAILED");
-        return false;
+        return 1;
     }
     int send_ret = HG_FALSE;
-    for (int i = 1; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 5000);
+    for (int i = 0; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
         if (send_ret == HG_SUCCESS) {
             break;
         }
     }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        ret = HG_Get_output(handle, &out);
+
+        ADAFS_DATA->spdlogger()->debug("Got response ret: {}", out.new_inode);
+        new_inode = static_cast<fuse_ino_t>(out.new_inode);
+
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        ADAFS_DATA->spdlogger()->error("RPC NOT send (timed out)");
+    }
+
+
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return true;
+    return 0;
 }

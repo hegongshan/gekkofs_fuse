@@ -65,6 +65,14 @@ lru11::Cache<uint64_t, hg_addr_t>& RPCData::address_cache() {
     return address_cache_;
 }
 
+hg_id_t RPCData::rpc_srv_create_id() const {
+    return rpc_srv_create_id_;
+}
+
+void RPCData::rpc_srv_create_id(hg_id_t rpc_srv_create_id) {
+    RPCData::rpc_srv_create_id_ = rpc_srv_create_id;
+}
+
 // Utility functions
 
 bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
@@ -73,7 +81,8 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         return true;
     } else {
         // not found, manual lookup and add address mapping to LRU cache
-        auto hostname = ADAFS_DATA->hosts().at(hostid); // convert hostid to hostname
+        auto hostname = "cci+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
+                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
         margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
         if (svr_addr == HG_ADDR_NULL)
             return false;
@@ -81,4 +90,14 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         return true;
     }
 }
+
+size_t RPCData::get_rpc_node(std::string to_hash) {
+    return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
+}
+
+std::string RPCData::get_dentry_hashable(const fuse_ino_t parent, const char* name) {
+    return fmt::FormatInt(parent).str() + "_" + name;
+}
+
+
 

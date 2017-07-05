@@ -69,7 +69,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     ADAFS_DATA->hosts(fuse_data->hosts);
     ADAFS_DATA->host_id(fuse_data->host_nr);
     ADAFS_DATA->host_size(fuse_data->hosts.size());
-    ADAFS_DATA->rpc_port(RPCPORT);
+    ADAFS_DATA->rpc_port(fmt::FormatInt(RPCPORT).str());
 
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());

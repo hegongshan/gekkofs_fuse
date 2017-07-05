@@ -32,6 +32,7 @@ private:
     // TODO RPC client IDs
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
+    hg_id_t rpc_srv_create_id_;
 
 
 public:
@@ -76,9 +77,17 @@ public:
 
     lru11::Cache<uint64_t, hg_addr_t>& address_cache();
 
+    hg_id_t rpc_srv_create_id() const;
+
+    void rpc_srv_create_id(hg_id_t rpc_srv_create_id);
+
     // Utility functions
 
     bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr);
+
+    size_t get_rpc_node(std::string to_hash);
+
+    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
 };
 
 

@@ -118,12 +118,24 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_
         // TODO
     }
 
-
-    auto buf = make_shared<struct stat>();
-    auto err = get_attr(*buf, ino);
+    struct stat buf{};
+    auto err = get_attr(buf, ino);
+    // TODO I think we need a cache to cache metadata on a node. Otherwise we have to get the metadata remotely all the time
+//    int err = 0;
+//    buf.st_ino = ino;
+//    buf.st_size = attr->st_size;
+//    buf.st_nlink = attr->st_nlink;
+//    buf.st_gid = fuse_req_ctx(req)->gid;
+//    buf.st_blocks = attr->st_blocks;
+//    buf.st_blksize = attr->st_blksize;
+//    buf.st_mode = S_IFREG | 477;
+//    buf.st_uid = fuse_req_ctx(req)->gid;
+//    buf.st_atim = attr->st_atim;
+//    buf.st_mtim = attr->st_mtim;
+//    buf.st_ctim = attr->st_ctim;
 
     if (err == 0) {
-        fuse_reply_attr(req, buf.get(), 1.0);
+        fuse_reply_attr(req, &buf, 1.0);
     } else {
         fuse_reply_err(req, err);
     }
@@ -177,21 +189,44 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t
 //    auto diff_count = chrono::duration_cast<ns>(diff).count();
 //    ADAFS_DATA->spdlogger()->info("TIME SPENT: {} microseconds", (diff_count / 1000));
 
-    // send_rpc...
+    fuse_entry_param fep{};
+    int err;
+    auto uid = fuse_req_ctx(req)->uid;
+    auto gid = fuse_req_ctx(req)->gid;
 
-    auto fep = make_shared<fuse_entry_param>();
+    if (ADAFS_DATA->host_size() > 1) {
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (recipient == ADAFS_DATA->host_id()) { // local
+            // XXX check permissions (omittable), should create node be atomic?
+            err = create_node(fep, parent, string(name), uid, gid, S_IFREG | mode);
+        } else { // remote
+            fuse_ino_t new_inode;
+            err = rpc_send_create(recipient, parent, name, uid, gid, S_IFREG | mode, new_inode);
+            // rpc_send_create only returns the new inode. The other values are set to default values which are set
+            // during create operation on the other node. Since the values are expected rpc doesn't need to return it
+            if (err == 0) {
+                fep.ino = new_inode;
+                fep.attr.st_ino = new_inode;
+                fep.attr.st_mode = mode;
+                fep.attr.st_blocks = 0;
+                fep.attr.st_gid = gid;
+                fep.attr.st_uid = uid;
+                fep.attr.st_nlink = 0;
+                fep.attr.st_size = 0;
+                fep.entry_timeout = 1.0;
+                fep.attr_timeout = 1.0;
+                // times are ignored here
+            }
+        }
+    } else { // local
+        // XXX check permissions (omittable), should create node be atomic?
+        err = create_node(fep, parent, string(name), uid, gid, S_IFREG | mode);
+    }
 
-    // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
-
-    // XXX check permissions (omittable)
-
-    // XXX all this below stuff needs to be atomic. reroll if error happens
-
-    auto err = create_node(*fep, parent, string(name), fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // XXX create chunk space
     if (err == 0)
-        fuse_reply_create(req, fep.get(), fi);
+        fuse_reply_create(req, &fep, fi);
     else
         fuse_reply_err(req, err);
 }
