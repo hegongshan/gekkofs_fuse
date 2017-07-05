@@ -145,11 +145,62 @@ int rpc_send_create(const size_t recipient, const fuse_ino_t parent, const strin
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        ADAFS_DATA->spdlogger()->error("RPC NOT send (timed out)");
+        ADAFS_DATA->spdlogger()->error("RPC send_create (timed out)");
     }
 
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
+    return 0;
+}
+
+int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct stat& attr) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_get_attr_in_t in;
+    rpc_get_attr_out_t out;
+    // fill in
+    in.inode = inode;
+    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+    if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
+        ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
+        return 1;
+    }
+    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_attr_id(), &handle);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("creating handle FAILED");
+        return 1;
+    }
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        ret = HG_Get_output(handle, &out);
+
+        ADAFS_DATA->spdlogger()->debug("Got response mode {}", out.mode);
+        attr.st_atim.tv_sec = static_cast<time_t>(out.atime);
+        attr.st_mtim.tv_sec = static_cast<time_t>(out.mtime);
+        attr.st_ctim.tv_sec = static_cast<time_t>(out.ctime);
+        attr.st_mode = static_cast<mode_t>(out.mode);
+        attr.st_uid = static_cast<uid_t>(out.uid);
+        attr.st_gid = static_cast<gid_t>(out.gid);
+        attr.st_nlink = static_cast<nlink_t>(out.nlink);
+        attr.st_size = static_cast<size_t>(out.size);
+        attr.st_blocks = static_cast<blkcnt_t>(out.blocks);
+
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        ADAFS_DATA->spdlogger()->error("RPC send_get_attr (timed out)");
+    }
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+
     return 0;
 }

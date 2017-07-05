@@ -73,6 +73,14 @@ void RPCData::rpc_srv_create_id(hg_id_t rpc_srv_create_id) {
     RPCData::rpc_srv_create_id_ = rpc_srv_create_id;
 }
 
+hg_id_t RPCData::rpc_srv_attr_id() const {
+    return rpc_srv_attr_id_;
+}
+
+void RPCData::rpc_srv_attr_id(hg_id_t rpc_srv_attr_id) {
+    RPCData::rpc_srv_attr_id_ = rpc_srv_attr_id;
+}
+
 // Utility functions
 
 bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
@@ -98,6 +106,7 @@ size_t RPCData::get_rpc_node(std::string to_hash) {
 std::string RPCData::get_dentry_hashable(const fuse_ino_t parent, const char* name) {
     return fmt::FormatInt(parent).str() + "_" + name;
 }
+
 
 
 

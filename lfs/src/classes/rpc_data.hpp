@@ -33,6 +33,7 @@ private:
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
     hg_id_t rpc_srv_create_id_;
+    hg_id_t rpc_srv_attr_id_;
 
 
 public:
@@ -80,6 +81,10 @@ public:
     hg_id_t rpc_srv_create_id() const;
 
     void rpc_srv_create_id(hg_id_t rpc_srv_create_id);
+
+    hg_id_t rpc_srv_attr_id() const;
+
+    void rpc_srv_attr_id(hg_id_t rpc_srv_attr_id);
 
     // Utility functions
 

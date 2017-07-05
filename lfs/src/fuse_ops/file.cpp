@@ -35,11 +35,27 @@ using namespace std;
 void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_getattr() enter: inode {}", ino);
 
-    auto attr = make_shared<struct stat>();
-    auto err = get_attr(*attr, ino);
+    struct stat attr{};
+    int err;
+
+    if (ADAFS_DATA->host_size() > 1) { // might be remote
+        auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(ino).str());
+        if (recipient == ADAFS_DATA->host_id()) { // local
+            err = get_attr(attr, ino);
+
+        } else { // remote
+            err = rpc_send_get_attr(recipient, ino, attr);
+        }
+    } else { // local
+        err = get_attr(attr, ino);
+
+    }
+
+
+//    auto attr = make_shared<struct stat>();
     if (err == 0) {
         // XXX take a look into timeout value later
-        fuse_reply_attr(req, attr.get(), 1.0);
+        fuse_reply_attr(req, &attr, 1.0);
     } else {
         fuse_reply_err(req, err);
     }
