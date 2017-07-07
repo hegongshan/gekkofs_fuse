@@ -5,6 +5,38 @@
 #include "rpc_data.hpp"
 
 
+// Utility functions
+
+bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+
+    if (address_cache_.tryGet(hostid, svr_addr)) {
+        ADAFS_DATA->spdlogger()->debug("tryGet successful and put in svr_addr ");
+        //found
+        return true;
+    } else {
+        ADAFS_DATA->spdlogger()->debug("not found in lrucache");
+        // not found, manual lookup and add address mapping to LRU cache
+        auto hostname = "cci+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
+                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
+        ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
+        margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
+        if (svr_addr == HG_ADDR_NULL)
+            return false;
+        address_cache_.insert(hostid, svr_addr);
+        return true;
+    }
+}
+
+size_t RPCData::get_rpc_node(std::string to_hash) {
+    return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
+}
+
+std::string RPCData::get_dentry_hashable(const fuse_ino_t parent, const char* name) {
+    return fmt::FormatInt(parent).str() + "_" + name;
+}
+
+// Getter/Setter
+
 hg_class_t* RPCData::server_hg_class() const {
     return server_hg_class_;
 }
@@ -65,14 +97,6 @@ lru11::Cache<uint64_t, hg_addr_t>& RPCData::address_cache() {
     return address_cache_;
 }
 
-hg_id_t RPCData::rpc_srv_create_id() const {
-    return rpc_srv_create_id_;
-}
-
-void RPCData::rpc_srv_create_id(hg_id_t rpc_srv_create_id) {
-    RPCData::rpc_srv_create_id_ = rpc_srv_create_id;
-}
-
 hg_id_t RPCData::rpc_srv_attr_id() const {
     return rpc_srv_attr_id_;
 }
@@ -81,31 +105,25 @@ void RPCData::rpc_srv_attr_id(hg_id_t rpc_srv_attr_id) {
     RPCData::rpc_srv_attr_id_ = rpc_srv_attr_id;
 }
 
-// Utility functions
-
-bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    if (address_cache_.tryGet(hostid, svr_addr)) {
-        //found
-        return true;
-    } else {
-        // not found, manual lookup and add address mapping to LRU cache
-        auto hostname = "cci+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
-                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
-        margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
-        if (svr_addr == HG_ADDR_NULL)
-            return false;
-        address_cache_.insert(hostid, svr_addr);
-        return true;
-    }
+hg_id_t RPCData::rpc_srv_create_dentry_id() const {
+    return rpc_srv_create_dentry_id_;
 }
 
-size_t RPCData::get_rpc_node(std::string to_hash) {
-    return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
+void RPCData::rpc_srv_create_dentry_id(hg_id_t rpc_srv_create_dentry_id) {
+    RPCData::rpc_srv_create_dentry_id_ = rpc_srv_create_dentry_id;
 }
 
-std::string RPCData::get_dentry_hashable(const fuse_ino_t parent, const char* name) {
-    return fmt::FormatInt(parent).str() + "_" + name;
+hg_id_t RPCData::rpc_srv_create_mdata_id() const {
+    return rpc_srv_create_mdata_id_;
 }
+
+void RPCData::rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id) {
+    RPCData::rpc_srv_create_mdata_id_ = rpc_srv_create_mdata_id;
+}
+
+
+
+
 
 
 

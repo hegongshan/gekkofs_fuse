@@ -8,8 +8,8 @@
 using namespace std;
 
 // TODO error handling.
-int write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
-    auto inode_key = fmt::FormatInt(inode).str();
+int write_all_metadata(const Metadata& md) {
+    auto inode_key = fmt::FormatInt(md.inode_no()).str();
     db_put_mdata(db_build_mdata_key(
             inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime());
     db_put_mdata(db_build_mdata_key(
@@ -133,7 +133,53 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
 }
 
 /**
- * Creates a new node (file or directory) in the file system. Fills given fuse_entry_param.
+ * Initializes the metadata for the given parameters. Return value not returning the state yet.
+ * Function will additionally return filled fuse_entry_param
+ * @param inode
+ * @param uid
+ * @param gid
+ * @param mode
+ * @return always 0
+ */
+int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, const uid_t uid, const gid_t gid,
+                      mode_t mode) {
+    Metadata md{mode, uid, gid, inode};
+    if ((mode & S_IFDIR) == S_IFDIR) {
+        // XXX just visual. size computation of directory should be done properly at some point
+        md.size(ADAFS_DATA->blocksize());
+    }
+    write_all_metadata(md);
+
+    // create dentry for Linux
+    fep.entry_timeout = 1.0;
+    fep.attr_timeout = 1.0;
+    fep.ino = md.inode_no();
+    //fill fep.attr with the metadata information
+    metadata_to_stat(md, fep.attr);
+    return 0;
+}
+
+/**
+ * Initializes the metadata for the given parameters. Return value not returning the state yet.
+ * @param inode
+ * @param uid
+ * @param gid
+ * @param mode
+ * @return always 0
+ */
+int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode_t mode) {
+    Metadata md{mode, uid, gid, inode};
+    if ((mode & S_IFDIR) == S_IFDIR) {
+        // XXX just visual. size computation of directory should be done properly at some point
+        md.size(ADAFS_DATA->blocksize());
+    }
+    write_all_metadata(md);
+
+    return 0;
+}
+
+/**
+ * Creates a new node (file or directory) in the file system. Fills given fuse_entry_param. This function is only called locally
  * @param req
  * @param fep
  * @param parent
@@ -143,25 +189,12 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
  */
 int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, const uid_t uid, const gid_t gid,
                 mode_t mode) {
-    // create metadata of new file (this will also create a new inode number)
-    // mode is used here to init metadata
-    auto md = make_shared<Metadata>(mode, uid, gid);
-    if ((mode & S_IFDIR) == S_IFDIR) {
-        md->size(
-                ADAFS_DATA->blocksize()); // XXX just visual. size computation of directory should be done properly at some point
-    }
-    // create directory entry (can fail) in adafs
-    create_dentry(parent, md->inode_no(), name, mode);
-
-    // write metadata
-    write_all_metadata(*md, md->inode_no());
-
-    // create dentry for Linux
-    fep.entry_timeout = 1.0;
-    fep.attr_timeout = 1.0;
-    fep.ino = md->inode_no();
-    //fill fep->attr with the metadata information
-    metadata_to_stat(*md, fep.attr);
+    // create inode number
+    auto new_inode = Util::generate_inode_no();
+    // create dentry
+    create_dentry(parent, new_inode, name, mode);
+    // create metadata and fill fuse entry param
+    init_metadata_fep(fep, new_inode, uid, gid, mode);
 
     return 0;
 }

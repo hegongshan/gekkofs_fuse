@@ -13,14 +13,21 @@
 MERCURY_GEN_PROC(rpc_minimal_in_t, ((int32_t) (input)))
 
 MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
-// create
-MERCURY_GEN_PROC(rpc_create_in_t,
+// create dentry
+MERCURY_GEN_PROC(rpc_create_dentry_in_t,
                  ((uint64_t) (parent_inode))\
 ((hg_const_string_t) (filename))\
+((uint32_t) (mode)))
+
+MERCURY_GEN_PROC(rpc_create_dentry_out_t, ((uint64_t) (inode)))
+// create mdata
+MERCURY_GEN_PROC(rpc_create_mdata_in_t,
+                 ((uint64_t) (inode))\
 ((uint32_t) (gid))\
 ((uint32_t) (uid))\
 ((uint32_t) (mode)))
-MERCURY_GEN_PROC(rpc_create_out_t, ((uint64_t) (new_inode)))
+
+MERCURY_GEN_PROC(rpc_create_mdata_out_t, ((hg_bool_t) (success)))
 // get_attr
 MERCURY_GEN_PROC(rpc_get_attr_in_t, ((uint64_t) (inode)))
 

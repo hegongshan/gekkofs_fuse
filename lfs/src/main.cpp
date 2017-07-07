@@ -102,7 +102,6 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     ADAFS_DATA->hashmap(unordered_map<string, string>()); //unused
     ADAFS_DATA->hashf(hash<string>());
 
-//    md = make_shared<Metadata>();
     auto md = make_shared<Metadata>();
 
     ADAFS_DATA->spdlogger()->info("Checking root metadata...");
@@ -117,7 +116,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
         md->gid(0); // hardcoded root XXX
         md->inode_no(ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->info("Writing / metadata to disk..."s);
-        write_all_metadata(*md, ADAFS_ROOT_INODE);
+        write_all_metadata(*md);
         ADAFS_DATA->spdlogger()->info("Initializing dentry for /"s);
         init_dentry_dir(ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->info("Creating Metadata object"s);

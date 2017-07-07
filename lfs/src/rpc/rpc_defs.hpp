@@ -11,7 +11,9 @@
 
 DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_create)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_dentry)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
 

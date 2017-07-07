@@ -32,7 +32,8 @@ private:
     // TODO RPC client IDs
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
-    hg_id_t rpc_srv_create_id_;
+    hg_id_t rpc_srv_create_dentry_id_;
+    hg_id_t rpc_srv_create_mdata_id_;
     hg_id_t rpc_srv_attr_id_;
 
 
@@ -47,6 +48,16 @@ public:
     RPCData(RPCData const&) = delete;
 
     void operator=(RPCData const&) = delete;
+
+    // Utility functions
+
+    bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr);
+
+    size_t get_rpc_node(std::string to_hash);
+
+    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
+
+    // Getter/Setter
 
     hg_class_t* server_hg_class() const;
 
@@ -78,21 +89,18 @@ public:
 
     lru11::Cache<uint64_t, hg_addr_t>& address_cache();
 
-    hg_id_t rpc_srv_create_id() const;
-
-    void rpc_srv_create_id(hg_id_t rpc_srv_create_id);
-
     hg_id_t rpc_srv_attr_id() const;
 
     void rpc_srv_attr_id(hg_id_t rpc_srv_attr_id);
 
-    // Utility functions
+    hg_id_t rpc_srv_create_dentry_id() const;
 
-    bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr);
+    void rpc_srv_create_dentry_id(hg_id_t rpc_srv_create_dentry_id);
 
-    size_t get_rpc_node(std::string to_hash);
+    hg_id_t rpc_srv_create_mdata_id() const;
 
-    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
+    void rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id);
+
 };
 
 

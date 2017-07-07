@@ -13,7 +13,7 @@
 
 using namespace std;
 
-int write_all_metadata(const Metadata& md, const fuse_ino_t inode);
+int write_all_metadata(const Metadata& md);
 
 int read_all_metadata(Metadata& md, const fuse_ino_t inode);
 
@@ -24,6 +24,11 @@ int get_metadata(Metadata& md, const fuse_ino_t inode);
 int get_attr(struct stat& attr, const fuse_ino_t inode);
 
 void metadata_to_stat(const Metadata& md, struct stat& attr);
+
+int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, const uid_t uid, const gid_t gid,
+                      mode_t mode);
+
+int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode_t mode);
 
 int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, const uid_t uid, const gid_t gid,
                 mode_t mode);

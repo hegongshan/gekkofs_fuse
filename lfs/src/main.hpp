@@ -39,6 +39,7 @@ extern "C" {
 #include <abt-snoozer.h>
 //#include <abt-io.h>
 //#include <mercury.h>
+#include <mercury_types.h>
 #include <mercury_proc_string.h>
 #include <margo.h>
 }
