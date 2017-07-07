@@ -39,7 +39,7 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
 
     if (ADAFS_DATA->host_size() > 1) { // might be remote
         auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(ino).str());
-        if (recipient == ADAFS_DATA->host_id()) { // local
+        if (recipient == ADAFS_DATA->host_id() || ino == ADAFS_ROOT_INODE) { // local, root inode is locally available
             err = get_attr(attr, ino);
 
         } else { // remote
@@ -418,5 +418,6 @@ void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
 void adafs_ll_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_release() enter: inode {}", ino);
     // TODO to be implemented if required
+    // TODO Update: Not required afaik
     fuse_reply_err(req, 0);
 }

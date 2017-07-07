@@ -113,9 +113,9 @@ int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, cons
     rpc_create_dentry_in_t in;
     rpc_create_dentry_out_t out;
     // fill in
-    in.parent_inode = parent;
+    in.parent_inode = static_cast<uint64_t>(parent);
     in.filename = name.c_str();
-    in.mode = mode;
+    in.mode = static_cast<uint32_t>(mode);
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
         ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
@@ -146,7 +146,7 @@ int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, cons
         ADAFS_DATA->spdlogger()->error("RPC send_create_dentry (timed out)");
     }
 
-
+    in.filename = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
     return 0;
@@ -192,6 +192,7 @@ int rpc_send_create_mdata(const size_t recipient, const uid_t uid, const gid_t g
     } else {
         ADAFS_DATA->spdlogger()->error("RPC send_create_mdata(timed out)");
     }
+
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);

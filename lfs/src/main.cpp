@@ -42,7 +42,8 @@ void init_rpc_env(promise<bool> rpc_promise) {
         return;
     }
     rpc_promise.set_value(true);
-    margo_wait_for_finalize(mid);
+    margo_wait_for_finalize(
+            mid); // XXX this consumes 1 logical core. Should put a conditional variable here and wait until shutdown.
 }
 
 /**
