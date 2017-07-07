@@ -41,6 +41,12 @@ MERCURY_GEN_PROC(rpc_get_attr_out_t,
 ((int64_t) (atime))\
 ((int64_t) (mtime))\
 ((int64_t) (ctime)))
+// lookup
+MERCURY_GEN_PROC(rpc_lookup_in_t,
+                 ((uint64_t) (parent_inode))\
+((hg_const_string_t) (filename)))
+
+MERCURY_GEN_PROC(rpc_lookup_out_t, ((uint64_t) (inode)))
 
 
 #endif //LFS_RPC_TYPES_HPP

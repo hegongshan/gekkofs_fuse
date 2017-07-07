@@ -9,6 +9,7 @@
 #include "../adafs_ops/access.hpp"
 
 #include "../classes/dentry.hpp"
+#include "../rpc/client/c_dentry.hpp"
 
 
 using namespace std;
@@ -29,8 +30,19 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     int err;
     fuse_ino_t inode;
 
-    //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
-    tie(err, inode) = do_lookup(req, parent, string(name));
+    if (ADAFS_DATA->host_size() > 1) { // might be remote
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (recipient == ADAFS_DATA->host_id()) { // local
+            tie(err, inode) = do_lookup(parent, string(name));
+
+        } else { // remote
+            err = rpc_send_lookup(recipient, parent, name, inode);
+        }
+    } else { // local
+        //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
+        tie(err, inode) = do_lookup(parent, string(name));
+    }
+
     if (err != 0) {
         fuse_reply_err(req, err);
         return;
@@ -234,7 +246,7 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     fuse_ino_t inode;
 
     // get inode of file
-    tie(err, inode) = do_lookup(req, parent, name);
+    tie(err, inode) = do_lookup(parent, name);
     if (err != 0) {
         fuse_reply_err(req, err);
         return;

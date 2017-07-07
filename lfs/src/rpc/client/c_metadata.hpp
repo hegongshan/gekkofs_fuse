@@ -5,6 +5,7 @@
 #ifndef LFS_C_METADATA_HPP
 #define LFS_C_METADATA_HPP
 
+#include "../../main.hpp"
 #include "../rpc_types.hpp"
 
 void send_minimal_rpc(void* arg);

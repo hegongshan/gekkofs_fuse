@@ -35,6 +35,7 @@ private:
     hg_id_t rpc_srv_create_dentry_id_;
     hg_id_t rpc_srv_create_mdata_id_;
     hg_id_t rpc_srv_attr_id_;
+    hg_id_t rpc_srv_lookup_id_;
 
 
 public:
@@ -100,6 +101,10 @@ public:
     hg_id_t rpc_srv_create_mdata_id() const;
 
     void rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id);
+
+    hg_id_t rpc_srv_lookup_id() const;
+
+    void rpc_srv_lookup_id(hg_id_t rpc_srv_lookup_id);
 
 };
 

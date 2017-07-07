@@ -121,6 +121,14 @@ void RPCData::rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id) {
     RPCData::rpc_srv_create_mdata_id_ = rpc_srv_create_mdata_id;
 }
 
+hg_id_t RPCData::rpc_srv_lookup_id() const {
+    return rpc_srv_lookup_id_;
+}
+
+void RPCData::rpc_srv_lookup_id(hg_id_t rpc_srv_lookup_id) {
+    RPCData::rpc_srv_lookup_id_ = rpc_srv_lookup_id;
+}
+
 
 
 

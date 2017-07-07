@@ -101,7 +101,7 @@ void get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
  * @param name
  * @return pair<err, inode>
  */
-pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const string& name) {
+pair<int, fuse_ino_t> do_lookup(const fuse_ino_t p_inode, const string& name) {
     string val; // will we filled by dentry exist check
     if (db_dentry_exists(p_inode, name, val) == 0) { // dentry NOT found
         return make_pair(ENOENT, INVALID_INODE);

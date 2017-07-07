@@ -133,6 +133,7 @@ void register_server_rpcs() {
     MERCURY_REGISTER(hg_class, "rpc_srv_create_mdata", rpc_create_mdata_in_t, rpc_create_mdata_out_t,
                      rpc_srv_create_mdata_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, rpc_srv_lookup_handler);
 }
 
 void destroy_rpc_server() {
@@ -202,6 +203,8 @@ void register_client_rpcs() {
             MERCURY_REGISTER(hg_class, "rpc_srv_create_mdata", rpc_create_mdata_in_t, rpc_create_mdata_out_t, nullptr));
     RPC_DATA->rpc_srv_attr_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr));
+    RPC_DATA->rpc_srv_lookup_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, nullptr));
 }
 
 void destroy_rpc_client() {

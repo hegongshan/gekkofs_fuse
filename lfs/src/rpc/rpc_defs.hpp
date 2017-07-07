@@ -17,5 +17,7 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_lookup)
+
 
 #endif //LFS_RPC_DEFS_HPP

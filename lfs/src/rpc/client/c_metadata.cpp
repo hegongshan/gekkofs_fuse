@@ -3,7 +3,6 @@
 //
 
 #include "c_metadata.hpp"
-#include "../rpc_types.hpp"
 
 using namespace std;
 
@@ -112,6 +111,7 @@ int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, cons
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_create_dentry_in_t in;
     rpc_create_dentry_out_t out;
+    auto err = 0;
     // fill in
     in.parent_inode = static_cast<uint64_t>(parent);
     in.filename = name.c_str();
@@ -149,7 +149,10 @@ int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, cons
     in.filename = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return 0;
+    if (new_inode == INVALID_INODE)
+        err = 1;
+
+    return err;
 }
 
 int rpc_send_create_mdata(const size_t recipient, const uid_t uid, const gid_t gid,
@@ -249,3 +252,4 @@ int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct sta
 
     return 0;
 }
+
