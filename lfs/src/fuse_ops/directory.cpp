@@ -30,15 +30,14 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     int err;
     fuse_ino_t inode;
 
-    if (ADAFS_DATA->host_size() > 1) { // might be remote
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
-        if (recipient == ADAFS_DATA->host_id()) { // local
+        if (ADAFS_DATA->is_local_op(recipient)) { // local
             tie(err, inode) = do_lookup(parent, string(name));
-
         } else { // remote
             err = rpc_send_lookup(recipient, parent, name, inode);
         }
-    } else { // local
+    } else { // single node operation
         //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
         tie(err, inode) = do_lookup(parent, string(name));
     }

@@ -181,6 +181,10 @@ fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
     return FsData::inode_count_;
 }
 
+bool FsData::is_local_op(const size_t recipient) {
+    return recipient == host_id_;
+}
+
 
 
 

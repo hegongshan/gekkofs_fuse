@@ -53,7 +53,7 @@ int rpc_send_lookup(const size_t recipient, const fuse_ino_t parent, const char*
     HG_Destroy(handle);
 
     if (inode == INVALID_INODE)
-        err = 1;
+        err = ENOENT;
     return err;
 }
 

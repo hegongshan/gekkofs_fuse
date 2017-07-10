@@ -152,6 +152,8 @@ public:
     // Utility member functions
 
     fuse_ino_t raise_inode_count(fuse_ino_t count);
+
+    bool is_local_op(size_t recipient);
 };
 
 

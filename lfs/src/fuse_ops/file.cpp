@@ -38,15 +38,14 @@ void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
     struct stat attr{};
     int err;
 
-    if (ADAFS_DATA->host_size() > 1) { // might be remote
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(ino).str());
-        if (recipient == ADAFS_DATA->host_id() || ino == ADAFS_ROOT_INODE) { // local, root inode is locally available
+        if (ADAFS_DATA->is_local_op(recipient) || ino == ADAFS_ROOT_INODE) { // local, root inode is locally available
             err = get_attr(attr, ino);
-
         } else { // remote
             err = rpc_send_get_attr(recipient, ino, attr);
         }
-    } else { // local
+    } else { // single node operation
         err = get_attr(attr, ino);
 
     }
@@ -208,41 +207,49 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t
 
     fuse_entry_param fep{};
     int err;
+    fuse_ino_t new_inode;
     auto uid = fuse_req_ctx(req)->uid;
     auto gid = fuse_req_ctx(req)->gid;
     auto f_mode = S_IFREG | mode;
 
-    if (ADAFS_DATA->host_size() > 1) {
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
-        if (recipient == ADAFS_DATA->host_id()) { // local
-            // XXX check permissions (omittable), should create node be atomic?
-            err = create_node(fep, parent, string(name), uid, gid, f_mode);
-        } else { // remote
-            fuse_ino_t new_inode;
+        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry create
+            new_inode = Util::generate_inode_no();
+            err = create_dentry(parent, new_inode, name, mode);
+        } else { // remote dentry create
             err = rpc_send_create_dentry(recipient, parent, name, f_mode, new_inode);
-            if (err == 0) {
-                recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
-                err = rpc_send_create_mdata(recipient, uid, gid, f_mode, new_inode);
-                if (err == 0) {
-                    fep.ino = new_inode;
-                    fep.attr.st_ino = new_inode;
-                    fep.attr.st_mode = mode;
-                    fep.attr.st_blocks = 0;
-                    fep.attr.st_gid = gid;
-                    fep.attr.st_uid = uid;
-                    fep.attr.st_nlink = 0;
-                    fep.attr.st_size = 0;
-                    fep.entry_timeout = 1.0;
-                    fep.attr_timeout = 1.0;
-                }
-            }
-
         }
-    } else { // local
+        if (err != 0) { // failure in dentry creation
+            fuse_reply_err(req, err);
+            ADAFS_DATA->spdlogger()->error("Failed to create a dentry");
+            return;
+        }
+        // calculate recipient again for new inode because it could hash somewhere else
+        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata init
+            err = init_metadata_fep(fep, new_inode, uid, gid, mode);
+        } else { // remote metadata init
+            err = rpc_send_create_mdata(recipient, uid, gid, f_mode, new_inode);
+            if (err == 0) {
+                // Because we don't want to return the metadata init values through the RPC
+                // we just set dummy values here with the most important bits
+                fep.ino = new_inode;
+                fep.attr.st_ino = new_inode;
+                fep.attr.st_mode = mode;
+                fep.attr.st_blocks = 0;
+                fep.attr.st_gid = gid;
+                fep.attr.st_uid = uid;
+                fep.attr.st_nlink = 0;
+                fep.attr.st_size = 0;
+                fep.entry_timeout = 1.0;
+                fep.attr_timeout = 1.0;
+            }
+        }
+    } else { //local single node operation
         // XXX check permissions (omittable), should create node be atomic?
         err = create_node(fep, parent, string(name), uid, gid, f_mode);
     }
-
 
     // XXX create chunk space
     if (err == 0)
@@ -312,25 +319,26 @@ void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
     fuse_ino_t del_inode;
     int err;
 
-    if (ADAFS_DATA->host_size() > 1) {
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
-        if (recipient == ADAFS_DATA->host_id()) { // local
+        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry removal
             // Remove denty returns <err, inode_of_dentry> pair
             tie(err, del_inode) = remove_dentry(parent, name);
-            if (err != 0) {
-                fuse_reply_err(req, err);
-                return;
-            }
-            // Remove inode
-            err = remove_all_metadata(del_inode);
-        } else { // remote
+        } else { // remote dentry removal
             err = rpc_send_remove_dentry(recipient, parent, name, del_inode);
-            if (err == 0) {
-                recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
-                err = rpc_send_remove_mdata(recipient, del_inode);
-            }
         }
-    } else { // local
+        if (err != 0) {
+            fuse_reply_err(req, err);
+            return;
+        }
+        // recalculate recipient for metadata removal
+        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata removal
+            err = remove_all_metadata(del_inode);
+        } else { // remote metadata removal
+            err = rpc_send_remove_mdata(recipient, del_inode);
+        }
+    } else { // single node local operation
         // Remove denty returns <err, inode_of_dentry> pair
         tie(err, del_inode) = remove_dentry(parent, name);
         if (err != 0) {
