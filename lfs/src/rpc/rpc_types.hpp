@@ -47,6 +47,15 @@ MERCURY_GEN_PROC(rpc_lookup_in_t,
 ((hg_const_string_t) (filename)))
 
 MERCURY_GEN_PROC(rpc_lookup_out_t, ((uint64_t) (inode)))
+// remove dentry
+MERCURY_GEN_PROC(rpc_remove_dentry_in_t,
+                 ((uint64_t) (parent_inode))\
+((hg_const_string_t) (filename)))
 
+MERCURY_GEN_PROC(rpc_remove_dentry_out_t, ((uint64_t) (del_inode)))
+// remove mdata
+MERCURY_GEN_PROC(rpc_remove_mdata_in_t, ((uint64_t) (del_inode)))
+
+MERCURY_GEN_PROC(rpc_remove_mdata_out_t, ((hg_bool_t) (success)))
 
 #endif //LFS_RPC_TYPES_HPP

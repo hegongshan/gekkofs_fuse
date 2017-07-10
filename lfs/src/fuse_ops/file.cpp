@@ -9,6 +9,7 @@
 #include "../adafs_ops/access.hpp"
 #include "../adafs_ops/io.hpp"
 #include "../rpc/client/c_metadata.hpp"
+#include "../rpc/client/c_dentry.hpp"
 
 using namespace std;
 
@@ -220,6 +221,7 @@ void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t
             fuse_ino_t new_inode;
             err = rpc_send_create_dentry(recipient, parent, name, f_mode, new_inode);
             if (err == 0) {
+                recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
                 err = rpc_send_create_mdata(recipient, uid, gid, f_mode, new_inode);
                 if (err == 0) {
                     fep.ino = new_inode;
@@ -307,33 +309,48 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
  */
 void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
-    fuse_ino_t inode;
+    fuse_ino_t del_inode;
     int err;
 
-    // XXX errorhandling
-    /*
+    if (ADAFS_DATA->host_size() > 1) {
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (recipient == ADAFS_DATA->host_id()) { // local
+            // Remove denty returns <err, inode_of_dentry> pair
+            tie(err, del_inode) = remove_dentry(parent, name);
+            if (err != 0) {
+                fuse_reply_err(req, err);
+                return;
+            }
+            // Remove inode
+            err = remove_all_metadata(del_inode);
+        } else { // remote
+            err = rpc_send_remove_dentry(recipient, parent, name, del_inode);
+            if (err == 0) {
+                recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
+                err = rpc_send_remove_mdata(recipient, del_inode);
+            }
+        }
+    } else { // local
+        // Remove denty returns <err, inode_of_dentry> pair
+        tie(err, del_inode) = remove_dentry(parent, name);
+        if (err != 0) {
+            fuse_reply_err(req, err);
+            return;
+        }
+        // Remove inode
+        err = remove_all_metadata(del_inode);
+    }
+
+    /* TODO really consider if this is even required in a distributed setup, I'd argue: No
      * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
      * for removal. If forget is then called, the file should be really removed. (see forget comments)
      * Any fuse comments that increment the lookup count will show the file as deleted after unlink and before/after forget.
      * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
      */
 
-    // Remove denty returns <err, inode_of_dentry> pair
-    tie(err, inode) = remove_dentry(parent, name);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-    // Remove inode
-    err = remove_all_metadata(inode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
     // XXX delete data blocks (asynchronously)
 
-    fuse_reply_err(req, 0);
+    fuse_reply_err(req, err);
 }
 
 /**

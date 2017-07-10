@@ -10,14 +10,18 @@
 /* visible API for RPC operations */
 
 DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
-
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_dentry)
-
+// mdata ops
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_mdata)
+// dentry ops
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_lookup)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_dentry)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_dentry)
 
 
 #endif //LFS_RPC_DEFS_HPP

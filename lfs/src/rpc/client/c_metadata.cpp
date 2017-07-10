@@ -3,6 +3,7 @@
 //
 
 #include "c_metadata.hpp"
+#include "../rpc_types.hpp"
 
 using namespace std;
 
@@ -105,56 +106,6 @@ void send_minimal_rpc(void* arg) {
     ADAFS_DATA->spdlogger()->debug("minimal RPC is done.");
 }
 
-int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, const string& name,
-                           const mode_t mode, fuse_ino_t& new_inode) {
-    hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_create_dentry_in_t in;
-    rpc_create_dentry_out_t out;
-    auto err = 0;
-    // fill in
-    in.parent_inode = static_cast<uint64_t>(parent);
-    in.filename = name.c_str();
-    in.mode = static_cast<uint32_t>(mode);
-    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-    if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
-        ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
-        return 1;
-    }
-    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_create_dentry_id(), &handle);
-    if (ret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("creating handle FAILED");
-        return 1;
-    }
-    int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
-        if (send_ret == HG_SUCCESS) {
-            break;
-        }
-    }
-    if (send_ret == HG_SUCCESS) {
-        /* decode response */
-        ret = HG_Get_output(handle, &out);
-
-        ADAFS_DATA->spdlogger()->debug("Got response inode: {}", out.inode);
-        new_inode = static_cast<fuse_ino_t>(out.inode);
-
-        /* clean up resources consumed by this rpc */
-        HG_Free_output(handle, &out);
-    } else {
-        ADAFS_DATA->spdlogger()->error("RPC send_create_dentry (timed out)");
-    }
-
-    in.filename = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-    HG_Free_input(handle, &in);
-    HG_Destroy(handle);
-    if (new_inode == INVALID_INODE)
-        err = 1;
-
-    return err;
-}
-
 int rpc_send_create_mdata(const size_t recipient, const uid_t uid, const gid_t gid,
                           const mode_t mode, const fuse_ino_t inode) {
     hg_handle_t handle;
@@ -253,3 +204,44 @@ int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct sta
     return 0;
 }
 
+int rpc_send_remove_mdata(const size_t recipient, const fuse_ino_t del_inode) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_remove_mdata_in_t in;
+    rpc_remove_mdata_out_t out;
+    // fill in
+    in.del_inode = static_cast<uint64_t>(del_inode);
+    hg_bool_t success = HG_FALSE;
+    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+    if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
+        ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
+        return 1;
+    }
+    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_remove_mdata_id(), &handle);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("creating handle FAILED");
+        return 1;
+    }
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        ret = HG_Get_output(handle, &out);
+
+        ADAFS_DATA->spdlogger()->debug("Got response remove mdata success: {}", out.success);
+        success = out.success;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        ADAFS_DATA->spdlogger()->error("RPC send_remove_mdata(timed out)");
+    }
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return success == HG_TRUE ? 0 : 1;
+}

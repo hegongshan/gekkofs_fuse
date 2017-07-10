@@ -130,8 +130,12 @@ void register_server_rpcs() {
     MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_create_dentry", rpc_create_dentry_in_t, rpc_create_dentry_out_t,
                      rpc_srv_create_dentry_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_remove_dentry", rpc_remove_dentry_in_t, rpc_remove_dentry_out_t,
+                     rpc_srv_remove_dentry_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_create_mdata", rpc_create_mdata_in_t, rpc_create_mdata_out_t,
                      rpc_srv_create_mdata_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_remove_mdata", rpc_remove_mdata_in_t, rpc_remove_mdata_out_t,
+                     rpc_srv_remove_mdata_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, rpc_srv_lookup_handler);
 }
@@ -199,8 +203,13 @@ void register_client_rpcs() {
     RPC_DATA->rpc_srv_create_dentry_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_create_dentry", rpc_create_dentry_in_t, rpc_create_dentry_out_t,
                              nullptr));
+    RPC_DATA->rpc_srv_remove_dentry_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_remove_dentry", rpc_remove_dentry_in_t, rpc_remove_dentry_out_t,
+                             nullptr));
     RPC_DATA->rpc_srv_create_mdata_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_create_mdata", rpc_create_mdata_in_t, rpc_create_mdata_out_t, nullptr));
+    RPC_DATA->rpc_srv_remove_mdata_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_remove_mdata", rpc_remove_mdata_in_t, rpc_remove_mdata_out_t, nullptr));
     RPC_DATA->rpc_srv_attr_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr));
     RPC_DATA->rpc_srv_lookup_id(

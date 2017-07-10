@@ -129,6 +129,22 @@ void RPCData::rpc_srv_lookup_id(hg_id_t rpc_srv_lookup_id) {
     RPCData::rpc_srv_lookup_id_ = rpc_srv_lookup_id;
 }
 
+hg_id_t RPCData::rpc_srv_remove_dentry_id() const {
+    return rpc_srv_remove_dentry_id_;
+}
+
+void RPCData::rpc_srv_remove_dentry_id(hg_id_t rpc_srv_remove_dentry_id) {
+    RPCData::rpc_srv_remove_dentry_id_ = rpc_srv_remove_dentry_id;
+}
+
+hg_id_t RPCData::rpc_srv_remove_mdata_id() const {
+    return rpc_srv_remove_mdata_id_;
+}
+
+void RPCData::rpc_srv_remove_mdata_id(hg_id_t rpc_srv_remove_mdata_id) {
+    RPCData::rpc_srv_remove_mdata_id_ = rpc_srv_remove_mdata_id;
+}
+
 
 
 
