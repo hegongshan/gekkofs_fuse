@@ -57,7 +57,7 @@ static hg_return_t rpc_srv_create_dentry(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // create new inode number and then the dentry
     auto new_inode = Util::generate_inode_no();
-    if (!create_dentry(in.parent_inode, new_inode, in.filename, in.mode)) {
+    if (create_dentry(in.parent_inode, new_inode, in.filename, in.mode) != 0) {
         // if putting dentry failed, return invalid inode to indicate failure
         new_inode = INVALID_INODE;
     }
