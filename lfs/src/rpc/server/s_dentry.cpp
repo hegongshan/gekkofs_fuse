@@ -16,7 +16,7 @@ static hg_return_t rpc_srv_lookup(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got lookup RPC with filename {}", in.filename);
+    ADAFS_DATA->spdlogger()->debug("Got lookup RPC with filename {}", in.filename);
 
     hgi = HG_Get_info(handle);
 
@@ -50,7 +50,7 @@ static hg_return_t rpc_srv_create_dentry(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got create dentry RPC with filename {}", in.filename);
+    ADAFS_DATA->spdlogger()->debug("Got create dentry RPC with filename {}", in.filename);
 
     hgi = HG_Get_info(handle);
 
@@ -84,7 +84,7 @@ static hg_return_t rpc_srv_remove_dentry(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got remove dentry RPC with filename {}", in.filename);
+    ADAFS_DATA->spdlogger()->debug("Got remove dentry RPC with filename {}", in.filename);
 
     hgi = HG_Get_info(handle);
 

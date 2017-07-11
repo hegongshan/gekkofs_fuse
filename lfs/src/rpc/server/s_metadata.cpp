@@ -13,7 +13,7 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
 
-    ADAFS_DATA->spdlogger()->info("Got simple RPC with input {}", in.input);
+    ADAFS_DATA->spdlogger()->debug("Got simple RPC with input {}", in.input);
     // Get hg_info handle
     hgi = HG_Get_info(handle);
     // extract margo id from hg_info (needed to know where to send response)
@@ -41,7 +41,7 @@ static hg_return_t rpc_srv_create_mdata(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got create mdata RPC with inode {}", in.inode);
+    ADAFS_DATA->spdlogger()->debug("Got create mdata RPC with inode {}", in.inode);
 
     hgi = HG_Get_info(handle);
 
@@ -71,7 +71,7 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     const struct hg_info* hgi;
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got get attr RPC with inode {}", in.inode);
+    ADAFS_DATA->spdlogger()->debug("Got get attr RPC with inode {}", in.inode);
     hgi = HG_Get_info(handle);
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // get the metadata
@@ -108,7 +108,7 @@ static hg_return_t rpc_srv_remove_mdata(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got remove mdata RPC with inode {}", in.del_inode);
+    ADAFS_DATA->spdlogger()->debug("Got remove mdata RPC with inode {}", in.del_inode);
 
     hgi = HG_Get_info(handle);
 
