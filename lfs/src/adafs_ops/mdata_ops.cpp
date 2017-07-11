@@ -141,6 +141,7 @@ int get_attr(struct stat& attr, const fuse_ino_t inode) {
             if (err == 0)
                 metadata_to_stat(md, attr);
         } else {
+            // attr is filled in here for rpcs
             err = rpc_send_get_attr(recipient, inode, attr);
         }
     } else { // single node operation
@@ -161,7 +162,7 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
     attr.st_uid = md.uid();
     attr.st_gid = md.gid();
     attr.st_size = md.size();
-    attr.st_blksize = ADAFS_DATA->blocksize();
+    attr.st_blksize = ADAFS_DATA->blocksize(); // globally set blocksize is used
     attr.st_blocks = md.blocks();
     attr.st_atim.tv_sec = md.atime();
     attr.st_mtim.tv_sec = md.mtime();

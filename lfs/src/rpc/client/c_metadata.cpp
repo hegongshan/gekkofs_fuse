@@ -182,6 +182,7 @@ int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct sta
         ret = HG_Get_output(handle, &out);
 
         ADAFS_DATA->spdlogger()->debug("Got response mode {}", out.mode);
+        attr.st_ino = static_cast<uint64_t>(inode);
         attr.st_atim.tv_sec = static_cast<time_t>(out.atime);
         attr.st_mtim.tv_sec = static_cast<time_t>(out.mtime);
         attr.st_ctim.tv_sec = static_cast<time_t>(out.ctime);
@@ -190,6 +191,7 @@ int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct sta
         attr.st_gid = static_cast<gid_t>(out.gid);
         attr.st_nlink = static_cast<nlink_t>(out.nlink);
         attr.st_size = static_cast<size_t>(out.size);
+        attr.st_blksize = ADAFS_DATA->blocksize(); // globally set blocksize is used
         attr.st_blocks = static_cast<blkcnt_t>(out.blocks);
 
         /* clean up resources consumed by this rpc */

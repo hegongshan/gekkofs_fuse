@@ -74,18 +74,19 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->info("Got get attr RPC with inode {}", in.inode);
     hgi = HG_Get_info(handle);
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
+    // get the metadata
+    Metadata md{};
+    get_metadata(md, in.inode);
+    out.atime = static_cast<uint64_t>(md.atime());
+    out.mtime = static_cast<uint64_t>(md.mtime());
+    out.ctime = static_cast<uint64_t>(md.ctime());
+    out.mode = static_cast<uint32_t>(md.mode());
+    out.uid = static_cast<uint32_t>(md.uid());
+    out.gid = static_cast<uint32_t>(md.gid());
+    out.nlink = static_cast<uint64_t>(md.link_count());
+    out.size = static_cast<uint64_t>(md.size());
+    out.blocks = static_cast<uint64_t>(md.blocks());
 
-    struct stat attr{};
-    get_attr(attr, in.inode);
-    out.atime = attr.st_atim.tv_sec;
-    out.mtime = attr.st_mtim.tv_sec;
-    out.ctime = attr.st_ctim.tv_sec;
-    out.mode = attr.st_mode;
-    out.uid = attr.st_uid;
-    out.gid = attr.st_gid;
-    out.nlink = attr.st_nlink;
-    out.size = attr.st_size;
-    out.blocks = attr.st_blocks;
     ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.mode);
     auto hret = margo_respond(mid, handle, &out);
     assert(hret == HG_SUCCESS);
