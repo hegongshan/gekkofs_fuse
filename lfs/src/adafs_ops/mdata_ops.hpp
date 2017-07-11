@@ -30,7 +30,9 @@ int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, cons
 
 int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode_t mode);
 
-int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, const uid_t uid, const gid_t gid,
+int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const char* name, const uid_t uid, const gid_t gid,
                 mode_t mode);
+
+int remove_node(fuse_ino_t parent, const char* name);
 
 #endif //FS_METADATA_OPS_H

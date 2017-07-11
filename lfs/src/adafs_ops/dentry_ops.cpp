@@ -123,7 +123,7 @@ pair<int, fuse_ino_t> do_lookup(const fuse_ino_t p_inode, const string& name) {
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
     // XXX check later if we need to check if dentry of father already exists
     // put dentry for key, value
-    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode)) ? 0 : 1;
+    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode)) ? 0 : EIO;
 }
 
 /**

@@ -29,7 +29,7 @@ bool db_put_dentry(const std::string& key, const std::string& val);
 
 void db_get_dentries(std::vector<Dentry>& dentries, const fuse_ino_t dir_inode);
 
-std::pair<bool, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, const std::string& name);
+std::pair<int, fuse_ino_t> db_delete_dentry_get_inode(const fuse_ino_t p_inode, const std::string& name);
 
 bool db_is_dir_empty(const fuse_ino_t inode);
 

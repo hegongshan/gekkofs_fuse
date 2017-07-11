@@ -194,62 +194,10 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_
 	 */
 void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_create() enter: parent_inode {} name {} mode {:o}", parent, name, mode);
-// XXX Below rpc example. Temporary of course
-//    using ns = chrono::nanoseconds;
-//    using get_time = chrono::steady_clock;
-//    auto start_t = get_time::now();
-//    send_minimal_rpc(nullptr);
-//    auto end_t = get_time::now();
-//    auto diff = end_t - start_t;
-//
-//    auto diff_count = chrono::duration_cast<ns>(diff).count();
-//    ADAFS_DATA->spdlogger()->info("TIME SPENT: {} microseconds", (diff_count / 1000));
 
     fuse_entry_param fep{};
-    int err;
-    fuse_ino_t new_inode;
-    auto uid = fuse_req_ctx(req)->uid;
-    auto gid = fuse_req_ctx(req)->gid;
-    auto f_mode = S_IFREG | mode;
-
-    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
-        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
-        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry create
-            new_inode = Util::generate_inode_no();
-            err = create_dentry(parent, new_inode, name, mode);
-        } else { // remote dentry create
-            err = rpc_send_create_dentry(recipient, parent, name, f_mode, new_inode);
-        }
-        if (err != 0) { // failure in dentry creation
-            fuse_reply_err(req, err);
-            ADAFS_DATA->spdlogger()->error("Failed to create a dentry");
-            return;
-        }
-        // calculate recipient again for new inode because it could hash somewhere else
-        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
-        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata init
-            err = init_metadata_fep(fep, new_inode, uid, gid, mode);
-        } else { // remote metadata init
-            err = rpc_send_create_mdata(recipient, uid, gid, f_mode, new_inode);
-            if (err == 0) {
-                // Because we don't want to return the metadata init values through the RPC
-                // we just set dummy values here with the most important bits
-                fep.ino = new_inode;
-                fep.attr.st_ino = new_inode;
-                fep.attr.st_mode = mode;
-                fep.attr.st_blocks = 0;
-                fep.attr.st_gid = gid;
-                fep.attr.st_uid = uid;
-                fep.attr.st_nlink = 0;
-                fep.attr.st_size = 0;
-                fep.entry_timeout = 1.0;
-                fep.attr_timeout = 1.0;
-            }
-        }
-    } else { //local single node operation
-        // XXX check permissions (omittable), should create node be atomic?
-        err = create_node(fep, parent, string(name), uid, gid, f_mode);
-    }
+    // fep is filled inside
+    auto err = create_node(fep, parent, name, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // XXX create chunk space
     if (err == 0)
@@ -279,21 +227,13 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
     ADAFS_DATA->spdlogger()->debug("adafs_ll_mknod() enter: parent_inode {} name {} mode {:o} dev {}", parent, name,
                                    mode, rdev);
 
-    auto fep = make_shared<fuse_entry_param>();
-
-    // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
-
-    // XXX check permissions (omittable)
-
-    // XXX all this below stuff needs to be atomic. reroll if error happens
-    auto err = create_node(*fep, parent, string(name), fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
-
-    // XXX create chunk space
-
+    fuse_entry_param fep{};
+    // fep is filled inside
+    auto err = create_node(fep, parent, name, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // return new dentry
     if (err == 0) {
-        fuse_reply_entry(req, fep.get());
+        fuse_reply_entry(req, &fep);
     } else {
         fuse_reply_err(req, err);
     }
@@ -316,47 +256,10 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
  */
 void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
-    fuse_ino_t del_inode;
-    int err;
 
-    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
-        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
-        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry removal
-            // Remove denty returns <err, inode_of_dentry> pair
-            tie(err, del_inode) = remove_dentry(parent, name);
-        } else { // remote dentry removal
-            err = rpc_send_remove_dentry(recipient, parent, name, del_inode);
-        }
-        if (err != 0) {
-            fuse_reply_err(req, err);
-            return;
-        }
-        // recalculate recipient for metadata removal
-        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
-        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata removal
-            err = remove_all_metadata(del_inode);
-        } else { // remote metadata removal
-            err = rpc_send_remove_mdata(recipient, del_inode);
-        }
-    } else { // single node local operation
-        // Remove denty returns <err, inode_of_dentry> pair
-        tie(err, del_inode) = remove_dentry(parent, name);
-        if (err != 0) {
-            fuse_reply_err(req, err);
-            return;
-        }
-        // Remove inode
-        err = remove_all_metadata(del_inode);
-    }
+    auto err = remove_node(parent, name);
 
-    /* TODO really consider if this is even required in a distributed setup, I'd argue: No
-     * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
-     * for removal. If forget is then called, the file should be really removed. (see forget comments)
-     * Any fuse comments that increment the lookup count will show the file as deleted after unlink and before/after forget.
-     * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
-     */
-
-    // XXX delete data blocks (asynchronously)
+    // XXX delete data blocks (asynchronously) for that remove_node needs to me modified to return the file inode
 
     fuse_reply_err(req, err);
 }
