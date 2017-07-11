@@ -131,11 +131,25 @@ int get_metadata(Metadata& md, const fuse_ino_t inode) {
  */
 int get_attr(struct stat& attr, const fuse_ino_t inode) {
 
-    // XXX look in cache first
-    auto md = make_shared<Metadata>();
-    auto err = get_metadata(*md, inode);
-
-    metadata_to_stat(*md, attr);
+    // XXX look in attribute cache first
+    Metadata md{};
+    int err;
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(inode).str());
+        if (ADAFS_DATA->is_local_op(recipient) || inode == ADAFS_ROOT_INODE) { // local, root inode is locally available
+            err = get_metadata(md, inode);
+            if (err == 0)
+                metadata_to_stat(md, attr);
+        } else {
+            err = rpc_send_get_attr(recipient, inode, attr);
+        }
+    } else { // single node operation
+        err = get_metadata(md, inode);
+        if (err == 0)
+            metadata_to_stat(md, attr);
+    }
+    if (err != 0)
+        ADAFS_DATA->spdlogger()->error("Failed to get attributes.");
 
     return err;
 }

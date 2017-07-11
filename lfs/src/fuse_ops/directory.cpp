@@ -47,13 +47,16 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
         return;
     }
 
-    auto fep = make_shared<struct fuse_entry_param>();
-    get_attr(fep->attr, inode);
-    fep->ino = fep->attr.st_ino;
-    fep->entry_timeout = 1.0;
-    fep->attr_timeout = 1.0;
+    struct fuse_entry_param fep{};
+    err = get_attr(fep.attr, inode);
+    fep.ino = fep.attr.st_ino;
+    fep.entry_timeout = 1.0;
+    fep.attr_timeout = 1.0;
 
-    fuse_reply_entry(req, fep.get());
+    if (err == 0)
+        fuse_reply_entry(req, &fep);
+    else
+        fuse_reply_err(req, err);
 
 
     /* for ENOENTs
