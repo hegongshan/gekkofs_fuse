@@ -4,6 +4,7 @@
 
 #include "../main.hpp"
 #include "../fuse_ops.hpp"
+#include "../db/db_ops.hpp"
 
 using namespace std;
 
@@ -33,7 +34,30 @@ using namespace std;
  * @param fi file information
  */
 void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info* fi) {
-    fuse_reply_err(req, 0);
+    \
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_read() enter: inode {} size {} offset {}", ino, size, off);
+    // TODO Check out how splicing works. This uses fuse_reply_data
+    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+    chnk_path /= fmt::FormatInt(ino).c_str();
+    chnk_path /= "data"s;
+
+    int fd = open(chnk_path.c_str(), R_OK);
+
+    if (fd < 0) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+    char* buf = new char[size]();
+
+    auto read_size = static_cast<size_t>(pread(fd, buf, size, off));
+//    snprintf(buf, size + 1, buf);
+    ADAFS_DATA->spdlogger()->debug("Read the following buf {} wtf", buf);
+
+    fuse_reply_buf(req, buf, read_size);
+
+
+    close(fd);
+    free(buf);
 }
 
 /**
@@ -64,5 +88,33 @@ void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struc
  */
 void
 adafs_ll_write(fuse_req_t req, fuse_ino_t ino, const char* buf, size_t size, off_t off, struct fuse_file_info* fi) {
-    fuse_reply_err(req, 0);
+    ADAFS_DATA->spdlogger()->info("adafs_ll_write() enter: inode {} size {} offset {} buf {} O_APPEND", ino, size, off,
+                                  buf, fi->flags & O_APPEND);
+    // TODO Check out how splicing works. This uses the function write_buf then.
+    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+    chnk_path /= fmt::FormatInt(ino).c_str();
+    chnk_path /= "data"s;
+
+    int fd = open(chnk_path.c_str(), W_OK);
+
+    if (fd < 0) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+
+    pwrite(fd, buf, size, off);
+    // XXX the metadata size needs to be correct in the metadata. otherwise it won't read the data...
+    db_put_mdata(db_build_mdata_key(ino, std::get<to_underlying(Md_fields::size)>(md_field_map)), size);
+    // Set new size of the file
+//    if (fi->flags & O_APPEND) {
+//        truncate(chnk_path.c_str(), md->size() + size);
+//        md->size(md->size() + static_cast<uint32_t>(size));
+//    } else {
+//        truncate(chnk_path.c_str(), size);
+//        md->size(static_cast<uint32_t>(size));
+//    }
+
+    close(fd);
+
+    fuse_reply_write(req, size);
 }
