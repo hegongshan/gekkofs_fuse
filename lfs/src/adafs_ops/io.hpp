@@ -7,8 +7,8 @@
 
 #include "../main.hpp"
 
-int init_chunk_space(const unsigned long hash);
+int init_chunk_space(const fuse_ino_t inode);
 
-int destroy_chunk_space(const unsigned long hash);
+int destroy_chunk_space(const fuse_ino_t inode);
 
 #endif //FS_IO_H

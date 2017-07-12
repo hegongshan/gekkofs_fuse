@@ -173,6 +173,8 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->releasedir = adafs_ll_releasedir;
 
     // I/O
+    ops->write = adafs_ll_write;
+    ops->read = adafs_ll_read;
 
     // sync
     ops->flush = adafs_ll_flush;

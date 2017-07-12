@@ -53,7 +53,7 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # classes header
         src/classes/metadata.hpp src/classes/fs_data.hpp src/classes/dentry.hpp src/classes/rpc_data.hpp
         # adafs_ops header
-        src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp
+        src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp src/adafs_ops/io.hpp
         # db header
         src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/db_util.hpp
         # rpc header
@@ -65,11 +65,11 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # util
         src/util.cpp
         # fuse ops
-        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp
+        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp src/fuse_ops/io.cpp
         # classes
         src/classes/metadata.cpp src/classes/fs_data.cpp src/classes/dentry.cpp src/classes/rpc_data.cpp
         # adafs_ops
-        src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
+        src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp src/adafs_ops/io.cpp
         # db src
         src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
         # rpc src

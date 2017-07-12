@@ -6,6 +6,7 @@
 #include "dentry_ops.hpp"
 #include "../rpc/client/c_dentry.hpp"
 #include "../rpc/client/c_metadata.hpp"
+#include "io.hpp"
 
 using namespace std;
 
@@ -185,7 +186,7 @@ int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, cons
         // XXX just visual. size computation of directory should be done properly at some point
         md.size(ADAFS_DATA->blocksize());
     }
-    write_all_metadata(md);
+    auto err = write_all_metadata(md);
 
     // create dentry for Linux
     fep.entry_timeout = 1.0;
@@ -193,7 +194,7 @@ int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, cons
     fep.ino = md.inode_no();
     //fill fep.attr with the metadata information
     metadata_to_stat(md, fep.attr);
-    return 0;
+    return err;
 }
 
 /**
@@ -210,9 +211,9 @@ int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode
         // XXX just visual. size computation of directory should be done properly at some point
         md.size(ADAFS_DATA->blocksize());
     }
-    write_all_metadata(md);
+    auto err = write_all_metadata(md);
 
-    return 0;
+    return err;
 }
 
 /**
@@ -226,13 +227,6 @@ int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode
  */
 int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const char* name, const uid_t uid, const gid_t gid,
                 mode_t mode) {
-//    // create inode number
-//    auto new_inode = Util::generate_inode_no();
-//    // create dentry
-//    create_dentry(parent, new_inode, name, mode);
-//    // create metadata and fill fuse entry param
-//    init_metadata_fep(fep, new_inode, uid, gid, mode);
-
     int err;
     // create new inode number
     fuse_ino_t new_inode = Util::generate_inode_no();
@@ -251,6 +245,8 @@ int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const char* nam
         recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
         if (ADAFS_DATA->is_local_op(recipient)) { // local metadata init
             err = init_metadata_fep(fep, new_inode, uid, gid, mode);
+            if (err == 0)
+                init_chunk_space(new_inode);
         } else { // remote metadata init
             err = rpc_send_create_mdata(recipient, uid, gid, mode, new_inode);
             if (err == 0) {
@@ -280,6 +276,8 @@ int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const char* nam
         }
         // create metadata and fill fuse entry param
         err = init_metadata_fep(fep, new_inode, uid, gid, mode);
+        if (err == 0)
+            init_chunk_space(new_inode);
     }
     if (err != 0)
         ADAFS_DATA->spdlogger()->error("Failed to create metadata");
@@ -309,6 +307,8 @@ int remove_node(fuse_ino_t parent, const char* name) {
         recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
         if (ADAFS_DATA->is_local_op(recipient)) { // local metadata removal
             err = remove_all_metadata(del_inode);
+            if (err == 0)
+                destroy_chunk_space(del_inode);
         } else { // remote metadata removal
             err = rpc_send_remove_mdata(recipient, del_inode);
         }
@@ -321,6 +321,8 @@ int remove_node(fuse_ino_t parent, const char* name) {
         }
         // Remove inode
         err = remove_all_metadata(del_inode);
+        if (err == 0)
+            destroy_chunk_space(del_inode);
     }
 
     if (err != 0)

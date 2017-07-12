@@ -4,6 +4,7 @@
 #include "../rpc_types.hpp"
 #include "../rpc_defs.hpp"
 #include "../../adafs_ops/mdata_ops.hpp"
+#include "../../adafs_ops/io.hpp"
 
 static hg_return_t rpc_minimal(hg_handle_t handle) {
     rpc_minimal_in_t in;
@@ -47,8 +48,12 @@ static hg_return_t rpc_srv_create_mdata(hg_handle_t handle) {
 
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // create metadata
-    init_metadata(in.inode, in.uid, in.gid, in.mode);
-    out.success = HG_TRUE;
+    auto err = init_metadata(in.inode, in.uid, in.gid, in.mode);
+    if (err == 0) {
+        out.success = HG_TRUE;
+        init_chunk_space(static_cast<fuse_ino_t>(in.inode));
+
+    }
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.success);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
@@ -115,10 +120,12 @@ static hg_return_t rpc_srv_remove_mdata(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // delete metadata
     auto err = remove_all_metadata(static_cast<fuse_ino_t>(in.del_inode));
-    if (err == 0)
+    if (err == 0) {
         out.success = HG_TRUE;
-    else
+        destroy_chunk_space(static_cast<fuse_ino_t>(in.del_inode));
+    } else {
         out.success = HG_FALSE;
+    }
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.success);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
