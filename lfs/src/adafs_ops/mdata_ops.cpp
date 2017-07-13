@@ -10,6 +10,59 @@
 
 using namespace std;
 
+/**
+ * Reads a specific metadata field from the database and puts it into the corresponding metadata object
+ * @tparam T
+ * @param inode
+ * @param field
+ * @return type, 0 might mean failure
+ */
+void read_metadata_field_md(const fuse_ino_t inode, const Md_fields field, Metadata& md) {
+    // XXX I am sure this can be implemented in a better way
+    switch (field) {
+        case Md_fields::atime:
+            md.atime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::atime)>(md_field_map))));
+            break;
+        case Md_fields::mtime:
+            md.mtime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mtime)>(md_field_map))));
+            break;
+        case Md_fields::ctime:
+            md.ctime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::ctime)>(md_field_map))));
+            break;
+        case Md_fields::uid:
+            md.uid(db_get_mdata<uid_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::uid)>(md_field_map))));
+            break;
+        case Md_fields::gid:
+            md.gid(db_get_mdata<gid_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::gid)>(md_field_map))));
+            break;
+        case Md_fields::mode:
+            md.mode(db_get_mdata<mode_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mode)>(md_field_map))));
+            break;
+        case Md_fields::inode_no:
+            md.inode_no(db_get_mdata<fuse_ino_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::inode_no)>(md_field_map))));
+            break;
+        case Md_fields::link_count:
+            md.link_count(db_get_mdata<nlink_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::link_count)>(md_field_map))));
+            break;
+        case Md_fields::size:
+            md.size(db_get_mdata<off_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::size)>(md_field_map))));
+            break;
+        case Md_fields::blocks:
+            md.blocks(db_get_mdata<blkcnt_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::blocks)>(md_field_map))));
+            break;
+    }
+}
+
 int write_all_metadata(const Metadata& md) {
     auto inode_key = fmt::FormatInt(md.inode_no()).str();
     // TODO this should be somewhat a batch operation or similar. this errorhandling is bs

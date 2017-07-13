@@ -14,14 +14,14 @@
 using namespace std;
 
 /**
- * Reads a specific metadata field to the database
+ * Reads a specific metadata field from the database and returns it
  * @tparam T
  * @param inode
  * @param field
  * @return type, 0 might mean failure
  */
 template<typename T>
-decltype(auto) read_metadata_field(const fuse_ino_t inode, Md_fields field) {
+decltype(auto) read_metadata_field(const fuse_ino_t inode, const Md_fields field) {
     // XXX I am sure this can be implemented in a better way
     switch (field) {
         case Md_fields::atime:
@@ -50,6 +50,8 @@ decltype(auto) read_metadata_field(const fuse_ino_t inode, Md_fields field) {
 
 }
 
+void read_metadata_field_md(const fuse_ino_t inode, const Md_fields field, Metadata& md);
+
 /**
  * writes a specific metadata field to the database
  * @tparam T
@@ -59,40 +61,41 @@ decltype(auto) read_metadata_field(const fuse_ino_t inode, Md_fields field) {
  * @return bool - success
  */
 template<typename T>
-bool write_metadata_field(const fuse_ino_t inode, const Md_fields field, Metadata& md) {
+bool write_metadata_field(const fuse_ino_t inode, const Md_fields field, const T val) {
     // XXX I am sure this can be implemented in a better way
     switch (field) {
         case Md_fields::atime:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::atime)>(md_field_map)),
-                                md.atime());
+                                val);
         case Md_fields::mtime:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mtime)>(md_field_map)),
-                                md.mtime());
+                                val);
         case Md_fields::ctime:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::ctime)>(md_field_map)),
-                                md.ctime());
+                                val);
         case Md_fields::uid:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::uid)>(md_field_map)),
-                                md.uid());
+                                val);
         case Md_fields::gid:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::gid)>(md_field_map)),
-                                md.gid());
+                                val);
         case Md_fields::mode:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mode)>(md_field_map)),
-                                md.mode());
+                                val);
         case Md_fields::inode_no:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)),
-                                md.inode_no());
+                                val);
         case Md_fields::link_count:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::link_count)>(md_field_map)),
-                                md.link_count());
+                                val);
         case Md_fields::size:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::size)>(md_field_map)),
-                                md.size());
+                                val);
         case Md_fields::blocks:
             return db_put_mdata(db_build_mdata_key(inode, std::get<to_underlying(Md_fields::blocks)>(md_field_map)),
-                                md.blocks());
+                                val);
     }
+    return false; // never reached... compiler complains if left out
 }
 
 
