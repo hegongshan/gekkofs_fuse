@@ -7,26 +7,36 @@
 using namespace rocksdb;
 using namespace std;
 
-inline const string db_get_mdata_helper(const string& key) {
+inline const bool db_get_mdata_helper(const string& key, string& val) {
     auto db = ADAFS_DATA->rdb();
-    string val_str;
-    db->Get(ReadOptions(), key, &val_str);
-    return val_str;
+    return db->Get(ReadOptions(), key, &val).ok();
 }
 
 template<>
 unsigned long db_get_mdata<unsigned long>(const string& key) {
-    return stoul(db_get_mdata_helper(key));
+    string val;
+    if (db_get_mdata_helper(key, val))
+        return stoul(val);
+    else
+        return 0;
 }
 
 template<>
 long db_get_mdata<long>(const string& key) {
-    return stol(db_get_mdata_helper(key));
+    string val;
+    if (db_get_mdata_helper(key, val))
+        return stol(val);
+    else
+        return 0;
 }
 
 template<>
 unsigned int db_get_mdata<unsigned int>(const string& key) {
-    return static_cast<unsigned int>(stoul(db_get_mdata_helper(key)));
+    string val;
+    if (db_get_mdata_helper(key, val))
+        return static_cast<unsigned int>(stoul(val));
+    else
+        return 0;
 }
 
 bool db_delete_mdata(const string& key) {
