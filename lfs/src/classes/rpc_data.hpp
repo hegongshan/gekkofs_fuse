@@ -38,6 +38,8 @@ private:
     hg_id_t rpc_srv_lookup_id_;
     hg_id_t rpc_srv_remove_dentry_id_;
     hg_id_t rpc_srv_remove_mdata_id_;
+    hg_id_t rpc_srv_read_data_id_;
+    hg_id_t rpc_srv_write_data_id_;
 
 
 public:
@@ -115,6 +117,14 @@ public:
     hg_id_t rpc_srv_remove_mdata_id() const;
 
     void rpc_srv_remove_mdata_id(hg_id_t rpc_srv_remove_mdata_id);
+
+    hg_id_t rpc_srv_read_data_id() const;
+
+    void rpc_srv_read_data_id(hg_id_t rpc_srv_read_data_id);
+
+    hg_id_t rpc_srv_write_data_id() const;
+
+    void rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id);
 };
 
 

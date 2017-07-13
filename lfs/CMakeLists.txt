@@ -60,7 +60,7 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         src/rpc/rpc_util.hpp src/rpc/rpc_types.hpp src/rpc/rpc_defs.hpp
 
         # rpcs header
-        src/rpc/client/c_metadata.hpp src/rpc/client/c_dentry.hpp
+        src/rpc/client/c_metadata.hpp src/rpc/client/c_dentry.hpp src/rpc/client/c_data.hpp
 
         # util
         src/util.cpp
@@ -75,8 +75,10 @@ set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
         # rpc src
         src/rpc/rpc_util.cpp
 
-        # rpcs src
-        src/rpc/server/s_metadata.cpp src/rpc/server/s_dentry.cpp src/rpc/client/c_metadata.cpp src/rpc/client/c_dentry.cpp
+        # rpcs src server
+        src/rpc/server/s_metadata.cpp src/rpc/server/s_dentry.cpp src/rpc/server/s_data.cpp
+        # rpcs src client
+        src/rpc/client/c_metadata.cpp src/rpc/client/c_dentry.cpp src/rpc/client/c_data.cpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}

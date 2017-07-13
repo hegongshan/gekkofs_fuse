@@ -145,6 +145,22 @@ void RPCData::rpc_srv_remove_mdata_id(hg_id_t rpc_srv_remove_mdata_id) {
     RPCData::rpc_srv_remove_mdata_id_ = rpc_srv_remove_mdata_id;
 }
 
+hg_id_t RPCData::rpc_srv_read_data_id() const {
+    return rpc_srv_read_data_id_;
+}
+
+void RPCData::rpc_srv_read_data_id(hg_id_t rpc_srv_read_data_id) {
+    RPCData::rpc_srv_read_data_id_ = rpc_srv_read_data_id;
+}
+
+hg_id_t RPCData::rpc_srv_write_data_id() const {
+    return rpc_srv_write_data_id_;
+}
+
+void RPCData::rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id) {
+    RPCData::rpc_srv_write_data_id_ = rpc_srv_write_data_id;
+}
+
 
 
 

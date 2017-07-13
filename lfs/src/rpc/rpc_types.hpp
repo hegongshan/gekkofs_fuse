@@ -13,6 +13,9 @@
 MERCURY_GEN_PROC(rpc_minimal_in_t, ((int32_t) (input)))
 
 MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
+// misc generic rpc types
+MERCURY_GEN_PROC(rpc_res_out_t, ((hg_bool_t) (res)))
+
 // create dentry
 MERCURY_GEN_PROC(rpc_create_dentry_in_t,
                  ((uint64_t) (parent_inode))\
@@ -57,5 +60,12 @@ MERCURY_GEN_PROC(rpc_remove_dentry_out_t, ((uint64_t) (del_inode)))
 MERCURY_GEN_PROC(rpc_remove_mdata_in_t, ((uint64_t) (del_inode)))
 
 MERCURY_GEN_PROC(rpc_remove_mdata_out_t, ((hg_bool_t) (success)))
+// data
+MERCURY_GEN_PROC(rpc_data_in_t,
+                 ((uint64_t) (inode))\
+((uint64_t) (size))\
+((int64_t) (offset))
+                         ((hg_bulk_t) (bulk_handle)))
+
 
 #endif //LFS_RPC_TYPES_HPP
