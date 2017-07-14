@@ -43,3 +43,12 @@ int destroy_chunk_space(const fuse_ino_t inode) {
 //    return static_cast<int>(!bfs::exists(chnk_path));
     return 0;
 }
+
+int read_file(char* buf, size_t& read_size, const char* path, const size_t size, const off_t off) {
+    int fd = open(path, R_OK);
+    if (fd < 0)
+        return EIO;
+    read_size = static_cast<size_t>(pread(fd, buf, size, off));
+    close(fd);
+    return 0;
+}

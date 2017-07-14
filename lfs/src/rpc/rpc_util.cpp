@@ -101,7 +101,7 @@ bool init_rpc_server() {
     /* MARGO PART */
     ADAFS_DATA->spdlogger()->info("Initializing Margo server...");
     // Start Margo
-    auto mid = margo_init(0, 0, hg_context);
+    auto mid = margo_init(1, 16, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo server");
         HG_Context_destroy(hg_context);
@@ -138,7 +138,7 @@ void register_server_rpcs() {
                      rpc_srv_remove_mdata_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, rpc_srv_lookup_handler);
-    MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_res_out_t, rpc_srv_read_data_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_data_in_t, rpc_res_out_t, rpc_srv_write_data_handler);
 }
 
@@ -217,7 +217,7 @@ void register_client_rpcs() {
     RPC_DATA->rpc_srv_lookup_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, nullptr));
     RPC_DATA->rpc_srv_read_data_id(
-            MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_res_out_t, nullptr));
+            MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_data_out_t, nullptr));
     RPC_DATA->rpc_srv_write_data_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_data_in_t, rpc_res_out_t, nullptr));
 }

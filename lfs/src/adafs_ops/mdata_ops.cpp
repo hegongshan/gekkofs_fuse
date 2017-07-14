@@ -194,7 +194,7 @@ int get_attr(struct stat& attr, const fuse_ino_t inode) {
             err = get_metadata(md, inode);
             if (err == 0)
                 metadata_to_stat(md, attr);
-        } else {
+        } else { // remote
             // attr is filled in here for rpcs
             err = rpc_send_get_attr(recipient, inode, attr);
         }

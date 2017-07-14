@@ -3,41 +3,63 @@
 //
 #include "../rpc_types.hpp"
 #include "../rpc_defs.hpp"
+#include "../../adafs_ops/io.hpp"
 
 using namespace std;
 
 static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     rpc_data_in_t in;
-    rpc_res_out_t out;
+    rpc_data_out_t out;
     void* b_buf;
-    hg_size_t b_size;
+    int err;
     hg_bulk_t bulk_handle;
-    const struct hg_info* hgi;
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got read RPC with inode {} size {} offset {}", in.inode, in.size, in.offset);
-    /* set up target buffer for bulk transfer */
-    b_size = 512;
-    b_buf = calloc(1, 512);
-    sprintf((char*) b_buf, "Hello world!\n");
 
-    hgi = HG_Get_info(handle);
+    auto hgi = HG_Get_info(handle);
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // set up buffer to read
+    auto buf = make_unique<char[]>(in.size);
 
     // do read operation
+    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+    chnk_path /= fmt::FormatInt(in.inode).c_str();
+    chnk_path /= "data"s;
 
-    ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &b_size, HG_BULK_READ_ONLY, &bulk_handle);
+    err = read_file(buf.get(), out.io_size, chnk_path.c_str(), in.size, in.offset);
 
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
-    // push data to client here
-    margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, b_size);
+    if (err != 0) {
+        ADAFS_DATA->spdlogger()->error("Could not open file with inode: {}", in.inode);
+        out.res = err;
+        ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
+        auto hret = margo_respond(mid, handle, &out);
+        if (hret != HG_SUCCESS) {
+            ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
+        }
+    } else {
+        // set up buffer for bulk transfer
+        b_buf = (void*) buf.get();
 
+        ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in.size, HG_BULK_READ_ONLY, &bulk_handle);
 
-    out.res = HG_TRUE;
-    ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
-    auto hret = margo_respond(mid, handle, &out);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
+        // push data to client
+        if (ret == HG_SUCCESS)
+            margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, in.size);
+        else {
+            ADAFS_DATA->spdlogger()->error("Failed to send data to client in read operation");
+            out.res = EIO;
+            out.io_size = 0;
+        }
+        ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
+        // respond rpc
+        auto hret = margo_respond(mid, handle, &out);
+        if (hret != HG_SUCCESS) {
+            ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
+        }
+        HG_Bulk_free(bulk_handle);
     }
 
     // Destroy handle when finished

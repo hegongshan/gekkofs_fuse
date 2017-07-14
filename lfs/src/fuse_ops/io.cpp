@@ -7,6 +7,7 @@
 #include "../db/db_ops.hpp"
 #include "../adafs_ops/mdata_ops.hpp"
 #include "../rpc/client/c_data.hpp"
+#include "../adafs_ops/io.hpp"
 
 using namespace std;
 
@@ -36,33 +37,34 @@ using namespace std;
  * @param fi file information
  */
 void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info* fi) {
-    \
-    ADAFS_DATA->spdlogger()->debug("adafs_ll_read() enter: inode {} size {} offset {}", ino, size, off);
-#ifdef RPC_TEST
-    rpc_send_read(0, ino, size, off, nullptr);
-#endif
-
     // TODO Check out how splicing works. This uses fuse_reply_data
-    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
-    chnk_path /= fmt::FormatInt(ino).c_str();
-    chnk_path /= "data"s;
-
-    int fd = open(chnk_path.c_str(), R_OK);
-
-    if (fd < 0) {
+    ADAFS_DATA->spdlogger()->debug("adafs_ll_read() enter: inode {} size {} offset {}", ino, size, off);
+    size_t read_size;
+    auto buf = make_unique<char[]>(size);
+    int err;
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(ino).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local read operation
+            auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+            chnk_path /= fmt::FormatInt(ino).c_str();
+            chnk_path /= "data"s;
+            err = read_file(buf.get(), read_size, chnk_path.c_str(), size, off);
+        } else { // remote read operation
+            err = rpc_send_read(recipient, ino, size, off, buf.get(), read_size);
+        }
+    } else { //single node operation
+        auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+        chnk_path /= fmt::FormatInt(ino).c_str();
+        chnk_path /= "data"s;
+        err = read_file(buf.get(), read_size, chnk_path.c_str(), size, off);
+    }
+    if (err != 0) {
         fuse_reply_err(req, EIO);
         return;
     }
-    char* buf = new char[size]();
 
-    auto read_size = static_cast<size_t>(pread(fd, buf, size, off));
-    ADAFS_DATA->spdlogger()->trace("Read the following buf: {}", buf);
-
-    fuse_reply_buf(req, buf, read_size);
-
-
-    close(fd);
-    free(buf);
+    ADAFS_DATA->spdlogger()->trace("Sending buf to Fuse driver: {}", buf.get());
+    fuse_reply_buf(req, buf.get(), read_size);
 }
 
 /**
