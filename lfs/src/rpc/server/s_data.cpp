@@ -63,7 +63,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
 
     // TODO pull data from client here
 
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);=
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     out.res = HG_TRUE;
     ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);

@@ -55,7 +55,7 @@ int rpc_send_read(const size_t recipient, const fuse_ino_t inode, const size_t i
         ret = HG_Get_output(handle, &out);
 
         ADAFS_DATA->spdlogger()->debug("Got response mode {}", out.res);
-        ADAFS_DATA->spdlogger()->debug("Filled buffer looks like this: {}", b_buf);
+        ADAFS_DATA->spdlogger()->debug("Filled buffer looks like this: {}", (char*) b_buf);
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {

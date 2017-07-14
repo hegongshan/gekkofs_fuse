@@ -6,6 +6,7 @@
 #include "../fuse_ops.hpp"
 #include "../db/db_ops.hpp"
 #include "../adafs_ops/mdata_ops.hpp"
+#include "../rpc/client/c_data.hpp"
 
 using namespace std;
 
@@ -37,6 +38,10 @@ using namespace std;
 void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info* fi) {
     \
     ADAFS_DATA->spdlogger()->debug("adafs_ll_read() enter: inode {} size {} offset {}", ino, size, off);
+#ifdef RPC_TEST
+    rpc_send_read(0, ino, size, off, nullptr);
+#endif
+
     // TODO Check out how splicing works. This uses fuse_reply_data
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fmt::FormatInt(ino).c_str();
