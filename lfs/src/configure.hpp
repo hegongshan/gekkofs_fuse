@@ -22,4 +22,7 @@
 // RPC configuration
 #define RPCPORT 4433
 
+// Debug configurations
+//#define RPC_TEST
+
 #endif //FS_CONFIGURE_H
