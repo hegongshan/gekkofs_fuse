@@ -138,8 +138,8 @@ void register_server_rpcs() {
                      rpc_srv_remove_mdata_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, rpc_srv_lookup_handler);
-    MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
-    MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_data_in_t, rpc_res_out_t, rpc_srv_write_data_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data_handler);
 }
 
 void destroy_rpc_server() {
@@ -217,9 +217,9 @@ void register_client_rpcs() {
     RPC_DATA->rpc_srv_lookup_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_lookup", rpc_lookup_in_t, rpc_lookup_out_t, nullptr));
     RPC_DATA->rpc_srv_read_data_id(
-            MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_data_in_t, rpc_data_out_t, nullptr));
+            MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, nullptr));
     RPC_DATA->rpc_srv_write_data_id(
-            MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_data_in_t, rpc_res_out_t, nullptr));
+            MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, nullptr));
 }
 
 void destroy_rpc_client() {

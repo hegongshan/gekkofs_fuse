@@ -3,6 +3,8 @@
 //
 
 #include "io.hpp"
+#include "../classes/metadata.hpp"
+#include "mdata_ops.hpp"
 
 using namespace std;
 
@@ -44,11 +46,48 @@ int destroy_chunk_space(const fuse_ino_t inode) {
     return 0;
 }
 
+/**
+ * pread wrapper
+ * @param buf
+ * @param read_size
+ * @param path
+ * @param size
+ * @param off
+ * @return
+ */
 int read_file(char* buf, size_t& read_size, const char* path, const size_t size, const off_t off) {
     int fd = open(path, R_OK);
     if (fd < 0)
         return EIO;
     read_size = static_cast<size_t>(pread(fd, buf, size, off));
     close(fd);
+    return 0;
+}
+
+int write_file(const fuse_ino_t inode, const char *buf, size_t &write_size, const size_t size, const off_t off,
+               const bool append) {
+    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+    chnk_path /= fmt::FormatInt(inode).c_str();
+    chnk_path /= "data"s;
+    // write to local file
+    int fd = open(chnk_path.c_str(), W_OK);
+    if (fd < 0)
+        return EIO;
+    write_size = static_cast<size_t>(pwrite(fd, buf, size, off));
+    close(fd);
+    // Depending on if the file was appended or not metadata sizes need to be modified accordingly
+    if (append) {
+        // appending requires to read the old size first so that the new size can be added to it
+        Metadata md{};
+        read_metadata_field_md(inode, Md_fields::size, md);
+        // truncating file
+        truncate(chnk_path.c_str(), md.size() + size);
+        // refresh metadata size field
+        write_metadata_field(inode, Md_fields::size, md.size() + static_cast<off_t>(size));
+    } else {
+        truncate(chnk_path.c_str(), size);
+        write_metadata_field(inode, Md_fields::size, static_cast<off_t>(size));
+    }
+
     return 0;
 }

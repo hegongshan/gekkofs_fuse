@@ -67,6 +67,7 @@ void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struc
     fuse_reply_buf(req, buf.get(), read_size);
 }
 
+
 /**
  * Write data
  *
@@ -99,33 +100,22 @@ adafs_ll_write(fuse_req_t req, fuse_ino_t ino, const char* buf, size_t size, off
                                    off,
                                    buf, fi->flags & O_APPEND);
     // TODO Check out how splicing works. This uses the function write_buf then.
-    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
-    chnk_path /= fmt::FormatInt(ino).c_str();
-    chnk_path /= "data"s;
-
-    int fd = open(chnk_path.c_str(), W_OK);
-
-    if (fd < 0) {
+    int err;
+    size_t write_size;
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(ino).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local write operation
+            err = write_file(ino, buf, write_size, size, off, (fi->flags & O_APPEND) != 0);
+        } else { // remote write operation
+            err = rpc_send_write(recipient, ino, size, off, buf, write_size, (fi->flags & O_APPEND) != 0);
+        }
+    } else { //single node operation
+        err = write_file(ino, buf, write_size, size, off, (fi->flags & O_APPEND) != 0);
+    }
+    if (err != 0) {
         fuse_reply_err(req, EIO);
         return;
     }
-    // write to disk
-    pwrite(fd, buf, size, off);
-
-    // Set new size of the file
-    if (fi->flags & O_APPEND) {
-        // appending requires to read the old size first so that the new size can be added to it
-        Metadata md{};
-        read_metadata_field_md(ino, Md_fields::size, md);
-        // truncating file
-        truncate(chnk_path.c_str(), md.size() + size);
-        // refresh metadata size field
-        write_metadata_field(ino, Md_fields::size, md.size() + static_cast<off_t>(size));
-    } else {
-        truncate(chnk_path.c_str(), size);
-        write_metadata_field(ino, Md_fields::size, static_cast<off_t>(size));
-    }
 
     fuse_reply_write(req, size);
-    close(fd);
 }

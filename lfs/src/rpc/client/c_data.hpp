@@ -15,8 +15,9 @@ int rpc_send_read(const size_t recipient, const fuse_ino_t inode, const size_t i
                   T* tar_buf, size_t& read_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_data_in_t in;
+    rpc_read_data_in_t in;
     rpc_data_out_t out;
+    int err;
     // fill in
     in.inode = inode;
     in.size = in_size;
@@ -46,25 +47,28 @@ int rpc_send_read(const size_t recipient, const fuse_ino_t inode, const size_t i
             break;
         }
     }
-
     if (send_ret == HG_SUCCESS) {
-
         /* decode response */
         ret = HG_Get_output(handle, &out);
         tar_buf = static_cast<T*>(b_buf);
         read_size = static_cast<size_t>(out.io_size);
+        err = out.res;
         ADAFS_DATA->spdlogger()->debug("Got response {}", out.res);
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
         ADAFS_DATA->spdlogger()->error("RPC rpc_send_read (timed out)");
+        err = EAGAIN;
     }
 
-    HG_Free_input(handle, &in);
     HG_Bulk_free(in.bulk_handle);
+    HG_Free_input(handle, &in);
     HG_Destroy(handle);
 
-    return 0;
+    return err;
 }
+
+int rpc_send_write(const size_t recipient, const fuse_ino_t inode, const size_t in_size, const off_t in_offset,
+                   const char *buf, size_t &write_size, const bool append);
 
 #endif //LFS_C_DATA_HPP

@@ -20,8 +20,10 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         auto hostname = "cci+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
                         ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
 #else
-        auto hostname = "cci+tcp://134.93.182.11:" +
+        auto hostname = "cci+tcp://127.0.0.1:" +
                         ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
+//        auto hostname = "cci+tcp://134.93.182.11:" +
+//                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
 #endif
         ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
         margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);

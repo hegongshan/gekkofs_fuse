@@ -61,14 +61,21 @@ MERCURY_GEN_PROC(rpc_remove_mdata_in_t, ((uint64_t) (del_inode)))
 
 MERCURY_GEN_PROC(rpc_remove_mdata_out_t, ((hg_bool_t) (success)))
 // data
-MERCURY_GEN_PROC(rpc_data_in_t,
+MERCURY_GEN_PROC(rpc_read_data_in_t,
                  ((uint64_t) (inode))\
 ((hg_size_t) (size))\
-((int64_t) (offset))
-                         ((hg_bulk_t) (bulk_handle)))
+((int64_t) (offset))\
+((hg_bulk_t) (bulk_handle)))
 
 MERCURY_GEN_PROC(rpc_data_out_t,
-                 ((int32_t) (res))
+                 ((int32_t) (res))\
                          ((hg_size_t) (io_size)))
+
+MERCURY_GEN_PROC(rpc_write_data_in_t,
+                 ((uint64_t) (inode))\
+((hg_size_t) (size))\
+((int64_t) (offset))\
+((hg_bool_t) (append))\
+((hg_bulk_t) (bulk_handle)))
 
 #endif //LFS_RPC_TYPES_HPP
