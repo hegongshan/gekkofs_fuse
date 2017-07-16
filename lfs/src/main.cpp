@@ -274,7 +274,8 @@ int main(int argc, const char* argv[]) {
             assert(hostname.size() != 0);
         }
         // split comma separated host string
-        boost::tokenizer<> tok(hosts);
+        boost::char_separator<char> sep(",");
+        boost::tokenizer<boost::char_separator<char>> tok(hosts, sep);
         for (auto&& s : tok) {
             fuse_struct->hosts[i] = s;
             if (hostname == s) {
