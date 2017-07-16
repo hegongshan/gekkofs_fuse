@@ -31,7 +31,7 @@ int rpc_send_lookup(const size_t recipient, const fuse_ino_t parent, const char*
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -80,7 +80,7 @@ int rpc_send_create_dentry(const size_t recipient, const fuse_ino_t parent, cons
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -128,7 +128,7 @@ int rpc_send_remove_dentry(const size_t recipient, const fuse_ino_t parent, cons
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }

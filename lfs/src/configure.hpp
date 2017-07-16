@@ -21,6 +21,7 @@
 
 // RPC configuration
 #define RPCPORT 4433
+#define RPC_TIMEOUT 15000
 
 // Debug configurations
 //#define RPC_TEST

@@ -130,7 +130,7 @@ int rpc_send_create_mdata(const size_t recipient, const uid_t uid, const gid_t g
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -172,7 +172,7 @@ int rpc_send_get_attr(const size_t recipient, const fuse_ino_t inode, struct sta
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -226,7 +226,7 @@ int rpc_send_remove_mdata(const size_t recipient, const fuse_ino_t del_inode) {
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 15000);
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
