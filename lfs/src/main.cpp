@@ -1,12 +1,50 @@
+
 #include "main.hpp"
-#include "classes/metadata.h"
+#include <future>
+#include "classes/metadata.hpp"
 #include "adafs_ops/mdata_ops.hpp"
 #include "adafs_ops/dentry_ops.hpp"
 #include "fuse_ops.hpp"
+#include "rpc/rpc_util.hpp"
+
 
 static struct fuse_lowlevel_ops adafs_ops;
 
 using namespace std;
+namespace po = boost::program_options;
+
+struct tmp_fuse_usr {
+    // Map host nr to host
+    std::map<uint64_t, std::string> hosts;
+    std::string hostfile;
+    uint64_t host_nr;
+};
+
+/**
+ * Initializes the rpc environment: Mercury with Argobots = Margo
+ * This must be run in a dedicated thread!
+ */
+void init_rpc_env(promise<bool> rpc_promise) {
+    auto ret = init_argobots();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    ret = init_rpc_server();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    auto mid = RPC_DATA->server_mid();
+    ret = init_rpc_client();
+    if (!ret) {
+        rpc_promise.set_value(false);
+        return;
+    }
+    rpc_promise.set_value(true);
+    margo_wait_for_finalize(
+            mid); // XXX this consumes 1 logical core. Should put a conditional variable here and wait until shutdown.
+}
 
 /**
  * Initialize filesystem
@@ -25,8 +63,15 @@ using namespace std;
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
-
     ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
+
+    // parse additional arguments to adafs
+    auto fuse_data = static_cast<tmp_fuse_usr*>(pdata);
+    ADAFS_DATA->hosts(fuse_data->hosts);
+    ADAFS_DATA->host_id(fuse_data->host_nr);
+    ADAFS_DATA->host_size(fuse_data->hosts.size());
+    ADAFS_DATA->rpc_port(fmt::FormatInt(RPCPORT).str());
+
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
     bfs::create_directories(ADAFS_DATA->inode_path());
@@ -36,6 +81,14 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     // Initialize rocksdb
     auto err = init_rocksdb();
     assert(err);
+    // Starting RPC environment
+    promise<bool> rpc_promise;
+    future<bool> rpc_future = rpc_promise.get_future();
+    thread t1(init_rpc_env, move(rpc_promise));
+    rpc_future.wait(); // wait for RPC environment to be initialized
+    assert(rpc_future.get()); // get potential error during RPC init and exit if future holds false
+    ADAFS_DATA->spdlogger()->info("RPC environment successfully started");
+    t1.detach(); // detach rpc thread for independent operation. This is mandatory for the Margo framework!
 
     // Check if fs already has some data and read the inode count
     if (bfs::exists(ADAFS_DATA->mgmt_path() + "/inode_count"))
@@ -47,10 +100,9 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
     ADAFS_DATA->blocksize(4096);
 
     // Init unordered_map for caching metadata that was already looked up XXX use later
-    ADAFS_DATA->hashmap(unordered_map<string, string>());
+    ADAFS_DATA->hashmap(unordered_map<string, string>()); //unused
     ADAFS_DATA->hashf(hash<string>());
 
-//    md = make_shared<Metadata>();
     auto md = make_shared<Metadata>();
 
     ADAFS_DATA->spdlogger()->info("Checking root metadata...");
@@ -65,7 +117,7 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
         md->gid(0); // hardcoded root XXX
         md->inode_no(ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->info("Writing / metadata to disk..."s);
-        write_all_metadata(*md, ADAFS_ROOT_INODE);
+        write_all_metadata(*md);
         ADAFS_DATA->spdlogger()->info("Initializing dentry for /"s);
         init_dentry_dir(ADAFS_ROOT_INODE);
         ADAFS_DATA->spdlogger()->info("Creating Metadata object"s);
@@ -87,6 +139,18 @@ void adafs_ll_init(void* pdata, struct fuse_conn_info* conn) {
  * @param userdata the user data passed to fuse_session_new()
  */
 void adafs_ll_destroy(void* pdata) {
+    ADAFS_DATA->spdlogger()->info("Shutting down..."s);
+    // Shutting down RPC environment XXX LATER
+//    margo_finalize(RPC_DATA->client_mid());
+//    ADAFS_DATA->spdlogger()->info("Margo client finalized");
+//    margo_finalize(RPC_DATA->server_mid());
+//    ADAFS_DATA->spdlogger()->info("Margo server finalized");
+//    destroy_argobots();
+//    ADAFS_DATA->spdlogger()->info("Argobots shut down"s);
+//    destroy_rpc_client();
+//    ADAFS_DATA->spdlogger()->info("Client shut down"s);
+//    destroy_rpc_server();
+//    ADAFS_DATA->spdlogger()->info("Server shut down"s);
     Util::write_inode_cnt();
 }
 
@@ -109,6 +173,8 @@ static void init_adafs_ops(fuse_lowlevel_ops* ops) {
     ops->releasedir = adafs_ll_releasedir;
 
     // I/O
+    ops->write = adafs_ll_write;
+    ops->read = adafs_ll_read;
 
     // sync
     ops->flush = adafs_ll_flush;
@@ -142,7 +208,7 @@ void err_cleanup3(fuse_session& se) {
  * @param argv
  * @return
  */
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
 
     //Initialize the mapping of Fuse functions
     init_adafs_ops(&adafs_ops);
@@ -161,12 +227,77 @@ int main(int argc, char* argv[]) {
 #else
     spdlog::set_level(spdlog::level::off);
 #endif
-    //extract the rootdir from argv and put it into rootdir of adafs_data
-    // TODO pointer modification = dangerous. need another solution
-    ADAFS_DATA->rootdir(string(realpath(argv[argc - 2], nullptr)));
-    argv[argc - 2] = argv[argc - 1];
-    argv[argc - 1] = nullptr;
-    argc--;
+
+    // Parse input
+    auto fuse_argc = 1;
+    vector<string> fuse_argv;
+    fuse_argv.push_back(move(argv[0]));
+    auto fuse_struct = make_unique<tmp_fuse_usr>();
+
+    po::options_description desc("Allowed options");
+    desc.add_options()
+            ("help,h", "Help message")
+            ("foreground,f", "Run Fuse instance in foreground. (Fuse parameter)")
+            ("mountdir,m", po::value<string>(), "User Fuse mountdir. (Fuse parameter)")
+            ("rootdir,r", po::value<string>(), "ADA-FS data directory")
+            ("hostsfile", po::value<string>(), "Path to the hosts_ file for all fs participants")
+            ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        cout << desc << "\n";
+        return 1;
+    }
+
+    if (vm.count("foreground")) {
+        fuse_argc++;
+        fuse_argv.push_back("-f"s);
+    }
+    if (vm.count("mountdir")) {
+        fuse_argc++;
+        fuse_argv.push_back(vm["mountdir"].as<string>());
+    }
+    if (vm.count("rootdir")) {
+        ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
+    }
+
+    // TODO Hostfile parsing here...
+    if (vm.count("hosts")) {
+        auto hosts = vm["hosts"].as<string>();
+        uint64_t i = 0;
+        auto found_hostname = false;
+        auto hostname = Util::get_my_hostname();
+        if (hostname.size() == 0) {
+            cerr << "Unable to read the machine's hostname" << endl;
+            assert(hostname.size() != 0);
+        }
+        // split comma separated host string
+        boost::char_separator<char> sep(",");
+        boost::tokenizer<boost::char_separator<char>> tok(hosts, sep);
+        for (auto&& s : tok) {
+            fuse_struct->hosts[i] = s;
+            if (hostname == s) {
+                fuse_struct->host_nr = i;
+                found_hostname = true;
+            }
+            i++;
+        }
+        if (!found_hostname) {
+            cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
+            assert(found_hostname);
+        }
+    }
+
+    // convert fuse_argv into char* []
+    char* fuse_argv_c[10] = {0};
+    for (unsigned int i = 0; i < fuse_argv.size(); ++i) {
+        char* tmp_c = new char[fuse_argv[i].size() + 1];
+        std::strcpy(tmp_c, fuse_argv[i].c_str());
+        fuse_argv_c[i] = tmp_c;
+    }
+
     //set all paths
     ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s);
     ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s);
@@ -174,7 +305,7 @@ int main(int argc, char* argv[]) {
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
     // Fuse stuff starts here in C style... ########################################################################
-    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+    struct fuse_args args = FUSE_ARGS_INIT(fuse_argc, fuse_argv_c);
     struct fuse_session* se;
     struct fuse_cmdline_opts opts;
     int err = -1;
@@ -195,7 +326,7 @@ int main(int argc, char* argv[]) {
     }
 
     // creating a low level session
-    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), nullptr);
+    se = fuse_session_new(&args, &adafs_ops, sizeof(adafs_ops), fuse_struct.get());
 
     if (se == NULL) {
         err_cleanup1(opts, args);

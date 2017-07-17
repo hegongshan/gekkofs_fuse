@@ -2,7 +2,7 @@
 // Created by evie on 5/9/17.
 //
 
-#include "dentry.h"
+#include "dentry.hpp"
 
 Dentry::Dentry() {}
 

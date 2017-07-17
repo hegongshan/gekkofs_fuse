@@ -4,7 +4,7 @@
 
 #include "dentry_ops.hpp"
 #include "../db/db_ops.hpp"
-#include "../db/util.hpp"
+#include "../db/db_util.hpp"
 
 using namespace std;
 
@@ -101,7 +101,7 @@ void get_dentries(vector<Dentry>& dentries, const fuse_ino_t dir_inode) {
  * @param name
  * @return pair<err, inode>
  */
-pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const string& name) {
+pair<int, fuse_ino_t> do_lookup(const fuse_ino_t p_inode, const string& name) {
     string val; // will we filled by dentry exist check
     if (db_dentry_exists(p_inode, name, val) == 0) { // dentry NOT found
         return make_pair(ENOENT, INVALID_INODE);
@@ -123,7 +123,7 @@ pair<int, fuse_ino_t> do_lookup(fuse_req_t& req, const fuse_ino_t p_inode, const
 int create_dentry(const fuse_ino_t p_inode, const fuse_ino_t inode, const string& name, mode_t mode) {
     // XXX check later if we need to check if dentry of father already exists
     // put dentry for key, value
-    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode));
+    return db_put_dentry(db_build_dentry_key(p_inode, name), db_build_dentry_value(inode, mode)) ? 0 : EIO;
 }
 
 /**

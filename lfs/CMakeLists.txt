@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 project(lfs VERSION 0.0.1)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
@@ -23,26 +23,67 @@ find_package(GFlags REQUIRED)
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(RocksDB REQUIRED)
+# margo dependencies
+find_package(Libev REQUIRED)
+find_package(CCI REQUIRED)
+#find_package(BMI REQUIRED)
+find_package(Mercury REQUIRED)
+find_package(MercuryUtil REQUIRED)
+find_package(Abt REQUIRED)
+find_package(Abt-Snoozer REQUIRED)
+find_package(Margo REQUIRED)
+# Optional dependencies
+#find_package(AbtIO)
+#option(WITH_AbtIO "AbtIO enabled" ON)
+#if (WITH_AbtIO)
+#    add_definitions(-DUSE_AbtIO=1)
+#else ()
+#    add_definitions(-DUSE_AbtIO=0)
+#endif ()
+
+
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
 find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 
-include_directories(${FUSE3_INCLUDE_DIR} ${ROCKSDB_INCLUDE_DIR} include/)
+include_directories(${FUSE3_INCLUDE_DIR} ${ROCKSDB_INCLUDE_DIR} include/
+        # margo paths
+        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
+        )
 set(SOURCE_FILES src/main.cpp src/main.hpp src/fuse_ops.hpp src/configure.hpp
-        src/classes/metadata.h src/classes/metadata.cpp src/classes/fs_data.h src/classes/fs_data.cpp
-        src/classes/dentry.h src/classes/dentry.cpp
+        # classes header
+        src/classes/metadata.hpp src/classes/fs_data.hpp src/classes/dentry.hpp src/classes/rpc_data.hpp
+        # adafs_ops header
+        src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp src/adafs_ops/io.hpp
+        # db header
+        src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/db_util.hpp
+        # rpc header
+        src/rpc/rpc_util.hpp src/rpc/rpc_types.hpp src/rpc/rpc_defs.hpp
 
-        src/adafs_ops/mdata_ops.hpp src/adafs_ops/dentry_ops.hpp src/adafs_ops/access.hpp
+        # rpcs header
+        src/rpc/client/c_metadata.hpp src/rpc/client/c_dentry.hpp src/rpc/client/c_data.hpp
 
-        src/db/db_ops.hpp src/db/db_txn_ops.hpp src/db/util.hpp
-
+        # util
         src/util.cpp
-        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp
-        src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp
+        # fuse ops
+        src/fuse_ops/file.cpp src/fuse_ops/directory.cpp src/fuse_ops/sync.cpp src/fuse_ops/access.cpp src/fuse_ops/io.cpp
+        # classes
+        src/classes/metadata.cpp src/classes/fs_data.cpp src/classes/dentry.cpp src/classes/rpc_data.cpp
+        # adafs_ops
+        src/adafs_ops/mdata_ops.cpp src/adafs_ops/dentry_ops.cpp src/adafs_ops/access.cpp src/adafs_ops/io.cpp
+        # db src
+        src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/db_util.cpp
+        # rpc src
+        src/rpc/rpc_util.cpp
 
-        src/db/db_ops.cpp src/db/db_txn_ops.cpp src/db/util.cpp
-
+        # rpcs src server
+        src/rpc/server/s_metadata.cpp src/rpc/server/s_dentry.cpp src/rpc/server/s_data.cpp
+        # rpcs src client
+        src/rpc/client/c_metadata.cpp src/rpc/client/c_dentry.cpp src/rpc/client/c_data.cpp
         )
 add_executable(adafs ${SOURCE_FILES} src/main.cpp)
 target_link_libraries(adafs ${FUSE3_LIBRARIES} ${ROCKSDB_LIBRARIES}
+        # rocksdb libs
         ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
-        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -pg)
+        # margo libs
+        ${CCI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${ABT_IO_LIBRARIES} ${MARGO_LIBRARIES}
+        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)

@@ -19,4 +19,11 @@
 // Write-ahead logging of rocksdb
 //#define RDB_WOL
 
+// RPC configuration
+#define RPCPORT 4433
+#define RPC_TIMEOUT 15000
+
+// Debug configurations
+//#define RPC_TEST
+
 #endif //FS_CONFIGURE_H

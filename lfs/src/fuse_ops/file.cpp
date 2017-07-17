@@ -8,6 +8,8 @@
 #include "../adafs_ops/dentry_ops.hpp"
 #include "../adafs_ops/access.hpp"
 #include "../adafs_ops/io.hpp"
+#include "../rpc/client/c_metadata.hpp"
+#include "../rpc/client/c_dentry.hpp"
 
 using namespace std;
 
@@ -33,11 +35,12 @@ using namespace std;
 void adafs_ll_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_getattr() enter: inode {}", ino);
 
-    auto attr = make_shared<struct stat>();
-    auto err = get_attr(*attr, ino);
+    struct stat attr{};
+    auto err = get_attr(attr, ino);
+
     if (err == 0) {
         // XXX take a look into timeout value later
-        fuse_reply_attr(req, attr.get(), 1.0);
+        fuse_reply_attr(req, &attr, 1.0);
     } else {
         fuse_reply_err(req, err);
     }
@@ -116,12 +119,25 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_
         // TODO
     }
 
-
-    auto buf = make_shared<struct stat>();
-    auto err = get_attr(*buf, ino);
+    struct stat buf{};
+//    auto err = get_attr(buf, ino);
+    // TODO I think we need a cache to cache metadata on a node. Otherwise we have to get the metadata remotely all the time
+    // XXX BELOW ARE DUMMY DATA TO AVOID RPC CALLS! TEMPORARY. SHOULD USE CACHE INSTEAD
+    int err = 0;
+    buf.st_ino = ino;
+    buf.st_size = attr->st_size;
+    buf.st_nlink = attr->st_nlink;
+    buf.st_gid = fuse_req_ctx(req)->gid;
+    buf.st_blocks = attr->st_blocks;
+    buf.st_blksize = attr->st_blksize;
+    buf.st_mode = S_IFREG | 477;
+    buf.st_uid = fuse_req_ctx(req)->gid;
+    buf.st_atim = attr->st_atim;
+    buf.st_mtim = attr->st_mtim;
+    buf.st_ctim = attr->st_ctim;
 
     if (err == 0) {
-        fuse_reply_attr(req, buf.get(), 1.0);
+        fuse_reply_attr(req, &buf, 1.0);
     } else {
         fuse_reply_err(req, err);
     }
@@ -165,19 +181,12 @@ void adafs_ll_setattr(fuse_req_t req, fuse_ino_t ino, struct stat* attr, int to_
 void adafs_ll_create(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_create() enter: parent_inode {} name {} mode {:o}", parent, name, mode);
 
-    auto fep = make_shared<fuse_entry_param>();
+    fuse_entry_param fep{};
+    // fep is filled inside
+    auto err = create_node(fep, parent, name, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
-    // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
-
-    // XXX check permissions (omittable)
-
-    // XXX all this below stuff needs to be atomic. reroll if error happens
-
-    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
-
-    // XXX create chunk space
     if (err == 0)
-        fuse_reply_create(req, fep.get(), fi);
+        fuse_reply_create(req, &fep, fi);
     else
         fuse_reply_err(req, err);
 }
@@ -203,21 +212,13 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
     ADAFS_DATA->spdlogger()->debug("adafs_ll_mknod() enter: parent_inode {} name {} mode {:o} dev {}", parent, name,
                                    mode, rdev);
 
-    auto fep = make_shared<fuse_entry_param>();
-
-    // XXX check if file exists (how can we omit this? Let's just try to create it and see if it fails)
-
-    // XXX check permissions (omittable)
-
-    // XXX all this below stuff needs to be atomic. reroll if error happens
-    auto err = create_node(req, *fep, parent, string(name), S_IFREG | mode);
-
-    // XXX create chunk space
-
+    fuse_entry_param fep{};
+    // fep is filled inside
+    auto err = create_node(fep, parent, name, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFREG | mode);
 
     // return new dentry
     if (err == 0) {
-        fuse_reply_entry(req, fep.get());
+        fuse_reply_entry(req, &fep);
     } else {
         fuse_reply_err(req, err);
     }
@@ -240,33 +241,12 @@ void adafs_ll_mknod(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
  */
 void adafs_ll_unlink(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_unlink() enter: parent_inode {} name {}", parent, name);
-    fuse_ino_t inode;
-    int err;
 
-    // XXX errorhandling
-    /*
-     * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
-     * for removal. If forget is then called, the file should be really removed. (see forget comments)
-     * Any fuse comments that increment the lookup count will show the file as deleted after unlink and before/after forget.
-     * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
-     */
+    auto err = remove_node(parent, name);
 
-    // Remove denty returns <err, inode_of_dentry> pair
-    tie(err, inode) = remove_dentry(parent, name);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-    // Remove inode
-    err = remove_all_metadata(inode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
+    // XXX delete data blocks (asynchronously) for that remove_node needs to me modified to return the file inode
 
-    // XXX delete data blocks (asynchronously)
-
-    fuse_reply_err(req, 0);
+    fuse_reply_err(req, err);
 }
 
 /**
@@ -351,5 +331,6 @@ void adafs_ll_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
 void adafs_ll_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_release() enter: inode {}", ino);
     // TODO to be implemented if required
+    // TODO Update: Not required afaik
     fuse_reply_err(req, 0);
 }

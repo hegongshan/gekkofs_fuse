@@ -8,7 +8,8 @@
 #include "../adafs_ops/dentry_ops.hpp"
 #include "../adafs_ops/access.hpp"
 
-#include "../classes/dentry.h"
+#include "../classes/dentry.hpp"
+#include "../rpc/client/c_dentry.hpp"
 
 
 using namespace std;
@@ -29,20 +30,33 @@ void adafs_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char* name) {
     int err;
     fuse_ino_t inode;
 
-    //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
-    tie(err, inode) = do_lookup(req, parent, string(name));
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (ADAFS_DATA->is_local_op(recipient)) { // local
+            tie(err, inode) = do_lookup(parent, string(name));
+        } else { // remote
+            err = rpc_send_lookup(recipient, parent, name, inode);
+        }
+    } else { // single node operation
+        //get inode no first (either from cache or disk) with parent inode and name;; returns <err, inode_of_dentry> pair
+        tie(err, inode) = do_lookup(parent, string(name));
+    }
+
     if (err != 0) {
         fuse_reply_err(req, err);
         return;
     }
 
-    auto fep = make_shared<struct fuse_entry_param>();
-    get_attr(fep->attr, inode);
-    fep->ino = fep->attr.st_ino;
-    fep->entry_timeout = 1.0;
-    fep->attr_timeout = 1.0;
+    struct fuse_entry_param fep{};
+    err = get_attr(fep.attr, inode);
+    fep.ino = fep.attr.st_ino;
+    fep.entry_timeout = 1.0;
+    fep.attr_timeout = 1.0;
 
-    fuse_reply_entry(req, fep.get());
+    if (err == 0)
+        fuse_reply_entry(req, &fep);
+    else
+        fuse_reply_err(req, err);
 
 
     /* for ENOENTs
@@ -186,25 +200,13 @@ void adafs_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
  */
 void adafs_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t mode) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_mkdir() enter: p_inode {} name {} mode {:o}", parent, name, mode);
-    auto fep = make_shared<fuse_entry_param>();
-    // XXX check if dir exists (how can we omit this? Let's just try to create it and see if it fails)
 
-    // XXX check if we need permission check
-
-    // XXX all this below stuff needs to be atomic. reroll if error happens
-    // create metadata for the new dir and adds the dentry to the parent dir
-    auto err = create_node(req, *fep, parent, string(name), S_IFDIR | mode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
-    // Init structure to hold dentries of new directory
-    err = init_dentry_dir(fep->ino);
+    fuse_entry_param fep{};
+    auto err = create_node(fep, parent, name, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid, S_IFDIR | mode);
 
     // return new dentry
     if (err == 0) {
-        fuse_reply_entry(req, fep.get());
+        fuse_reply_entry(req, &fep);
     } else {
         fuse_reply_err(req, err);
     }
@@ -229,40 +231,29 @@ void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name) {
     ADAFS_DATA->spdlogger()->debug("adafs_ll_rmdir() enter: p_inode {} name {}", parent, name);
     // XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
     // XXX see adafs_ll_unlink
-    int err;
 
-    fuse_ino_t inode;
+    // Below is checking if the directory that should be removed is actually empty. We omit this here
+    // and just unlink the directory out of the fs tree.
+//    fuse_ino_t inode;
+//
+//    // get inode of file
+//    tie(err, inode) = do_lookup(parent, name);
+//    if (err != 0) {
+//        fuse_reply_err(req, err);
+//        return;
+//    }
+//
+//    // check if dir is empty
+//    // TODO THIS IS VEEEEEEEERY SLOW! Doing a RangeScan is not the right approach here!
+//    err = is_dir_empty(inode);
+//    if (err != 0) {
+//        fuse_reply_err(req, err);
+//        return;
+//    }
 
-    // get inode of file
-    tie(err, inode) = do_lookup(req, parent, name);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
+    auto err = remove_node(parent, name);
 
-    // check if dir is empty
-    // TODO THIS IS VEEEEEEEERY SLOW! Doing a RangeScan is not the right approach here!
-    err = is_dir_empty(inode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
-    // remove dentry from parent dir
-    tie(err, inode) = remove_dentry(parent, name);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
-    // remove metadata (inode) of dir
-    err = remove_all_metadata(inode);
-    if (err != 0) {
-        fuse_reply_err(req, err);
-        return;
-    }
-
-    fuse_reply_err(req, 0);
+    fuse_reply_err(req, err);
 }
 
 /**

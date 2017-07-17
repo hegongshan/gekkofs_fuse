@@ -6,7 +6,7 @@
 #define LFS_DB_TXN_OPS_HPP
 
 #include "../main.hpp"
-#include "util.hpp"
+#include "db_util.hpp"
 
 template<typename T>
 bool dbtxn_put_mdata(const std::string& key, const T val, rocksdb::Transaction& txn) {

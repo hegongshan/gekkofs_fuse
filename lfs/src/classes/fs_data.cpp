@@ -2,7 +2,7 @@
 // Created by evie on 4/18/17.
 //
 
-#include "fs_data.h"
+#include "fs_data.hpp"
 
 // getter/setter
 
@@ -142,11 +142,52 @@ void FsData::inode_count(fuse_ino_t inode_count) {
     FsData::inode_count_ = inode_count;
 }
 
+const std::map<uint64_t, std::string>& FsData::hosts() const {
+    return hosts_;
+}
+
+void FsData::hosts(const std::map<uint64_t, std::string>& hosts) {
+    FsData::hosts_ = hosts;
+}
+
+const uint64_t& FsData::host_id() const {
+    return host_id_;
+}
+
+void FsData::host_id(const uint64_t& host_id) {
+    FsData::host_id_ = host_id;
+}
+
+size_t FsData::host_size() const {
+    return host_size_;
+}
+
+void FsData::host_size(size_t host_size) {
+    FsData::host_size_ = host_size;
+}
+
+std::string FsData::rpc_port() const {
+    return rpc_port_;
+}
+
+void FsData::rpc_port(std::string rpc_port) {
+    FsData::rpc_port_ = rpc_port;
+}
+
 // Utility member functions
 
 fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
     FsData::inode_count_ += count;
     return FsData::inode_count_;
 }
+
+bool FsData::is_local_op(const size_t recipient) {
+    return recipient == host_id_;
+}
+
+
+
+
+
 
 

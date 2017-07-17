@@ -4,32 +4,98 @@
 
 #include "mdata_ops.hpp"
 #include "dentry_ops.hpp"
+#include "../rpc/client/c_dentry.hpp"
+#include "../rpc/client/c_metadata.hpp"
+#include "io.hpp"
 
 using namespace std;
 
-// TODO error handling.
-int write_all_metadata(const Metadata& md, const fuse_ino_t inode) {
-    auto inode_key = fmt::FormatInt(inode).str();
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map)), md.mtime());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map)), md.ctime());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map)), md.uid());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map)), md.gid());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map)), md.mode());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)), md.inode_no());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map)), md.link_count());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map)), md.size());
-    db_put_mdata(db_build_mdata_key(
-            inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map)), md.blocks());
+/**
+ * Reads a specific metadata field from the database and puts it into the corresponding metadata object
+ * @tparam T
+ * @param inode
+ * @param field
+ * @return type, 0 might mean failure
+ */
+void read_metadata_field_md(const fuse_ino_t inode, const Md_fields field, Metadata& md) {
+    // XXX I am sure this can be implemented in a better way
+    switch (field) {
+        case Md_fields::atime:
+            md.atime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::atime)>(md_field_map))));
+            break;
+        case Md_fields::mtime:
+            md.mtime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mtime)>(md_field_map))));
+            break;
+        case Md_fields::ctime:
+            md.ctime(db_get_mdata<time_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::ctime)>(md_field_map))));
+            break;
+        case Md_fields::uid:
+            md.uid(db_get_mdata<uid_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::uid)>(md_field_map))));
+            break;
+        case Md_fields::gid:
+            md.gid(db_get_mdata<gid_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::gid)>(md_field_map))));
+            break;
+        case Md_fields::mode:
+            md.mode(db_get_mdata<mode_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::mode)>(md_field_map))));
+            break;
+        case Md_fields::inode_no:
+            md.inode_no(db_get_mdata<fuse_ino_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::inode_no)>(md_field_map))));
+            break;
+        case Md_fields::link_count:
+            md.link_count(db_get_mdata<nlink_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::link_count)>(md_field_map))));
+            break;
+        case Md_fields::size:
+            md.size(db_get_mdata<off_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::size)>(md_field_map))));
+            break;
+        case Md_fields::blocks:
+            md.blocks(db_get_mdata<blkcnt_t>(
+                    db_build_mdata_key(inode, std::get<to_underlying(Md_fields::blocks)>(md_field_map))));
+            break;
+    }
+}
+
+int write_all_metadata(const Metadata& md) {
+    auto inode_key = fmt::FormatInt(md.inode_no()).str();
+    // TODO this should be somewhat a batch operation or similar. this errorhandling is bs
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)), md.atime()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map)), md.mtime()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map)), md.ctime()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map)), md.uid()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map)), md.gid()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map)), md.mode()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)), md.inode_no()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map)), md.link_count()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map)), md.size()))
+        return EIO;
+    if (!db_put_mdata(db_build_mdata_key(
+            inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map)), md.blocks()))
+        return EIO;
 
     return 0;
 }
@@ -68,18 +134,28 @@ int read_all_metadata(Metadata& md, const fuse_ino_t inode) {
  * @return err
  */
 int remove_all_metadata(const fuse_ino_t inode) {
-    // TODO error handling
     auto inode_key = fmt::FormatInt(inode).str();
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map)));
-    db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map)));
+    // TODO this should be somewhat a batch operation or similar. this errorhandling is bs
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::atime)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mtime)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::ctime)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::uid)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::gid)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::mode)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::inode_no)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::link_count)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::size)>(md_field_map))))
+        return EIO;
+    if (!db_delete_mdata(db_build_mdata_key(inode_key, std::get<to_underlying(Md_fields::blocks)>(md_field_map))))
+        return EIO;
     return 0;
 }
 
@@ -109,11 +185,26 @@ int get_metadata(Metadata& md, const fuse_ino_t inode) {
  */
 int get_attr(struct stat& attr, const fuse_ino_t inode) {
 
-    // XXX look in cache first
-    auto md = make_shared<Metadata>();
-    auto err = get_metadata(*md, inode);
-
-    metadata_to_stat(*md, attr);
+    // XXX look in attribute cache first
+    Metadata md{};
+    int err;
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(inode).str());
+        if (ADAFS_DATA->is_local_op(recipient) || inode == ADAFS_ROOT_INODE) { // local, root inode is locally available
+            err = get_metadata(md, inode);
+            if (err == 0)
+                metadata_to_stat(md, attr);
+        } else { // remote
+            // attr is filled in here for rpcs
+            err = rpc_send_get_attr(recipient, inode, attr);
+        }
+    } else { // single node operation
+        err = get_metadata(md, inode);
+        if (err == 0)
+            metadata_to_stat(md, attr);
+    }
+    if (err != 0)
+        ADAFS_DATA->spdlogger()->error("Failed to get attributes.");
 
     return err;
 }
@@ -125,11 +216,57 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
     attr.st_uid = md.uid();
     attr.st_gid = md.gid();
     attr.st_size = md.size();
-    attr.st_blksize = ADAFS_DATA->blocksize();
+    attr.st_blksize = ADAFS_DATA->blocksize(); // globally set blocksize is used
     attr.st_blocks = md.blocks();
     attr.st_atim.tv_sec = md.atime();
     attr.st_mtim.tv_sec = md.mtime();
     attr.st_ctim.tv_sec = md.ctime();
+}
+
+/**
+ * Initializes the metadata for the given parameters. Return value not returning the state yet.
+ * Function will additionally return filled fuse_entry_param
+ * @param inode
+ * @param uid
+ * @param gid
+ * @param mode
+ * @return always 0
+ */
+int init_metadata_fep(struct fuse_entry_param& fep, const fuse_ino_t inode, const uid_t uid, const gid_t gid,
+                      mode_t mode) {
+    Metadata md{mode, uid, gid, inode};
+    if ((mode & S_IFDIR) == S_IFDIR) {
+        // XXX just visual. size computation of directory should be done properly at some point
+        md.size(ADAFS_DATA->blocksize());
+    }
+    auto err = write_all_metadata(md);
+
+    // create dentry for Linux
+    fep.entry_timeout = 1.0;
+    fep.attr_timeout = 1.0;
+    fep.ino = md.inode_no();
+    //fill fep.attr with the metadata information
+    metadata_to_stat(md, fep.attr);
+    return err;
+}
+
+/**
+ * Initializes the metadata for the given parameters. Return value not returning the state yet.
+ * @param inode
+ * @param uid
+ * @param gid
+ * @param mode
+ * @return always 0
+ */
+int init_metadata(const fuse_ino_t inode, const uid_t uid, const gid_t gid, mode_t mode) {
+    Metadata md{mode, uid, gid, inode};
+    if ((mode & S_IFDIR) == S_IFDIR) {
+        // XXX just visual. size computation of directory should be done properly at some point
+        md.size(ADAFS_DATA->blocksize());
+    }
+    auto err = write_all_metadata(md);
+
+    return err;
 }
 
 /**
@@ -141,30 +278,117 @@ void metadata_to_stat(const Metadata& md, struct stat& attr) {
  * @param mode
  * @return err
  */
-int create_node(fuse_req_t& req, struct fuse_entry_param& fep, fuse_ino_t parent, const string& name, mode_t mode) {
-    // create metadata of new file (this will also create a new inode number)
-    // mode is used here to init metadata
-    auto md = make_shared<Metadata>(mode, fuse_req_ctx(req)->uid, fuse_req_ctx(req)->gid);
-    if ((mode & S_IFDIR) == S_IFDIR) {
-        md->size(
-                ADAFS_DATA->blocksize()); // XXX just visual. size computation of directory should be done properly at some point
+int create_node(struct fuse_entry_param& fep, fuse_ino_t parent, const char* name, const uid_t uid, const gid_t gid,
+                mode_t mode) {
+    int err;
+    // create new inode number
+    fuse_ino_t new_inode = Util::generate_inode_no();
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry create
+            err = create_dentry(parent, new_inode, name, mode);
+        } else { // remote dentry create
+            err = rpc_send_create_dentry(recipient, parent, name, mode, new_inode);
+        }
+        if (err != 0) { // failure in dentry creation
+            ADAFS_DATA->spdlogger()->error("Failed to create a dentry");
+            return err;
+        }
+        // calculate recipient again for new inode because it could hash somewhere else
+        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(new_inode).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata init
+            err = init_metadata_fep(fep, new_inode, uid, gid, mode);
+            if (err == 0)
+                init_chunk_space(new_inode);
+        } else { // remote metadata init
+            err = rpc_send_create_mdata(recipient, uid, gid, mode, new_inode);
+            if (err == 0) {
+                // Because we don't want to return the metadata init values through the RPC
+                // we just set dummy values here with the most important bits
+                fep.ino = new_inode;
+                fep.attr.st_ino = new_inode;
+                fep.attr.st_mode = mode;
+                fep.attr.st_blocks = 0;
+                fep.attr.st_gid = gid;
+                fep.attr.st_uid = uid;
+                fep.attr.st_nlink = 0;
+                fep.attr.st_size = 0;
+                fep.entry_timeout = 1.0;
+                fep.attr_timeout = 1.0;
+            } else {
+                // TODO remove created dentry
+            }
+        }
+    } else { //local single node operation
+        // XXX check permissions (omittable), should create node be atomic?
+        // create dentry
+        err = create_dentry(parent, new_inode, name, mode);
+        if (err != 0) { // failure in dentry creation
+            ADAFS_DATA->spdlogger()->error("Failed to create a dentry");
+            return err;
+        }
+        // create metadata and fill fuse entry param
+        err = init_metadata_fep(fep, new_inode, uid, gid, mode);
+        if (err == 0)
+            init_chunk_space(new_inode);
     }
-    // create directory entry (can fail) in adafs
-    create_dentry(parent, md->inode_no(), name, mode);
+    if (err != 0)
+        ADAFS_DATA->spdlogger()->error("Failed to create metadata");
+    // TODO remove created dentry
 
-    // write metadata
-    write_all_metadata(*md, md->inode_no());
-
-    // create dentry for Linux
-    fep.entry_timeout = 1.0;
-    fep.attr_timeout = 1.0;
-    fep.ino = md->inode_no();
-    //fill fep->attr with the metadata information
-    metadata_to_stat(*md, fep.attr);
-
-    return 0;
+    return err;
 }
 
+int remove_node(fuse_ino_t parent, const char* name) {
 
+    fuse_ino_t del_inode;
+    int err;
+
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(RPC_DATA->get_dentry_hashable(parent, name));
+        if (ADAFS_DATA->is_local_op(recipient)) { // local dentry removal
+            // Remove denty returns <err, inode_of_dentry> pair
+            tie(err, del_inode) = remove_dentry(parent, name);
+        } else { // remote dentry removal
+            err = rpc_send_remove_dentry(recipient, parent, name, del_inode);
+        }
+        if (err != 0) {
+            ADAFS_DATA->spdlogger()->error("Failed to remove dentry");
+            return err;
+        }
+        // recalculate recipient for metadata removal
+        recipient = RPC_DATA->get_rpc_node(fmt::FormatInt(del_inode).str());
+        if (ADAFS_DATA->is_local_op(recipient)) { // local metadata removal
+            err = remove_all_metadata(del_inode);
+            if (err == 0)
+                destroy_chunk_space(del_inode);
+        } else { // remote metadata removal
+            err = rpc_send_remove_mdata(recipient, del_inode);
+        }
+    } else { // single node local operation
+        // Remove denty returns <err, inode_of_dentry> pair
+        tie(err, del_inode) = remove_dentry(parent, name);
+        if (err != 0) {
+            ADAFS_DATA->spdlogger()->error("Failed to remove dentry");
+            return err;
+        }
+        // Remove inode
+        err = remove_all_metadata(del_inode);
+        if (err == 0)
+            destroy_chunk_space(del_inode);
+    }
+
+    if (err != 0)
+        ADAFS_DATA->spdlogger()->error("Failed to remove metadata");
+
+    /* TODO really consider if this is even required in a distributed setup, I'd argue: No
+     * XXX consider the whole lookup count functionality. We need something like a hashtable here, which marks the file
+     * for removal. If forget is then called, the file should be really removed. (see forget comments)
+     * Any fuse comments that increment the lookup count will show the file as deleted after unlink and before/after forget.
+     * symlinks, hardlinks, devices, pipes, etc all work differently with forget and unlink
+     */
+
+    return err;
+}
 
 

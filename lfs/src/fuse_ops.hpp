@@ -27,7 +27,9 @@ void adafs_ll_mkdir(fuse_req_t req, fuse_ino_t parent, const char* name, mode_t 
 void adafs_ll_rmdir(fuse_req_t req, fuse_ino_t parent, const char* name);
 void adafs_ll_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
 // I/O
+void adafs_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info* fi);
 
+void adafs_ll_write(fuse_req_t req, fuse_ino_t ino, const char* buf, size_t size, off_t off, struct fuse_file_info* fi);
 
 
 // sync
