@@ -39,7 +39,11 @@ include_directories(include ${ROCKSDB_INCLUDE_DIR}
 
 include_directories(include)
 
-set(SOURCE_FILES main.cpp main.hpp)
+set(SOURCE_FILES main.cpp main.hpp configure.hpp
+        src/db/db_util.cpp src/classes/fs_data.cpp
+
+        include/db/db_util.hpp include/classes/fs_data.hpp
+        src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs

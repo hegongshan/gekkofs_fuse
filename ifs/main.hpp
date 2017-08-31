@@ -12,13 +12,13 @@
 #include <unordered_map>
 #include <thread>
 
+// adafs config
+#include "configure.hpp"
 // boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
-// adafs
-#include "configure.hpp"
 // third party libs
 #include "extern/spdlog/spdlog.h"
 #include "extern/spdlog/fmt/fmt.h"
@@ -38,5 +38,11 @@ extern "C" {
 #include <mercury_proc_string.h>
 #include <margo.h>
 }
+// adafs
+#include "include/classes/fs_data.hpp"
+
+namespace bfs = boost::filesystem;
+
+#define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
 
 #endif //IFS_MAIN_HPP
