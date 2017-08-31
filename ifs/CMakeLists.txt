@@ -11,9 +11,41 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Rocksdb dependencies
+find_package(LZ4 REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(GFlags REQUIRED)
+find_package(snappy REQUIRED)
+find_package(ZStd REQUIRED)
+find_package(RocksDB REQUIRED)
+# margo dependencies
+find_package(Libev REQUIRED)
+#find_package(CCI REQUIRED)
+find_package(BMI REQUIRED)
+find_package(Mercury REQUIRED)
+find_package(MercuryUtil REQUIRED)
+find_package(Abt REQUIRED)
+find_package(Abt-Snoozer REQUIRED)
+find_package(Margo REQUIRED)
+
+# boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
+find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
+
+include_directories(include ${ROCKSDB_INCLUDE_DIR}
+        # margo paths
+        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
+        )
+
 include_directories(include)
 
-set(SOURCE_FILES main.cpp)
+set(SOURCE_FILES main.cpp main.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
+target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
+        # rocksdb libs
+        ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${gflags_LIBRARIES} ${LZ4_LIBRARY}
+        # margo libs
+        ${BMI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
+        -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)
 
 add_subdirectory(src/preload)
