@@ -33,23 +33,6 @@
 //#include <iostream>
 
 
-ssize_t ld_write(int fd, const void *buf, size_t count) {
-    printf("write:chars#:%lu, buf %s\n", count, (char*)buf);
-    printf("\tfd:%d\n", fd);
-    printf("\tPath in write %s\n", file_map.get(fd)->path());
-    return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
-}
-
-ssize_t ld_read(int fd, void *buf, size_t count) {
-    return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
-}
-
-
-int ld_puts(const char* str) {
-    printf("puts:chars#:%lu\n", strlen(str));
-    return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
-}
-
 int ld_open(const char *path, int flags, ...){
     printf("opening up the path: %s\n", path);
     if(flags & O_CREAT){
@@ -68,16 +51,30 @@ int ld_open(const char *path, int flags, ...){
     return ret;
 }
 
+int ld_open64(__const char *path, int flags, ...) {
+    mode_t mode;
+    if (flags & O_CREAT) {
+        va_list ap;
+        va_start(ap, flags);
+        mode = va_arg(ap, mode_t);
+        va_end(ap);
+    }
+    return ld_open(path, flags | O_LARGEFILE, mode);
+}
+
 FILE* ld_fopen(const char *path, const char *mode){
     printf("FILE opening up the path: %s\n", path);
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
+}
+
+int ld_creat(const char *pathname, mode_t mode) {
+    return ld_open(pathname, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
 int ld_close(int fd) {
     printf("closing fd: %d\n", fd);
     file_map.remove(fd);
     return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
-
 }
 
 int ld___close(int fd) {
@@ -85,15 +82,87 @@ int ld___close(int fd) {
     return ld_close(fd);
 }
 
+int ld_stat(const char *pathname, struct stat *buf) {
+    printf("stat called with path %s\n", pathname);
+    return (reinterpret_cast<decltype(&stat)>(libc_stat))(pathname, buf);
+}
+
+int ld_fstat(int fd, struct stat *buf) {
+    printf("stat called with fd %d\n", fd);
+    return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
+}
+
+int ld_puts(const char* str) {
+    printf("puts:chars#:%lu\n", strlen(str));
+    return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
+}
+
+ssize_t ld_write(int fd, const void *buf, size_t count) {
+    printf("write:chars#:%lu, buf %s\n", count, (char*)buf);
+    printf("\tfd:%d\n", fd);
+    printf("\tPath in write %s\n", file_map.get(fd)->path());
+    return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
+}
+
+ssize_t ld_read(int fd, void *buf, size_t count) {
+    return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
+}
+
+ssize_t ld_pread(int fd, void *buf, size_t count, off_t offset) {
+    return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
+}
+
+ssize_t ld_pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
+    return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, nbyte, offset);
+}
+
+off_t ld_lseek(int fd, off_t offset, int whence) __THROW {
+    return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
+}
+
+off_t ld_lseek64(int fd, off_t offset, int whence) __THROW {
+    return ld_lseek(fd, offset, whence);
+}
+
+int ld_truncate(const char *path, off_t length) __THROW {
+    return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
+}
+
+int ld_ftruncate(int fd, off_t length) __THROW {
+    return (reinterpret_cast<decltype(&ftruncate)>(libc_ftruncate))(fd, length);
+}
+
+int ld_dup(int oldfd) __THROW {
+    return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
+}
+
+int ld_dup2(int oldfd, int newfd) __THROW {
+    return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
+}
+
 void init_preload(void) {
     libc = dlopen("libc.so.6", RTLD_LAZY);
-    libc_close = dlsym(libc, "close");
-    libc___close = dlsym(libc, "__close");
-    libc_puts = dlsym(libc, "puts");
-    libc_write = dlsym(libc, "write");
-    libc_read = dlsym(libc, "read");
     libc_open = dlsym(libc, "open");
     libc_fopen = dlsym(libc, "fopen");
+
+    libc_close = dlsym(libc, "close");
+//    libc___close = dlsym(libc, "__close");
+
+    libc_stat = dlsym(libc, "stat");
+    libc_fstat = dlsym(libc, "fstat");
+
+    libc_puts = dlsym(libc, "puts");
+
+    libc_write = dlsym(libc, "write");
+    libc_read = dlsym(libc, "read");
+    libc_pread = dlsym(libc, "pread");
+    libc_pread64 = dlsym(libc, "pread64");
+
+    libc_lseek = dlsym(libc, "lseek");
+
+    libc_truncate = dlsym(libc, "truncate");
+    libc_ftruncate = dlsym(libc, "ftruncate");
+
     printf("HELLLO\n");
 }
 

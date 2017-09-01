@@ -60,7 +60,7 @@ public:
 
     size_t get_rpc_node(std::string to_hash);
 
-    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
+//    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
 
     // Getter/Setter
 

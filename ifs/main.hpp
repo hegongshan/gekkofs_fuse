@@ -44,5 +44,6 @@ extern "C" {
 namespace bfs = boost::filesystem;
 
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
+#define RPC_DATA (static_cast<RPCData*>(RPCData::getInstance()))
 
 #endif //IFS_MAIN_HPP
