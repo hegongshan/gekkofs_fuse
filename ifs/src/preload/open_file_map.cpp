@@ -6,7 +6,10 @@
 
 using namespace std;
 
-OpenFile::OpenFile(const char* path, const int fd) : path_(path), fd_(fd)  {}
+OpenFile::OpenFile(const char* path) : path_(path) {
+    tmp_file_ = tmpfile(); // create a temporary file in memory and
+    fd_ = fileno(tmp_file_); // get a valid file descriptor from the kernel
+}
 
 const char* OpenFile::path() const {
     return path_;
@@ -26,6 +29,16 @@ void OpenFile::fd(int fd_) {
 
 OpenFileMap::OpenFileMap() {}
 
+OpenFile::~OpenFile() {
+    if (tmp_file_ != nullptr)
+        fclose(tmp_file_);
+}
+
+void OpenFile::annul_fd() {
+    if (tmp_file_ != nullptr)
+        fclose(tmp_file_);
+}
+
 OpenFile* OpenFileMap::get(int fd) {
     lock_guard<mutex> lock(files_mutex_);
     auto f = files_.find(fd);
@@ -42,11 +55,11 @@ bool OpenFileMap::exist(const int fd) {
     return !(f == files_.end());
 }
 
-bool OpenFileMap::add(const char* path, const int fd) {
-    OpenFile file{path, fd};
+int OpenFileMap::add(const char* path) {
+    OpenFile file{path};
     lock_guard<mutex> lock(files_mutex_);
-    files_.insert(make_pair(fd, file));
-    return true;
+    files_.insert(make_pair(file.fd(), file));
+    return file.fd();
 }
 
 bool OpenFileMap::remove(const int fd) {
@@ -55,6 +68,7 @@ bool OpenFileMap::remove(const int fd) {
     if (f == files_.end()) {
         return false;
     }
+    files_.at(fd).annul_fd(); // free file descriptor
     files_.erase(fd);
     return true;
 }

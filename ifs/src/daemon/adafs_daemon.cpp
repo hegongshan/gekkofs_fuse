@@ -9,7 +9,14 @@ void daemon_loop(void* arg) {
     ADAFS_DATA->spdlogger()->info("Starting application loop ...");
     while(true) {
         ADAFS_DATA->spdlogger()->info("sleeping");
-        sleep(5);
+        sleep(1);
+        /* TODO for Nafiseh
+         * Connect to the IPC socket with the looping thread and listed for messages from the preload lib
+         * When new message is received spawn a new thread that will trigger the operation and respond to preload lib
+         * Ensure that messages from the lib are not lost. XXX
+         */
+
+        // connect to the ipc socket and a separate thread retrieves the message from the preload lib. in
         ADAFS_DATA->spdlogger()->info("done sleeping. exiting ...");
         break;
     }

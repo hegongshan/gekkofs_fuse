@@ -12,9 +12,14 @@ class OpenFile {
 private:
     const char* path_;
     int fd_;
+    FILE* tmp_file_;
 
 public:
-    OpenFile(const char* path, const int fd);
+    OpenFile(const char* path);
+
+    ~OpenFile();
+
+    void annul_fd();
 
     // getter/setter
     const char* path() const;
@@ -24,6 +29,7 @@ public:
     int fd() const;
 
     void fd(int fd_);
+
 };
 
 
@@ -40,7 +46,8 @@ public:
 
     OpenFile* get(int fd);
     bool exist(const int fd);
-    bool add(const char* path, const int fd);
+
+    int add(const char* path);
     bool remove(const int fd);
 
 };

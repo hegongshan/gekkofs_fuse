@@ -35,20 +35,18 @@
 
 int ld_open(const char *path, int flags, ...){
     printf("opening up the path: %s\n", path);
+    mode_t mode;
     if(flags & O_CREAT){
         va_list vl;
         va_start(vl,flags);
-        mode_t mode = va_arg(vl,int);
+        mode = va_arg(vl, int);
         va_end(vl);
-        int ret = (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
-        printf("\tGot fd:%d\n", ret);
-        file_map.add(path, ret);
-        return ret;
     }
-    int ret = (reinterpret_cast<decltype(&open)>(libc_open))(path, flags);
-    file_map.add(path, ret);
-    printf("\tGot fd:%d\n", ret);
-    return ret;
+    if (is_fs_path(path)) {
+        auto fd = file_map.add(path);
+        // TODO call daemon and return if successful return the above fd. if unsuccessful delete fd remove file from map
+    }
+    return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
 int ld_open64(__const char *path, int flags, ...) {
@@ -72,8 +70,11 @@ int ld_creat(const char *pathname, mode_t mode) {
 }
 
 int ld_close(int fd) {
-    printf("closing fd: %d\n", fd);
-    file_map.remove(fd);
+    if (file_map.exist(fd)) {
+        // TODO call daemon and return
+        file_map.remove(fd);
+    } else
+        printf("closing fd: %d\n", fd);
     return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
 }
 
@@ -82,6 +83,7 @@ int ld___close(int fd) {
     return ld_close(fd);
 }
 
+// XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXX Continue here
 int ld_stat(const char *pathname, struct stat *buf) {
     printf("stat called with path %s\n", pathname);
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(pathname, buf);

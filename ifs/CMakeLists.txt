@@ -46,7 +46,7 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp
         src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp
 
 
-        )
+        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs

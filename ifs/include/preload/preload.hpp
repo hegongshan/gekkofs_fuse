@@ -11,6 +11,7 @@
 #include <fcntl.h>
 
 #include "preload/open_file_map.hpp"
+#include "preload/preload_util.hpp"
 
 //
 void* libc;

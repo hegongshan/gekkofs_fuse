@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-g -fPIC")
 
 
-set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/preload.hpp ../../include/preload/open_file_map.hpp)
+set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/preload.hpp
+        ../../include/preload/open_file_map.hpp preload_util.cpp ../../include/preload/preload_util.hpp
+        )
 add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
 target_link_libraries(iointer dl)
