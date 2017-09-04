@@ -40,6 +40,7 @@ extern "C" {
 }
 // adafs
 #include "include/classes/fs_data.hpp"
+#include "include/classes/rpc_data.hpp"
 
 namespace bfs = boost::filesystem;
 

@@ -7,9 +7,16 @@
 
 #include "../../main.hpp"
 
-bool init_argobots();
-void destroy_argobots();
+void daemon_loop(void* arg);
+void run_daemon();
 
 void init_environment();
+void destroy_enviroment();
+
+bool init_argobots();
+void destroy_argobots();
+bool init_rpc_server();
+bool init_rpc_client();
+
 
 #endif //IFS_ADAFS_DAEMON_HPP

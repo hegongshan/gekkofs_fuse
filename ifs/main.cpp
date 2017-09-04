@@ -26,18 +26,15 @@ int main(int argc, const char* argv[]) {
 #endif
 
     // Parse input
-    auto fuse_argc = 1;
     vector<string> fuse_argv;
     fuse_argv.push_back(move(argv[0]));
-//    auto fuse_struct = make_unique<tmp_fuse_usr>();
 
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
-            ("foreground,f", "Run Fuse instance in foreground. (Fuse parameter)")
-            ("mountdir,m", po::value<string>(), "User Fuse mountdir. (Fuse parameter)")
+            ("mountdir,m", po::value<string>(), "User Fuse mountdir.")
             ("rootdir,r", po::value<string>(), "ADA-FS data directory")
-            ("hostsfile", po::value<string>(), "Path to the hosts_ file for all fs participants")
+            ("hostsfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -47,13 +44,7 @@ int main(int argc, const char* argv[]) {
         cout << desc << "\n";
         return 1;
     }
-
-    if (vm.count("foreground")) {
-        fuse_argc++;
-        fuse_argv.push_back("-f"s);
-    }
     if (vm.count("mountdir")) {
-        fuse_argc++;
         fuse_argv.push_back(vm["mountdir"].as<string>());
     }
     if (vm.count("rootdir")) {
@@ -103,6 +94,11 @@ int main(int argc, const char* argv[]) {
 
     init_environment();
 
+    run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
+
+
+
+    destroy_enviroment();
 
     return 0;
 
