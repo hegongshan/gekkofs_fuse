@@ -58,7 +58,7 @@ public:
 
     bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr);
 
-    size_t get_rpc_node(std::string to_hash);
+    size_t get_rpc_node(const std::string& to_hash);
 
 //    std::string get_dentry_hashable(const fuse_ino_t parent, const char* name);
 

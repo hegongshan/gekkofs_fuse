@@ -4,6 +4,17 @@
 
 #include "classes/fs_data.hpp"
 
+// Utility member functions
+
+//fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
+//    FsData::inode_count_ += count;
+//    return FsData::inode_count_;
+//}
+
+bool FsData::is_local_op(const size_t recipient) {
+    return recipient == host_id_;
+}
+
 // getter/setter
 
 const std::unordered_map<std::string, std::string>& FsData::hashmap() const {
@@ -172,17 +183,6 @@ std::string FsData::rpc_port() const {
 
 void FsData::rpc_port(std::string rpc_port) {
     FsData::rpc_port_ = rpc_port;
-}
-
-// Utility member functions
-
-//fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
-//    FsData::inode_count_ += count;
-//    return FsData::inode_count_;
-//}
-
-bool FsData::is_local_op(const size_t recipient) {
-    return recipient == host_id_;
 }
 
 

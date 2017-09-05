@@ -64,7 +64,16 @@ public:
 
     void operator=(FsData const&) = delete;
 
+    // Utility member functions
+
+//    fuse_ino_t raise_inode_count(fuse_ino_t count);
+
+    bool is_local_op(size_t recipient);
+
+    size_t hash_path(const std::string& path);
+
     // getter/setter
+
     const std::unordered_map<std::string, std::string>& hashmap() const;
 
     void hashmap(const std::unordered_map<std::string, std::string>& hashmap_);
@@ -149,11 +158,7 @@ public:
 
     void rpc_port(std::string rpc_port);
 
-    // Utility member functions
 
-//    fuse_ino_t raise_inode_count(fuse_ino_t count);
-
-    bool is_local_op(size_t recipient);
 };
 
 

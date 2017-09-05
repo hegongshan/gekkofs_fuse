@@ -33,12 +33,12 @@
 //#include <iostream>
 
 
-int ld_open(const char *path, int flags, ...){
+int ld_open(const char* path, int flags, ...) {
     printf("opening up the path: %s\n", path);
     mode_t mode;
-    if(flags & O_CREAT){
+    if (flags & O_CREAT) {
         va_list vl;
-        va_start(vl,flags);
+        va_start(vl, flags);
         mode = va_arg(vl, int);
         va_end(vl);
     }
@@ -49,7 +49,7 @@ int ld_open(const char *path, int flags, ...){
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
-int ld_open64(__const char *path, int flags, ...) {
+int ld_open64(__const char* path, int flags, ...) {
     mode_t mode;
     if (flags & O_CREAT) {
         va_list ap;
@@ -60,18 +60,18 @@ int ld_open64(__const char *path, int flags, ...) {
     return ld_open(path, flags | O_LARGEFILE, mode);
 }
 
-FILE* ld_fopen(const char *path, const char *mode){
+FILE* ld_fopen(const char* path, const char* mode) {
     printf("FILE opening up the path: %s\n", path);
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
 }
 
-int ld_creat(const char *pathname, mode_t mode) {
-    return ld_open(pathname, O_CREAT | O_WRONLY | O_TRUNC, mode);
+int ld_creat(const char* path, mode_t mode) {
+    return ld_open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
 int ld_close(int fd) {
     if (file_map.exist(fd)) {
-        // TODO call daemon and return
+        // TODO call daemon and return (do we even need to)
         file_map.remove(fd);
     } else
         printf("closing fd: %d\n", fd);
@@ -83,14 +83,20 @@ int ld___close(int fd) {
     return ld_close(fd);
 }
 
-// XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXX Continue here
-int ld_stat(const char *pathname, struct stat *buf) {
-    printf("stat called with path %s\n", pathname);
-    return (reinterpret_cast<decltype(&stat)>(libc_stat))(pathname, buf);
+
+int ld_stat(const char* path, struct stat* buf) {
+    if (is_fs_path(path)) {
+        // TODO call daemon and return
+    }
+    return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
 
-int ld_fstat(int fd, struct stat *buf) {
-    printf("stat called with fd %d\n", fd);
+int ld_fstat(int fd, struct stat* buf) {
+    \
+    if (file_map.exist(fd)) {
+        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        // TODO call daemon and return
+    }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
 }
 
@@ -99,22 +105,35 @@ int ld_puts(const char* str) {
     return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
 }
 
-ssize_t ld_write(int fd, const void *buf, size_t count) {
-    printf("write:chars#:%lu, buf %s\n", count, (char*)buf);
-    printf("\tfd:%d\n", fd);
-    printf("\tPath in write %s\n", file_map.get(fd)->path());
+ssize_t ld_write(int fd, const void* buf, size_t count) {
+    if (file_map.exist(fd)) {
+        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        // TODO call daemon and return size written
+    }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
 }
 
-ssize_t ld_read(int fd, void *buf, size_t count) {
+ssize_t ld_read(int fd, void* buf, size_t count) {
+    if (file_map.exist(fd)) {
+        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        // TODO call daemon and return size written
+    }
     return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
 }
 
-ssize_t ld_pread(int fd, void *buf, size_t count, off_t offset) {
+ssize_t ld_pread(int fd, void* buf, size_t count, off_t offset) {
+    if (file_map.exist(fd)) {
+        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        // TODO call daemon and return size written
+    }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }
 
 ssize_t ld_pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
+    if (file_map.exist(fd)) {
+        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        // TODO call daemon and return size written
+    }
     return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, nbyte, offset);
 }
 
@@ -126,7 +145,7 @@ off_t ld_lseek64(int fd, off_t offset, int whence) __THROW {
     return ld_lseek(fd, offset, whence);
 }
 
-int ld_truncate(const char *path, off_t length) __THROW {
+int ld_truncate(const char* path, off_t length) __THROW {
     return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
 }
 

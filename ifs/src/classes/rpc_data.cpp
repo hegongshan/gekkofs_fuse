@@ -34,7 +34,7 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
     }
 }
 
-size_t RPCData::get_rpc_node(std::string to_hash) {
+size_t RPCData::get_rpc_node(const std::string& to_hash) {
     return ADAFS_DATA->hashf()(to_hash) % ADAFS_DATA->host_size();
 }
 
