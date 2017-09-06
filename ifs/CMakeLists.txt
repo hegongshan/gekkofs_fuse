@@ -43,10 +43,13 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp
         src/db/db_util.cpp src/classes/fs_data.cpp src/classes/rpc_data.cpp
 
         include/db/db_util.hpp include/classes/fs_data.hpp include/classes/rpc_data.hpp
+        include/classes/metadata.hpp src/classes/metadata.cpp
         src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp
 
+        include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
 
-        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp)
+
+        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp src/adafs_ops/metadentry.cpp include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs

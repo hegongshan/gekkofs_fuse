@@ -27,6 +27,9 @@ bool init_rocksdb();
 
 void optimize_rocksdb(rocksdb::Options& options);
 
+std::string
+db_build_metadentry_value(); // TODO this would build a value based on the number of metadata fields that are used in the fs configuration
+
 //std::string db_build_dentry_key(const fuse_ino_t inode, const std::string& name);
 //
 //std::string db_build_dentry_prefix(const fuse_ino_t inode);

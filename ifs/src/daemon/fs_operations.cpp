@@ -3,10 +3,14 @@
 //
 
 #include "daemon/fs_operations.hpp"
+#include "adafs_ops/metadentry.hpp"
 
 using namespace std;
 
 int adafs_open(char* path, int flags, mode_t mode) {
+    auto uid = getuid();
+    auto gid = getgid();
+
     if (flags & O_CREAT) { // do file create TODO handle all other flags
         string path_s(path);
         if (ADAFS_DATA->host_size() > 1) { // multiple node operation
@@ -18,6 +22,7 @@ int adafs_open(char* path, int flags, mode_t mode) {
             }
         } else { // single node operation
             // TODO
+            auto ret = create_node(path_s, uid, gid, mode);
         }
     } else {
         // do nothing.
