@@ -88,7 +88,7 @@ void Metadata::blocks(blkcnt_t blocks_) {
 
 //--------------------------------------------
 // By default create an empty metadata object
-//Metadata::Metadata() : Metadata(S_IFREG | 0755) {}
+
 Metadata::Metadata() : atime_(),
                        mtime_(),
                        ctime_(),
@@ -115,7 +115,7 @@ Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid) :
 //    inode_no_ = Util::generate_inode_no();
 }
 
-Metadata::Metadata(mode_t mode, uid_t uid, gid_t gid, uint64_t inode) :
+Metadata::Metadata(mode_t mode, uid_t uid, gid_t gid, ino_t inode) :
         atime_(),
         mtime_(),
         ctime_(),

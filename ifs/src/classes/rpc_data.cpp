@@ -104,68 +104,12 @@ lru11::Cache<uint64_t, hg_addr_t>& RPCData::address_cache() {
     return address_cache_;
 }
 
-hg_id_t RPCData::rpc_srv_attr_id() const {
-    return rpc_srv_attr_id_;
+hg_id_t RPCData::rpc_srv_create_node_id() const {
+    return rpc_srv_create_node_id_;
 }
 
-void RPCData::rpc_srv_attr_id(hg_id_t rpc_srv_attr_id) {
-    RPCData::rpc_srv_attr_id_ = rpc_srv_attr_id;
-}
-
-hg_id_t RPCData::rpc_srv_create_dentry_id() const {
-    return rpc_srv_create_dentry_id_;
-}
-
-void RPCData::rpc_srv_create_dentry_id(hg_id_t rpc_srv_create_dentry_id) {
-    RPCData::rpc_srv_create_dentry_id_ = rpc_srv_create_dentry_id;
-}
-
-hg_id_t RPCData::rpc_srv_create_mdata_id() const {
-    return rpc_srv_create_mdata_id_;
-}
-
-void RPCData::rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id) {
-    RPCData::rpc_srv_create_mdata_id_ = rpc_srv_create_mdata_id;
-}
-
-hg_id_t RPCData::rpc_srv_lookup_id() const {
-    return rpc_srv_lookup_id_;
-}
-
-void RPCData::rpc_srv_lookup_id(hg_id_t rpc_srv_lookup_id) {
-    RPCData::rpc_srv_lookup_id_ = rpc_srv_lookup_id;
-}
-
-hg_id_t RPCData::rpc_srv_remove_dentry_id() const {
-    return rpc_srv_remove_dentry_id_;
-}
-
-void RPCData::rpc_srv_remove_dentry_id(hg_id_t rpc_srv_remove_dentry_id) {
-    RPCData::rpc_srv_remove_dentry_id_ = rpc_srv_remove_dentry_id;
-}
-
-hg_id_t RPCData::rpc_srv_remove_mdata_id() const {
-    return rpc_srv_remove_mdata_id_;
-}
-
-void RPCData::rpc_srv_remove_mdata_id(hg_id_t rpc_srv_remove_mdata_id) {
-    RPCData::rpc_srv_remove_mdata_id_ = rpc_srv_remove_mdata_id;
-}
-
-hg_id_t RPCData::rpc_srv_read_data_id() const {
-    return rpc_srv_read_data_id_;
-}
-
-void RPCData::rpc_srv_read_data_id(hg_id_t rpc_srv_read_data_id) {
-    RPCData::rpc_srv_read_data_id_ = rpc_srv_read_data_id;
-}
-
-hg_id_t RPCData::rpc_srv_write_data_id() const {
-    return rpc_srv_write_data_id_;
-}
-
-void RPCData::rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id) {
-    RPCData::rpc_srv_write_data_id_ = rpc_srv_write_data_id;
+void RPCData::rpc_srv_create_node_id(hg_id_t rpc_srv_create_node_id) {
+    RPCData::rpc_srv_create_node_id_ = rpc_srv_create_node_id;
 }
 
 

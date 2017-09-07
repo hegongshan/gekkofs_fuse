@@ -6,10 +6,10 @@
 
 // Utility member functions
 
-//fuse_ino_t FsData::raise_inode_count(fuse_ino_t count) {
-//    FsData::inode_count_ += count;
-//    return FsData::inode_count_;
-//}
+ino_t FsData::raise_inode_count(ino_t count) {
+    FsData::inode_count_ += count;
+    return FsData::inode_count_;
+}
 
 bool FsData::is_local_op(const size_t recipient) {
     return recipient == host_id_;
@@ -145,13 +145,13 @@ void FsData::rdb_write_options(const rocksdb::WriteOptions& rdb_write_options) {
     FsData::rdb_write_options_ = rdb_write_options;
 }
 
-//fuse_ino_t FsData::inode_count() const {
-//    return inode_count_;
-//}
-//
-//void FsData::inode_count(fuse_ino_t inode_count) {
-//    FsData::inode_count_ = inode_count;
-//}
+ino_t FsData::inode_count() const {
+    return inode_count_;
+}
+
+void FsData::inode_count(ino_t inode_count) {
+    FsData::inode_count_ = inode_count;
+}
 
 const std::map<uint64_t, std::string>& FsData::hosts() const {
     return hosts_;
@@ -183,6 +183,70 @@ std::string FsData::rpc_port() const {
 
 void FsData::rpc_port(std::string rpc_port) {
     FsData::rpc_port_ = rpc_port;
+}
+
+bool FsData::atime_state() const {
+    return atime_state_;
+}
+
+void FsData::atime_state(bool atime_state) {
+    FsData::atime_state_ = atime_state;
+}
+
+bool FsData::mtime_state() const {
+    return mtime_state_;
+}
+
+void FsData::mtime_state(bool mtime_state) {
+    FsData::mtime_state_ = mtime_state;
+}
+
+bool FsData::ctime_state() const {
+    return ctime_state_;
+}
+
+void FsData::ctime_state(bool ctime_state) {
+    FsData::ctime_state_ = ctime_state;
+}
+
+bool FsData::uid_state() const {
+    return uid_state_;
+}
+
+void FsData::uid_state(bool uid_state) {
+    FsData::uid_state_ = uid_state;
+}
+
+bool FsData::gid_state() const {
+    return gid_state_;
+}
+
+void FsData::gid_state(bool gid_state) {
+    FsData::gid_state_ = gid_state;
+}
+
+bool FsData::inode_no_state() const {
+    return inode_no_state_;
+}
+
+void FsData::inode_no_state(bool inode_no_state) {
+    FsData::inode_no_state_ = inode_no_state;
+}
+
+bool FsData::link_cnt_state() const {
+    return link_cnt_state_;
+}
+
+void FsData::link_cnt_state(bool link_cnt_state) {
+    FsData::link_cnt_state_ = link_cnt_state;
+}
+
+bool FsData::blocks_state() const {
+    return blocks_state_;
+}
+
+void FsData::blocks_state(bool blocks_state) {
+    FsData::blocks_state_ = blocks_state;
 }
 
 

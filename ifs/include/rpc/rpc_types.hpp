@@ -6,7 +6,7 @@
 #define LFS_RPC_TYPES_HPP
 
 
-#include "../main.hpp"
+#include "../../main.hpp"
 
 /* visible API for RPC data types used in RPCS */
 
@@ -15,6 +15,10 @@ MERCURY_GEN_PROC(rpc_minimal_in_t, ((int32_t) (input)))
 MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
 // misc generic rpc types
 MERCURY_GEN_PROC(rpc_res_out_t, ((hg_bool_t) (res)))
+
+MERCURY_GEN_PROC(rpc_create_node_in_t,
+                 ((hg_const_string_t) (path))\
+((uint32_t) (mode)))
 
 /** OLD BELOW
 // create dentry

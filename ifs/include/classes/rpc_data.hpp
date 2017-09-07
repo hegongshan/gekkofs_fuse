@@ -32,14 +32,7 @@ private:
     // TODO RPC client IDs
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
-    hg_id_t rpc_srv_create_dentry_id_;
-    hg_id_t rpc_srv_create_mdata_id_;
-    hg_id_t rpc_srv_attr_id_;
-    hg_id_t rpc_srv_lookup_id_;
-    hg_id_t rpc_srv_remove_dentry_id_;
-    hg_id_t rpc_srv_remove_mdata_id_;
-    hg_id_t rpc_srv_read_data_id_;
-    hg_id_t rpc_srv_write_data_id_;
+    hg_id_t rpc_srv_create_node_id_;
 
 
 public:
@@ -94,37 +87,10 @@ public:
 
     lru11::Cache<uint64_t, hg_addr_t>& address_cache();
 
-    hg_id_t rpc_srv_attr_id() const;
+    hg_id_t rpc_srv_create_node_id() const;
 
-    void rpc_srv_attr_id(hg_id_t rpc_srv_attr_id);
+    void rpc_srv_create_node_id(hg_id_t rpc_srv_create_node_id);
 
-    hg_id_t rpc_srv_create_dentry_id() const;
-
-    void rpc_srv_create_dentry_id(hg_id_t rpc_srv_create_dentry_id);
-
-    hg_id_t rpc_srv_create_mdata_id() const;
-
-    void rpc_srv_create_mdata_id(hg_id_t rpc_srv_create_mdata_id);
-
-    hg_id_t rpc_srv_lookup_id() const;
-
-    void rpc_srv_lookup_id(hg_id_t rpc_srv_lookup_id);
-
-    hg_id_t rpc_srv_remove_dentry_id() const;
-
-    void rpc_srv_remove_dentry_id(hg_id_t rpc_srv_remove_dentry_id);
-
-    hg_id_t rpc_srv_remove_mdata_id() const;
-
-    void rpc_srv_remove_mdata_id(hg_id_t rpc_srv_remove_mdata_id);
-
-    hg_id_t rpc_srv_read_data_id() const;
-
-    void rpc_srv_read_data_id(hg_id_t rpc_srv_read_data_id);
-
-    hg_id_t rpc_srv_write_data_id() const;
-
-    void rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id);
 };
 
 

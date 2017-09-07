@@ -19,7 +19,7 @@ private:
     std::hash<std::string> hashf_;
 
     // inodes
-//    fuse_ino_t inode_count_;
+    ino_t inode_count_;
 
     // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
     blksize_t blocksize_;
@@ -49,6 +49,16 @@ private:
     rocksdb::WriteOptions rdb_write_options_;
     std::string rdb_path_;
 
+    // configurable metadata
+    bool atime_state_;
+    bool mtime_state_;
+    bool ctime_state_;
+    bool uid_state_;
+    bool gid_state_;
+    bool inode_no_state_;
+    bool link_cnt_state_;
+    bool blocks_state_;
+
 public:
 
     // mutex has a deleted method to assign an existing mutex. As such it cannot use getter or setters
@@ -66,7 +76,7 @@ public:
 
     // Utility member functions
 
-//    fuse_ino_t raise_inode_count(fuse_ino_t count);
+    ino_t raise_inode_count(ino_t count);
 
     bool is_local_op(size_t recipient);
 
@@ -82,9 +92,9 @@ public:
 
     void hashf(const std::hash<std::string>& hashf_);
 
-//    fuse_ino_t inode_count() const;
-//
-//    void inode_count(fuse_ino_t inode_count);
+    ino_t inode_count() const;
+
+    void inode_count(ino_t inode_count);
 
     blksize_t blocksize() const;
 
@@ -158,6 +168,37 @@ public:
 
     void rpc_port(std::string rpc_port);
 
+    bool atime_state() const;
+
+    void atime_state(bool atime_state);
+
+    bool mtime_state() const;
+
+    void mtime_state(bool mtime_state);
+
+    bool ctime_state() const;
+
+    void ctime_state(bool ctime_state);
+
+    bool uid_state() const;
+
+    void uid_state(bool uid_state);
+
+    bool gid_state() const;
+
+    void gid_state(bool gid_state);
+
+    bool inode_no_state() const;
+
+    void inode_no_state(bool inode_no_state);
+
+    bool link_cnt_state() const;
+
+    void link_cnt_state(bool link_cnt_state);
+
+    bool blocks_state() const;
+
+    void blocks_state(bool blocks_state);
 
 };
 

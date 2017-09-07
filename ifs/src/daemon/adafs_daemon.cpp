@@ -4,10 +4,12 @@
 
 #include "daemon/adafs_daemon.hpp"
 #include "db/db_util.hpp"
+#include "rpc/rpc_types.hpp"
+#include "rpc/rpc_defs.hpp"
 
 void daemon_loop(void* arg) {
     ADAFS_DATA->spdlogger()->info("Starting application loop ...");
-    while(true) {
+    while (true) {
         ADAFS_DATA->spdlogger()->info("sleeping");
         sleep(1);
         /* TODO for Nafiseh
@@ -27,7 +29,8 @@ void run_daemon() {
     ABT_pool pool;
     ABT_thread loop_thread;
 
-    auto argo_ret = ABT_xstream_self(&xstream); // get the current execution stream (1 core) to use (started with ABT_init())
+    auto argo_ret = ABT_xstream_self(
+            &xstream); // get the current execution stream (1 core) to use (started with ABT_init())
     if (argo_ret != 0) {
         ADAFS_DATA->spdlogger()->error("Error getting the execution stream when starting the daemon.");
         return;
@@ -69,6 +72,15 @@ void init_environment() {
     assert(err);
     err = init_rpc_client();
     assert(err);
+    // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
+    ADAFS_DATA->atime_state(false);
+    ADAFS_DATA->mtime_state(false);
+    ADAFS_DATA->ctime_state(false);
+    ADAFS_DATA->uid_state(false);
+    ADAFS_DATA->gid_state(false);
+    ADAFS_DATA->inode_no_state(false);
+    ADAFS_DATA->link_cnt_state(false);
+    ADAFS_DATA->blocks_state(false);
 }
 
 /**
@@ -200,6 +212,16 @@ bool init_rpc_server() {
     return true;
 }
 
+/**
+ * Register the rpcs for the server. There is no need to store rpc ids for the server
+ * @param hg_class
+ */
+void register_server_rpcs() {
+    auto hg_class = RPC_DATA->server_hg_class();
+    MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_res_out_t, rpc_srv_create_node_handler);
+}
+
 bool init_rpc_client() {
     auto protocol_port = "bmi+tcp"s;
     ADAFS_DATA->spdlogger()->info("Initializing Mercury client ...");
@@ -242,4 +264,15 @@ bool init_rpc_client() {
 //    register_client_rpcs();
 
     return true;
+}
+
+/**
+ * Register rpcs for the client and add the rpc id to rpc_data
+ * @param hg_class
+ */
+void register_client_rpcs() {
+    auto hg_class = RPC_DATA->client_hg_class();
+    RPC_DATA->rpc_minimal_id(MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr));
+    RPC_DATA->rpc_srv_create_node_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_res_out_t, nullptr));
 }

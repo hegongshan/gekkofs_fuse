@@ -11,6 +11,8 @@
 
 DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_node)
+
 /** OLD BELOW
 // mdata ops
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)

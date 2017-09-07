@@ -11,6 +11,7 @@ std::string db_get_metadentry(const std::string& key) {
     auto db = ADAFS_DATA->rdb();
     string val;
     db->Get(ReadOptions(), key, &val).ok();
+
     return val;
 }
 

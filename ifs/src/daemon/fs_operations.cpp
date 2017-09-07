@@ -4,30 +4,32 @@
 
 #include "daemon/fs_operations.hpp"
 #include "adafs_ops/metadentry.hpp"
+#include "rpc/sender/c_metadentry.hpp"
 
 using namespace std;
 
 int adafs_open(char* path, int flags, mode_t mode) {
-    auto uid = getuid();
+    auto uid = getuid(); // XXX this should go into daemon init and set it globally
     auto gid = getgid();
+    int ret;
 
     if (flags & O_CREAT) { // do file create TODO handle all other flags
         string path_s(path);
         if (ADAFS_DATA->host_size() > 1) { // multiple node operation
             auto recipient = RPC_DATA->get_rpc_node(path_s);
             if (ADAFS_DATA->is_local_op(recipient)) { // local
-                // TODO this node does operation
+                ret = create_node(path_s, uid, gid, mode);
             } else { // remote
-                // TODO call rpc
+                ret = rpc_send_create_node(recipient, mode);
             }
         } else { // single node operation
-            // TODO
-            auto ret = create_node(path_s, uid, gid, mode);
+            ret = create_node(path_s, uid, gid, mode);
         }
     } else {
         // do nothing.
+        ret = 0;
     }
-    return 0;
+    return ret;
 }
 
 FILE* adafs_fopen(char* path, const char* mode) {
@@ -70,22 +72,7 @@ int adafs_stat(char* path, struct stat* buf) {
             // TODO call rpc
         }
     } else { // single node operation
-        // TODO
-    }
-    return 0;
-}
-
-int adafs_fstat(char* path, struct stat* buf) {
-    string path_s(path);
-    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
-        auto recipient = RPC_DATA->get_rpc_node(path_s);
-        if (ADAFS_DATA->is_local_op(recipient)) { // local
-            // TODO this node does operation
-        } else { // remote
-            // TODO call rpc
-        }
-    } else { // single node operation
-        // TODO
+        auto ret = get_attr(path_s, buf);
     }
     return 0;
 }

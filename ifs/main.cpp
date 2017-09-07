@@ -6,7 +6,6 @@
 using namespace std;
 namespace po = boost::program_options;
 
-
 int main(int argc, const char* argv[]) {
 
 
@@ -95,8 +94,6 @@ int main(int argc, const char* argv[]) {
     init_environment();
 
     run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
-
-
 
     destroy_enviroment();
 
