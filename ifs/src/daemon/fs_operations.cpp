@@ -2,9 +2,9 @@
 // Created by evie on 9/4/17.
 //
 
-#include "daemon/fs_operations.hpp"
-#include "adafs_ops/metadentry.hpp"
-#include "rpc/sender/c_metadentry.hpp"
+#include <daemon/fs_operations.hpp>
+#include <adafs_ops/metadentry.hpp>
+#include <rpc/sender/c_metadentry.hpp>
 
 using namespace std;
 
@@ -64,17 +64,18 @@ int adafs_close(char* path) {
 
 int adafs_stat(char* path, struct stat* buf) {
     string path_s(path);
+    int ret;
     if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(path_s);
         if (ADAFS_DATA->is_local_op(recipient)) { // local
-            // TODO this node does operation
+            ret = get_attr(path_s, buf);
         } else { // remote
-            // TODO call rpc
+            ret = rpc_send_get_attr(recipient, path, buf);
         }
     } else { // single node operation
-        auto ret = get_attr(path_s, buf);
+        ret = get_attr(path_s, buf);
     }
-    return 0;
+    return ret;
 }
 
 ssize_t adafs_write(char* path, void* buf, size_t count) {

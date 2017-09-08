@@ -2,10 +2,10 @@
 // Created by evie on 8/31/17.
 //
 
-#include "daemon/adafs_daemon.hpp"
-#include "db/db_util.hpp"
-#include "rpc/rpc_types.hpp"
-#include "rpc/rpc_defs.hpp"
+#include <daemon/adafs_daemon.hpp>
+#include <db/db_util.hpp>
+#include <rpc/rpc_types.hpp>
+#include <rpc/rpc_defs.hpp>
 
 void daemon_loop(void* arg) {
     ADAFS_DATA->spdlogger()->info("Starting application loop ...");
@@ -220,6 +220,7 @@ void register_server_rpcs() {
     auto hg_class = RPC_DATA->server_hg_class();
     MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_res_out_t, rpc_srv_create_node_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
 }
 
 bool init_rpc_client() {
@@ -275,4 +276,6 @@ void register_client_rpcs() {
     RPC_DATA->rpc_minimal_id(MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr));
     RPC_DATA->rpc_srv_create_node_id(
             MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_res_out_t, nullptr));
+    RPC_DATA->rpc_srv_attr_id(
+            MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr));
 }

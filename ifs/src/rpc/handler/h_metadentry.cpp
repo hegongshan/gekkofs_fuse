@@ -2,9 +2,13 @@
 // Created by evie on 9/7/17.
 //
 
-#include "rpc/rpc_types.hpp"
-#include "rpc/rpc_defs.hpp"
-#include "adafs_ops/metadentry.hpp"
+#include <rpc/rpc_types.hpp>
+#include <rpc/rpc_defs.hpp>
+
+#include <adafs_ops/metadentry.hpp>
+
+#include <db/db_ops.hpp>
+
 
 static hg_return_t rpc_minimal(hg_handle_t handle) {
     rpc_minimal_in_t in;
@@ -68,3 +72,28 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_create_node)
+
+static hg_return_t rpc_srv_attr(hg_handle_t handle) {
+    rpc_get_attr_in_t in;
+    rpc_get_attr_out_t out;
+    const struct hg_info* hgi;
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got get attr RPC for path {}", in.path);
+    hgi = HG_Get_info(handle);
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+    // get the metadata
+    out.db_val = db_get_metadentry(in.path).c_str();
+
+    ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
+    auto hret = margo_respond(mid, handle, &out);
+    assert(hret == HG_SUCCESS);
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)

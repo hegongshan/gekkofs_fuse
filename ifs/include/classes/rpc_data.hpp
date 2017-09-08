@@ -6,7 +6,7 @@
 #define LFS_RPC_DATA_HPP
 
 #include "../../main.hpp"
-#include "extern/lrucache/LRUCache11.hpp"
+#include <extern/lrucache/LRUCache11.hpp>
 
 class RPCData {
 
@@ -33,6 +33,7 @@ private:
     // RPC client IDs
     hg_id_t rpc_minimal_id_;
     hg_id_t rpc_srv_create_node_id_;
+    hg_id_t rpc_srv_attr_id_;
 
 
 public:
@@ -90,6 +91,10 @@ public:
     hg_id_t rpc_srv_create_node_id() const;
 
     void rpc_srv_create_node_id(hg_id_t rpc_srv_create_node_id);
+
+    hg_id_t rpc_srv_attr_id() const;
+
+    void rpc_srv_attr_id(hg_id_t rpc_srv_attr_id);
 
 };
 

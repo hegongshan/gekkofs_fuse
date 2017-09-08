@@ -39,8 +39,8 @@ extern "C" {
 #include <margo.h>
 }
 // adafs
-#include "include/classes/fs_data.hpp"
-#include "include/classes/rpc_data.hpp"
+#include <classes/fs_data.hpp>
+#include <classes/rpc_data.hpp>
 
 namespace bfs = boost::filesystem;
 

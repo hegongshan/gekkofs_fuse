@@ -2,7 +2,7 @@
 // Created by evie on 9/6/17.
 //
 
-#include "db/db_ops.hpp"
+#include <db/db_ops.hpp>
 
 using namespace rocksdb;
 using namespace std;
@@ -11,7 +11,8 @@ std::string db_get_metadentry(const std::string& key) {
     auto db = ADAFS_DATA->rdb();
     string val;
     db->Get(ReadOptions(), key, &val).ok();
-
+    // TODO check what happens if nothing could have been found. Will val be NULL, nullptr, ""?
+    // It matters because the client RPC is checking for an empty string to see if get_attr was successful or not
     return val;
 }
 

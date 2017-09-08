@@ -2,7 +2,7 @@
 // Created by evie on 6/21/17.
 //
 
-#include "classes/rpc_data.hpp"
+#include <classes/rpc_data.hpp>
 
 
 // Utility functions
@@ -110,6 +110,14 @@ hg_id_t RPCData::rpc_srv_create_node_id() const {
 
 void RPCData::rpc_srv_create_node_id(hg_id_t rpc_srv_create_node_id) {
     RPCData::rpc_srv_create_node_id_ = rpc_srv_create_node_id;
+}
+
+hg_id_t RPCData::rpc_srv_attr_id() const {
+    return rpc_srv_attr_id_;
+}
+
+void RPCData::rpc_srv_attr_id(hg_id_t rpc_srv_attr_id) {
+    RPCData::rpc_srv_attr_id_ = rpc_srv_attr_id;
 }
 
 

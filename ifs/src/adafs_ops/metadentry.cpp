@@ -2,8 +2,8 @@
 // Created by evie on 9/6/17.
 //
 
-#include "adafs_ops/metadentry.hpp"
-#include "db/db_ops.hpp"
+#include <adafs_ops/metadentry.hpp>
+#include <db/db_ops.hpp>
 
 using namespace std;
 
@@ -51,14 +51,13 @@ int create_metadentry(const std::string& path, mode_t mode) {
     return db_put_metadentry(path, val);
 }
 
-int db_metadentry_to_stat(const std::string& path, struct stat& attr) {
-    auto val = db_get_metadentry(path);
+int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr) {
 
     auto delim = ","s;
-    auto pos = val.find(delim);
+    auto pos = db_val.find(delim);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
         attr.st_ino = ADAFS_DATA->hashf()(path);
-        attr.st_mode = static_cast<unsigned int>(stoul(db_get_metadentry(path)));
+        attr.st_mode = static_cast<unsigned int>(stoul(db_val));
         attr.st_nlink = 1;
         attr.st_uid = getuid();
         attr.st_gid = getgid();
@@ -71,52 +70,52 @@ int db_metadentry_to_stat(const std::string& path, struct stat& attr) {
         return 0;
     }
     // some metadata is enabled
-    attr.st_mode = static_cast<unsigned int>(stoul(val.substr(0, pos)));
-    val.erase(0, pos + 1);
+    attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
+    db_val.erase(0, pos + 1);
     // The order is important. don't change.
     if (ADAFS_DATA->atime_state()) {
-        pos = val.find(delim);
-        attr.st_atim.tv_sec = static_cast<time_t>(stol(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->mtime_state()) {
-        pos = val.find(delim);
-        attr.st_mtim.tv_sec = static_cast<time_t>(stol(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->ctime_state()) {
-        pos = val.find(delim);
-        attr.st_ctim.tv_sec = static_cast<time_t>(stol(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->uid_state()) {
-        pos = val.find(delim);
-        attr.st_uid = static_cast<uid_t>(stoul(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->gid_state()) {
-        pos = val.find(delim);
-        attr.st_gid = static_cast<uid_t>(stoul(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->inode_no_state()) {
-        pos = val.find(delim);
-        attr.st_ino = static_cast<ino_t>(stoul(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        pos = val.find(delim);
-        attr.st_nlink = static_cast<nlink_t>(stoul(val.substr(0, pos)));
-        val.erase(0, pos + 1);
+        pos = db_val.find(delim);
+        attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->blocks_state()) { // last one will not encounter a delimter anymore
-        attr.st_blocks = static_cast<blkcnt_t>(stoul(val));
+    if (ADAFS_DATA->blocks_state()) { // last one will not encounter a delimiter anymore
+        attr.st_blocks = static_cast<blkcnt_t>(stoul(db_val));
     }
     return 0;
 }
 
 int get_attr(const std::string& path, struct stat* attr) {
-
-    db_metadentry_to_stat(path, *attr);
+    auto val = db_get_metadentry(path);
+    db_val_to_stat(path, val, *attr);
     return 0;
 }

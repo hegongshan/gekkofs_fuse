@@ -16,9 +16,16 @@ MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
 // misc generic rpc types
 MERCURY_GEN_PROC(rpc_res_out_t, ((hg_bool_t) (res)))
 
+// Metadentry
 MERCURY_GEN_PROC(rpc_create_node_in_t,
                  ((hg_const_string_t) (path))\
 ((uint32_t) (mode)))
+
+MERCURY_GEN_PROC(rpc_get_attr_in_t, ((hg_const_string_t) (path)))
+
+MERCURY_GEN_PROC(rpc_get_attr_out_t, ((hg_const_string_t) (db_val)))
+
+
 
 /** OLD BELOW
 // create dentry
