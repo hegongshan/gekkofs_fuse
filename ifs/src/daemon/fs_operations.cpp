@@ -4,7 +4,9 @@
 
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
+#include <adafs_ops/data.hpp>
 #include <rpc/sender/c_metadentry.hpp>
+#include <rpc/sender/c_data.hpp>
 
 using namespace std;
 
@@ -70,7 +72,7 @@ int adafs_stat(char* path, struct stat* buf) {
         if (ADAFS_DATA->is_local_op(recipient)) { // local
             ret = get_attr(path_s, buf);
         } else { // remote
-            ret = rpc_send_get_attr(recipient, path, buf);
+            ret = rpc_send_get_attr(recipient, path_s, buf);
         }
     } else { // single node operation
         ret = get_attr(path_s, buf);
@@ -78,47 +80,57 @@ int adafs_stat(char* path, struct stat* buf) {
     return ret;
 }
 
-ssize_t adafs_write(char* path, void* buf, size_t count) {
+/**
+ * write buf to path
+ * @param path
+ * @param buf
+ * @param size
+ * @param offset
+ * @return
+ */
+ssize_t adafs_write(char* path, char* buf, size_t size, off_t offset) {
+    // TODO make sure this function does everything it should do. recheck if buffer should be const or not
     string path_s(path);
+    size_t write_size;
+    int err;
+    // XXX Append is set when opening the file. This needs to get here somehow. this is why false is hardcoded for now
     if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(path_s);
         if (ADAFS_DATA->is_local_op(recipient)) { // local
-            // TODO this node does operation
+            err = write_file(path_s, buf, write_size, size, offset, false);
         } else { // remote
-            // TODO call rpc
+            err = rpc_send_write(recipient, path_s, size, offset, buf, write_size, false);
         }
     } else { // single node operation
-        // TODO
+        err = write_file(path_s, buf, write_size, size, offset, false);
     }
-    return 0;
+    return err;
 }
 
-ssize_t adafs_read(char* path, void* buf, size_t count) {
-    string path_s(path);
-    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
-        auto recipient = RPC_DATA->get_rpc_node(path_s);
-        if (ADAFS_DATA->is_local_op(recipient)) { // local
-            // TODO this node does operation
-        } else { // remote
-            // TODO call rpc
-        }
-    } else { // single node operation
-        // TODO
-    }
-    return 0;
-}
+/**
+ * If offset is nonzero than it can be interpreted as pread
+ * @param path
+ * @param buf
+ * @param size
+ * @param offset
+ * @return
+ */
+ssize_t adafs_read(char* path, char* buf, size_t size, off_t offset) {
+    // TODO make sure this function does everything it should do. recheck if buffer should be const or not
+    size_t read_size;
+//    auto buf = make_unique<char[]>(size);
+    int err;
 
-ssize_t adafs_pread(char* path, void* buf, size_t count, off_t offset) {
     string path_s(path);
     if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(path_s);
         if (ADAFS_DATA->is_local_op(recipient)) { // local
-            // TODO this node does operation
+            err = read_file(buf, read_size, path_s, size, offset);
         } else { // remote
-            // TODO call rpc
+            err = rpc_send_read(recipient, path_s, size, offset, buf, read_size);
         }
     } else { // single node operation
-        // TODO
+        err = read_file(buf, read_size, path_s, size, offset);
     }
-    return 0;
+    return err;
 }

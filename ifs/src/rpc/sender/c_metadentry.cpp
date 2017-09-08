@@ -101,6 +101,8 @@ int rpc_send_create_node(const size_t recipient, const mode_t mode) {
         ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
     }
 
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
     return success == HG_TRUE ? 0 : 1;
@@ -149,6 +151,7 @@ int rpc_send_get_attr(const size_t recipient, const std::string& path, struct st
     } else {
         ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
     }
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);

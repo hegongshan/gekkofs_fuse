@@ -34,6 +34,8 @@ private:
     hg_id_t rpc_minimal_id_;
     hg_id_t rpc_srv_create_node_id_;
     hg_id_t rpc_srv_attr_id_;
+    hg_id_t rpc_srv_read_data_id_;
+    hg_id_t rpc_srv_write_data_id_;
 
 
 public:
@@ -95,6 +97,14 @@ public:
     hg_id_t rpc_srv_attr_id() const;
 
     void rpc_srv_attr_id(hg_id_t rpc_srv_attr_id);
+
+    hg_id_t rpc_srv_read_data_id() const;
+
+    void rpc_srv_read_data_id(hg_id_t rpc_srv_read_data_id);
+
+    hg_id_t rpc_srv_write_data_id() const;
+
+    void rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id);
 
 };
 

@@ -15,13 +15,9 @@ int adafs_close(char* path);
 
 int adafs_stat(char* path, struct stat* buf);
 
-int adafs_fstat(char* path, struct stat* buf);
+ssize_t adafs_write(char* path, char* buf, size_t size, off_t offset);
 
-ssize_t adafs_write(char* path, void* buf, size_t count);
-
-ssize_t adafs_read(char* path, void* buf, size_t count);
-
-ssize_t adafs_pread(char* path, void* buf, size_t count, off_t offset);
+ssize_t adafs_read(char* path, char* buf, size_t size, off_t offset);
 
 
 #endif //IFS_FS_OPERATIONS_HPP

@@ -15,6 +15,11 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_node)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
 
+// data
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
+
 /** OLD BELOW
 // mdata ops
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)

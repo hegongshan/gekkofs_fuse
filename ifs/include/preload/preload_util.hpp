@@ -7,7 +7,9 @@
 
 #include <string>
 
-static const std::string root_path = "/home/evie/ownCloud/Promotion/gogs_git/ada-fs/ifs/.hidden_playground/rootdir";
+using namespace std;
+
+static const std::string root_path = "/home/evie/ownCloud/Promotion/gogs_git/ada-fs/ifs/.hidden_playground/rootdir"s;
 
 bool is_fs_path(const char* path);
 

@@ -10,8 +10,8 @@
 #include <stdint.h>
 #include <fcntl.h>
 
-#include <open_file_map.hpp>
-#include <preload_util.hpp>
+#include <preload/open_file_map.hpp>
+#include <preload/preload_util.hpp>
 
 //
 void* libc;

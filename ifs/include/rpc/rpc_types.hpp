@@ -25,6 +25,24 @@ MERCURY_GEN_PROC(rpc_get_attr_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_get_attr_out_t, ((hg_const_string_t) (db_val)))
 
+// data
+MERCURY_GEN_PROC(rpc_read_data_in_t,
+                 ((hg_const_string_t) (path))\
+((hg_size_t) (size))\
+((int64_t) (offset))\
+((hg_bulk_t) (bulk_handle)))
+
+MERCURY_GEN_PROC(rpc_data_out_t,
+                 ((int32_t) (res))\
+((hg_size_t) (io_size)))
+
+MERCURY_GEN_PROC(rpc_write_data_in_t,
+                 ((hg_const_string_t) (path))\
+((hg_size_t) (size))\
+((int64_t) (offset))\
+((hg_bool_t) (append))\
+((hg_bulk_t) (bulk_handle)))
+
 
 
 /** OLD BELOW
