@@ -5,35 +5,12 @@
 //#define _GNU_SOURCE
 #include <preload/preload.hpp>
 #include <dlfcn.h>
-#include <string.h>
 
-//#include <dlfcn.h>
-//#include <sys/types.h>
-//#include <sys/uio.h>
-//#include <stdio.h>
 #include <stdarg.h>
-//#include <stdlib.h>
-//#include <inttypes.h>
-//#include <string.h>
-//#include <assert.h>
-//#include <errno.h>
-//#include <utime.h>
-//#include <sys/statvfs.h>
-//#include <fcntl.h>
-//#include <sys/stat.h>
-//#include <dirent.h>
-//#include <sys/param.h>
-//#include <sys/mount.h>
-//#include <sys/time.h>
 #include <unistd.h>
-//#include <dirent.h>
-//#include <sys/xattr.h>
-//#include <string>
-//#include <iostream>
 
 
 int ld_open(const char* path, int flags, ...) {
-    printf("opening up the path: %s\n", path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list vl;
@@ -60,7 +37,7 @@ int ld_open64(__const char* path, int flags, ...) {
 }
 
 FILE* ld_fopen(const char* path, const char* mode) {
-    printf("FILE opening up the path: %s\n", path);
+    printf("test\n");
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
 }
 
@@ -72,13 +49,11 @@ int ld_close(int fd) {
     if (file_map.exist(fd)) {
         // TODO call daemon and return (do we even need to)
         file_map.remove(fd);
-    } else
-        printf("closing fd: %d\n", fd);
+    }
     return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
 }
 
 int ld___close(int fd) {
-    printf("___closing fd: %d\n", fd);
     return ld_close(fd);
 }
 
@@ -91,7 +66,6 @@ int ld_stat(const char* path, struct stat* buf) {
 }
 
 int ld_fstat(int fd, struct stat* buf) {
-    \
     if (file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return
@@ -100,7 +74,6 @@ int ld_fstat(int fd, struct stat* buf) {
 }
 
 int ld_puts(const char* str) {
-    printf("puts:chars#:%lu\n", strlen(str));
     return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
 }
 
@@ -153,14 +126,27 @@ int ld_ftruncate(int fd, off_t length) __THROW {
 }
 
 int ld_dup(int oldfd) __THROW {
+    if (file_map.exist(oldfd)) {
+        // Not implemented
+        return -1;
+    }
     return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
 }
 
 int ld_dup2(int oldfd, int newfd) __THROW {
+    if (file_map.exist(oldfd) || file_map.exist(newfd)) {
+        // Not implemented
+        return -1;
+    }
     return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
 }
 
+
 void init_preload(void) {
+
+    // just a security measure
+    if (is_lib_initialized)
+        return;
     libc = dlopen("libc.so.6", RTLD_LAZY);
     libc_open = dlsym(libc, "open");
     libc_fopen = dlsym(libc, "fopen");
@@ -183,9 +169,15 @@ void init_preload(void) {
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");
 
-    printf("HELLLO\n");
+    libc_dup = dlsym(libc, "dup");
+    libc_dup2 = dlsym(libc, "dup2");
+
+    debug_fd = fopen(LOG_DAEMON_PATH, "a+");
+    DAEMON_DEBUG(debug_fd, "Preload initialized.\n");
+    is_lib_initialized = true;
 }
 
 void destroy_preload(void) {
 
+    fclose(debug_fd);
 }

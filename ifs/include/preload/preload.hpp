@@ -10,10 +10,12 @@
 #include <stdint.h>
 #include <fcntl.h>
 
+#include "../../configure.hpp"
+
 #include <preload/open_file_map.hpp>
 #include <preload/preload_util.hpp>
 
-//
+
 void* libc;
 
 void* libc_open;
@@ -75,7 +77,12 @@ static OpenFileMap file_map{};
 #define ld_dup dup
 #define ld_dup2 dup2
 
+bool is_lib_initialized = false;
 
+FILE* debug_fd;
+
+#define DAEMON_DEBUG(fd, fmt, ...) \
+            do { if (LOG_DAEMON_DEBUG) fprintf(fd, fmt, ##__VA_ARGS__); } while (0)
 
 void init_preload(void) __attribute__((constructor));
 

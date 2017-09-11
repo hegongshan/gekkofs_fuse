@@ -18,15 +18,14 @@ int main() {
 //    ofs << "lorem upsum";
 //    ofs.close();
 //
-    auto buf = "BUFFERINO2";
-    auto fd2 = open("/tmp/test_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
-    write(fd2, buf, 9);
-    cout << close(fd2) << endl;
+//    auto buf = "BUFFERINO2";
+//    auto fd2 = open("/tmp/test_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
+//    write(fd2, buf, 9);
+//    cout << close(fd2) << endl;
 //    auto fd3 = fopen("test_fopen", "w");
 //    fputs(buf, fd3);
 //    fclose(fd3);
 
-    cout << "done" << endl;
 
 //    for (int i = 0; i < 200; ++i) {
 //        printf("%d\n", i);
@@ -36,11 +35,29 @@ int main() {
 //        sleep(1);
 //    }
 
-    return 1;
+    auto buf = "BUFFERINO2";
 
-//    std::cout << "BLAAAA" << std::endl;
-//
-//    pwrite(0, "Hello pwrite\n", 13, 0);
-//    write(0, "Hello, Kernel!\n", 15);
-//    printf("Hello, World!\n");
+
+    auto pid = fork();
+
+    if (pid == 0) {
+        auto fd2 = open("/tmp/child_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
+        write(fd2, buf, 9);
+        cout << close(fd2) << endl;
+    } else if (pid > 0) {
+        auto fd3 = open("/tmp/parent_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
+        write(fd3, buf, 9);
+        cout << close(fd3) << endl;
+    } else {
+        printf("fork failed");
+        return 1;
+    }
+
+
+
+
+
+    cout << "done" << endl;
+    return 0;
+
 }
