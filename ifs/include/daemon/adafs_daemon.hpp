@@ -18,7 +18,8 @@ void destroy_argobots();
 bool init_rpc_server();
 
 void register_server_rpcs();
-bool init_rpc_client();
+
+bool init_ipc_client();
 
 void register_client_rpcs();
 

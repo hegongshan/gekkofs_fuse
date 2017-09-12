@@ -6,12 +6,13 @@
 #include <db/db_util.hpp>
 #include <rpc/rpc_types.hpp>
 #include <rpc/rpc_defs.hpp>
+#include <preload/ipc_types.hpp>
 
 void daemon_loop(void* arg) {
     ADAFS_DATA->spdlogger()->info("Starting application loop ...");
     while (true) {
         ADAFS_DATA->spdlogger()->info("sleeping");
-        sleep(1);
+        sleep(10);
         /* TODO for Nafiseh
          * Connect to the IPC socket with the looping thread and listed for messages from the preload lib
          * When new message is received spawn a new thread that will trigger the operation and respond to preload lib
@@ -70,7 +71,7 @@ void init_environment() {
     // init margo
     err = init_rpc_server();
     assert(err);
-    err = init_rpc_client();
+    err = init_ipc_client();
     assert(err);
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
     ADAFS_DATA->atime_state(false);
@@ -207,7 +208,7 @@ bool init_rpc_server() {
     RPC_DATA->server_mid(mid);
 
     // register RPCs
-//    register_server_rpcs();
+    register_server_rpcs();
 
     return true;
 }
@@ -223,9 +224,12 @@ void register_server_rpcs() {
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
+    // preload IPCs
+    MERCURY_REGISTER(hg_class, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, ipc_srv_open_handler);
+
 }
 
-bool init_rpc_client() {
+bool init_ipc_client() {
     auto protocol_port = "bmi+tcp"s;
     ADAFS_DATA->spdlogger()->info("Initializing Mercury client ...");
     /* MERCURY PART */
@@ -264,7 +268,7 @@ bool init_rpc_client() {
     RPC_DATA->client_hg_context(hg_context);
     RPC_DATA->client_mid(mid);
 
-//    register_client_rpcs();
+    register_client_rpcs();
 
     return true;
 }
