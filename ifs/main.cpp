@@ -25,8 +25,6 @@ int main(int argc, const char* argv[]) {
 #endif
 
     // Parse input
-    vector<string> fuse_argv;
-    fuse_argv.push_back(move(argv[0]));
 
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -39,43 +37,47 @@ int main(int argc, const char* argv[]) {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
 
-    if (vm.count("help")) {
+    if (vm.count("help") || argc < 3) {
         cout << desc << "\n";
         return 1;
     }
     if (vm.count("mountdir")) {
-        fuse_argv.push_back(vm["mountdir"].as<string>());
+//        fuse_argv.push_back(vm["mountdir"].as<string>());
+        // TODO, currently hardcoded
     }
     if (vm.count("rootdir")) {
         ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
     }
 
-//    // TODO Hostfile parsing here...
-//    if (vm.count("hosts")) {
-//        auto hosts = vm["hosts"].as<string>();
-//        uint64_t i = 0;
-//        auto found_hostname = false;
-//        auto hostname = Util::get_my_hostname();
-//        if (hostname.size() == 0) {
-//            cerr << "Unable to read the machine's hostname" << endl;
-//            assert(hostname.size() != 0);
-//        }
-//        // split comma separated host string
-//        boost::char_separator<char> sep(",");
-//        boost::tokenizer<boost::char_separator<char>> tok(hosts, sep);
-//        for (auto&& s : tok) {
-//            fuse_struct->hosts[i] = s;
-//            if (hostname == s) {
-//                fuse_struct->host_nr = i;
-//                found_hostname = true;
-//            }
-//            i++;
-//        }
-//        if (!found_hostname) {
-//            cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
-//            assert(found_hostname);
-//        }
-//    }
+    // TODO Hostfile parsing here...
+    if (vm.count("hosts")) {
+        auto hosts = vm["hosts"].as<string>();
+        std::map<uint64_t, std::string> hostmap;
+        uint64_t i = 0;
+        auto found_hostname = false;
+        auto hostname = Util::get_my_hostname();
+        if (hostname.size() == 0) {
+            cerr << "Unable to read the machine's hostname" << endl;
+            assert(hostname.size() != 0);
+        }
+        // split comma separated host string
+        boost::char_separator<char> sep(",");
+        boost::tokenizer<boost::char_separator<char>> tok(hosts, sep);
+        for (auto&& s : tok) {
+            hostmap[i] = s;
+            if (hostname == s) {
+                ADAFS_DATA->host_id(i);
+                found_hostname = true;
+            }
+            i++;
+        }
+        if (!found_hostname) {
+            cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
+            assert(found_hostname);
+        }
+        ADAFS_DATA->hosts(hostmap);
+        ADAFS_DATA->host_size(hostmap.size());
+    }
 
     //set all paths
     ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s);
