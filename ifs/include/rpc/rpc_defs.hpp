@@ -20,6 +20,9 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
 
+// IPCs
+DECLARE_MARGO_RPC_HANDLER(ipc_srv_open)
+
 /** OLD BELOW
 // mdata ops
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)

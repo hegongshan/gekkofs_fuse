@@ -12,6 +12,14 @@
 
 #include "../../configure.hpp"
 
+extern "C" {
+#include <abt.h>
+#include <abt-snoozer.h>
+#include <mercury_types.h>
+#include <mercury_proc_string.h>
+#include <margo.h>
+}
+
 #include <preload/open_file_map.hpp>
 #include <preload/preload_util.hpp>
 
@@ -82,7 +90,17 @@ bool is_lib_initialized = false;
 FILE* debug_fd;
 
 #define DAEMON_DEBUG(fd, fmt, ...) \
-            do { if (LOG_DAEMON_DEBUG) fprintf(fd, fmt, ##__VA_ARGS__); } while (0)
+            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt, ##__VA_ARGS__); } while (0)
+#define DAEMON_DEBUG0(fd, fmt) \
+            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt); } while (0)
+
+
+bool init_argobots();
+
+void register_client_ipcs();
+
+bool init_ipc_client();
+
 
 void init_preload(void) __attribute__((constructor));
 

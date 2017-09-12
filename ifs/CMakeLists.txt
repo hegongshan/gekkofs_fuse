@@ -49,7 +49,7 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
         include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
 
 
-        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp src/adafs_ops/metadentry.cpp include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp src/rpc/handler/h_metadentry.cpp src/rpc/sender/c_metadentry.cpp include/rpc/sender/c_metadentry.hpp src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp src/rpc/sender/c_data.cpp include/rpc/sender/c_data.hpp)
+        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp src/adafs_ops/metadentry.cpp include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp src/rpc/handler/h_metadentry.cpp src/rpc/sender/c_metadentry.cpp include/rpc/sender/c_metadentry.hpp src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp src/rpc/sender/c_data.cpp include/rpc/sender/c_data.hpp src/rpc/handler/h_preload.cpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs

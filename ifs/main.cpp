@@ -94,9 +94,11 @@ int main(int argc, const char* argv[]) {
     bfs::create_directories(ADAFS_DATA->mgmt_path());
 
     init_environment();
-
+#ifndef MARGOIPC
     run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
-
+#else
+    margo_wait_for_finalize(RPC_DATA->server_mid());
+#endif
     destroy_enviroment();
 
     return 0;

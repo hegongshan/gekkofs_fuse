@@ -31,4 +31,7 @@
 // Debug configurations
 //#define RPC_TEST
 
+// Using Margo for IPC or raw sockets
+#define MARGOIPC
+
 #endif //FS_CONFIGURE_H
