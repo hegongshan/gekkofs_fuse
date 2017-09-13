@@ -19,7 +19,7 @@ bool init_rpc_server();
 
 void register_server_rpcs();
 
-bool init_ipc_client();
+bool init_rpc_client();
 
 void register_client_rpcs();
 

@@ -27,7 +27,8 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
     auto err = adafs_open(path, in.flags, in.mode);
     if (err == 0) {
         out.res = HG_TRUE;
-
+    } else {
+        out.res = HG_FALSE;
     }
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
     auto hret = margo_respond(mid, handle, &out);

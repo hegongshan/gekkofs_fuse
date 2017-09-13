@@ -71,7 +71,7 @@ void init_environment() {
     // init margo
     err = init_rpc_server();
     assert(err);
-    err = init_ipc_client();
+    err = init_rpc_client();
     assert(err);
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
     ADAFS_DATA->atime_state(false);
@@ -229,7 +229,7 @@ void register_server_rpcs() {
 
 }
 
-bool init_ipc_client() {
+bool init_rpc_client() {
     auto protocol_port = "bmi+tcp"s;
     ADAFS_DATA->spdlogger()->info("Initializing Mercury client ...");
     /* MERCURY PART */

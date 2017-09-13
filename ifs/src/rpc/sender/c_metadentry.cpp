@@ -11,7 +11,7 @@ using namespace std;
 
 static int max_retries = 3;
 
-void send_minimal_rpc(void* arg) {
+void send_minimal_rpc(const hg_id_t minimal_id) {
 
     hg_handle_t handle;
     rpc_minimal_in_t in;

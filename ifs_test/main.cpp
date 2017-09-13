@@ -38,20 +38,20 @@ int main() {
     auto buf = "BUFFERINO2";
 
 
-    auto pid = fork();
+//    auto pid = fork();
 
-    if (pid == 0) {
+//    if (pid == 0) {
         auto fd2 = open("/tmp/child_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
         write(fd2, buf, 9);
         cout << close(fd2) << endl;
-    } else if (pid > 0) {
-        auto fd3 = open("/tmp/parent_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
-        write(fd3, buf, 9);
-        cout << close(fd3) << endl;
-    } else {
-        printf("fork failed");
-        return 1;
-    }
+//    } else if (pid > 0) {
+//        auto fd3 = open("/tmp/parent_open.txt", O_WRONLY|O_CREAT|O_TRUNC,0666);
+//        write(fd3, buf, 9);
+//        cout << close(fd3) << endl;
+//    } else {
+//        printf("fork failed");
+//        return 1;
+//    }
 
 
 

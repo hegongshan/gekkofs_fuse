@@ -33,6 +33,8 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
     HG_Free_input(handle, &in);
     HG_Free_output(handle, &out);
     HG_Destroy(handle);
+    ADAFS_DATA->spdlogger()->debug("Done with minimal rpc handler!");
+
     return HG_SUCCESS;
 }
 

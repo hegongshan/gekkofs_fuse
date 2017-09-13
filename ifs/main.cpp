@@ -97,7 +97,12 @@ int main(int argc, const char* argv[]) {
 #ifndef MARGOIPC
     run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
 #else
-    margo_wait_for_finalize(RPC_DATA->server_mid());
+    bool shutdown_please = false;
+
+    while (!shutdown_please) {
+        sleep(1);
+    }
+
 #endif
     destroy_enviroment();
 

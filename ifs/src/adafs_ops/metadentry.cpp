@@ -19,11 +19,11 @@ static const std::string dentry_val_delim = ","s;
  * @return
  */
 int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_t mode) {
-    create_metadentry(path, mode); // XXX errorhandling
+    auto err = create_metadentry(path, mode); // XXX errorhandling
 
     init_chunk_space(path);
 
-    return 0;
+    return err;
 }
 
 /**

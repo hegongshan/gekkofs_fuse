@@ -2,21 +2,62 @@
 // Created by evie on 7/21/17.
 //
 
-//#define _GNU_SOURCE
 #include <preload/preload.hpp>
 #include <preload/ipc_types.hpp>
+#include <preload/margo_ipc.hpp>
 
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <unistd.h>
 
 // Mercury Client
-hg_class_t* mercury_hg_class;
-hg_context_t* mercury_hg_context;
-margo_instance_id margo_mid;
-hg_addr_t daemon_addr;
+hg_class_t* mercury_hg_class_;
+hg_context_t* mercury_hg_context_;
+margo_instance_id margo_id_;
+hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
 
-hg_id_t ipc_open_id;
+static hg_id_t ipc_open_id;
+static hg_id_t minimal_id;
+
+// misc
+bool is_lib_initialized = false;
+
+// external variables
+FILE* debug_fd;
+
+// function pointer for preloading
+void* libc;
+
+void* libc_open;
+//void* libc_open64; //unused
+void* libc_fopen;
+
+//void* libc_creat; //unused
+
+void* libc_close;
+//void* libc___close; //unused
+
+void* libc_stat;
+void* libc_fstat;
+
+void* libc_puts;
+
+void* libc_write;
+void* libc_read;
+void* libc_pread;
+void* libc_pread64;
+
+void* libc_lseek;
+//void* libc_lseek64; //unused
+
+void* libc_truncate;
+void* libc_ftruncate;
+
+void* libc_dup;
+void* libc_dup2;
+
+
+static OpenFileMap file_map{};
 
 int ld_open(const char* path, int flags, ...) {
     mode_t mode;
@@ -32,9 +73,16 @@ int ld_open(const char* path, int flags, ...) {
 #ifndef MARGOIPC
 
 #else
-
+        auto err = ipc_send_open(path, flags, mode, ipc_open_id);
 #endif
+        if (err == 0)
+            return fd;
+        else {
+            file_map.remove(fd);
+            return -1;
+        }
     }
+    ipc_send_open(path, flags, mode, ipc_open_id);
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
@@ -50,7 +98,6 @@ int ld_open64(__const char* path, int flags, ...) {
 }
 
 FILE* ld_fopen(const char* path, const char* mode) {
-    printf("test\n");
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
 }
 
@@ -84,6 +131,7 @@ int ld_stat(const char* path, struct stat* buf) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
@@ -97,6 +145,7 @@ int ld_fstat(int fd, struct stat* buf) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
 }
@@ -114,6 +163,7 @@ ssize_t ld_write(int fd, const void* buf, size_t count) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
 }
@@ -127,6 +177,7 @@ ssize_t ld_read(int fd, void* buf, size_t count) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
 }
@@ -140,6 +191,7 @@ ssize_t ld_pread(int fd, void* buf, size_t count, off_t offset) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }
@@ -153,6 +205,7 @@ ssize_t ld_pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
 #else
 
 #endif
+        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, nbyte, offset);
 }
@@ -193,7 +246,7 @@ int ld_dup2(int oldfd, int newfd) __THROW {
  * Initializes the Argobots environment
  * @return
  */
-bool init_argobots() {
+bool init_ld_argobots() {
     DAEMON_DEBUG0(debug_fd, "Initializing Argobots ...\n");
 
     // We need no arguments to init
@@ -213,7 +266,8 @@ bool init_argobots() {
 }
 
 void register_client_ipcs() {
-    ipc_open_id = MERCURY_REGISTER(mercury_hg_class, "ipc_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_tt, rpc_minimal_out_tt, nullptr);
 }
 
 bool init_ipc_client() {
@@ -251,17 +305,41 @@ bool init_ipc_client() {
     DAEMON_DEBUG0(debug_fd, "Success.\n");
 
     // Put context and class into RPC_data object
-    mercury_hg_class = hg_class;
-    mercury_hg_context = hg_context;
-    margo_mid = mid;
+    mercury_hg_class_ = hg_class;
+    mercury_hg_context_ = hg_context;
+    margo_id_ = mid;
 
-    margo_addr_lookup(margo_mid, "bmi+tcp://localhost:4433", &daemon_addr);
+    margo_addr_lookup(margo_id_, "bmi+tcp://localhost:4433", &daemon_svr_addr_);
 
     register_client_ipcs();
+
+//    for (int i = 0; i < 10000; ++i) {
+//        printf("Running %d iteration\n", i);
+//        send_minimal_rpc(minimal_id);
+//    }
 
     return true;
 }
 
+hg_class_t* ld_mercury_class() {
+    return mercury_hg_class_;
+}
+
+hg_context_t* ld_mercury_context() {
+    return mercury_hg_context_;
+}
+
+margo_instance_id ld_margo_id() {
+    return margo_id_;
+}
+
+hg_addr_t daemon_addr() {
+    return daemon_svr_addr_;
+}
+
+/**
+ * Called initially when preload library is used with the LD_PRELOAD environment variable
+ */
 void init_preload(void) {
 
     // just a security measure
@@ -297,26 +375,29 @@ void init_preload(void) {
     is_lib_initialized = true;
 #ifdef MARGOIPC
     // init margo client for IPC
-    init_argobots();
+    init_ld_argobots();
     init_ipc_client();
 #endif
 }
 
+/**
+ * Called last when preload library is used with the LD_PRELOAD environment variable
+ */
 void destroy_preload(void) {
 
 #ifdef MARGOIPC
     DAEMON_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
-    HG_Addr_free(mercury_hg_class, daemon_addr);
+    HG_Addr_free(mercury_hg_class_, daemon_svr_addr_);
     DAEMON_DEBUG0(debug_fd, "Finalizing Margo ...\n");
-    margo_finalize(margo_mid);
+    margo_finalize(margo_id_);
 
     DAEMON_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
     ABT_finalize();
 
     DAEMON_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
-    HG_Context_destroy(mercury_hg_context);
+    HG_Context_destroy(mercury_hg_context_);
     DAEMON_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
-    HG_Finalize(mercury_hg_class);
+    HG_Finalize(mercury_hg_class_);
     DAEMON_DEBUG0(debug_fd, "Preload library shut down.\n");
 #endif
 
