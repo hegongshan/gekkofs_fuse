@@ -33,12 +33,15 @@ void* libc_open;
 void* libc_fopen;
 
 //void* libc_creat; //unused
+void* libc_unlink;
 
 void* libc_close;
 //void* libc___close; //unused
 
 void* libc_stat;
 void* libc_fstat;
+
+void* libc_access;
 
 void* libc_puts;
 
@@ -82,7 +85,6 @@ int ld_open(const char* path, int flags, ...) {
             return -1;
         }
     }
-    ipc_send_open(path, flags, mode, ipc_open_id);
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
@@ -102,7 +104,20 @@ FILE* ld_fopen(const char* path, const char* mode) {
 }
 
 int ld_creat(const char* path, mode_t mode) {
+//    DAEMON_DEBUG(debug_fd, "ld_creat called with path %s with mode %d\n", path, mode);
     return ld_open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
+}
+
+int ld_unlink(const char* path) __THROW {
+//    DAEMON_DEBUG(debug_fd, "ld_unlink called with path %s\n", path);
+    if (is_fs_path(path)) {
+#ifndef MARGOIPC
+
+#else
+
+#endif
+    }
+    return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
 
 int ld_close(int fd) {
@@ -148,6 +163,17 @@ int ld_fstat(int fd, struct stat* buf) {
         return 0; // TODO
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
+}
+
+int ld_access(const char* path, int mode) __THROW {
+    if (is_fs_path(path)) {
+#ifndef MARGOIPC
+
+#else
+
+#endif
+    }
+    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mode);
 }
 
 int ld_puts(const char* str) {
@@ -349,11 +375,15 @@ void init_preload(void) {
     libc_open = dlsym(libc, "open");
     libc_fopen = dlsym(libc, "fopen");
 
+    libc_unlink = dlsym(libc, "unlink");
+
     libc_close = dlsym(libc, "close");
 //    libc___close = dlsym(libc, "__close");
 
     libc_stat = dlsym(libc, "stat");
     libc_fstat = dlsym(libc, "fstat");
+
+    libc_access = dlsym(libc, "access");
 
     libc_puts = dlsym(libc, "puts");
 

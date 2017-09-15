@@ -28,12 +28,15 @@ extern "C" {
 #define ld_fopen fopen
 
 #define ld_creat creat
+#define ld_unlink unlink
 
 #define ld_close close
 #define ld___close __close
 
 #define ld_stat stat
 #define ld_fstat fstat
+
+#define ld_access access
 
 #define ld_puts puts
 

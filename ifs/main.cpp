@@ -2,9 +2,17 @@
 
 #include "daemon/adafs_daemon.hpp"
 
+#include <csignal>
+
 
 using namespace std;
 namespace po = boost::program_options;
+
+static bool shutdown_please = false;
+
+void shutdown_handler(int dummy) {
+    shutdown_please = true;
+}
 
 int main(int argc, const char* argv[]) {
 
@@ -97,11 +105,16 @@ int main(int argc, const char* argv[]) {
 #ifndef MARGOIPC
     run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
 #else
-    bool shutdown_please = false;
+
+    signal(SIGINT, shutdown_handler);
+    signal(SIGTERM, shutdown_handler);
+    signal(SIGKILL, shutdown_handler);
 
     while (!shutdown_please) {
         sleep(1);
     }
+
+    ADAFS_DATA->spdlogger()->info("Shutting done signal encountered. Shutting down ...");
 
 #endif
     destroy_enviroment();
