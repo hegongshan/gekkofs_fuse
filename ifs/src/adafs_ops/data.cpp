@@ -6,14 +6,13 @@
 
 using namespace std;
 
-static const std::string root_path = "/home/evie/ownCloud/Promotion/gogs_git/ada-fs/ifs/.hidden_playground/rootdir"s;
-
+static const std::string mountdir = ADAFS_MOUNTDIR; // TODO better solution
 
 std::string path_to_fspath(const std::string& path) {
     // root path is absolute as is the path comes in here which is hierarchically under root_path
     // XXX check if this can be done easier
     string fs_path;
-    set_difference(path.begin(), path.end(), root_path.begin(), root_path.end(), std::back_inserter(fs_path));
+    set_difference(path.begin(), path.end(), mountdir.begin(), mountdir.end(), std::back_inserter(fs_path));
     if (fs_path.at(1) == '/') {
         fs_path = fs_path.substr(1, fs_path.size());
     }

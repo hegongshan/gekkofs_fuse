@@ -53,7 +53,7 @@ OpenFile* OpenFileMap::get(int fd) {
     if (f == files_.end()) {
         return nullptr;
     } else {
-        return &f->second;
+        return f->second;
     }
 }
 
@@ -66,7 +66,7 @@ bool OpenFileMap::exist(const int fd) {
 int OpenFileMap::add(const char* path, const bool append) {
     OpenFile file{path, append};
     lock_guard<mutex> lock(files_mutex_);
-    files_.insert(make_pair(file.fd(), file));
+    files_.insert(make_pair(file.fd(), &file));
     return file.fd();
 }
 
@@ -76,7 +76,7 @@ bool OpenFileMap::remove(const int fd) {
     if (f == files_.end()) {
         return false;
     }
-    files_.at(fd).annul_fd(); // free file descriptor
+    files_.at(fd)->annul_fd(); // free file descriptor
     files_.erase(fd);
     return true;
 }

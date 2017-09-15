@@ -6,5 +6,5 @@
 #include <cstring>
 
 bool is_fs_path(const char* path) {
-    return strstr(path, root_path.c_str()) == path;
+    return strstr(path, mountdir.c_str()) == path;
 }

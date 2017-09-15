@@ -42,8 +42,7 @@ public:
 class OpenFileMap {
 
 private:
-    typedef std::map<int, OpenFile> FileMap;
-    FileMap files_;
+    std::map<int, OpenFile*> files_;
     std::mutex files_mutex_;
 
 

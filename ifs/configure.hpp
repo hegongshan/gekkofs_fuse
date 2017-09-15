@@ -5,6 +5,8 @@
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
+#define ADAFS_MOUNTDIR "/tmp/mountdir"
+
 // To enabled logging with info level
 //#define LOG_INFO
 #define LOG_DEBUG

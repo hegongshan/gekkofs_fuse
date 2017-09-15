@@ -5,11 +5,12 @@
 #ifndef IFS_PRELOAD_UTIL_HPP
 #define IFS_PRELOAD_UTIL_HPP
 
+#include "../../configure.hpp"
 #include <string>
 
 using namespace std;
 
-static const std::string root_path = "/home/evie/ownCloud/Promotion/gogs_git/ada-fs/ifs/.hidden_playground/rootdir"s;
+static const std::string mountdir = ADAFS_MOUNTDIR;
 
 bool is_fs_path(const char* path);
 

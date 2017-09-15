@@ -87,7 +87,6 @@ int ld_open(const char* path, int flags, ...) {
             return -1;
         }
     }
-    ipc_send_open(path, flags, mode, ipc_open_id);
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
@@ -119,7 +118,6 @@ int ld_unlink(const char* path) __THROW {
         return ipc_send_unlink(path, ipc_unlink_id);
 #endif
     }
-    ipc_send_unlink(path, ipc_unlink_id);
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
 
