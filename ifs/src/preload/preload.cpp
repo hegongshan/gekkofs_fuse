@@ -47,6 +47,7 @@ void* libc_access;
 void* libc_puts;
 
 void* libc_write;
+void* libc_pwrite;
 void* libc_read;
 void* libc_pread;
 void* libc_pread64;
@@ -72,7 +73,7 @@ int ld_open(const char* path, int flags, ...) {
         va_end(vl);
     }
     if (is_fs_path(path)) {
-        auto fd = file_map.add(path);
+        auto fd = file_map.add(path, (flags & O_APPEND) != 0);
         // TODO call daemon and return if successful return the above fd. if unsuccessful delete fd remove file from map
 #ifndef MARGOIPC
 
@@ -180,7 +181,9 @@ int ld_puts(const char* str) {
 
 ssize_t ld_write(int fd, const void* buf, size_t count) {
     if (file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+        auto adafs_fd = file_map.get(fd);
+        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
+        auto append_flag = adafs_fd->append_flag();
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
@@ -192,10 +195,26 @@ ssize_t ld_write(int fd, const void* buf, size_t count) {
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
 }
 
+ssize_t ld_pwrite(int fd, const void* buf, size_t count, off_t offset) {
+    if (file_map.exist(fd)) {
+        auto adafs_fd = file_map.get(fd);
+        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
+        auto append_flag = adafs_fd->append_flag();
+        // TODO call daemon and return size written
+#ifndef MARGOIPC
+
+#else
+
+#endif
+        return 0;
+    }
+    return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
+}
+
 ssize_t ld_read(int fd, void* buf, size_t count) {
     if (file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
-        // TODO call daemon and return size written
+        // TODO call daemon and return size read
 #ifndef MARGOIPC
 
 #else
@@ -387,6 +406,7 @@ void init_preload(void) {
     libc_puts = dlsym(libc, "puts");
 
     libc_write = dlsym(libc, "write");
+    libc_pwrite = dlsym(libc, "pwrite");
     libc_read = dlsym(libc, "read");
     libc_pread = dlsym(libc, "pread");
     libc_pread64 = dlsym(libc, "pread64");

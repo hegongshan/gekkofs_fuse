@@ -11,11 +11,13 @@
 class OpenFile {
 private:
     const char* path_;
+    bool append_flag_;
+
     int fd_;
     FILE* tmp_file_;
 
 public:
-    OpenFile(const char* path);
+    OpenFile(const char* path, const bool append_flag);
 
     ~OpenFile();
 
@@ -29,6 +31,10 @@ public:
     int fd() const;
 
     void fd(int fd_);
+
+    bool append_flag() const;
+
+    void append_flag(bool append_flag);
 
 };
 
@@ -47,7 +53,7 @@ public:
     OpenFile* get(int fd);
     bool exist(const int fd);
 
-    int add(const char* path);
+    int add(const char* path, const bool append);
     bool remove(const int fd);
 
 };

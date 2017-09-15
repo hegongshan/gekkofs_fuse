@@ -41,6 +41,7 @@ extern "C" {
 #define ld_puts puts
 
 #define ld_write write
+#define ld_pwrite pwrite
 #define ld_read read
 #define ld_pread pread
 #define ld_pread64 pread64

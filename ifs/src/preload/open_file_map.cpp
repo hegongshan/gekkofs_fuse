@@ -6,7 +6,7 @@
 
 using namespace std;
 
-OpenFile::OpenFile(const char* path) : path_(path) {
+OpenFile::OpenFile(const char* path, const bool append_flag) : path_(path), append_flag_(append_flag) {
     tmp_file_ = tmpfile(); // create a temporary file in memory and
     fd_ = fileno(tmp_file_); // get a valid file descriptor from the kernel
 }
@@ -39,6 +39,14 @@ void OpenFile::annul_fd() {
         fclose(tmp_file_);
 }
 
+bool OpenFile::append_flag() const {
+    return append_flag_;
+}
+
+void OpenFile::append_flag(bool append_flag) {
+    OpenFile::append_flag_ = append_flag;
+}
+
 OpenFile* OpenFileMap::get(int fd) {
     lock_guard<mutex> lock(files_mutex_);
     auto f = files_.find(fd);
@@ -55,8 +63,8 @@ bool OpenFileMap::exist(const int fd) {
     return !(f == files_.end());
 }
 
-int OpenFileMap::add(const char* path) {
-    OpenFile file{path};
+int OpenFileMap::add(const char* path, const bool append) {
+    OpenFile file{path, append};
     lock_guard<mutex> lock(files_mutex_);
     files_.insert(make_pair(file.fd(), file));
     return file.fd();
