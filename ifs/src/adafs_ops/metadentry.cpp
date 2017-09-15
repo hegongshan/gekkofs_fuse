@@ -67,7 +67,7 @@ int create_metadentry(const std::string& path, mode_t mode) {
         val += dentry_val_delim + "0"s;
     }
 
-    return db_put_metadentry(path, val);
+    return db_put_metadentry(path, val) ? 0 : -1;
 }
 
 /**
@@ -149,4 +149,15 @@ int get_attr(const std::string& path, struct stat* attr) {
     auto val = db_get_metadentry(path);
     db_val_to_stat(path, val, *attr);
     return 0;
+}
+
+int remove_metadentry(const string& path) {
+    return db_delete_metadentry(path) ? 0 : -1;
+}
+
+int remove_node(const string& path) {
+    auto err = remove_metadentry(path);
+    if (err == 0)
+        destroy_chunk_space(path);
+    return err;
 }

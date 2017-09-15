@@ -64,12 +64,13 @@ void send_minimal_rpc(const hg_id_t minimal_id) {
     ADAFS_DATA->spdlogger()->debug("minimal RPC is done.");
 }
 
-int rpc_send_create_node(const size_t recipient, const mode_t mode) {
+int rpc_send_create_node(const size_t recipient, const std::string& path, const mode_t mode) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_create_node_in_t in;
     rpc_res_out_t out;
     // fill in
+    in.path = path.c_str();
     in.mode = mode;
     hg_bool_t success = HG_FALSE;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
@@ -151,6 +152,50 @@ int rpc_send_get_attr(const size_t recipient, const std::string& path, struct st
     } else {
         ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
     }
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return success == HG_TRUE ? 0 : 1;
+}
+
+int rpc_send_remove_node(const size_t recipient, const std::string& path) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_remove_node_in_t in;
+    rpc_res_out_t out;
+    // fill in
+    in.path = path.c_str();
+    hg_bool_t success = HG_FALSE;
+    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+    if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
+        ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
+        return 1;
+    }
+    auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_remove_node_id(), &handle);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("creating handle FAILED");
+        return 1;
+    }
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        ret = HG_Get_output(handle, &out);
+
+        ADAFS_DATA->spdlogger()->debug("Got response success: {}", out.res);
+        success = out.res;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
+    }
+
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
 
     HG_Free_input(handle, &in);

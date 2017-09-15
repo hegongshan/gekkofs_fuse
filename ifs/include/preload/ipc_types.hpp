@@ -18,4 +18,6 @@ MERCURY_GEN_PROC(ipc_open_in_t, ((hg_const_string_t) (path))
         ((hg_int32_t) (flags)) \
 ((hg_uint32_t) (mode)))
 
+MERCURY_GEN_PROC(ipc_unlink_in_t, ((hg_const_string_t) (path)))
+
 #endif //IFS_IPC_TYPES_HPP

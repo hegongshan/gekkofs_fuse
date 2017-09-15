@@ -16,7 +16,7 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got create node IPC with path {}", in.path);
+    ADAFS_DATA->spdlogger()->debug("Got open IPC with path {}", in.path);
 
     hgi = HG_Get_info(handle);
 
@@ -44,3 +44,40 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_open)
+
+static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
+    const struct hg_info* hgi;
+    ipc_unlink_in_t in;
+    ipc_res_out_t out;
+
+
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got unlink IPC with path {}", in.path);
+
+    hgi = HG_Get_info(handle);
+
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // do unlink
+    string path = in.path;
+    auto err = adafs_unlink(path);
+    if (err == 0) {
+        out.res = HG_TRUE;
+    } else {
+        out.res = HG_FALSE;
+    }
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    auto hret = margo_respond(mid, handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("Failed to respond to unlink ipc");
+    }
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(ipc_srv_unlink)

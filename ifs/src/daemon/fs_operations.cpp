@@ -21,7 +21,7 @@ int adafs_open(string& path, int flags, mode_t mode) {
             if (ADAFS_DATA->is_local_op(recipient)) { // local
                 ret = create_node(path, uid, gid, mode);
             } else { // remote
-                ret = rpc_send_create_node(recipient, mode);
+                ret = rpc_send_create_node(recipient, path, mode);
             }
         } else { // single node operation
             ret = create_node(path, uid, gid, mode);
@@ -45,6 +45,21 @@ FILE* adafs_fopen(string& path, const char* mode) {
         // TODO
     }
     return nullptr;
+}
+
+int adafs_unlink(string& path) {
+    int ret;
+    if (ADAFS_DATA->host_size() > 1) { // multiple node operation
+        auto recipient = RPC_DATA->get_rpc_node(path);
+        if (ADAFS_DATA->is_local_op(recipient)) { // local
+            ret = remove_node(path);
+        } else { // remote
+            ret = rpc_send_remove_node(recipient, path);
+        }
+    } else { // single node operation
+        ret = remove_node(path);
+    }
+    return ret;
 }
 
 int adafs_close(string& path) {

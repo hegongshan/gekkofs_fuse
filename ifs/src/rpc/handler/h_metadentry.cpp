@@ -99,3 +99,38 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)
+
+static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
+    const struct hg_info* hgi;
+    rpc_remove_node_in_t in;
+    rpc_res_out_t out;
+
+
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got remove node RPC with path {}", in.path);
+
+    hgi = HG_Get_info(handle);
+
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // create metadentry
+    auto err = remove_metadentry(in.path);
+    if (err == 0) {
+        out.res = HG_TRUE;
+
+    }
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    auto hret = margo_respond(mid, handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("Failed to respond to remove node rpc");
+    }
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove_node)

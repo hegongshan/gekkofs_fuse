@@ -17,12 +17,12 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         ADAFS_DATA->spdlogger()->debug("not found in lrucache");
         // not found, manual lookup and add address mapping to LRU cache
 #ifndef RPC_TEST
-        auto hostname = "cci+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
+        auto hostname = "bmi+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
                         ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
 #else
-        auto hostname = "cci+tcp://127.0.0.1:" +
+        auto hostname = "bmi+tcp://127.0.0.1:" +
                         ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
-//        auto hostname = "cci+tcp://134.93.182.11:" +
+//        auto hostname = "bmi+tcp://134.93.182.11:" +
 //                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
 #endif
         ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
@@ -134,6 +134,14 @@ hg_id_t RPCData::rpc_srv_write_data_id() const {
 
 void RPCData::rpc_srv_write_data_id(hg_id_t rpc_srv_write_data_id) {
     RPCData::rpc_srv_write_data_id_ = rpc_srv_write_data_id;
+}
+
+hg_id_t RPCData::rpc_srv_remove_node_id() const {
+    return rpc_srv_remove_node_id_;
+}
+
+void RPCData::rpc_srv_remove_node_id(hg_id_t rpc_srv_remove_node_id) {
+    RPCData::rpc_srv_remove_node_id_ = rpc_srv_remove_node_id;
 }
 
 

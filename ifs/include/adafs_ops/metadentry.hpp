@@ -15,4 +15,8 @@ int db_val_to_stat(const std::string& path, std::string db_val, struct stat& att
 
 int get_attr(const std::string& path, struct stat* attr);
 
+int remove_metadentry(const std::string& path);
+
+int remove_node(const std::string& path);
+
 #endif //IFS_METADENTRY_HPP

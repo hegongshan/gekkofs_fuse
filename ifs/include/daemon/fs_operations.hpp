@@ -11,6 +11,8 @@ int adafs_open(std::string& path, int flags, mode_t mode);
 
 FILE* adafs_fopen(std::string& path, const char* mode);
 
+int adafs_unlink(std::string& path);
+
 int adafs_close(std::string& path);
 
 int adafs_stat(std::string& path, struct stat* buf);

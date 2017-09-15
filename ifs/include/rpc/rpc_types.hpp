@@ -25,6 +25,9 @@ MERCURY_GEN_PROC(rpc_get_attr_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_get_attr_out_t, ((hg_const_string_t) (db_val)))
 
+MERCURY_GEN_PROC(rpc_remove_node_in_t,
+                 ((hg_const_string_t) (path)))
+
 // data
 MERCURY_GEN_PROC(rpc_read_data_in_t,
                  ((hg_const_string_t) (path))\

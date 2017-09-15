@@ -16,8 +16,9 @@ hg_context_t* mercury_hg_context_;
 margo_instance_id margo_id_;
 hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
 
-static hg_id_t ipc_open_id;
 static hg_id_t minimal_id;
+static hg_id_t ipc_open_id;
+static hg_id_t ipc_unlink_id;
 
 // misc
 bool is_lib_initialized = false;
@@ -85,6 +86,7 @@ int ld_open(const char* path, int flags, ...) {
             return -1;
         }
     }
+    ipc_send_open(path, flags, mode, ipc_open_id);
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
@@ -112,23 +114,19 @@ int ld_unlink(const char* path) __THROW {
 //    DAEMON_DEBUG(debug_fd, "ld_unlink called with path %s\n", path);
     if (is_fs_path(path)) {
 #ifndef MARGOIPC
-
 #else
-
+        return ipc_send_unlink(path, ipc_unlink_id);
 #endif
     }
+    ipc_send_unlink(path, ipc_unlink_id);
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
 
 int ld_close(int fd) {
     if (file_map.exist(fd)) {
-        // TODO call daemon and return (do we even need to)
-#ifndef MARGOIPC
-
-#else
-
-#endif
+        // Currently no call to the daemon is required
         file_map.remove(fd);
+        return 0;
     }
     return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
 }
@@ -292,8 +290,9 @@ bool init_ld_argobots() {
 }
 
 void register_client_ipcs() {
-    ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
     minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_tt, rpc_minimal_out_tt, nullptr);
+    ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    ipc_unlink_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
 }
 
 bool init_ipc_client() {
