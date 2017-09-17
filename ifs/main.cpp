@@ -50,10 +50,11 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     if (vm.count("mountdir")) {
-//        fuse_argv.push_back(vm["mountdir"].as<string>());
-        // TODO, currently hardcoded
+        // XXX check that this is actually an existing directory and exit if not
+        ADAFS_DATA->mountdir(vm["mountdir"].as<string>());
     }
     if (vm.count("rootdir")) {
+        // XXX check that this is actually an existing directory and exit if not
         ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
     }
 
@@ -88,8 +89,8 @@ int main(int argc, const char* argv[]) {
     }
 
     //set all paths
-    ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s);
-    ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s);
+    ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s); // XXX prob not needed anymore
+    ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s); // XXX prob not needed anymore
     ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 

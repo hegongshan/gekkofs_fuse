@@ -76,17 +76,17 @@ int adafs_close(string& path) {
     return 0;
 }
 
-int adafs_stat(string& path, struct stat* buf) {
-    int ret;
+string adafs_stat(string& path) {
+    string ret = ""s;
     if (ADAFS_DATA->host_size() > 1) { // multiple node operation
         auto recipient = RPC_DATA->get_rpc_node(path);
         if (ADAFS_DATA->is_local_op(recipient)) { // local
-            ret = get_attr(path, buf);
+            ret = get_attr(path);
         } else { // remote
-            ret = rpc_send_get_attr(recipient, path, buf);
+            ret = rpc_send_get_attr(recipient, path);
         }
     } else { // single node operation
-        ret = get_attr(path, buf);
+        ret = get_attr(path);
     }
     return ret;
 }

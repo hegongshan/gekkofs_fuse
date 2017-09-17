@@ -5,8 +5,6 @@
 #include <rpc/sender/c_metadentry.hpp>
 #include <rpc/rpc_types.hpp>
 
-#include <adafs_ops/metadentry.hpp>
-
 using namespace std;
 
 static int max_retries = 3;
@@ -109,7 +107,7 @@ int rpc_send_create_node(const size_t recipient, const std::string& path, const 
     return success == HG_TRUE ? 0 : 1;
 }
 
-int rpc_send_get_attr(const size_t recipient, const std::string& path, struct stat* attr) {
+string rpc_send_get_attr(const size_t recipient, const std::string& path) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_get_attr_in_t in;
@@ -120,12 +118,12 @@ int rpc_send_get_attr(const size_t recipient, const std::string& path, struct st
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!RPC_DATA->get_addr_by_hostid(recipient, svr_addr)) {
         ADAFS_DATA->spdlogger()->error("server address not resolvable for host id {}", recipient);
-        return 1;
+        return ""s;
     }
     auto ret = HG_Create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_srv_attr_id(), &handle);
     if (ret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("creating handle FAILED");
-        return 1;
+        return ""s;
     }
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
@@ -144,19 +142,19 @@ int rpc_send_get_attr(const size_t recipient, const std::string& path, struct st
             success = HG_FALSE;
         } else {
             success = HG_TRUE;
-            db_val_to_stat(path, out.db_val, *attr);
+//            db_val_to_stat(path, out.db_val, *attr);
         }
 
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
+        ADAFS_DATA->spdlogger()->error("RPC get_attr (timed out)");
     }
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return success == HG_TRUE ? 0 : 1;
+    return success == HG_TRUE ? string(out.db_val) : nullptr;
 }
 
 int rpc_send_remove_node(const size_t recipient, const std::string& path) {
@@ -193,7 +191,7 @@ int rpc_send_remove_node(const size_t recipient, const std::string& path) {
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        ADAFS_DATA->spdlogger()->error("RPC send_create_node (timed out)");
+        ADAFS_DATA->spdlogger()->error("RPC send_remove_node (timed out)");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!

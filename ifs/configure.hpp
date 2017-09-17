@@ -5,8 +5,6 @@
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
-#define ADAFS_MOUNTDIR "/tmp/mountdir"
-
 // To enabled logging with info level
 //#define LOG_INFO
 #define LOG_DEBUG
@@ -19,6 +17,7 @@
 
 // If ACM time should be considered
 #define ACMtime
+#define BLOCKSIZE 4 // in kilobytes
 
 // If access permissions should be checked while opening a file
 //#define CHECK_ACCESS
@@ -28,7 +27,7 @@
 
 // RPC configuration
 #define RPCPORT 4433
-#define RPC_TIMEOUT 15000
+#define RPC_TIMEOUT 150000
 
 // Debug configurations
 //#define RPC_TEST

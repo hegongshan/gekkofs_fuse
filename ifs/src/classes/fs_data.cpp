@@ -57,6 +57,14 @@ void FsData::rootdir(const std::string& rootdir_) {
     FsData::rootdir_ = rootdir_;
 }
 
+const std::string& FsData::mountdir() const {
+    return mountdir_;
+}
+
+void FsData::mountdir(const std::string& mountdir) {
+    FsData::mountdir_ = mountdir;
+}
+
 const std::string& FsData::inode_path() const {
     return inode_path_;
 }
@@ -248,6 +256,7 @@ bool FsData::blocks_state() const {
 void FsData::blocks_state(bool blocks_state) {
     FsData::blocks_state_ = blocks_state;
 }
+
 
 
 

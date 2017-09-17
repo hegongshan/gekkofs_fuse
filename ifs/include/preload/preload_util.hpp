@@ -10,8 +10,8 @@
 
 using namespace std;
 
-static const std::string mountdir = ADAFS_MOUNTDIR;
-
 bool is_fs_path(const char* path);
+
+int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr);
 
 #endif //IFS_PRELOAD_UTIL_HPP

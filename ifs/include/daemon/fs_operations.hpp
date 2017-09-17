@@ -15,7 +15,7 @@ int adafs_unlink(std::string& path);
 
 int adafs_close(std::string& path);
 
-int adafs_stat(std::string& path, struct stat* buf);
+std::string adafs_stat(std::string& path);
 
 ssize_t adafs_write(std::string& path, char* buf, size_t size, off_t offset);
 

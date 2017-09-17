@@ -5,6 +5,7 @@
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP
 
+#include <memory>
 #include <sys/statfs.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -54,6 +55,25 @@ extern "C" {
 
 #define ld_dup dup
 #define ld_dup2 dup2
+
+struct FsConfig {
+    // configurable metadata
+    bool atime_state;
+    bool mtime_state;
+    bool ctime_state;
+    bool uid_state;
+    bool gid_state;
+    bool inode_no_state;
+    bool link_cnt_state;
+    bool blocks_state;
+
+    uid_t uid;
+    gid_t gid;
+
+    std::string mountdir;
+    std::string rootdir;
+};
+extern shared_ptr<struct FsConfig> fs_config;
 
 extern FILE* debug_fd;
 

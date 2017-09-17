@@ -13,7 +13,7 @@ int create_metadentry(const std::string& path, mode_t mode);
 
 int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
 
-int get_attr(const std::string& path, struct stat* attr);
+std::string get_attr(const std::string& path);
 
 int remove_metadentry(const std::string& path);
 

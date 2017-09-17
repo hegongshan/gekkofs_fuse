@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 // Mercury Client
 hg_class_t* mercury_hg_class_;
@@ -17,7 +18,9 @@ margo_instance_id margo_id_;
 hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
 
 static hg_id_t minimal_id;
+static hg_id_t ipc_config_id;
 static hg_id_t ipc_open_id;
+static hg_id_t ipc_stat_id;
 static hg_id_t ipc_unlink_id;
 
 // misc
@@ -25,6 +28,7 @@ bool is_lib_initialized = false;
 
 // external variables
 FILE* debug_fd;
+shared_ptr<FsConfig> fs_config;
 
 // function pointer for preloading
 void* libc;
@@ -141,7 +145,7 @@ int ld_stat(const char* path, struct stat* buf) {
 #ifndef MARGOIPC
 
 #else
-
+        ipc_send_stat(path, buf, ipc_stat_id);
 #endif
         return 0; // TODO
     }
@@ -309,7 +313,10 @@ bool init_ld_argobots() {
 void register_client_ipcs() {
     minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_tt, rpc_minimal_out_tt, nullptr);
     ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    ipc_stat_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
     ipc_unlink_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
+    ipc_config_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
+                                     nullptr);
 }
 
 bool init_ipc_client() {
@@ -417,13 +424,17 @@ void init_preload(void) {
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
 
+    // XXX Continue here. stat is not intercepted because it is not part of libc? investigate.
+
     debug_fd = fopen(LOG_DAEMON_PATH, "a+");
+    fs_config = make_shared<struct FsConfig>();
     DAEMON_DEBUG0(debug_fd, "Preload initialized.\n");
     is_lib_initialized = true;
 #ifdef MARGOIPC
     // init margo client for IPC
     init_ld_argobots();
     init_ipc_client();
+    ipc_send_get_fs_config(ipc_config_id); // get fs configurations the daemon was started with.
 #endif
 }
 
