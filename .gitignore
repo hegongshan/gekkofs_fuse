@@ -76,6 +76,7 @@ Thumbs.db
 
 # fuse files
 cmake-build-debug
+cmake-build-release
 playground
 .fuse_hidden*
 
