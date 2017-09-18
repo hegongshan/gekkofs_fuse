@@ -45,6 +45,12 @@ void* libc_close;
 
 void* libc_stat;
 void* libc_fstat;
+void* libc___xstat;
+void* libc___xstat64;
+void* libc___fxstat;
+void* libc___fxstat64;
+void* libc___lxstat;
+void* libc___lxstat64;
 
 void* libc_access;
 
@@ -69,6 +75,7 @@ void* libc_dup2;
 static OpenFileMap file_map{};
 
 int ld_open(const char* path, int flags, ...) {
+    DAEMON_DEBUG(debug_fd, "ld_open called with path %s\n", path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list vl;
@@ -95,6 +102,7 @@ int ld_open(const char* path, int flags, ...) {
 }
 
 int ld_open64(__const char* path, int flags, ...) {
+    DAEMON_DEBUG(debug_fd, "ld_open64 called with path %s\n", path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list ap;
@@ -106,11 +114,12 @@ int ld_open64(__const char* path, int flags, ...) {
 }
 
 FILE* ld_fopen(const char* path, const char* mode) {
+//    DAEMON_DEBUG(debug_fd, "ld_fopen called with path %s with mode %d\n", path, mode);
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
 }
 
 int ld_creat(const char* path, mode_t mode) {
-//    DAEMON_DEBUG(debug_fd, "ld_creat called with path %s with mode %d\n", path, mode);
+    DAEMON_DEBUG(debug_fd, "ld_creat called with path %s with mode %d\n", path, mode);
     return ld_open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
@@ -139,31 +148,99 @@ int ld___close(int fd) {
 }
 
 
-int ld_stat(const char* path, struct stat* buf) {
+int ld_stat(const char* path, struct stat* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "stat called with path %s\n", path);
     if (is_fs_path(path)) {
         // TODO call daemon and return
 #ifndef MARGOIPC
 
 #else
-        ipc_send_stat(path, buf, ipc_stat_id);
+        return ipc_send_stat(path, buf, ipc_stat_id);
 #endif
         return 0; // TODO
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
 
-int ld_fstat(int fd, struct stat* buf) {
+int ld_fstat(int fd, struct stat* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "ld_fstat called with fd %d\n", fd);
     if (file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return
 #ifndef MARGOIPC
 
 #else
-
+        return ipc_send_stat(path, buf, ipc_stat_id);
 #endif
         return 0; // TODO
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
+}
+
+int ld___xstat(int ver, const char* path, struct stat* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "ld___xstat called with path %s\n", path);
+    if (is_fs_path(path)) {
+        // TODO call stat
+#ifndef MARGOIPC
+
+#else
+        return ipc_send_stat(path, buf, ipc_stat_id);
+#endif
+    }
+    return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
+}
+
+int ld___xstat64(int ver, const char* path, struct stat64* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "ld___xstat64 called with path %s\n", path);
+//    if (is_fs_path(path)) {
+//        // Not implemented
+//        return -1;
+//    }
+    return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
+}
+
+int ld___fxstat(int ver, int fd, struct stat* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "ld___fxstat called with fd %d\n", fd);
+    if (file_map.exist(fd)) {
+        // TODO call fstat
+        auto path = file_map.get(fd)->path();
+#ifndef MARGOIPC
+
+#else
+        return ipc_send_stat(path, buf, ipc_stat_id);
+#endif
+    }
+    return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
+}
+
+int ld___fxstat64(int ver, int fd, struct stat64* buf) __THROW {
+    DAEMON_DEBUG(debug_fd, "ld___fxstat64 called with fd %s\n", fd);
+    if (file_map.exist(fd)) {
+        // TODO call fstat64
+        auto path = file_map.get(fd)->path();
+#ifndef MARGOIPC
+
+#else
+//        return ipc_send_stat(path, buf, ipc_stat_id); // TODO need new function for stat64 struct
+#endif
+    }
+    return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
+}
+
+extern int ld___lxstat(int ver, const char* path, struct stat* buf) __THROW {
+    if (is_fs_path(path)) {
+        // Not implemented
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&__lxstat)>(libc___lxstat))(ver, path, buf);
+}
+
+extern int ld___lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
+    if (is_fs_path(path)) {
+        // Not implemented
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }
 
 int ld_access(const char* path, int mode) __THROW {
@@ -405,6 +482,12 @@ void init_preload(void) {
 
     libc_stat = dlsym(libc, "stat");
     libc_fstat = dlsym(libc, "fstat");
+    libc___xstat = dlsym(libc, "__xstat");
+    libc___xstat64 = dlsym(libc, "__xstat64");
+    libc___fxstat = dlsym(libc, "__fxstat");
+    libc___fxstat64 = dlsym(libc, "__fxstat64");
+    libc___lxstat = dlsym(libc, "__lxstat");
+    libc___lxstat64 = dlsym(libc, "__lxstat64");
 
     libc_access = dlsym(libc, "access");
 

@@ -36,6 +36,12 @@ extern "C" {
 
 #define ld_stat stat
 #define ld_fstat fstat
+#define ld___xstat __xstat
+#define ld___xstat64 __xstat64
+#define ld___fxstat __fxstat
+#define ld___fxstat64 __fxstat64
+#define ld___lxstat __lxstat
+#define ld___lxstat64 __lxstat64
 
 #define ld_access access
 
@@ -78,9 +84,9 @@ extern shared_ptr<struct FsConfig> fs_config;
 extern FILE* debug_fd;
 
 #define DAEMON_DEBUG(fd, fmt, ...) \
-            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt, ##__VA_ARGS__); } while (0)
+            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
 #define DAEMON_DEBUG0(fd, fmt) \
-            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt); } while (0)
+            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt); fflush(fd); } while (0)
 
 
 bool init_ld_argobots();
