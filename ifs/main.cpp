@@ -14,6 +14,16 @@ void shutdown_handler(int dummy) {
     shutdown_please = true;
 }
 
+/**
+ * Returns the machine's hostname
+ * @return
+ */
+string get_my_hostname() {
+    char hostname[1024];
+    auto ret = gethostname(hostname, 1024);
+    return ret == 0 ? string(hostname) : ""s;
+}
+
 int main(int argc, const char* argv[]) {
 
 
@@ -64,7 +74,7 @@ int main(int argc, const char* argv[]) {
         std::map<uint64_t, std::string> hostmap;
         uint64_t i = 0;
         auto found_hostname = false;
-        auto hostname = Util::get_my_hostname();
+        auto hostname = get_my_hostname();
         if (hostname.size() == 0) {
             cerr << "Unable to read the machine's hostname" << endl;
             assert(hostname.size() != 0);

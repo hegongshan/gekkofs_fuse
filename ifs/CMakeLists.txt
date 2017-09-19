@@ -11,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# required packages
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -38,6 +39,8 @@ include_directories(include ${ROCKSDB_INCLUDE_DIR}
         )
 
 include_directories(include)
+add_subdirectory(src/preload)
+#add_subdirectory(src/fuse3)
 
 set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
         src/db/db_util.cpp src/classes/fs_data.cpp src/classes/rpc_data.cpp
@@ -47,7 +50,6 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
         src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp
 
         include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
-
 
         src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp src/adafs_ops/metadentry.cpp
         include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp
@@ -61,5 +63,3 @@ target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # margo libs
         ${BMI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
         -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)
-
-add_subdirectory(src/preload)

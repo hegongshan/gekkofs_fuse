@@ -10,6 +10,12 @@ using namespace std;
 
 static const std::string dentry_val_delim = ","s;
 
+ino_t generate_inode_no() {
+    std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
+    // TODO check that our inode counter is within boundaries of inode numbers in the given node
+    return ADAFS_DATA->raise_inode_count(1);
+}
+
 /**
  * Creates a file system node of any type (such as file or directory)
  * @param path
@@ -58,7 +64,7 @@ int create_metadentry(const std::string& path, mode_t mode) {
         val += dentry_val_delim + fmt::FormatInt(getgid()).str();
     }
     if (ADAFS_DATA->inode_no_state()) {
-        val += dentry_val_delim + fmt::FormatInt(Util::generate_inode_no()).str();
+        val += dentry_val_delim + fmt::FormatInt(generate_inode_no()).str();
     }
     if (ADAFS_DATA->link_cnt_state()) {
         val += dentry_val_delim + "1"s;

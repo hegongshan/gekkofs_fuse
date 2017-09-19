@@ -32,8 +32,6 @@
 extern "C" {
 #include <abt.h>
 #include <abt-snoozer.h>
-//#include <abt-io.h>
-//#include <mercury.h>
 #include <mercury_types.h>
 #include <mercury_proc_string.h>
 #include <margo.h>
@@ -48,17 +46,5 @@ namespace bfs = boost::filesystem;
 #define INVALID_INODE static_cast<ino_t>(0)
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
 #define RPC_DATA (static_cast<RPCData*>(RPCData::getInstance()))
-
-namespace Util {
-    int init_inode_no();
-
-    uint64_t generate_inode_no();
-
-    int read_inode_cnt();
-
-    int write_inode_cnt();
-
-    std::string get_my_hostname();
-}
 
 #endif //IFS_MAIN_HPP
