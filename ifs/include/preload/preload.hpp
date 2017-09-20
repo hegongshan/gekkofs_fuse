@@ -46,9 +46,9 @@ extern shared_ptr<struct FsConfig> fs_config;
 extern FILE* debug_fd;
 
 #define DAEMON_DEBUG(fd, fmt, ...) \
-            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
+            do { if (LOG_PRELOAD_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
 #define DAEMON_DEBUG0(fd, fmt) \
-            do { if (LOG_DAEMON_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt); fflush(fd); } while (0)
+            do { if (LOG_PRELOAD_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] " fmt); fflush(fd); } while (0)
 
 
 bool init_ld_argobots();

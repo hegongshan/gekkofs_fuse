@@ -9,11 +9,11 @@
 //#define LOG_INFO
 #define LOG_DEBUG
 //#define LOG_TRACE
-#define LOG_PATH "/tmp/adafs.log"
+#define LOG_DAEMON_PATH "/tmp/adafs_daemon.log"
 
 // Enable logging for daemon
-#define LOG_DAEMON_DEBUG 1
-#define LOG_DAEMON_PATH "/tmp/adafs_daemon.log"
+#define LOG_PRELOAD_DEBUG 1
+#define LOG_PRELOAD_PATH "/tmp/adafs_preload.log"
 
 // If ACM time should be considered
 #define ACMtime

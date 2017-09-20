@@ -28,7 +28,7 @@ int main(int argc, const char* argv[]) {
 
 
     //set the spdlogger and initialize it with spdlog
-    ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", LOG_PATH));
+    ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", LOG_DAEMON_PATH));
 #if defined(LOG_TRACE)
     spdlog::set_level(spdlog::level::trace);
     ADAFS_DATA->spdlogger()->flush_on(spdlog::level::trace);

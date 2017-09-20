@@ -574,7 +574,7 @@ void init_passthrough_() {
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
 
-    debug_fd = fopen(LOG_DAEMON_PATH, "a+");
+    debug_fd = fopen(LOG_PRELOAD_PATH, "a+");
     fs_config = make_shared<struct FsConfig>();
     DAEMON_DEBUG0(debug_fd, "Passthrough initialized.\n");
 }
