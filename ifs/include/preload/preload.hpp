@@ -65,6 +65,7 @@ margo_instance_id ld_margo_id();
 
 hg_addr_t daemon_addr();
 
+void init_passthrough_if_needed();
 
 void init_preload(void) __attribute__((constructor));
 

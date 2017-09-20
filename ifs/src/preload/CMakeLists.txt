@@ -15,4 +15,4 @@ set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/pre
 add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
 target_link_libraries(iointer dl ${BMI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
         ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-        -lboost_system)
+        -lpthread -lboost_system)
