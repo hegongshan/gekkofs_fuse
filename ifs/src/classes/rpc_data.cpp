@@ -4,9 +4,9 @@
 
 #include <classes/rpc_data.hpp>
 
+using namespace std;
 
 // Utility functions
-
 bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
 
     if (address_cache_.tryGet(hostid, svr_addr)) {
@@ -17,7 +17,7 @@ bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         ADAFS_DATA->spdlogger()->debug("not found in lrucache");
         // not found, manual lookup and add address mapping to LRU cache
 #ifndef RPC_TEST
-        auto hostname = "bmi+tcp://" + ADAFS_DATA->hosts().at(hostid) + ":" +
+        auto hostname = RPC_PROTOCOL + "://"s + ADAFS_DATA->hosts().at(hostid) + ":"s +
                         ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
 #else
         auto hostname = "bmi+tcp://127.0.0.1:" +

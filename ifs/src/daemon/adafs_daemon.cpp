@@ -148,7 +148,7 @@ void destroy_argobots() {
 }
 
 bool init_rpc_server() {
-    auto protocol_port = "bmi+tcp://localhost:" + to_string(RPCPORT);
+    auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPCPORT);
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
@@ -311,7 +311,7 @@ void register_server_ipcs() {
 }
 
 bool init_rpc_client() {
-    auto protocol_port = "bmi+tcp"s;
+    string protocol_port = RPC_PROTOCOL;
     ADAFS_DATA->spdlogger()->info("Initializing Mercury client ...");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
