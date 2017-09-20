@@ -41,13 +41,12 @@ void send_minimal_rpc(const hg_id_t minimal_id) {
     printf("minimal RPC is done.\n");
 }
 
-int ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
+bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     hg_handle_t handle;
     ipc_config_in_t in;
     ipc_config_out_t out;
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
-    hg_bool_t success = HG_FALSE;
     auto ret = HG_Create(ld_mercury_context(), daemon_addr(), ipc_get_config_id, &handle);
     if (ret != HG_SUCCESS) {
         DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
@@ -79,6 +78,8 @@ int ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
             fs_config->uid = out.uid;
             fs_config->gid = out.gid;
             DAEMON_DEBUG(debug_fd, "Got response with mountdir: %s\n", out.mountdir);
+        } else {
+            printf("[ERR] Retrieving fs configurations from daemon");
         }
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
@@ -88,7 +89,7 @@ int ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return ret == HG_SUCCESS ? 0 : 1;
+    return ret == HG_SUCCESS;
 }
 
 int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t ipc_open_id) {

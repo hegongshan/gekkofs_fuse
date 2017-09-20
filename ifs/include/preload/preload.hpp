@@ -24,44 +24,6 @@ extern "C" {
 #include <preload/open_file_map.hpp>
 #include <preload/preload_util.hpp>
 
-#define ld_open open
-#define ld_open64 open64
-#define ld_fopen fopen
-
-#define ld_creat creat
-#define ld_unlink unlink
-
-#define ld_close close
-#define ld___close __close
-
-#define ld_stat stat
-#define ld_fstat fstat
-#define ld___xstat __xstat
-#define ld___xstat64 __xstat64
-#define ld___fxstat __fxstat
-#define ld___fxstat64 __fxstat64
-#define ld___lxstat __lxstat
-#define ld___lxstat64 __lxstat64
-
-#define ld_access access
-
-#define ld_puts puts
-
-#define ld_write write
-#define ld_pwrite pwrite
-#define ld_read read
-#define ld_pread pread
-#define ld_pread64 pread64
-
-#define ld_lseek lseek
-#define ld_lseek64 lseek64
-
-#define ld_truncate truncate
-#define ld_ftruncate ftruncate
-
-#define ld_dup dup
-#define ld_dup2 dup2
-
 struct FsConfig {
     // configurable metadata
     bool atime_state;

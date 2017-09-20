@@ -14,4 +14,6 @@ bool is_fs_path(const char* path);
 
 int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr);
 
+int getProcIdByName(std::string procName);
+
 #endif //IFS_PRELOAD_UTIL_HPP

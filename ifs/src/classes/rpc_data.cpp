@@ -44,20 +44,36 @@ size_t RPCData::get_rpc_node(const std::string& to_hash) {
 
 // Getter/Setter
 
-hg_class_t* RPCData::server_hg_class() const {
-    return server_hg_class_;
+hg_class_t* RPCData::server_rpc_hg_class() const {
+    return server_rpc_hg_class_;
 }
 
-void RPCData::server_hg_class(hg_class_t* server_hg_class) {
-    RPCData::server_hg_class_ = server_hg_class;
+void RPCData::server_rpc_hg_class(hg_class_t* server_rpc_hg_class) {
+    RPCData::server_rpc_hg_class_ = server_rpc_hg_class;
 }
 
-hg_context_t* RPCData::server_hg_context() const {
-    return server_hg_context_;
+hg_context_t* RPCData::server_rpc_hg_context() const {
+    return server_rpc_hg_context_;
 }
 
-void RPCData::server_hg_context(hg_context_t* server_hg_context) {
-    RPCData::server_hg_context_ = server_hg_context;
+void RPCData::server_rpc_hg_context(hg_context_t* server_rpc_hg_context) {
+    RPCData::server_rpc_hg_context_ = server_rpc_hg_context;
+}
+
+hg_class_t* RPCData::server_ipc_hg_class() const {
+    return server_ipc_hg_class_;
+}
+
+void RPCData::server_ipc_hg_class(hg_class_t* server_ipc_hg_class) {
+    RPCData::server_ipc_hg_class_ = server_ipc_hg_class;
+}
+
+hg_context_t* RPCData::server_ipc_hg_context() const {
+    return server_ipc_hg_context_;
+}
+
+void RPCData::server_ipc_hg_context(hg_context_t* server_ipc_hg_context) {
+    RPCData::server_ipc_hg_context_ = server_ipc_hg_context;
 }
 
 hg_class_t* RPCData::client_hg_class() const {
@@ -76,20 +92,28 @@ void RPCData::client_hg_context(hg_context_t* client_hg_context) {
     RPCData::client_hg_context_ = client_hg_context;
 }
 
-margo_instance* RPCData::server_mid() {
-    return server_mid_;
+margo_instance* RPCData::server_rpc_mid() {
+    return server_rpc_mid_;
 }
 
-void RPCData::server_mid(margo_instance* server_mid) {
-    RPCData::server_mid_ = server_mid;
+void RPCData::server_rpc_mid(margo_instance* server_rpc_mid) {
+    RPCData::server_rpc_mid_ = server_rpc_mid;
+}
+
+margo_instance* RPCData::server_ipc_mid() {
+    return server_ipc_mid_;
+}
+
+void RPCData::server_ipc_mid(margo_instance* server_ipc_mid) {
+    RPCData::server_ipc_mid_ = server_ipc_mid;
 }
 
 margo_instance* RPCData::client_mid() {
-    return client_mid_;
+    return client_rpc_mid_;
 }
 
 void RPCData::client_mid(margo_instance* client_mid) {
-    RPCData::client_mid_ = client_mid;
+    RPCData::client_rpc_mid_ = client_mid;
 }
 
 hg_id_t RPCData::rpc_minimal_id() const {

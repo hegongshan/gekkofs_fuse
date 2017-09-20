@@ -16,7 +16,7 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
 
     auto ret = HG_Get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got config IPC");
+    ADAFS_DATA->spdlogger()->info("Got config IPC");
 
     hgi = HG_Get_info(handle);
 
@@ -34,7 +34,7 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
     out.blocks_state = static_cast<hg_bool_t>(ADAFS_DATA->blocks_state());
     out.uid = getuid();
     out.gid = getgid();
-    ADAFS_DATA->spdlogger()->debug("Sending output configs back to library");
+    ADAFS_DATA->spdlogger()->info("Sending output configs back to library");
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");

@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include "../../main.hpp"
 
 // Mercury Client
 hg_class_t* mercury_hg_class_;
@@ -90,6 +91,7 @@ int ld_open(const char* path, int flags, ...) {
 
 #else
         auto err = ipc_send_open(path, flags, mode, ipc_open_id);
+//        auto err = 0;
 #endif
         if (err == 0)
             return fd;
@@ -118,12 +120,12 @@ FILE* ld_fopen(const char* path, const char* mode) {
     return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
 }
 
-int ld_creat(const char* path, mode_t mode) {
+int creat(const char* path, mode_t mode) {
     DAEMON_DEBUG(debug_fd, "ld_creat called with path %s with mode %d\n", path, mode);
     return ld_open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
-int ld_unlink(const char* path) __THROW {
+int unlink(const char* path) __THROW {
 //    DAEMON_DEBUG(debug_fd, "ld_unlink called with path %s\n", path);
     if (is_fs_path(path)) {
 #ifndef MARGOIPC
@@ -214,10 +216,10 @@ int ld___fxstat(int ver, int fd, struct stat* buf) __THROW {
 }
 
 int ld___fxstat64(int ver, int fd, struct stat64* buf) __THROW {
-    DAEMON_DEBUG(debug_fd, "ld___fxstat64 called with fd %s\n", fd);
+    DAEMON_DEBUG(debug_fd, "ld___fxstat64 called with fd %d\n", fd);
     if (file_map.exist(fd)) {
         // TODO call fstat64
-        auto path = file_map.get(fd)->path();
+//        auto path = file_map.get(fd)->path();
 #ifndef MARGOIPC
 
 #else
@@ -260,9 +262,9 @@ int ld_puts(const char* str) {
 
 ssize_t ld_write(int fd, const void* buf, size_t count) {
     if (file_map.exist(fd)) {
-        auto adafs_fd = file_map.get(fd);
-        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
-        auto append_flag = adafs_fd->append_flag();
+//        auto adafs_fd = file_map.get(fd);
+//        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
+//        auto append_flag = adafs_fd->append_flag();
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
@@ -276,9 +278,9 @@ ssize_t ld_write(int fd, const void* buf, size_t count) {
 
 ssize_t ld_pwrite(int fd, const void* buf, size_t count, off_t offset) {
     if (file_map.exist(fd)) {
-        auto adafs_fd = file_map.get(fd);
-        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
-        auto append_flag = adafs_fd->append_flag();
+//        auto adafs_fd = file_map.get(fd);
+//        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
+//        auto append_flag = adafs_fd->append_flag();
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
@@ -292,7 +294,7 @@ ssize_t ld_pwrite(int fd, const void* buf, size_t count, off_t offset) {
 
 ssize_t ld_read(int fd, void* buf, size_t count) {
     if (file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return size read
 #ifndef MARGOIPC
 
@@ -306,7 +308,7 @@ ssize_t ld_read(int fd, void* buf, size_t count) {
 
 ssize_t ld_pread(int fd, void* buf, size_t count, off_t offset) {
     if (file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
@@ -320,7 +322,7 @@ ssize_t ld_pread(int fd, void* buf, size_t count, off_t offset) {
 
 ssize_t ld_pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
     if (file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
+//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
@@ -397,7 +399,7 @@ void register_client_ipcs() {
 }
 
 bool init_ipc_client() {
-    auto protocol_port = "bmi+tcp"s;
+    auto protocol_port = "na+sm"s;
     DAEMON_DEBUG0(debug_fd, "Initializing Mercury client ...\n");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
@@ -435,7 +437,15 @@ bool init_ipc_client() {
     mercury_hg_context_ = hg_context;
     margo_id_ = mid;
 
-    margo_addr_lookup(margo_id_, "bmi+tcp://localhost:4433", &daemon_svr_addr_);
+    auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
+    if (adafs_daemon_pid == -1) {
+        printf("[ERR] ADA-FS daemon not started. Exiting ...\n");
+        return false;
+    }
+    printf("[INFO] ADA-FS daemon with PID %d found.\n", adafs_daemon_pid);
+
+    string sm_addr_str = "na+sm://"s + fmt::FormatInt(adafs_daemon_pid).str() + "/0";
+    margo_addr_lookup(margo_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
 
     register_client_ipcs();
 
@@ -515,10 +525,14 @@ void init_preload(void) {
     is_lib_initialized = true;
 #ifdef MARGOIPC
     // init margo client for IPC
-    init_ld_argobots();
-    init_ipc_client();
-    ipc_send_get_fs_config(ipc_config_id); // get fs configurations the daemon was started with.
+    auto err = init_ld_argobots();
+    assert(err);
+    err = init_ipc_client();
+    assert(err);
+    err = ipc_send_get_fs_config(ipc_config_id); // get fs configurations the daemon was started with.
+    assert(err);
 #endif
+    printf("[INFO] preload init successful.\n");
 }
 
 /**
