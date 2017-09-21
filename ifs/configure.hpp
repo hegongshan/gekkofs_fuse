@@ -28,6 +28,7 @@
 // RPC configuration
 #define RPCPORT 4433
 #define RPC_TIMEOUT 150000
+#define RPC_PROTOCOL "bmi+tcp"
 
 // Debug configurations
 //#define RPC_TEST

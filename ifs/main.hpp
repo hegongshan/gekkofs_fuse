@@ -42,7 +42,7 @@ extern "C" {
 
 namespace bfs = boost::filesystem;
 
-#define RPC_PROTOCOL "bmi+tcp"
+
 #define ADAFS_ROOT_INODE static_cast<ino_t>(1)
 #define INVALID_INODE static_cast<ino_t>(0)
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))

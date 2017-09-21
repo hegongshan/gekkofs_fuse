@@ -16,11 +16,15 @@
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
-// Mercury Client
-hg_class_t* mercury_hg_class_;
-hg_context_t* mercury_hg_context_;
-margo_instance_id margo_id_;
+// Mercury IPC Client
+hg_class_t* mercury_ipc_class_;
+hg_context_t* mercury_ipc_context_;
+margo_instance_id margo_ipc_id_;
 hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
+// Mercury RPC Client
+hg_class_t* mercury_rpc_class_;
+hg_context_t* mercury_rpc_context_;
+margo_instance_id margo_rpc_id_;
 
 static hg_id_t minimal_id;
 static hg_id_t ipc_config_id;
@@ -438,42 +442,46 @@ bool init_ld_argobots() {
 }
 
 void register_client_ipcs() {
-    minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
-    ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
-    ipc_stat_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
-    ipc_unlink_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
-    ipc_config_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
+    minimal_id = MERCURY_REGISTER(mercury_ipc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
+    ipc_open_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    ipc_stat_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
+    ipc_unlink_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
+    ipc_config_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
+}
+
+void register_client_rpcs() {
+
 }
 
 bool init_ipc_client() {
     auto protocol_port = "na+sm"s;
-    DAEMON_DEBUG0(debug_fd, "Initializing Mercury client ...\n");
+    DAEMON_DEBUG0(debug_fd, "Initializing Mercury IPC client ...\n");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
     hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury client layer\n");
+        DAEMON_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury IPC client layer\n");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury client context\n");
+        DAEMON_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury IPC client context\n");
         HG_Finalize(hg_class);
         return false;
     }
     DAEMON_DEBUG0(debug_fd, "Success.\n");
 
     /* MARGO PART */
-    DAEMON_DEBUG0(debug_fd, "Initializing Margo client ...\n");
+    DAEMON_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
     // Start Margo
     auto mid = margo_init(0, 0,
                           hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        DAEMON_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo client\n");
+        DAEMON_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo IPC client\n");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         return false;
@@ -481,9 +489,9 @@ bool init_ipc_client() {
     DAEMON_DEBUG0(debug_fd, "Success.\n");
 
     // Put context and class into RPC_data object
-    mercury_hg_class_ = hg_class;
-    mercury_hg_context_ = hg_context;
-    margo_id_ = mid;
+    mercury_ipc_class_ = hg_class;
+    mercury_ipc_context_ = hg_context;
+    margo_ipc_id_ = mid;
 
     auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
     if (adafs_daemon_pid == -1) {
@@ -493,28 +501,77 @@ bool init_ipc_client() {
     printf("[INFO] ADA-FS daemon with PID %d found.\n", adafs_daemon_pid);
 
     string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
-    margo_addr_lookup(margo_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
+    margo_addr_lookup(margo_ipc_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
 
     register_client_ipcs();
 
-    for (int i = 0; i < 10000; ++i) {
-        printf("Running %d iteration\n", i);
-        send_minimal_ipc(minimal_id);
-    }
+//    for (int i = 0; i < 10; ++i) {
+//        printf("Running %d iteration\n", i);
+//        send_minimal_ipc(minimal_id);
+//    }
 
     return true;
 }
 
-hg_class_t* ld_mercury_class() {
-    return mercury_hg_class_;
+bool init_rpc_client() {
+    string protocol_port = RPC_PROTOCOL;
+    DAEMON_DEBUG0(debug_fd, "Initializing Mercury RPC client ...\n");
+    /* MERCURY PART */
+    // Init Mercury layer (must be finalized when finished)
+    hg_class_t* hg_class;
+    hg_context_t* hg_context;
+    hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
+    if (hg_class == nullptr) {
+        DAEMON_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury RPC client layer\n");
+        return false;
+    }
+    // Create a new Mercury context (must be destroyed when finished)
+    hg_context = HG_Context_create(hg_class);
+    if (hg_context == nullptr) {
+        DAEMON_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury RPC client context\n");
+        HG_Finalize(hg_class);
+        return false;
+    }
+    DAEMON_DEBUG0(debug_fd, "Success.\n");
+
+    /* MARGO PART */
+    DAEMON_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
+    // Start Margo
+    auto mid = margo_init(0, 0,
+                          hg_context);
+    if (mid == MARGO_INSTANCE_NULL) {
+        DAEMON_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo RPC client\n");
+        HG_Context_destroy(hg_context);
+        HG_Finalize(hg_class);
+        return false;
+    }
+    DAEMON_DEBUG0(debug_fd, "Success.\n");
+
+    // Put context and class into RPC_data object
+    mercury_rpc_class_ = hg_class;
+    mercury_rpc_context_ = hg_context;
+    margo_rpc_id_ = mid;
+
+    register_client_rpcs();
+
+//    for (int i = 0; i < 10000; ++i) {
+//        printf("Running %d iteration\n", i);
+//        send_minimal_ipc(minimal_id);
+//    }
+
+    return true;
 }
 
-hg_context_t* ld_mercury_context() {
-    return mercury_hg_context_;
+hg_class_t* ld_mercury_ipc_class() {
+    return mercury_ipc_class_;
 }
 
-margo_instance_id ld_margo_id() {
-    return margo_id_;
+hg_context_t* ld_mercury_ipc_context() {
+    return mercury_ipc_context_;
+}
+
+margo_instance_id ld_margo_ipc_id() {
+    return margo_ipc_id_;
 }
 
 hg_addr_t daemon_addr() {
@@ -601,17 +658,17 @@ void destroy_preload(void) {
 
 #ifdef MARGOIPC
     DAEMON_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
-    HG_Addr_free(mercury_hg_class_, daemon_svr_addr_);
+    HG_Addr_free(mercury_ipc_class_, daemon_svr_addr_);
     DAEMON_DEBUG0(debug_fd, "Finalizing Margo ...\n");
-    margo_finalize(margo_id_);
+    margo_finalize(margo_ipc_id_);
 
     DAEMON_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
     ABT_finalize();
 
     DAEMON_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
-    HG_Context_destroy(mercury_hg_context_);
+    HG_Context_destroy(mercury_ipc_context_);
     DAEMON_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
-    HG_Finalize(mercury_hg_class_);
+    HG_Finalize(mercury_ipc_class_);
     DAEMON_DEBUG0(debug_fd, "Preload library shut down.\n");
 #endif
     fclose(debug_fd);

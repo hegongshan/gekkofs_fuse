@@ -19,7 +19,7 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("minimal RPC is running...\n");
 
     /* create handle */
-    auto ret = HG_Create(ld_mercury_context(), daemon_addr(), minimal_id, &handle);
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), minimal_id, &handle);
     assert(ret == HG_SUCCESS);
 
     /* Send rpc. Note that we are also transmitting the bulk handle in the
@@ -27,7 +27,7 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
      */
     in.input = 42;
     printf("About to send RPC\n");
-    margo_forward(ld_margo_id(), handle, &in);
+    margo_forward(ld_margo_ipc_id(), handle, &in);
     printf("Waiting for response\n");
     /* decode response */
     ret = HG_Get_output(handle, &out);
@@ -48,7 +48,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     ipc_config_out_t out;
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
-    auto ret = HG_Create(ld_mercury_context(), daemon_addr(), ipc_get_config_id, &handle);
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_get_config_id, &handle);
     if (ret != HG_SUCCESS) {
         DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
@@ -56,7 +56,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     DAEMON_DEBUG0(debug_fd, "About to send get config IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(ld_margo_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -102,7 +102,7 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
     in.flags = flags;
     in.path = path;
     hg_bool_t success = HG_FALSE;
-    auto ret = HG_Create(ld_mercury_context(), daemon_addr(), ipc_open_id, &handle);
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_open_id, &handle);
     if (ret != HG_SUCCESS) {
         DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
@@ -110,7 +110,7 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
     DAEMON_DEBUG0(debug_fd, "About to send open IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(ld_margo_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -142,7 +142,7 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
     // fill in
     in.path = path;
     hg_bool_t success = HG_FALSE;
-    auto ret = HG_Create(ld_mercury_context(), daemon_addr(), ipc_stat_id, &handle);
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_stat_id, &handle);
     if (ret != HG_SUCCESS) {
         DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
@@ -150,7 +150,7 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
     DAEMON_DEBUG0(debug_fd, "About to send stat IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(ld_margo_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -185,7 +185,7 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
     // fill in
     in.path = path;
     hg_bool_t success = HG_FALSE;
-    auto ret = HG_Create(ld_mercury_context(), daemon_addr(), ipc_unlink_id, &handle);
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_unlink_id, &handle);
     if (ret != HG_SUCCESS) {
         DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
@@ -193,7 +193,7 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
     DAEMON_DEBUG0(debug_fd, "About to send unlink IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(ld_margo_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }

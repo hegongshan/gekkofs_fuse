@@ -57,11 +57,11 @@ void register_client_ipcs();
 
 bool init_ipc_client();
 
-hg_class_t* ld_mercury_class();
+hg_class_t* ld_mercury_ipc_class();
 
-hg_context_t* ld_mercury_context();
+hg_context_t* ld_mercury_ipc_context();
 
-margo_instance_id ld_margo_id();
+margo_instance_id ld_margo_ipc_id();
 
 hg_addr_t daemon_addr();
 
