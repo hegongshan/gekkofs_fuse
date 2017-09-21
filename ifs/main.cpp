@@ -96,6 +96,7 @@ int main(int argc, const char* argv[]) {
         }
         ADAFS_DATA->hosts(hostmap);
         ADAFS_DATA->host_size(hostmap.size());
+        ADAFS_DATA->rpc_port(fmt::FormatInt(RPCPORT).str());
     }
 
     //set all paths

@@ -19,7 +19,7 @@ void send_minimal_rpc(const hg_id_t minimal_id) {
 
     ADAFS_DATA->spdlogger()->debug("Looking up address");
 
-    margo_addr_lookup(RPC_DATA->client_mid(), "cci+tcp://134.93.182.11:1234"s.c_str(), &svr_addr);
+    margo_addr_lookup(RPC_DATA->client_mid(), "bmi+tcp://134.93.182.11:1234"s.c_str(), &svr_addr);
 
     ADAFS_DATA->spdlogger()->debug("minimal RPC is running...");
 
@@ -82,6 +82,7 @@ int rpc_send_create_node(const size_t recipient, const std::string& path, const 
         return 1;
     }
     int send_ret = HG_FALSE;
+    ADAFS_DATA->spdlogger()->trace("About to send create_node RPC ...");
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
