@@ -5,12 +5,14 @@
 #include <preload/preload.hpp>
 #include <preload/ipc_types.hpp>
 #include <preload/margo_ipc.hpp>
+#include <rpc/rpc_types.hpp>
 
 #include <dlfcn.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "../../main.hpp"
+#include <atomic>
+#include <cassert>
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
@@ -436,7 +438,7 @@ bool init_ld_argobots() {
 }
 
 void register_client_ipcs() {
-    minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_tt, rpc_minimal_out_tt, nullptr);
+    minimal_id = MERCURY_REGISTER(mercury_hg_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
     ipc_open_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
     ipc_stat_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
     ipc_unlink_id = MERCURY_REGISTER(mercury_hg_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
@@ -490,15 +492,15 @@ bool init_ipc_client() {
     }
     printf("[INFO] ADA-FS daemon with PID %d found.\n", adafs_daemon_pid);
 
-    string sm_addr_str = "na+sm://"s + fmt::FormatInt(adafs_daemon_pid).str() + "/0";
+    string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
     margo_addr_lookup(margo_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
 
     register_client_ipcs();
 
-//    for (int i = 0; i < 10000; ++i) {
-//        printf("Running %d iteration\n", i);
-//        send_minimal_rpc(minimal_id);
-//    }
+    for (int i = 0; i < 10000; ++i) {
+        printf("Running %d iteration\n", i);
+        send_minimal_ipc(minimal_id);
+    }
 
     return true;
 }

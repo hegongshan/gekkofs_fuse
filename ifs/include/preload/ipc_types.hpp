@@ -9,9 +9,9 @@
 
 MERCURY_GEN_PROC(ipc_res_out_t, ((hg_bool_t) (res))) // generic return type
 
-MERCURY_GEN_PROC(rpc_minimal_in_tt, ((int32_t) (input)))
-
-MERCURY_GEN_PROC(rpc_minimal_out_tt, ((int32_t) (output)))
+//MERCURY_GEN_PROC(rpc_minimal_in_tt, ((int32_t) (input)))
+//
+//MERCURY_GEN_PROC(rpc_minimal_out_tt, ((int32_t) (output)))
 
 MERCURY_GEN_PROC(ipc_config_in_t, ((int32_t) (dummy)))
 

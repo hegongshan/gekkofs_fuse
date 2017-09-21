@@ -3,17 +3,18 @@
 //
 
 #include <preload/margo_ipc.hpp>
+#include <rpc/rpc_types.hpp>
 #include <cassert>
 
 using namespace std;
 
 static int max_retries = 3;
 
-void send_minimal_rpc(const hg_id_t minimal_id) {
+void send_minimal_ipc(const hg_id_t minimal_id) {
 
     hg_handle_t handle;
-    rpc_minimal_in_tt in;
-    rpc_minimal_out_tt out;
+    rpc_minimal_in_t in;
+    rpc_minimal_out_t out;
 
     printf("minimal RPC is running...\n");
 
