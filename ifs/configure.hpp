@@ -13,6 +13,7 @@
 
 // Enable logging for daemon
 #define LOG_PRELOAD_DEBUG 1
+#define LOG_PRELOAD_TRACE 1
 #define LOG_PRELOAD_PATH "/tmp/adafs_preload.log"
 
 // If ACM time should be considered

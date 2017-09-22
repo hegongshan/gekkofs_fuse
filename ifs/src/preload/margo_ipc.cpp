@@ -4,7 +4,8 @@
 
 #include <preload/margo_ipc.hpp>
 #include <rpc/rpc_types.hpp>
-#include <cassert>
+#include <boost/token_functions.hpp>
+#include <boost/tokenizer.hpp>
 
 using namespace std;
 
@@ -50,10 +51,10 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_get_config_id, &handle);
     if (ret != HG_SUCCESS) {
-        DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
     }
-    DAEMON_DEBUG0(debug_fd, "About to send get config IPC to daemon\n");
+    LD_LOG_DEBUG0(debug_fd, "About to send get config IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
@@ -63,7 +64,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        DAEMON_DEBUG0(debug_fd, "Waiting for response\n");
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
         if (ret == HG_SUCCESS) {
             fs_config->mountdir = out.mountdir;
@@ -78,14 +79,27 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
             fs_config->blocks_state = out.blocks_state;
             fs_config->uid = out.uid;
             fs_config->gid = out.gid;
-            DAEMON_DEBUG(debug_fd, "Got response with mountdir: %s\n", out.mountdir);
+            fs_config->host_id = out.host_id;
+            fs_config->host_size = out.host_size;
+
+            // split comma separated host string and create a hosts map
+            string hosts_raw = out.hosts_raw;
+            std::map<uint64_t, std::string> hostmap;
+            boost::char_separator<char> sep(",");
+            boost::tokenizer<boost::char_separator<char>> tok(hosts_raw, sep);
+            uint64_t i = 0;
+            for (auto&& s : tok) {
+                hostmap[i++] = s;
+            }
+            fs_config->hosts = hostmap;
+            LD_LOG_DEBUG(debug_fd, "Got response with mountdir: %s\n", out.mountdir);
         } else {
             printf("[ERR] Retrieving fs configurations from daemon");
         }
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        DAEMON_DEBUG0(debug_fd, "IPC send_get_config (timed out)\n");
+        LD_LOG_DEBUG0(debug_fd, "IPC send_get_config (timed out)\n");
     }
 
     HG_Free_input(handle, &in);
@@ -104,10 +118,10 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
     hg_bool_t success = HG_FALSE;
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_open_id, &handle);
     if (ret != HG_SUCCESS) {
-        DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
     }
-    DAEMON_DEBUG0(debug_fd, "About to send open IPC to daemon\n");
+    LD_LOG_DEBUG0(debug_fd, "About to send open IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
@@ -117,15 +131,15 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        DAEMON_DEBUG0(debug_fd, "Waiting for response\n");
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
 
-        DAEMON_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
         success = out.res;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        DAEMON_DEBUG0(debug_fd, "IPC send_open (timed out)\n");
+        LD_LOG_DEBUG0(debug_fd, "IPC send_open (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
@@ -144,10 +158,10 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
     hg_bool_t success = HG_FALSE;
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_stat_id, &handle);
     if (ret != HG_SUCCESS) {
-        DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
     }
-    DAEMON_DEBUG0(debug_fd, "About to send stat IPC to daemon\n");
+    LD_LOG_DEBUG0(debug_fd, "About to send stat IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
@@ -157,10 +171,10 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        DAEMON_DEBUG0(debug_fd, "Waiting for response\n");
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
 
-        DAEMON_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
         success = out.res;
         if (out.res == HG_TRUE)
             db_val_to_stat(path, out.db_val, *attr);
@@ -168,7 +182,7 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
         out.db_val = nullptr;
         HG_Free_output(handle, &out);
     } else {
-        DAEMON_DEBUG0(debug_fd, "IPC send_stat (timed out)\n");
+        LD_LOG_DEBUG0(debug_fd, "IPC send_stat (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
@@ -187,10 +201,10 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
     hg_bool_t success = HG_FALSE;
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_unlink_id, &handle);
     if (ret != HG_SUCCESS) {
-        DAEMON_DEBUG0(debug_fd, "creating handle FAILED\n");
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
         return 1;
     }
-    DAEMON_DEBUG0(debug_fd, "About to send unlink IPC to daemon\n");
+    LD_LOG_DEBUG0(debug_fd, "About to send unlink IPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
@@ -200,15 +214,15 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        DAEMON_DEBUG0(debug_fd, "Waiting for response\n");
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
 
-        DAEMON_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
         success = out.res;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        DAEMON_DEBUG0(debug_fd, "IPC send_unlink (timed out)\n");
+        LD_LOG_DEBUG0(debug_fd, "IPC send_unlink (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!

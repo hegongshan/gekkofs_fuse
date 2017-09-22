@@ -5,8 +5,8 @@
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
 #include <adafs_ops/data.hpp>
-#include <rpc/sender/c_metadentry.hpp>
-#include <rpc/sender/c_data.hpp>
+//#include <rpc/sender/c_metadentry.hpp>
+//#include <rpc/sender/c_data.hpp>
 
 using namespace std;
 
@@ -21,7 +21,8 @@ int adafs_open(string& path, int flags, mode_t mode) {
             if (ADAFS_DATA->is_local_op(recipient)) { // local
                 ret = create_node(path, uid, gid, mode);
             } else { // remote
-                ret = rpc_send_create_node(recipient, path, mode);
+                ret = 0; // XXX WIP
+//                ret = rpc_send_create_node(recipient, path, mode);
             }
         } else { // single node operation
             ret = create_node(path, uid, gid, mode);
@@ -54,7 +55,8 @@ int adafs_unlink(string& path) {
         if (ADAFS_DATA->is_local_op(recipient)) { // local
             ret = remove_node(path);
         } else { // remote
-            ret = rpc_send_remove_node(recipient, path);
+            ret = 0; // XXX WIP
+//            ret = rpc_send_remove_node(recipient, path);
         }
     } else { // single node operation
         ret = remove_node(path);
@@ -83,7 +85,8 @@ string adafs_stat(string& path) {
         if (ADAFS_DATA->is_local_op(recipient)) { // local
             ret = get_attr(path);
         } else { // remote
-            ret = rpc_send_get_attr(recipient, path);
+            ret = ""s; // XXX WIP
+//            ret = rpc_send_get_attr(recipient, path);
         }
     } else { // single node operation
         ret = get_attr(path);
@@ -109,7 +112,8 @@ ssize_t adafs_write(string& path, char* buf, size_t size, off_t offset) {
         if (ADAFS_DATA->is_local_op(recipient)) { // local
             err = write_file(path, buf, write_size, size, offset, false);
         } else { // remote
-            err = rpc_send_write(recipient, path, size, offset, buf, write_size, false);
+            err = 0; // XXX WIP
+//            err = rpc_send_write(recipient, path, size, offset, buf, write_size, false);
         }
     } else { // single node operation
         err = write_file(path, buf, write_size, size, offset, false);
@@ -135,7 +139,8 @@ ssize_t adafs_read(string& path, char* buf, size_t size, off_t offset) {
         if (ADAFS_DATA->is_local_op(recipient)) { // local
             err = read_file(buf, read_size, path, size, offset);
         } else { // remote
-            err = rpc_send_read(recipient, path, size, offset, buf, read_size);
+            err = 0; // XXX WIP
+//            err = rpc_send_read(recipient, path, size, offset, buf, read_size);
         }
     } else { // single node operation
         err = read_file(buf, read_size, path, size, offset);

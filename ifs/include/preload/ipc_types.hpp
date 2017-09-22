@@ -13,7 +13,7 @@ MERCURY_GEN_PROC(ipc_res_out_t, ((hg_bool_t) (res))) // generic return type
 //
 //MERCURY_GEN_PROC(rpc_minimal_out_tt, ((int32_t) (output)))
 
-MERCURY_GEN_PROC(ipc_config_in_t, ((int32_t) (dummy)))
+MERCURY_GEN_PROC(ipc_config_in_t, ((int32_t) (dummy))) // XXX remove that.
 
 MERCURY_GEN_PROC(ipc_config_out_t, ((hg_const_string_t) (mountdir))
         ((hg_const_string_t) (rootdir)) \
@@ -26,7 +26,10 @@ MERCURY_GEN_PROC(ipc_config_out_t, ((hg_const_string_t) (mountdir))
 ((hg_bool_t) (link_cnt_state)) \
 ((hg_bool_t) (blocks_state)) \
 ((hg_uint32_t) (uid)) \
-((hg_uint32_t) (gid)))
+((hg_uint32_t) (gid)) \
+((hg_const_string_t) (hosts_raw)) \
+((hg_uint64_t) (host_id)) \
+((hg_uint64_t) (host_size)))
 
 
 MERCURY_GEN_PROC(ipc_open_in_t, ((hg_const_string_t) (path))

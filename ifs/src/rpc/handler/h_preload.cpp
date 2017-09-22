@@ -21,6 +21,7 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
     hgi = HG_Get_info(handle);
 
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
     // get fs config
     out.mountdir = ADAFS_DATA->mountdir().c_str();
     out.rootdir = ADAFS_DATA->rootdir().c_str();
@@ -34,6 +35,9 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
     out.blocks_state = static_cast<hg_bool_t>(ADAFS_DATA->blocks_state());
     out.uid = getuid();
     out.gid = getgid();
+    out.hosts_raw = static_cast<hg_const_string_t>(ADAFS_DATA->hosts_raw().c_str());
+    out.host_id = static_cast<hg_uint64_t>(ADAFS_DATA->host_id());
+    out.host_size = static_cast<hg_uint64_t>(ADAFS_DATA->host_size());
     ADAFS_DATA->spdlogger()->info("Sending output configs back to library");
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {

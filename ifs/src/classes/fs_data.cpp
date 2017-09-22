@@ -161,6 +161,14 @@ void FsData::inode_count(ino_t inode_count) {
     FsData::inode_count_ = inode_count;
 }
 
+const std::string& FsData::hosts_raw() const {
+    return hosts_raw_;
+}
+
+void FsData::hosts_raw(const std::string& hosts_raw) {
+    FsData::hosts_raw_ = hosts_raw;
+}
+
 const std::map<uint64_t, std::string>& FsData::hosts() const {
     return hosts_;
 }

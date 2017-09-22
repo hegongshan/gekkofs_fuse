@@ -36,6 +36,7 @@ private:
     std::string mgmt_path_;
 
     // hosts_
+    std::string hosts_raw_; // raw hosts string, given when daemon is started. Used to give it to fs client
     std::map<uint64_t, std::string> hosts_;
     uint64_t host_id_; // my host number
     size_t host_size_;
@@ -156,6 +157,10 @@ public:
     const rocksdb::WriteOptions& rdb_write_options() const;
 
     void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
+
+    const std::string& hosts_raw() const;
+
+    void hosts_raw(const std::string& hosts_raw);
 
     const std::map<uint64_t, std::string>& hosts() const;
 

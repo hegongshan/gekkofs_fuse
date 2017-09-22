@@ -5,7 +5,8 @@
 #include <preload/preload.hpp>
 #include <preload/ipc_types.hpp>
 #include <preload/margo_ipc.hpp>
-#include <rpc/rpc_types.hpp>
+#include <preload/rpc/ld_rpc_metadentry.hpp>
+#include <extern/lrucache/LRUCache11.hpp>
 
 #include <dlfcn.h>
 #include <stdarg.h>
@@ -13,6 +14,8 @@
 #include <sys/stat.h>
 #include <atomic>
 #include <cassert>
+
+// TODO my god... someone clean up this mess of a file
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
@@ -26,11 +29,21 @@ hg_class_t* mercury_rpc_class_;
 hg_context_t* mercury_rpc_context_;
 margo_instance_id margo_rpc_id_;
 
+// IPC IDs
 static hg_id_t minimal_id;
 static hg_id_t ipc_config_id;
 static hg_id_t ipc_open_id;
 static hg_id_t ipc_stat_id;
 static hg_id_t ipc_unlink_id;
+// RPC IDs
+static hg_id_t rpc_minimal_id;
+static hg_id_t rpc_create_node_id;
+static hg_id_t rpc_attr_id;
+static hg_id_t rpc_remove_node_id;
+static hg_id_t rpc_write_data_id;
+static hg_id_t rpc_read_data_id;
+// rpc address cache
+lru11::Cache<uint64_t, hg_addr_t> rpc_address_cache_{32768, 4096}; // XXX Set values are not based on anything...
 
 // misc
 static std::atomic<bool> is_env_initialized(false);
@@ -87,7 +100,7 @@ static OpenFileMap file_map{};
 
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "open called with path %s\n", path);
+    LD_LOG_DEBUG(debug_fd, "open called with path %s\n", path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list vl;
@@ -96,11 +109,30 @@ int open(const char* path, int flags, ...) {
         va_end(vl);
     }
     if (is_env_initialized && is_fs_path(path)) {
+        auto err = 1;
         auto fd = file_map.add(path, (flags & O_APPEND) != 0);
 #ifndef MARGOIPC
 
 #else
-        auto err = ipc_send_open(path, flags, mode, ipc_open_id);
+        if (flags & O_CREAT) { // do file create TODO handle all other flags
+            if (fs_config->host_size > 1) { // multiple node operation
+                auto recipient = get_rpc_node(path);
+                if (is_local_op(recipient)) { // local
+                    err = ipc_send_open(path, flags, mode, ipc_open_id);
+                } else { // remote
+                    err = rpc_send_create_node(rpc_create_node_id, recipient, path,
+                                               mode); // XXX change create node to generic open
+                }
+            } else { // single node operation
+                err = ipc_send_open(path, flags, mode, ipc_open_id);
+            }
+        } else {
+            // do nothing.
+            err = 0;
+        }
+
+
+        err = ipc_send_open(path, flags, mode, ipc_open_id);
 //        auto err = 0;
 #endif
         if (err == 0)
@@ -115,7 +147,7 @@ int open(const char* path, int flags, ...) {
 
 int open64(__const char* path, int flags, ...) {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "open64 called with path %s\n", path);
+    LD_LOG_DEBUG(debug_fd, "open64 called with path %s\n", path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list ap;
@@ -143,7 +175,7 @@ int open64(__const char* path, int flags, ...) {
 #undef creat
 int creat(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "creat called with path %s with mode %d\n", path, mode);
+    LD_LOG_DEBUG(debug_fd, "creat called with path %s with mode %d\n", path, mode);
     return open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
@@ -151,13 +183,13 @@ int creat(const char* path, mode_t mode) {
 
 int creat64(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "creat64 called with path %s with mode %d\n", path, mode);
+    LD_LOG_DEBUG(debug_fd, "creat64 called with path %s with mode %d\n", path, mode);
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
 
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
-//    DAEMON_DEBUG(debug_fd, "unlink called with path %s\n", path);
+//    LD_LOG_DEBUG(debug_fd, "unlink called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
 #ifndef MARGOIPC
 #else
@@ -184,7 +216,7 @@ int __close(int fd) {
 
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "stat called with path %s\n", path);
+    LD_LOG_DEBUG(debug_fd, "stat called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call daemon and return
 #ifndef MARGOIPC
@@ -199,7 +231,7 @@ int stat(const char* path, struct stat* buf) __THROW {
 
 int fstat(int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "fstat called with fd %d\n", fd);
+    LD_LOG_DEBUG(debug_fd, "fstat called with fd %d\n", fd);
     if (is_env_initialized && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return
@@ -215,7 +247,7 @@ int fstat(int fd, struct stat* buf) __THROW {
 
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "__xstat called with path %s\n", path);
+    LD_LOG_DEBUG(debug_fd, "__xstat called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call stat
 #ifndef MARGOIPC
@@ -229,7 +261,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "__xstat64 called with path %s\n", path);
+    LD_LOG_DEBUG(debug_fd, "__xstat64 called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
         // Not implemented
         return -1;
@@ -239,7 +271,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
 
 int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "__fxstat called with fd %d\n", fd);
+    LD_LOG_DEBUG(debug_fd, "__fxstat called with fd %d\n", fd);
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat
         auto path = file_map.get(fd)->path();
@@ -254,7 +286,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
 
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    DAEMON_DEBUG(debug_fd, "__fxstat64 called with fd %d\n", fd);
+    LD_LOG_DEBUG(debug_fd, "__fxstat64 called with fd %d\n", fd);
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat64
 //        auto path = file_map.get(fd)->path();
@@ -423,22 +455,50 @@ int dup2(int oldfd, int newfd) __THROW {
  * @return
  */
 bool init_ld_argobots() {
-    DAEMON_DEBUG0(debug_fd, "Initializing Argobots ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Initializing Argobots ...\n");
 
     // We need no arguments to init
     auto argo_err = ABT_init(0, nullptr);
     if (argo_err != 0) {
-        DAEMON_DEBUG0(debug_fd, "ABT_init() Failed to init Argobots (client)\n");
+        LD_LOG_DEBUG0(debug_fd, "ABT_init() Failed to init Argobots (client)\n");
         return false;
     }
     // Set primary execution stream to idle without polling. Normally xstreams cannot sleep. This is what ABT_snoozer does
     argo_err = ABT_snoozer_xstream_self_set();
     if (argo_err != 0) {
-        DAEMON_DEBUG0(debug_fd, "ABT_snoozer_xstream_self_set()  (client)\n");
+        LD_LOG_DEBUG0(debug_fd, "ABT_snoozer_xstream_self_set()  (client)\n");
         return false;
     }
-    DAEMON_DEBUG0(debug_fd, "Success.\n");
+    LD_LOG_DEBUG0(debug_fd, "Success.\n");
     return true;
+}
+
+bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+
+    if (rpc_address_cache_.tryGet(hostid, svr_addr)) {
+//        ADAFS_DATA->spdlogger()->debug("tryGet successful and put in svr_addr ");
+        //found
+        return true;
+    } else {
+//        ADAFS_DATA->spdlogger()->debug("not found in lrucache");
+        // not found, manual lookup and add address mapping to LRU cache
+        auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
+                        fs_config->rpc_port; // convert hostid to hostname and port
+//        ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
+        margo_addr_lookup(margo_rpc_id_, hostname.c_str(), &svr_addr);
+        if (svr_addr == HG_ADDR_NULL)
+            return false;
+        rpc_address_cache_.insert(hostid, svr_addr);
+        return true;
+    }
+}
+
+size_t get_rpc_node(const string& to_hash) {
+    return std::hash<string>{}(to_hash) % fs_config->host_size;
+}
+
+bool is_local_op(const size_t recipient) {
+    return recipient == fs_config->host_id;
 }
 
 void register_client_ipcs() {
@@ -451,42 +511,51 @@ void register_client_ipcs() {
 }
 
 void register_client_rpcs() {
-
+    rpc_minimal_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
+    rpc_create_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_create_node", rpc_create_node_in_t,
+                                          rpc_res_out_t, nullptr);
+    rpc_attr_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr);
+    rpc_remove_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_remove_node", rpc_remove_node_in_t,
+                                          rpc_res_out_t, nullptr);
+    rpc_write_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
+                                         nullptr);
+    rpc_read_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,
+                                        nullptr);
 }
 
 bool init_ipc_client() {
     auto protocol_port = "na+sm"s;
-    DAEMON_DEBUG0(debug_fd, "Initializing Mercury IPC client ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Initializing Mercury IPC client ...\n");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
     hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury IPC client layer\n");
+        LD_LOG_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury IPC client layer\n");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury IPC client context\n");
+        LD_LOG_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury IPC client context\n");
         HG_Finalize(hg_class);
         return false;
     }
-    DAEMON_DEBUG0(debug_fd, "Success.\n");
+    LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
     /* MARGO PART */
-    DAEMON_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
     // Start Margo
     auto mid = margo_init(0, 0,
                           hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        DAEMON_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo IPC client\n");
+        LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo IPC client\n");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         return false;
     }
-    DAEMON_DEBUG0(debug_fd, "Success.\n");
+    LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
     // Put context and class into RPC_data object
     mercury_ipc_class_ = hg_class;
@@ -515,37 +584,37 @@ bool init_ipc_client() {
 
 bool init_rpc_client() {
     string protocol_port = RPC_PROTOCOL;
-    DAEMON_DEBUG0(debug_fd, "Initializing Mercury RPC client ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Initializing Mercury RPC client ...\n");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
     hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury RPC client layer\n");
+        LD_LOG_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury RPC client layer\n");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        DAEMON_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury RPC client context\n");
+        LD_LOG_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury RPC client context\n");
         HG_Finalize(hg_class);
         return false;
     }
-    DAEMON_DEBUG0(debug_fd, "Success.\n");
+    LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
     /* MARGO PART */
-    DAEMON_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
     // Start Margo
     auto mid = margo_init(0, 0,
                           hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        DAEMON_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo RPC client\n");
+        LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo RPC client\n");
         HG_Context_destroy(hg_context);
         HG_Finalize(hg_class);
         return false;
     }
-    DAEMON_DEBUG0(debug_fd, "Success.\n");
+    LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
     // Put context and class into RPC_data object
     mercury_rpc_class_ = hg_class;
@@ -574,6 +643,11 @@ margo_instance_id ld_margo_ipc_id() {
     return margo_ipc_id_;
 }
 
+margo_instance_id ld_margo_rpc_id() {
+    return margo_ipc_id_;
+}
+
+
 hg_addr_t daemon_addr() {
     return daemon_svr_addr_;
 }
@@ -590,9 +664,11 @@ void init_environment() {
     assert(err);
     err = ipc_send_get_fs_config(ipc_config_id); // get fs configurations the daemon was started with.
     assert(err);
+    err = init_rpc_client();
+    assert(err);
 #endif
     is_env_initialized = true;
-    DAEMON_DEBUG0(debug_fd, "Environment initialized.\n");
+    LD_LOG_DEBUG0(debug_fd, "Environment initialized.\n");
 }
 
 void init_passthrough_() {
@@ -635,7 +711,7 @@ void init_passthrough_() {
 
     debug_fd = fopen(LOG_PRELOAD_PATH, "a+");
     fs_config = make_shared<struct FsConfig>();
-    DAEMON_DEBUG0(debug_fd, "Passthrough initialized.\n");
+    LD_LOG_DEBUG0(debug_fd, "Passthrough initialized.\n");
 }
 
 void init_passthrough_if_needed() {
@@ -657,19 +733,19 @@ void init_preload(void) {
 void destroy_preload(void) {
 
 #ifdef MARGOIPC
-    DAEMON_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
     HG_Addr_free(mercury_ipc_class_, daemon_svr_addr_);
-    DAEMON_DEBUG0(debug_fd, "Finalizing Margo ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo ...\n");
     margo_finalize(margo_ipc_id_);
 
-    DAEMON_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
     ABT_finalize();
 
-    DAEMON_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
     HG_Context_destroy(mercury_ipc_context_);
-    DAEMON_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
+    LD_LOG_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
     HG_Finalize(mercury_ipc_class_);
-    DAEMON_DEBUG0(debug_fd, "Preload library shut down.\n");
+    LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
 #endif
     fclose(debug_fd);
 }
