@@ -1,8 +1,5 @@
 #include <iostream>
-#include <unistd.h>
-#include <fstream>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <chrono>
 using namespace std;
 
@@ -11,7 +8,7 @@ using get_time = chrono::steady_clock;
 
 int main(int argc, char* argv[]) {
 
-    auto filen = strtol(argv[1], NULL, 20);
+    auto filen = atoi(argv[1]);
 
 //    cout << mkdir("/tmp/mountdir/bla", 0775) << endl;
 //    auto buf = "BUFFERINO2";
@@ -42,10 +39,10 @@ int main(int argc, char* argv[]) {
     auto start_t = get_time::now();
 
     for (int i = 0; i < filen; ++i) {
-        string p = "/tmp/mountdir/file2" + to_string(i);
+        string p = "/tmp/mountdir/file" + to_string(i);
         creat(p.c_str(), 0666);
         if (i % 25000 == 0)
-            cout << i << " files processed.2" << endl;
+            cout << i << " files processed." << endl;
 //        cout << p << endl;
     }
 

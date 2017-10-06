@@ -81,3 +81,5 @@ playground
 .fuse_hidden*
 
 ifs/\.hidden_playground/
+
+ifs_test/build/
