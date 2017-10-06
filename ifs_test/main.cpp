@@ -9,9 +9,9 @@ using namespace std;
 using ns = chrono::nanoseconds;
 using get_time = chrono::steady_clock;
 
-int main() {
+int main(int argc, char* argv[]) {
 
-
+    auto filen = strtol(argv[1], NULL, 20);
 
 //    cout << mkdir("/tmp/mountdir/bla", 0775) << endl;
 //    auto buf = "BUFFERINO2";
@@ -37,7 +37,7 @@ int main() {
 //        return 1;
 //    }
 
-    int filen = 3;
+//    int filen = 3;
 
     auto start_t = get_time::now();
 
