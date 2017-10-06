@@ -10,6 +10,8 @@
 
 using namespace std;
 
+// TODO This file might not be needed anymore.
+
 int adafs_open(string& path, int flags, mode_t mode) {
     auto uid = getuid(); // XXX this should go into daemon init and set it globally
     auto gid = getgid();

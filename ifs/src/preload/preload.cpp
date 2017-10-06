@@ -121,19 +121,15 @@ int open(const char* path, int flags, ...) {
                     err = ipc_send_open(path, flags, mode, ipc_open_id);
                 } else { // remote
                     err = rpc_send_create_node(rpc_create_node_id, recipient, path,
-                                               mode); // XXX change create node to generic open
+                                               mode);
                 }
             } else { // single node operation
                 err = ipc_send_open(path, flags, mode, ipc_open_id);
             }
         } else {
-            // do nothing.
+            // look up if file exists
             err = 0;
         }
-
-
-        err = ipc_send_open(path, flags, mode, ipc_open_id);
-//        auto err = 0;
 #endif
         if (err == 0)
             return fd;
