@@ -15,7 +15,7 @@
 #include <atomic>
 #include <cassert>
 
-// TODO my god... someone clean up this mess of a file
+// TODO my god... someone clean up this mess of a file :_:
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
@@ -484,7 +484,8 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         // not found, manual lookup and add address mapping to LRU cache
         auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
                         fs_config->rpc_port; // convert hostid to hostname and port
-//        ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
+        LD_LOG_TRACE(debug_fd, "generated hostname %s with rpc_port %s\n", hostname.c_str(),
+                     fs_config->rpc_port.c_str());
         margo_addr_lookup(margo_rpc_id_, hostname.c_str(), &svr_addr);
         if (svr_addr == HG_ADDR_NULL)
             return false;
@@ -644,7 +645,7 @@ margo_instance_id ld_margo_ipc_id() {
 }
 
 margo_instance_id ld_margo_rpc_id() {
-    return margo_ipc_id_;
+    return margo_rpc_id_;
 }
 
 
@@ -738,9 +739,12 @@ void destroy_preload(void) {
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo ...\n");
     margo_finalize(margo_ipc_id_);
 
+    // TODO free all rpc addresses in LRU map and finalize margo rpc
+
     LD_LOG_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
     ABT_finalize();
 
+    // TODO destroy rpc context and class
     LD_LOG_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
     HG_Context_destroy(mercury_ipc_context_);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");

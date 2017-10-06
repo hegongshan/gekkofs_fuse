@@ -74,7 +74,7 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
     hg_bool_t success = HG_FALSE;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %l\n", recipient);
+        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
         return 1;
     }
     auto ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_create_node_id, &handle);
