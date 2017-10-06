@@ -46,6 +46,7 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
 
     out.mountdir = nullptr;
     out.rootdir = nullptr;
+    out.hosts_raw = nullptr;
 
     // Destroy handle when finished
     HG_Free_input(handle, &in);
