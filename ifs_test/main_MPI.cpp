@@ -18,10 +18,12 @@ int main(int argc, char* argv[]) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    auto total_files = filen * world_size;
 
 //    int filen = 3;
 
-    cout << "Hello from rank " << rank << endl;
+    printf("Hello from rank %d\n", rank);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     auto start_t = get_time::now();
 
@@ -39,9 +41,9 @@ int main(int argc, char* argv[]) {
 
     if (rank == 0) {
         auto diff_count = chrono::duration_cast<ns>(diff).count();
-
+        cout << "\nFiles created in total: " << total_files << " with " << filen << " files per process" << endl;
         cout << diff_count << "ns\t" << (diff_count) / 1000000. << "ms" << endl;
-        cout << filen / ((diff_count) / 1000000000.) << " files per second" << endl;
+        cout << total_files / ((diff_count) / 1000000000.) << " files per second" << endl;
     }
 
     MPI_Finalize();
