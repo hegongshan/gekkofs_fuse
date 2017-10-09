@@ -18,7 +18,7 @@ MERCURY_GEN_PROC(rpc_minimal_in_t, ((int32_t) (input)))
 
 MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
 // misc generic rpc types
-MERCURY_GEN_PROC(rpc_res_out_t, ((hg_bool_t) (res)))
+MERCURY_GEN_PROC(rpc_err_out_t, ((hg_int32_t) (err)))
 
 // Metadentry
 MERCURY_GEN_PROC(rpc_create_node_in_t,

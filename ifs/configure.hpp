@@ -17,11 +17,11 @@
 #define LOG_PRELOAD_PATH "/tmp/adafs_preload.log"
 
 // If ACM time should be considered
-#define ACMtime
+#define ACMtime //unused
 #define BLOCKSIZE 4 // in kilobytes
 
 // If access permissions should be checked while opening a file
-//#define CHECK_ACCESS
+//#define CHECK_ACCESS //unused
 
 // Write-ahead logging of rocksdb
 //#define RDB_WOL
@@ -32,7 +32,7 @@
 #define RPC_PROTOCOL "bmi+tcp"
 
 // Debug configurations
-//#define RPC_TEST
+//#define RPC_TEST //unused
 
 // Using Margo for IPC or raw sockets
 #define MARGOIPC

@@ -5,6 +5,7 @@
 #include <rpc/rpc_defs.hpp>
 #include <preload/ipc_types.hpp>
 #include <daemon/fs_operations.hpp>
+#include <adafs_ops/metadentry.hpp>
 
 using namespace std;
 
@@ -60,7 +61,7 @@ DEFINE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
 static hg_return_t ipc_srv_open(hg_handle_t handle) {
     const struct hg_info* hgi;
     ipc_open_in_t in;
-    ipc_res_out_t out;
+    ipc_err_out_t out;
 
 
     auto ret = HG_Get_input(handle, &in);
@@ -73,13 +74,9 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
 
     // do open
     string path = in.path;
-    auto err = adafs_open(path, in.flags, in.mode);
-    if (err == 0) {
-        out.res = HG_TRUE;
-    } else {
-        out.res = HG_FALSE;
-    }
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    out.err = adafs_open(path, in.flags, in.mode);
+
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
@@ -135,7 +132,7 @@ DEFINE_MARGO_RPC_HANDLER(ipc_srv_stat)
 static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
     const struct hg_info* hgi;
     ipc_unlink_in_t in;
-    ipc_res_out_t out;
+    ipc_err_out_t out;
 
 
     auto ret = HG_Get_input(handle, &in);
@@ -147,18 +144,14 @@ static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // do unlink
-    string path = in.path;
-    auto err = adafs_unlink(path);
-    if (err == 0) {
-        out.res = HG_TRUE;
-    } else {
-        out.res = HG_FALSE;
-    }
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    out.err = remove_node(in.path);
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to unlink ipc");
     }
+
+    in.path = nullptr;
 
     // Destroy handle when finished
     HG_Free_input(handle, &in);

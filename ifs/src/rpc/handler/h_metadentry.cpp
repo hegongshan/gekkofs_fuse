@@ -29,6 +29,7 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.output);
     auto hret = margo_respond(mid, handle, &out);
     assert(hret == HG_SUCCESS);
+
     // Destroy handle when finished
     HG_Free_input(handle, &in);
     HG_Free_output(handle, &out);
@@ -43,7 +44,7 @@ DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
 static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
     const struct hg_info* hgi;
     rpc_create_node_in_t in;
-    rpc_res_out_t out;
+    rpc_err_out_t out;
 
 
     auto ret = HG_Get_input(handle, &in);
@@ -55,16 +56,15 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // create metadentry
-    auto err = create_metadentry(in.path, in.mode);
-    if (err == 0) {
-        out.res = HG_TRUE;
+    out.err = create_metadentry(in.path, in.mode);
 
-    }
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to create node rpc");
     }
+
+    in.path = nullptr;
 
     // Destroy handle when finished
     HG_Free_input(handle, &in);
@@ -103,7 +103,7 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)
 static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
     const struct hg_info* hgi;
     rpc_remove_node_in_t in;
-    rpc_res_out_t out;
+    rpc_err_out_t out;
 
 
     auto ret = HG_Get_input(handle, &in);
@@ -115,16 +115,15 @@ static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // create metadentry
-    auto err = remove_metadentry(in.path);
-    if (err == 0) {
-        out.res = HG_TRUE;
+    out.err = remove_node(in.path);
 
-    }
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to remove node rpc");
     }
+
+    in.path = nullptr;
 
     // Destroy handle when finished
     HG_Free_input(handle, &in);

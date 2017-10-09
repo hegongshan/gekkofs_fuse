@@ -67,11 +67,11 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_create_node_in_t in;
-    rpc_res_out_t out;
+    rpc_err_out_t out;
     // fill in
     in.path = path.c_str();
     in.mode = mode;
-    hg_bool_t success = HG_FALSE;
+    int err = EUNKNOWN;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
         LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
@@ -94,8 +94,8 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
         /* decode response */
         ret = HG_Get_output(handle, &out);
 
-        LD_LOG_TRACE(debug_fd, "Got response success: %d\n", out.res);
-        success = out.res;
+        LD_LOG_TRACE(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
@@ -106,7 +106,7 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return success == HG_TRUE ? 0 : 1;
+    return err;
 }
 
 string rpc_send_get_attr(const size_t recipient, const std::string& path) {
@@ -164,13 +164,13 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_remove_node_in_t in;
-    rpc_res_out_t out;
+    rpc_err_out_t out;
     // fill in
     in.path = path.c_str();
-    hg_bool_t success = HG_FALSE;
+    int err = EUNKNOWN;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %l\n", recipient);
+        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %d\n", static_cast<int>(recipient));
         return 1;
     }
     auto ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_remove_node_id, &handle);
@@ -189,8 +189,8 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
         /* decode response */
         ret = HG_Get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.res);
-        success = out.res;
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
@@ -201,5 +201,5 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return success == HG_TRUE ? 0 : 1;
+    return err;
 }

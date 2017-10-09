@@ -64,7 +64,7 @@ extern FILE* debug_fd;
             do { if (LOG_PRELOAD_TRACE) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [trace] " fmt); fflush(fd); } while (0)
 #define LD_LOG_ERROR0(fd, fmt) \
             do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]" fmt); fflush(fd); } while (0)
-
+#define EUNKNOWN -1
 
 bool init_ld_argobots();
 

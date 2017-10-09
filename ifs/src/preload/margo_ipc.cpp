@@ -98,6 +98,9 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
             printf("[ERR] Retrieving fs configurations from daemon");
         }
         /* clean up resources consumed by this rpc */
+        out.rootdir = nullptr;
+        out.mountdir = nullptr;
+        out.hosts_raw = nullptr;
         HG_Free_output(handle, &out);
     } else {
         LD_LOG_DEBUG0(debug_fd, "IPC send_get_config (timed out)\n");
@@ -111,12 +114,12 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
 int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t ipc_open_id) {
     hg_handle_t handle;
     ipc_open_in_t in;
-    ipc_res_out_t out;
+    ipc_err_out_t out;
     // fill in
     in.mode = mode;
     in.flags = flags;
     in.path = path;
-    hg_bool_t success = HG_FALSE;
+    int err = EUNKNOWN;
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_open_id, &handle);
     if (ret != HG_SUCCESS) {
         LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
@@ -135,8 +138,8 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
         LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
-        success = out.res;
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
@@ -147,7 +150,7 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return success == HG_TRUE ? 0 : 1;
+    return err;
 }
 
 int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id) {
@@ -156,7 +159,7 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
     ipc_stat_out_t out;
     // fill in
     in.path = path;
-    hg_bool_t success = HG_FALSE;
+    hg_bool_t success = HG_FALSE; //XXX
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_stat_id, &handle);
     if (ret != HG_SUCCESS) {
         LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
@@ -196,10 +199,10 @@ int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id
 int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
     hg_handle_t handle;
     ipc_unlink_in_t in;
-    ipc_res_out_t out;
+    ipc_err_out_t out;
     // fill in
     in.path = path;
-    hg_bool_t success = HG_FALSE;
+    int err = EUNKNOWN;
     auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_unlink_id, &handle);
     if (ret != HG_SUCCESS) {
         LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
@@ -218,8 +221,8 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
         LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
         ret = HG_Get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", static_cast<bool>(out.res));
-        success = out.res;
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
@@ -230,5 +233,5 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
-    return success == HG_TRUE ? 0 : 1;
+    return err;
 }

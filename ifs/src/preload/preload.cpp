@@ -127,7 +127,7 @@ int open(const char* path, int flags, ...) {
                 err = ipc_send_open(path, flags, mode, ipc_open_id);
             }
         } else {
-            // look up if file exists
+            // TODO look up if file exists
             err = 0;
         }
 #endif
@@ -185,11 +185,24 @@ int creat64(const char* path, mode_t mode) {
 
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
+    int err;
 //    LD_LOG_DEBUG(debug_fd, "unlink called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
 #ifndef MARGOIPC
 #else
-        return ipc_send_unlink(path, ipc_unlink_id);
+        if (fs_config->host_size > 1) { // multiple node operation
+            auto recipient = get_rpc_node(path);
+            if (is_local_op(recipient)) { // local
+                err = ipc_send_unlink(path, ipc_unlink_id);
+            } else { // remote
+                err = rpc_send_remove_node(rpc_remove_node_id, recipient, path);
+            }
+        } else { // single node operation
+            err = ipc_send_unlink(path, ipc_unlink_id);
+        }
+
+        return err;
+
 #endif
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
@@ -500,9 +513,9 @@ bool is_local_op(const size_t recipient) {
 
 void register_client_ipcs() {
     minimal_id = MERCURY_REGISTER(mercury_ipc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
-    ipc_open_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_open", ipc_open_in_t, ipc_res_out_t, nullptr);
+    ipc_open_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, nullptr);
     ipc_stat_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
-    ipc_unlink_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_res_out_t, nullptr);
+    ipc_unlink_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
     ipc_config_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
 }
@@ -510,10 +523,10 @@ void register_client_ipcs() {
 void register_client_rpcs() {
     rpc_minimal_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
     rpc_create_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_create_node", rpc_create_node_in_t,
-                                          rpc_res_out_t, nullptr);
+                                          rpc_err_out_t, nullptr);
     rpc_attr_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr);
     rpc_remove_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_remove_node", rpc_remove_node_in_t,
-                                          rpc_res_out_t, nullptr);
+                                          rpc_err_out_t, nullptr);
     rpc_write_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
                                          nullptr);
     rpc_read_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,

@@ -164,6 +164,7 @@ int remove_metadentry(const string& path) {
 int remove_node(const string& path) {
     auto err = remove_metadentry(path);
     if (err == 0)
-        destroy_chunk_space(path);
+        destroy_chunk_space(
+                path); // XXX This removes only the data on that node. Leaving everything in inconsistent state
     return err;
 }

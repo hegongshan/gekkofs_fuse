@@ -34,7 +34,6 @@ int main(int argc, char* argv[]) {
 //        return 1;
 //    }
 
-//    int filen = 3;
 
     auto start_t = get_time::now();
 
@@ -43,7 +42,6 @@ int main(int argc, char* argv[]) {
         creat(p.c_str(), 0666);
         if (i % 25000 == 0)
             cout << i << " files processed." << endl;
-//        cout << p << endl;
     }
 
     auto end_t = get_time::now();
@@ -54,10 +52,6 @@ int main(int argc, char* argv[]) {
     cout << diff_count << "ns\t" << (diff_count) / 1000000. << "ms" << endl;
     cout << filen / ((diff_count) / 1000000000.) << " files per second" << endl;
 
-
-
-
-//    cout << "done" << endl;
     return 0;
 
 }
