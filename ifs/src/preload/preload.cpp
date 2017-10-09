@@ -222,6 +222,42 @@ int __close(int fd) {
     return close(fd);
 }
 
+// TODO combine adafs_stat and adafs_stat64
+int adafs_stat(const char* path, struct stat* buf) {
+    int err;
+    string attr = ""s;
+    if (fs_config->host_size > 1) { // multiple node operation
+        auto recipient = get_rpc_node(path);
+        if (is_local_op(recipient)) { // local
+            err = ipc_send_stat(path, attr, ipc_stat_id);
+        } else { // remote
+            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
+        }
+    } else { // single node operation
+        err = ipc_send_stat(path, attr, ipc_stat_id);
+    }
+
+    db_val_to_stat(path, attr, *buf);
+
+    return err;
+}
+
+int adafs_stat64(const char* path, struct stat64* buf) {
+    int err;
+    string attr = ""s;
+    if (fs_config->host_size > 1) { // multiple node operation
+        auto recipient = get_rpc_node(path);
+        if (is_local_op(recipient)) { // local
+            err = ipc_send_stat(path, attr, ipc_stat_id);
+        } else { // remote
+            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
+        }
+    } else { // single node operation
+        err = ipc_send_stat(path, attr, ipc_stat_id);
+    }
+    db_val_to_stat64(path, attr, *buf);
+    return err;
+}
 
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
@@ -231,9 +267,8 @@ int stat(const char* path, struct stat* buf) __THROW {
 #ifndef MARGOIPC
 
 #else
-        return ipc_send_stat(path, buf, ipc_stat_id);
+        return adafs_stat(path, buf);
 #endif
-        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
@@ -247,9 +282,8 @@ int fstat(int fd, struct stat* buf) __THROW {
 #ifndef MARGOIPC
 
 #else
-        return ipc_send_stat(path, buf, ipc_stat_id);
+        return adafs_stat(path, buf);
 #endif
-        return 0; // TODO
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
 }
@@ -262,7 +296,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 #ifndef MARGOIPC
 
 #else
-        return ipc_send_stat(path, buf, ipc_stat_id);
+        return adafs_stat(path, buf);
 #endif
     }
     return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
@@ -272,8 +306,13 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     LD_LOG_DEBUG(debug_fd, "__xstat64 called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
-        // Not implemented
-        return -1;
+#ifndef MARGOIPC
+
+#else
+        return adafs_stat64(path, buf);
+#endif
+//        // Not implemented
+//        return -1;
     }
     return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
 }
@@ -287,7 +326,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
 #ifndef MARGOIPC
 
 #else
-        return ipc_send_stat(path, buf, ipc_stat_id);
+        return adafs_stat(path, buf);
 #endif
     }
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
@@ -298,11 +337,11 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     LD_LOG_DEBUG(debug_fd, "__fxstat64 called with fd %d\n", fd);
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat64
-//        auto path = file_map.get(fd)->path();
+        auto path = file_map.get(fd)->path();
 #ifndef MARGOIPC
 
 #else
-//        return ipc_send_stat(path, buf, ipc_stat_id); // TODO need new function for stat64 struct
+        return adafs_stat64(path, buf);
 #endif
     }
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);

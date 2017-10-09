@@ -7,7 +7,7 @@
 
 #include "../../main.hpp"
 
-std::string db_get_metadentry(const std::string& key);
+bool db_get_metadentry(const std::string& key, std::string& val);
 
 bool db_put_metadentry(const std::string& key, const std::string& val);
 

@@ -152,7 +152,9 @@ int create_metadentry(const std::string& path, mode_t mode) {
  * @return
  */
 std::string get_attr(const std::string& path) {
-    return db_get_metadentry(path);
+    string val;
+    db_get_metadentry(path, val);
+    return val;
 //    db_val_to_stat(path, val, *attr);
 //    return 0;
 }

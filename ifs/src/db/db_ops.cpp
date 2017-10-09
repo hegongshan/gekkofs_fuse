@@ -7,13 +7,12 @@
 using namespace rocksdb;
 using namespace std;
 
-std::string db_get_metadentry(const std::string& key) {
+bool db_get_metadentry(const std::string& key, std::string& val) {
     auto db = ADAFS_DATA->rdb();
-    string val;
-    db->Get(ReadOptions(), key, &val).ok();
+    auto err = db->Get(ReadOptions(), key, &val).ok();
     // TODO check what happens if nothing could have been found. Will val be NULL, nullptr, ""?
     // It matters because the client RPC is checking for an empty string to see if get_attr was successful or not
-    return val;
+    return err;
 }
 
 bool db_put_metadentry(const std::string& key, const std::string& val) {

@@ -14,7 +14,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id);
 
 int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t ipc_open_id);
 
-int ipc_send_stat(const char* path, struct stat* attr, const hg_id_t ipc_stat_id);
+int ipc_send_stat(const char* path, std::string& attr, const hg_id_t ipc_stat_id);
 
 int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id);
 

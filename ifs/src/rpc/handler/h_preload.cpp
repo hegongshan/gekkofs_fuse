@@ -6,6 +6,7 @@
 #include <preload/ipc_types.hpp>
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
+#include <db/db_ops.hpp>
 
 using namespace std;
 
@@ -72,9 +73,9 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
 
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
-    // do open
+    // do open TODO handle da flags
     string path = in.path;
-    out.err = adafs_open(path, in.flags, in.mode);
+    out.err = create_metadentry(in.path, in.mode);
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
@@ -106,15 +107,15 @@ static hg_return_t ipc_srv_stat(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // do open
-    string path = in.path;
-    auto err_str = adafs_stat(path);
-    if (err_str != ""s) {
-        out.res = HG_TRUE;
-        out.db_val = err_str.c_str();
+    string val;
+    auto err = db_get_metadentry(in.path, val);
+    if (err) {
+        out.err = 0;
+        out.db_val = val.c_str();
     } else {
-        out.res = HG_FALSE;
+        out.err = 1;
     }
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.res);
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to stat ipc");

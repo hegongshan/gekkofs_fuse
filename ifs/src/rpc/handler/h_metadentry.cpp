@@ -9,6 +9,7 @@
 
 #include <db/db_ops.hpp>
 
+using namespace std;
 
 static hg_return_t rpc_minimal(hg_handle_t handle) {
     rpc_minimal_in_t in;
@@ -85,7 +86,14 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     hgi = HG_Get_info(handle);
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // get the metadata
-    out.db_val = db_get_metadentry(in.path).c_str();
+    string val;
+    auto err = db_get_metadentry(in.path, val);
+    if (err) {
+        out.err = 0;
+        out.db_val = val.c_str();
+    } else {
+        out.err = 1;
+    }
 
     ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
     auto hret = margo_respond(mid, handle, &out);

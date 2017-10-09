@@ -34,7 +34,7 @@ MERCURY_GEN_PROC(ipc_open_in_t, ((hg_const_string_t) (path))
 
 MERCURY_GEN_PROC(ipc_stat_in_t, ((hg_const_string_t) (path)))
 
-MERCURY_GEN_PROC(ipc_stat_out_t, ((hg_bool_t) (res))
+MERCURY_GEN_PROC(ipc_stat_out_t, ((hg_int32_t) (err))
         ((hg_const_string_t) (db_val)))
 
 MERCURY_GEN_PROC(ipc_unlink_in_t, ((hg_const_string_t) (path)))
