@@ -103,7 +103,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
         out.hosts_raw = nullptr;
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_DEBUG0(debug_fd, "IPC send_get_config (timed out)\n");
+        LD_LOG_ERROR0(debug_fd, "IPC send_get_config (timed out)\n");
     }
 
     HG_Free_input(handle, &in);
@@ -143,7 +143,7 @@ int ipc_send_open(const char* path, int flags, const mode_t mode, const hg_id_t 
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_DEBUG0(debug_fd, "IPC send_open (timed out)\n");
+        LD_LOG_ERROR0(debug_fd, "IPC send_open (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
@@ -187,7 +187,7 @@ int ipc_send_stat(const char* path, string& attr, const hg_id_t ipc_stat_id) {
         out.db_val = nullptr;
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_DEBUG0(debug_fd, "IPC send_stat (timed out)\n");
+        LD_LOG_ERROR0(debug_fd, "IPC send_stat (timed out)\n");
         err = 1;
     }
 
@@ -228,12 +228,73 @@ int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id) {
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_DEBUG0(debug_fd, "IPC send_unlink (timed out)\n");
+        LD_LOG_ERROR0(debug_fd, "IPC send_unlink (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
 
     HG_Free_input(handle, &in);
     HG_Destroy(handle);
+    return err;
+}
+
+int ipc_send_write(const string& path, const size_t in_size, const off_t in_offset,
+                   const void* buf, size_t& write_size, const bool append, const hg_id_t ipc_write_id) {
+
+    hg_handle_t handle;
+    rpc_write_data_in_t in;
+    rpc_data_out_t out;
+    int err;
+    // fill in
+    in.path = path.c_str();
+    in.size = in_size;
+    in.offset = in_offset;
+    if (append)
+        in.append = HG_TRUE;
+    else
+        in.append = HG_FALSE;
+    auto ret = HG_Create(ld_mercury_ipc_context(), daemon_addr(), ipc_write_id, &handle);
+    if (ret != HG_SUCCESS) {
+        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        return 1;
+    }
+
+    auto hgi = HG_Get_info(handle);
+    /* register local target buffer for bulk access */
+    // remove constness from buffer for transfer
+    void* b_buf = const_cast<void*>(buf);
+    ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in_size, HG_BULK_READ_ONLY, &in.bulk_handle);
+    if (ret != 0) {
+        LD_LOG_ERROR0(debug_fd, "failed to create bulkd on client when writing\n");
+        return 1;
+    }
+
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < max_retries; ++i) {
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+
+        /* decode response */
+        ret = HG_Get_output(handle, &out);
+        err = out.res;
+        write_size = static_cast<size_t>(out.io_size);
+        LD_LOG_DEBUG(debug_fd, "Got response %d\n", out.res);
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        LD_LOG_ERROR0(debug_fd, "RPC rpc_send_read (timed out)\n");
+        err = EAGAIN;
+    }
+
+    in.path = nullptr;
+
+    HG_Bulk_free(in.bulk_handle);
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+
     return err;
 }

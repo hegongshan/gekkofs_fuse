@@ -51,7 +51,8 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
 
         include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
 
-        src/daemon/fs_operations.cpp src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp src/adafs_ops/metadentry.cpp
+        #src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp
+        src/adafs_ops/metadentry.cpp
         include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp
         src/rpc/handler/h_metadentry.cpp
         src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp

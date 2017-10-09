@@ -83,3 +83,5 @@ playground
 ifs/\.hidden_playground/
 
 ifs_test/build/
+
+ifs/build/

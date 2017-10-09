@@ -162,3 +162,53 @@ static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_unlink)
+
+static hg_return_t ipc_srv_write_data(hg_handle_t handle) {
+    ipc_write_data_in_t in;
+    ipc_data_out_t out;
+    void* b_buf;
+    hg_bulk_t bulk_handle;
+
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got write RPC with path {} size {} offset {}", in.path, in.size, in.offset);
+
+    auto hgi = HG_Get_info(handle);
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+    // register local buffer to fill for bulk pull
+    auto b_buf_wrap = make_unique<char[]>(in.size);
+    b_buf = reinterpret_cast<void*>(b_buf_wrap.get());
+    ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in.size, HG_BULK_WRITE_ONLY, &bulk_handle);
+    // push data to client
+    if (ret == HG_SUCCESS) {
+        // pull data from client here
+        margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, in.size);
+        // do write operation
+        auto buf = reinterpret_cast<char*>(b_buf);
+//        out.res = write_file(in.path, buf, out.io_size, in.size, in.offset, (in.append == HG_TRUE)); TODO XXX Continue here
+        if (out.res != 0) {
+            ADAFS_DATA->spdlogger()->error("Failed to write data to local disk.");
+            out.io_size = 0;
+        }
+        HG_Bulk_free(bulk_handle);
+    } else {
+        ADAFS_DATA->spdlogger()->error("Failed to pull data from client in write operation");
+        out.res = EIO;
+        out.io_size = 0;
+    }
+    ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
+    auto hret = margo_respond(mid, handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("Failed to respond to write request");
+    }
+
+    in.path = nullptr;
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(ipc_srv_write_data)

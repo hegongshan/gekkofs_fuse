@@ -39,4 +39,22 @@ MERCURY_GEN_PROC(ipc_stat_out_t, ((hg_int32_t) (err))
 
 MERCURY_GEN_PROC(ipc_unlink_in_t, ((hg_const_string_t) (path)))
 
+// data
+MERCURY_GEN_PROC(ipc_read_data_in_t,
+                 ((hg_const_string_t) (path))\
+((hg_size_t) (size))\
+((int64_t) (offset))\
+((hg_bulk_t) (bulk_handle)))
+
+MERCURY_GEN_PROC(ipc_data_out_t,
+                 ((int32_t) (res))\
+((hg_size_t) (io_size)))
+
+MERCURY_GEN_PROC(ipc_write_data_in_t,
+                 ((hg_const_string_t) (path))\
+((hg_size_t) (size))\
+((int64_t) (offset))\
+((hg_bool_t) (append))\
+((hg_bulk_t) (bulk_handle)))
+
 #endif //IFS_IPC_TYPES_HPP

@@ -18,4 +18,7 @@ int ipc_send_stat(const char* path, std::string& attr, const hg_id_t ipc_stat_id
 
 int ipc_send_unlink(const char* path, const hg_id_t ipc_unlink_id);
 
+int ipc_send_write(const string& path, const size_t in_size, const off_t in_offset,
+                   const void* buf, size_t& write_size, const bool append, const hg_id_t ipc_write_id);
+
 #endif //IFS_MARGO_IPC_HPP

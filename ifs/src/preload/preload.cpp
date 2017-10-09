@@ -35,6 +35,8 @@ static hg_id_t ipc_config_id;
 static hg_id_t ipc_open_id;
 static hg_id_t ipc_stat_id;
 static hg_id_t ipc_unlink_id;
+static hg_id_t ipc_write_data_id;
+static hg_id_t ipc_read_data_id;
 // RPC IDs
 static hg_id_t rpc_minimal_id;
 static hg_id_t rpc_create_node_id;
@@ -384,14 +386,26 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
-//        auto adafs_fd = file_map.get(fd);
-//        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
-//        auto append_flag = adafs_fd->append_flag();
+        auto adafs_fd = file_map.get(fd);
+        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
+        auto append_flag = adafs_fd->append_flag();
+        size_t write_size;
+        int err;
         // TODO call daemon and return size written
 #ifndef MARGOIPC
 
 #else
-
+        if (fs_config->host_size > 1) { // multiple node operation
+            auto recipient = get_rpc_node(path);
+            if (is_local_op(recipient)) { // local
+                err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
+//                err = ipc_send_stat(path, attr, ipc_stat_id);
+            } else { // remote
+//                err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
+            }
+        } else { // single node operation
+//            err = ipc_send_stat(path, attr, ipc_stat_id);
+        }
 #endif
         return 0; // TODO
     }
@@ -557,6 +571,10 @@ void register_client_ipcs() {
     ipc_unlink_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
     ipc_config_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
+    ipc_write_data_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_write_data", ipc_write_data_in_t, rpc_data_out_t,
+                                         nullptr);
+    ipc_read_data_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_read_data", ipc_read_data_in_t, rpc_data_out_t,
+                                        nullptr);
 }
 
 void register_client_rpcs() {
