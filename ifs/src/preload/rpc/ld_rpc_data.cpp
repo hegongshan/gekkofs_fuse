@@ -3,7 +3,7 @@
 //
 
 #include <preload/rpc/ld_rpc_data.hpp>
-#include <preload/preload.hpp>
+
 
 using namespace std;
 
@@ -40,10 +40,10 @@ int rpc_send_write(const size_t recipient, const string& path, const size_t in_s
     void* b_buf = const_cast<void*>(buf);
     ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in_size, HG_BULK_READ_ONLY, &in.bulk_handle);
     if (ret != 0)
-        LD_LOG_ERROR0(debug_fd, "failed to create bulkd on client\n");
+        LD_LOG_ERROR0(debug_fd, "failed to create bulk on client\n");
 
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -59,7 +59,7 @@ int rpc_send_write(const size_t recipient, const string& path, const size_t in_s
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC rpc_send_read (timed out)");
+        LD_LOG_ERROR0(debug_fd, "RPC rpc_send_write (timed out)");
         err = EAGAIN;
     }
 

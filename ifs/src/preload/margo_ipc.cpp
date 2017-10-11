@@ -3,13 +3,8 @@
 //
 
 #include <preload/margo_ipc.hpp>
-#include <rpc/rpc_types.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
-
-using namespace std;
-
-static int max_retries = 3;
 
 void send_minimal_ipc(const hg_id_t minimal_id) {
 
@@ -56,7 +51,7 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     }
     LD_LOG_DEBUG0(debug_fd, "About to send get config IPC to daemon\n");
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -127,7 +122,7 @@ int ipc_send_open(const string& path, int flags, const mode_t mode, const hg_id_
     }
     LD_LOG_DEBUG0(debug_fd, "About to send open IPC to daemon\n");
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -167,7 +162,7 @@ int ipc_send_stat(const string& path, string& attr, const hg_id_t ipc_stat_id) {
     }
     LD_LOG_DEBUG0(debug_fd, "About to send stat IPC to daemon\n");
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -212,7 +207,7 @@ int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id) {
     }
     LD_LOG_DEBUG0(debug_fd, "About to send unlink IPC to daemon\n");
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -242,8 +237,8 @@ int ipc_send_write(const string& path, const size_t in_size, const off_t in_offs
                    const void* buf, size_t& write_size, const bool append, const hg_id_t ipc_write_id) {
 
     hg_handle_t handle;
-    rpc_write_data_in_t in;
-    rpc_data_out_t out;
+    ipc_write_data_in_t in;
+    ipc_data_out_t out;
     int err;
     // fill in
     in.path = path.c_str();
@@ -270,7 +265,7 @@ int ipc_send_write(const string& path, const size_t in_size, const off_t in_offs
     }
 
     int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
@@ -279,14 +274,14 @@ int ipc_send_write(const string& path, const size_t in_size, const off_t in_offs
     if (send_ret == HG_SUCCESS) {
 
         /* decode response */
-        ret = HG_Get_output(handle, &out);
+        ret = HG_Get_output(handle, &out); // XXX handle ret
         err = out.res;
         write_size = static_cast<size_t>(out.io_size);
         LD_LOG_DEBUG(debug_fd, "Got response %d\n", out.res);
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC rpc_send_write (timed out)\n");
+        LD_LOG_ERROR0(debug_fd, "ipc_send_write (timed out)\n");
         err = EAGAIN;
     }
 

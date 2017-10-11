@@ -428,14 +428,26 @@ ssize_t read(int fd, void* buf, size_t count) {
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
-//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
-        // TODO call daemon and return size written
+        auto adafs_fd = file_map.get(fd);
+        auto path = adafs_fd->path();
+        size_t read_size = 0;
+        int err;
 #ifndef MARGOIPC
 
 #else
-
+        if (fs_config->host_size > 1) { // multiple node operation
+            auto recipient = get_rpc_node(path);
+            if (is_local_op(recipient)) { // local
+                err = ipc_send_read(path, count, offset, buf, read_size, ipc_read_data_id);
+            } else { // remote
+                err = rpc_send_read(recipient, path, count, offset, buf, read_size, rpc_read_data_id);
+            }
+        } else { // single node operation
+            err = rpc_send_read(0, path, count, offset, buf, read_size, rpc_read_data_id);
+        }
 #endif
-        return 0; // TODO
+        // TODO check how much we need to deal with the read_size
+        return err == 0 ? read_size : 0;
     }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }

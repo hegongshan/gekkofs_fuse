@@ -38,6 +38,8 @@ DECLARE_MARGO_RPC_HANDLER(ipc_srv_unlink)
 
 DECLARE_MARGO_RPC_HANDLER(ipc_srv_write_data)
 
+DECLARE_MARGO_RPC_HANDLER(ipc_srv_read_data)
+
 
 /** OLD BELOW
 // mdata ops

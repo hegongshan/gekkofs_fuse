@@ -10,7 +10,6 @@ extern "C" {
 #include <mercury_proc_string.h>
 #include <margo.h>
 }
-//#include "../../main.hpp"
 
 /* visible API for RPC data types used in RPCS */
 
