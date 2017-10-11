@@ -82,6 +82,6 @@ int rpc_send_read(const size_t recipient, const std::string& path, const size_t 
 }
 
 int rpc_send_write(const size_t recipient, const std::string& path, const size_t in_size, const off_t in_offset,
-                   const char* buf, size_t& write_size, const bool append);
+                   const void* buf, size_t& write_size, const bool append, const hg_id_t rpc_write_data_id);
 
 #endif //IFS_PRELOAD_C_DATA_HPP

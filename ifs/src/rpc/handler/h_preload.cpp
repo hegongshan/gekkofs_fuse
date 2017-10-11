@@ -7,6 +7,7 @@
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
 #include <db/db_ops.hpp>
+#include <adafs_ops/data.hpp>
 
 using namespace std;
 
@@ -185,7 +186,7 @@ static hg_return_t ipc_srv_write_data(hg_handle_t handle) {
         margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, in.size);
         // do write operation
         auto buf = reinterpret_cast<char*>(b_buf);
-//        out.res = write_file(in.path, buf, out.io_size, in.size, in.offset, (in.append == HG_TRUE)); TODO XXX Continue here
+        out.res = write_file(in.path, buf, out.io_size, in.size, in.offset, (in.append == HG_TRUE));
         if (out.res != 0) {
             ADAFS_DATA->spdlogger()->error("Failed to write data to local disk.");
             out.io_size = 0;

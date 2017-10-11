@@ -6,16 +6,16 @@
 
 using namespace std;
 
-OpenFile::OpenFile(const char* path, const bool append_flag) : path_(path), append_flag_(append_flag) {
+OpenFile::OpenFile(const string& path, const bool append_flag) : path_(path), append_flag_(append_flag) {
     tmp_file_ = tmpfile(); // create a temporary file in memory and
     fd_ = fileno(tmp_file_); // get a valid file descriptor from the kernel
 }
 
-const char* OpenFile::path() const {
+string OpenFile::path() const {
     return path_;
 }
 
-void OpenFile::path(const char* path_) {
+void OpenFile::path(const string& path_) {
     OpenFile::path_ = path_;
 }
 
@@ -30,8 +30,8 @@ void OpenFile::fd(int fd_) {
 OpenFileMap::OpenFileMap() {}
 
 OpenFile::~OpenFile() {
-    if (tmp_file_ != nullptr)
-        fclose(tmp_file_);
+//    if (tmp_file_ != nullptr) // XXX This crashes when preload lib is shut down. annul_fd should always be called!
+//        fclose(tmp_file_);
 }
 
 void OpenFile::annul_fd() {
@@ -53,7 +53,7 @@ OpenFile* OpenFileMap::get(int fd) {
     if (f == files_.end()) {
         return nullptr;
     } else {
-        return f->second;
+        return f->second.get();
     }
 }
 
@@ -63,11 +63,11 @@ bool OpenFileMap::exist(const int fd) {
     return !(f == files_.end());
 }
 
-int OpenFileMap::add(const char* path, const bool append) {
-    OpenFile file{path, append};
+int OpenFileMap::add(string path, const bool append) {
+    auto file = make_shared<OpenFile>(path, append);
     lock_guard<mutex> lock(files_mutex_);
-    files_.insert(make_pair(file.fd(), &file));
-    return file.fd();
+    files_.insert(make_pair(file->fd(), file));
+    return file->fd();
 }
 
 bool OpenFileMap::remove(const int fd) {

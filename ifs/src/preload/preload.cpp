@@ -14,19 +14,16 @@
 #include <sys/stat.h>
 #include <atomic>
 #include <cassert>
+#include <preload/rpc/ld_rpc_data.hpp>
 
 // TODO my god... someone clean up this mess of a file :_:
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
-// Mercury IPC Client
-hg_class_t* mercury_ipc_class_;
-hg_context_t* mercury_ipc_context_;
+// Mercury/Margo IPC Client
 margo_instance_id margo_ipc_id_;
 hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
-// Mercury RPC Client
-hg_class_t* mercury_rpc_class_;
-hg_context_t* mercury_rpc_context_;
+// Mercury/Margo RPC Client
 margo_instance_id margo_rpc_id_;
 
 // IPC IDs
@@ -45,7 +42,8 @@ static hg_id_t rpc_remove_node_id;
 static hg_id_t rpc_write_data_id;
 static hg_id_t rpc_read_data_id;
 // rpc address cache
-lru11::Cache<uint64_t, hg_addr_t> rpc_address_cache_{32768, 4096}; // XXX Set values are not based on anything...
+typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
+KVCache rpc_address_cache_{32768, 4096}; // XXX Set values are not based on anything...
 
 // misc
 static std::atomic<bool> is_env_initialized(false);
@@ -225,7 +223,7 @@ int __close(int fd) {
 }
 
 // TODO combine adafs_stat and adafs_stat64
-int adafs_stat(const char* path, struct stat* buf) {
+int adafs_stat(const std::string& path, struct stat* buf) {
     int err;
     string attr = ""s;
     if (fs_config->host_size > 1) { // multiple node operation
@@ -244,7 +242,7 @@ int adafs_stat(const char* path, struct stat* buf) {
     return err;
 }
 
-int adafs_stat64(const char* path, struct stat64* buf) {
+int adafs_stat64(const std::string& path, struct stat64* buf) {
     int err;
     string attr = ""s;
     if (fs_config->host_size > 1) { // multiple node operation
@@ -386,28 +384,7 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
-        auto adafs_fd = file_map.get(fd);
-        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
-        auto append_flag = adafs_fd->append_flag();
-        size_t write_size;
-        int err;
-        // TODO call daemon and return size written
-#ifndef MARGOIPC
-
-#else
-        if (fs_config->host_size > 1) { // multiple node operation
-            auto recipient = get_rpc_node(path);
-            if (is_local_op(recipient)) { // local
-                err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
-//                err = ipc_send_stat(path, attr, ipc_stat_id);
-            } else { // remote
-//                err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
-            }
-        } else { // single node operation
-//            err = ipc_send_stat(path, attr, ipc_stat_id);
-        }
-#endif
-        return 0; // TODO
+        return pwrite(fd, buf, count, 0);
     }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
 }
@@ -415,16 +392,27 @@ ssize_t write(int fd, const void* buf, size_t count) {
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
-//        auto adafs_fd = file_map.get(fd);
-//        auto path = adafs_fd->path(); // TODO use this to send to the daemon (call directly)
-//        auto append_flag = adafs_fd->append_flag();
-        // TODO call daemon and return size written
+        auto adafs_fd = file_map.get(fd);
+        auto path = adafs_fd->path();
+        auto append_flag = adafs_fd->append_flag();
+        size_t write_size;
+        int err;
 #ifndef MARGOIPC
 
 #else
-
+        if (fs_config->host_size > 1) { // multiple node operation
+            auto recipient = get_rpc_node(path);
+            if (is_local_op(recipient)) { // local
+                err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
+            } else { // remote
+                err = rpc_send_write(recipient, path, count, 0, buf, write_size, append_flag, rpc_write_data_id);
+            }
+        } else { // single node operation
+            err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
+        }
+        // TODO handle written size that the rpc/ipc gets back in write_size
 #endif
-        return 0;
+        return err;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
 }
@@ -432,14 +420,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
-//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
-        // TODO call daemon and return size read
-#ifndef MARGOIPC
-
-#else
-
-#endif
-        return 0; // TODO
+        return pread(fd, buf, count, 0);
     }
     return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
 }
@@ -538,11 +519,11 @@ bool init_ld_argobots() {
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
 
     if (rpc_address_cache_.tryGet(hostid, svr_addr)) {
-//        ADAFS_DATA->spdlogger()->debug("tryGet successful and put in svr_addr ");
+        LD_LOG_TRACE0(debug_fd, "tryGet successful and put in svr_addr\n");
         //found
         return true;
     } else {
-//        ADAFS_DATA->spdlogger()->debug("not found in lrucache");
+        LD_LOG_TRACE0(debug_fd, "not found in lrucache");
         // not found, manual lookup and add address mapping to LRU cache
         auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
                         fs_config->rpc_port; // convert hostid to hostname and port
@@ -564,29 +545,29 @@ bool is_local_op(const size_t recipient) {
     return recipient == fs_config->host_id;
 }
 
-void register_client_ipcs() {
-    minimal_id = MERCURY_REGISTER(mercury_ipc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
-    ipc_open_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, nullptr);
-    ipc_stat_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
-    ipc_unlink_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
-    ipc_config_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
+void register_client_ipcs(hg_class_t* hg_class) {
+    minimal_id = MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
+    ipc_open_id = MERCURY_REGISTER(hg_class, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, nullptr);
+    ipc_stat_id = MERCURY_REGISTER(hg_class, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
+    ipc_unlink_id = MERCURY_REGISTER(hg_class, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
+    ipc_config_id = MERCURY_REGISTER(hg_class, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
-    ipc_write_data_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_write_data", ipc_write_data_in_t, rpc_data_out_t,
+    ipc_write_data_id = MERCURY_REGISTER(hg_class, "ipc_srv_write_data", ipc_write_data_in_t, rpc_data_out_t,
                                          nullptr);
-    ipc_read_data_id = MERCURY_REGISTER(mercury_ipc_class_, "ipc_srv_read_data", ipc_read_data_in_t, rpc_data_out_t,
+    ipc_read_data_id = MERCURY_REGISTER(hg_class, "ipc_srv_read_data", ipc_read_data_in_t, rpc_data_out_t,
                                         nullptr);
 }
 
-void register_client_rpcs() {
-    rpc_minimal_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
-    rpc_create_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_create_node", rpc_create_node_in_t,
+void register_client_rpcs(hg_class_t* hg_class) {
+    rpc_minimal_id = MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr);
+    rpc_create_node_id = MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t,
                                           rpc_err_out_t, nullptr);
-    rpc_attr_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr);
-    rpc_remove_node_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_remove_node", rpc_remove_node_in_t,
+    rpc_attr_id = MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr);
+    rpc_remove_node_id = MERCURY_REGISTER(hg_class, "rpc_srv_remove_node", rpc_remove_node_in_t,
                                           rpc_err_out_t, nullptr);
-    rpc_write_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
+    rpc_write_data_id = MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
                                          nullptr);
-    rpc_read_data_id = MERCURY_REGISTER(mercury_rpc_class_, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,
+    rpc_read_data_id = MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,
                                         nullptr);
 }
 
@@ -624,9 +605,6 @@ bool init_ipc_client() {
     }
     LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
-    // Put context and class into RPC_data object
-    mercury_ipc_class_ = hg_class;
-    mercury_ipc_context_ = hg_context;
     margo_ipc_id_ = mid;
 
     auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
@@ -639,7 +617,7 @@ bool init_ipc_client() {
     string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
     margo_addr_lookup(margo_ipc_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
 
-    register_client_ipcs();
+    register_client_ipcs(hg_class);
 
 //    for (int i = 0; i < 10; ++i) {
 //        printf("Running %d iteration\n", i);
@@ -683,12 +661,9 @@ bool init_rpc_client() {
     }
     LD_LOG_DEBUG0(debug_fd, "Success.\n");
 
-    // Put context and class into RPC_data object
-    mercury_rpc_class_ = hg_class;
-    mercury_rpc_context_ = hg_context;
     margo_rpc_id_ = mid;
 
-    register_client_rpcs();
+    register_client_rpcs(hg_class);
 
 //    for (int i = 0; i < 10000; ++i) {
 //        printf("Running %d iteration\n", i);
@@ -696,14 +671,6 @@ bool init_rpc_client() {
 //    }
 
     return true;
-}
-
-hg_class_t* ld_mercury_ipc_class() {
-    return mercury_ipc_class_;
-}
-
-hg_context_t* ld_mercury_ipc_context() {
-    return mercury_ipc_context_;
 }
 
 margo_instance_id ld_margo_ipc_id() {
@@ -801,20 +768,32 @@ void destroy_preload(void) {
 
 #ifdef MARGOIPC
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
-    HG_Addr_free(mercury_ipc_class_, daemon_svr_addr_);
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo ...\n");
+    HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
+    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo IPC client ...\n");
+    auto mercury_ipc_class = margo_get_class(margo_ipc_id_);
+    auto mercury_ipc_context = margo_get_context(margo_ipc_id_);
     margo_finalize(margo_ipc_id_);
 
-    // TODO free all rpc addresses in LRU map and finalize margo rpc
+    LD_LOG_DEBUG0(debug_fd, "Freeing Mercury RPC addresses ...\n");
+    // free all rpc addresses in LRU map and finalize margo rpc
+    auto free_all_addr = [&](const KVCache::node_type& n) {
+        HG_Addr_free(margo_get_class(ld_margo_rpc_id()), n.value);
+    };
+    rpc_address_cache_.cwalk(free_all_addr);
+    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo RPC client ...\n");
+    auto mercury_rpc_class = margo_get_class(margo_rpc_id_);
+    auto mercury_rpc_context = margo_get_context(margo_rpc_id_);
+    margo_finalize(margo_rpc_id_);
 
     LD_LOG_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
     ABT_finalize();
 
-    // TODO destroy rpc context and class
     LD_LOG_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
-    HG_Context_destroy(mercury_ipc_context_);
+    HG_Context_destroy(mercury_ipc_context);
+    HG_Context_destroy(mercury_rpc_context);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
-    HG_Finalize(mercury_ipc_class_);
+    HG_Finalize(mercury_ipc_class);
+    HG_Finalize(mercury_rpc_class);
     LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
 #endif
     fclose(debug_fd);
