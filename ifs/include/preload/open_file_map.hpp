@@ -7,26 +7,27 @@
 
 #include <map>
 #include <mutex>
+#include <memory>
 
 class OpenFile {
 private:
-    const char* path_;
+    std::string path_;
     bool append_flag_;
 
     int fd_;
     FILE* tmp_file_;
 
 public:
-    OpenFile(const char* path, const bool append_flag);
+    OpenFile(const std::string& path, const bool append_flag);
 
     ~OpenFile();
 
     void annul_fd();
 
     // getter/setter
-    const char* path() const;
+    std::string path() const;
 
-    void path(const char* path_);
+    void path(const std::string& path_);
 
     int fd() const;
 
@@ -42,7 +43,7 @@ public:
 class OpenFileMap {
 
 private:
-    std::map<int, OpenFile*> files_;
+    std::map<int, std::shared_ptr<OpenFile>> files_;
     std::mutex files_mutex_;
 
 
@@ -52,7 +53,7 @@ public:
     OpenFile* get(int fd);
     bool exist(const int fd);
 
-    int add(const char* path, const bool append);
+    int add(std::string path, const bool append);
     bool remove(const int fd);
 
 };

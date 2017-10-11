@@ -12,7 +12,7 @@ std::string path_to_fspath(const std::string& path) {
     string fs_path;
     set_difference(path.begin(), path.end(), ADAFS_DATA->mountdir().begin(), ADAFS_DATA->mountdir().end(),
                    std::back_inserter(fs_path));
-    if (fs_path.at(1) == '/') {
+    if (fs_path.at(0) == '/') {
         fs_path = fs_path.substr(1, fs_path.size());
     }
     // replace / with : to avoid making a bunch of mkdirs to store the data in the underlying fs. XXX Can this be done with hashing?
@@ -90,9 +90,10 @@ int write_file(const string& path, const char* buf, size_t& write_size, const si
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
+    bfs::create_directories(chnk_path);
     chnk_path /= "data"s;
     // write to local file
-    int fd = open(chnk_path.c_str(), W_OK);
+    int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0777);
     if (fd < 0)
         return EIO;
     write_size = static_cast<size_t>(pwrite(fd, buf, size, off));
