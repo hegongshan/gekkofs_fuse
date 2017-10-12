@@ -73,17 +73,15 @@ void init_environment() {
     assert(err);
     err = init_ipc_server();
     assert(err);
-//    err = init_rpc_client();
-//    assert(err);
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
-    ADAFS_DATA->atime_state(false);
-    ADAFS_DATA->mtime_state(false);
-    ADAFS_DATA->ctime_state(false);
-    ADAFS_DATA->uid_state(false);
-    ADAFS_DATA->gid_state(false);
-    ADAFS_DATA->inode_no_state(false);
-    ADAFS_DATA->link_cnt_state(false);
-    ADAFS_DATA->blocks_state(false);
+    ADAFS_DATA->atime_state(MDATA_USE_ATIME);
+    ADAFS_DATA->mtime_state(MDATA_USE_MTIME);
+    ADAFS_DATA->ctime_state(MDATA_USE_CTIME);
+    ADAFS_DATA->uid_state(MDATA_USE_UID);
+    ADAFS_DATA->gid_state(MDATA_USE_GID);
+    ADAFS_DATA->inode_no_state(MDATA_USE_INODE_NO);
+    ADAFS_DATA->link_cnt_state(MDATA_USE_LINK_CNT);
+    ADAFS_DATA->blocks_state(MDATA_USE_BLOCKS);
 }
 
 /**
@@ -287,50 +285,6 @@ bool init_rpc_server() {
     return true;
 }
 
-//bool init_rpc_client() {
-//    string protocol_port = RPC_PROTOCOL;
-//    ADAFS_DATA->spdlogger()->info("Initializing Mercury client ...");
-//    /* MERCURY PART */
-//    // Init Mercury layer (must be finalized when finished)
-//    hg_class_t* hg_class;
-//    hg_context_t* hg_context;
-//    hg_class = HG_Init(protocol_port.c_str(), HG_FALSE);
-//    if (hg_class == nullptr) {
-//        ADAFS_DATA->spdlogger()->error("HG_Init() Failed to init Mercury client layer");
-//        return false;
-//    }
-//    // Create a new Mercury context (must be destroyed when finished)
-//    hg_context = HG_Context_create(hg_class);
-//    if (hg_context == nullptr) {
-//        ADAFS_DATA->spdlogger()->error("HG_Context_create() Failed to create Mercury client context");
-//        HG_Finalize(hg_class);
-//        return false;
-//    }
-//    ADAFS_DATA->spdlogger()->info("Success.");
-//
-//    /* MARGO PART */
-//    ADAFS_DATA->spdlogger()->info("Initializing Margo client ...");
-//    // Start Margo
-//    auto mid = margo_init(1, 16,
-//                          hg_context);
-//    if (mid == MARGO_INSTANCE_NULL) {
-//        ADAFS_DATA->spdlogger()->info("[ERR]: margo_init failed to initialize the Margo client");
-//        HG_Context_destroy(hg_context);
-//        HG_Finalize(hg_class);
-//        return false;
-//    }
-//    ADAFS_DATA->spdlogger()->info("Success.");
-//
-//    // Put context and class into RPC_data object
-//    RPC_DATA->client_hg_class(hg_class);
-//    RPC_DATA->client_hg_context(hg_context);
-//    RPC_DATA->client_mid(mid);
-//
-//    register_client_rpcs();
-//
-//    return true;
-//}
-
 void register_server_ipcs() {
     auto hg_class = RPC_DATA->server_ipc_hg_class();
     // preload IPCs
@@ -356,22 +310,3 @@ void register_server_rpcs() {
     MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
 }
-
-///**
-// * Register rpcs for the client and add the rpc id to rpc_data
-// * @param hg_class
-// */
-//void register_client_rpcs() {
-//    auto hg_class = RPC_DATA->client_hg_class();
-//    RPC_DATA->rpc_minimal_id(MERCURY_REGISTER(hg_class, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, nullptr));
-//    RPC_DATA->rpc_srv_create_node_id(
-//            MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_res_out_t, nullptr));
-//    RPC_DATA->rpc_srv_attr_id(
-//            MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, nullptr));
-//    RPC_DATA->rpc_srv_remove_node_id(
-//            MERCURY_REGISTER(hg_class, "rpc_srv_remove_node", rpc_remove_node_in_t, rpc_res_out_t, nullptr));
-//    RPC_DATA->rpc_srv_write_data_id(
-//            MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, nullptr));
-//    RPC_DATA->rpc_srv_read_data_id(
-//            MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, nullptr));
-//}

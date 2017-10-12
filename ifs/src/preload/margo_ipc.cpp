@@ -193,6 +193,12 @@ int ipc_send_stat(const string& path, string& attr, const hg_id_t ipc_stat_id) {
     return err;
 }
 
+int ipc_send_update_metadentry(const string& path, const hg_id_t ipc_update_metadentry_id, const Metadentry& md,
+                               const MetadentryUpdateFlags& md_flags) {
+    // XXX call daemon to update metadentry for given md_flags
+    return 0;
+}
+
 int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id) {
     hg_handle_t handle;
     ipc_unlink_in_t in;

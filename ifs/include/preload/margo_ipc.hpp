@@ -22,6 +22,9 @@ int ipc_send_stat(const string& path, std::string& attr, const hg_id_t ipc_stat_
 
 int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id);
 
+int ipc_send_update_metadentry(const string& path, const hg_id_t ipc_update_metadentry_id, const Metadentry& md,
+                               const MetadentryUpdateFlags& md_flags);
+
 int ipc_send_write(const string& path, const size_t in_size, const off_t in_offset,
                    const void* buf, size_t& write_size, const bool append, const hg_id_t ipc_write_id);
 

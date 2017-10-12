@@ -4,7 +4,6 @@
 
 #include "../../main.hpp"
 
-
 class Metadata {
 
 private:
@@ -19,17 +18,20 @@ private:
     off_t size_;               // size_ in bytes, might be computed instead of stored
     blkcnt_t blocks_;          // allocated file system blocks_
 
+    std::string path_;
 
 public:
     Metadata();
 
-    Metadata(mode_t mode, uint32_t uid, uint32_t gid);
+    Metadata(const std::string& path, const mode_t mode);
 
-    Metadata(mode_t mode, uid_t uid, gid_t gid, uint64_t inode);
+    Metadata(const std::string& path, std::string db_val);
 
     void init_ACM_time();
 
     void update_ACM_time(bool a, bool c, bool m);
+
+    std::string to_KVentry();
 
     //Getter and Setter
     time_t atime() const;
@@ -71,6 +73,10 @@ public:
     blkcnt_t blocks() const;
 
     void blocks(blkcnt_t blocks_);
+
+    const std::string& path() const;
+
+    void path(const std::string& path);
 
 };
 

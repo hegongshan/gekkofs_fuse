@@ -20,6 +20,17 @@
 #define ACMtime //unused
 #define BLOCKSIZE 4 // in kilobytes
 
+// What metadata is used TODO this has to be parametrized or put into a configuration file
+#define MDATA_USE_ATIME false
+#define MDATA_USE_MTIME false
+#define MDATA_USE_CTIME false
+#define MDATA_USE_UID false
+#define MDATA_USE_GID false
+#define MDATA_USE_INODE_NO false
+#define MDATA_USE_LINK_CNT false
+#define MDATA_USE_BLOCKS false
+#define MDATA_USE_SIZE true // XXX to be added in ADAFS_DATA. currently on by default
+
 // If access permissions should be checked while opening a file
 //#define CHECK_ACCESS //unused
 

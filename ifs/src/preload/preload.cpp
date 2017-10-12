@@ -32,6 +32,7 @@ static hg_id_t ipc_config_id;
 static hg_id_t ipc_open_id;
 static hg_id_t ipc_stat_id;
 static hg_id_t ipc_unlink_id;
+static hg_id_t ipc_update_metadentry_id;
 static hg_id_t ipc_write_data_id;
 static hg_id_t ipc_read_data_id;
 // RPC IDs
@@ -410,6 +411,11 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         } else { // single node operation
             err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
         }
+        Metadentry md{};
+        md.size = write_size;
+        MetadentryUpdateFlags md_flags{};
+        md_flags.size = true;
+        ipc_send_update_metadentry(path, ipc_update_metadentry_id, md, md_flags);
         // TODO handle written size that the rpc/ipc gets back in write_size
 #endif
         return err;
@@ -562,6 +568,8 @@ void register_client_ipcs(hg_class_t* hg_class) {
     ipc_open_id = MERCURY_REGISTER(hg_class, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, nullptr);
     ipc_stat_id = MERCURY_REGISTER(hg_class, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
     ipc_unlink_id = MERCURY_REGISTER(hg_class, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
+    ipc_update_metadentry_id = MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry", ipc_update_metadentry_in_t,
+                                                ipc_err_out_t, nullptr); // TODO create handler
     ipc_config_id = MERCURY_REGISTER(hg_class, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
     ipc_write_data_id = MERCURY_REGISTER(hg_class, "ipc_srv_write_data", ipc_write_data_in_t, rpc_data_out_t,

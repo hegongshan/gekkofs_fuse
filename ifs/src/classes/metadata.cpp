@@ -4,7 +4,166 @@
 
 #include <classes/metadata.hpp>
 
-// TODO clean up plx
+using namespace std;
+
+static const std::string dentry_val_delim = ","s;
+
+// By default create an empty metadata object
+
+Metadata::Metadata() : atime_(),
+                       mtime_(),
+                       ctime_(),
+                       uid_(),
+                       gid_(),
+                       mode_(),
+                       inode_no_(INVALID_INODE),
+                       link_count_(0),
+                       size_(0),
+                       blocks_(0) {}
+
+Metadata::Metadata(const std::string& path, const mode_t mode) : atime_(),
+                                                                 mtime_(),
+                                                                 ctime_(),
+                                                                 uid_(),
+                                                                 gid_(),
+                                                                 mode_(mode),
+                                                                 inode_no_(INVALID_INODE),
+                                                                 link_count_(0),
+                                                                 size_(0),
+                                                                 blocks_(0),
+                                                                 path_(path) {}
+
+/**
+ * Creates a metadata object from a value from the database
+ * @param path
+ * @param db_val
+ */
+Metadata::Metadata(const std::string& path, std::string db_val) {
+    auto pos = db_val.find(dentry_val_delim);
+    if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
+        inode_no_ = std::hash<std::string>{}(path);
+        mode_ = static_cast<unsigned int>(stoul(db_val));
+        link_count_ = 1;
+        uid_ = getuid();
+        gid_ = getgid();
+        size_ = 0;
+        blocks_ = 0;
+        atime_ = 0;
+        mtime_ = 0;
+        ctime_ = 0;
+        return;
+    }
+    // some metadata is enabled: mode is always there
+    mode_ = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
+    db_val.erase(0, pos + 1);
+    // size is also there
+    pos = db_val.find(dentry_val_delim);
+    if (pos != std::string::npos) {  // delimiter found. more metadata is coming
+        size_ = stol(db_val.substr(0, pos));
+        db_val.erase(0, pos + 1);
+    } else {
+        size_ = stol(db_val);
+        return;
+    }
+    // The order is important. don't change.
+    if (ADAFS_DATA->atime_state()) {
+        pos = db_val.find(dentry_val_delim);
+        atime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->mtime_state()) {
+        pos = db_val.find(dentry_val_delim);
+        mtime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->ctime_state()) {
+        pos = db_val.find(dentry_val_delim);
+        ctime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->uid_state()) {
+        pos = db_val.find(dentry_val_delim);
+        uid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->gid_state()) {
+        pos = db_val.find(dentry_val_delim);
+        gid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->inode_no_state()) {
+        pos = db_val.find(dentry_val_delim);
+        inode_no_ = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->link_cnt_state()) {
+        pos = db_val.find(dentry_val_delim);
+        link_count_ = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
+        db_val.erase(0, pos + 1);
+    }
+    if (ADAFS_DATA->blocks_state()) { // last one will not encounter a delimiter anymore
+        blocks_ = static_cast<blkcnt_t>(stoul(db_val));
+    }
+}
+
+void Metadata::init_ACM_time() {
+    std::time_t time;
+    std::time(&time);
+    atime_ = time;
+    mtime_ = time;
+    ctime_ = time;
+}
+
+void Metadata::update_ACM_time(bool a, bool c, bool m) {
+    std::time_t time;
+    std::time(&time);
+    if (a)
+        atime_ = time;
+    if (c)
+        ctime_ = time;
+    if (m)
+        mtime_ = time;
+}
+
+/**
+ * Creates a key value metadentry string that is used as a value in the KV store
+ * @return
+ */
+std::string Metadata::to_KVentry() {
+    auto val = ""s;
+
+    // The order is important. don't change.
+    val += fmt::FormatInt(mode_).c_str(); // add mandatory mode
+    val += dentry_val_delim + fmt::FormatInt(size_).c_str(); // add mandatory size
+    if (ADAFS_DATA->atime_state()) {
+        val += dentry_val_delim + fmt::FormatInt(atime_).c_str();
+    }
+    if (ADAFS_DATA->mtime_state()) {
+        val += dentry_val_delim + fmt::FormatInt(mtime_).c_str();
+    }
+    if (ADAFS_DATA->ctime_state()) {
+        val += dentry_val_delim + fmt::FormatInt(ctime_).c_str();
+    }
+    if (ADAFS_DATA->uid_state()) {
+        val += dentry_val_delim + fmt::FormatInt(uid_).str();
+    }
+    if (ADAFS_DATA->gid_state()) {
+        val += dentry_val_delim + fmt::FormatInt(gid_).str();
+    }
+    if (ADAFS_DATA->inode_no_state()) {
+        val += dentry_val_delim + fmt::FormatInt(inode_no_).str();
+    }
+    if (ADAFS_DATA->link_cnt_state()) {
+        val += dentry_val_delim + fmt::FormatInt(link_count_).c_str();
+    }
+    if (ADAFS_DATA->blocks_state()) {
+        val += dentry_val_delim + fmt::FormatInt(blocks_).c_str();
+    }
+
+    return val;
+}
+
+//-------------------------------------------- GETTER/SETTER
 
 time_t Metadata::atime() const {
     return atime_;
@@ -86,64 +245,11 @@ void Metadata::blocks(blkcnt_t blocks_) {
     Metadata::blocks_ = blocks_;
 }
 
-//--------------------------------------------
-// By default create an empty metadata object
-
-Metadata::Metadata() : atime_(),
-                       mtime_(),
-                       ctime_(),
-                       uid_(),
-                       gid_(),
-                       mode_(),
-                       inode_no_(0),
-                       link_count_(0),
-                       size_(0),
-                       blocks_(0) {}
-
-Metadata::Metadata(mode_t mode, uint32_t uid, uint32_t gid) :
-        atime_(),
-        mtime_(),
-        ctime_(),
-        uid_(uid),
-        gid_(gid),
-        mode_(mode),
-        inode_no_(0),
-        link_count_(0),
-        size_(0),
-        blocks_(0) {
-    init_ACM_time();
-//    inode_no_ = Util::generate_inode_no();
+const std::string& Metadata::path() const {
+    return path_;
 }
 
-Metadata::Metadata(mode_t mode, uid_t uid, gid_t gid, ino_t inode) :
-        atime_(),
-        mtime_(),
-        ctime_(),
-        uid_(uid),
-        gid_(gid),
-        mode_(mode),
-        inode_no_(inode),
-        link_count_(0),
-        size_(0),
-        blocks_(0) {
-    init_ACM_time();
+void Metadata::path(const std::string& path) {
+    Metadata::path_ = path;
 }
 
-void Metadata::init_ACM_time() {
-    std::time_t time;
-    std::time(&time);
-    atime_ = time;
-    mtime_ = time;
-    ctime_ = time;
-}
-
-void Metadata::update_ACM_time(bool a, bool c, bool m) {
-    std::time_t time;
-    std::time(&time);
-    if (a)
-        atime_ = time;
-    if (c)
-        ctime_ = time;
-    if (m)
-        mtime_ = time;
-}

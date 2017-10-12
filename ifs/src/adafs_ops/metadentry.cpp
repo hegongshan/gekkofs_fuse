@@ -5,10 +5,11 @@
 #include <adafs_ops/metadentry.hpp>
 #include <adafs_ops/data.hpp>
 #include <db/db_ops.hpp>
+#include <classes/metadata.hpp>
 
 using namespace std;
 
-static const std::string dentry_val_delim = ","s;
+static const std::string dentry_val_delim = ","s; // XXX this needs to be global.
 
 ino_t generate_inode_no() {
     std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
@@ -39,111 +40,29 @@ int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_
  * @return
  */
 int create_metadentry(const std::string& path, mode_t mode) {
-    auto val = fmt::FormatInt(
-            mode).str(); // For now just the mode is the value. Later any metadata combination can be in there. TODO
 
-    // The order is important. don't change.
+    Metadata md{path, mode};
+    // update metadata object based on what metadata is needed
     if (ADAFS_DATA->atime_state() || ADAFS_DATA->mtime_state() || ADAFS_DATA->ctime_state()) {
         std::time_t time;
         std::time(&time);
         auto time_s = fmt::FormatInt(time).str();
-        if (ADAFS_DATA->atime_state()) {
-            val += dentry_val_delim + time_s;
-        }
-        if (ADAFS_DATA->mtime_state()) {
-            val += dentry_val_delim + time_s;
-        }
-        if (ADAFS_DATA->ctime_state()) {
-            val += dentry_val_delim + time_s;
-        }
+        if (ADAFS_DATA->atime_state())
+            md.atime(time);
+        if (ADAFS_DATA->mtime_state())
+            md.mtime(time);
+        if (ADAFS_DATA->ctime_state())
+            md.ctime(time);
     }
-    if (ADAFS_DATA->uid_state()) {
-        val += dentry_val_delim + fmt::FormatInt(getuid()).str();
-    }
-    if (ADAFS_DATA->gid_state()) {
-        val += dentry_val_delim + fmt::FormatInt(getgid()).str();
-    }
-    if (ADAFS_DATA->inode_no_state()) {
-        val += dentry_val_delim + fmt::FormatInt(generate_inode_no()).str();
-    }
-    if (ADAFS_DATA->link_cnt_state()) {
-        val += dentry_val_delim + "1"s;
-    }
-    if (ADAFS_DATA->blocks_state()) {
-        val += dentry_val_delim + "0"s;
-    }
+    if (ADAFS_DATA->uid_state())
+        md.uid(getuid());
+    if (ADAFS_DATA->gid_state())
+        md.gid(getgid());
+    if (ADAFS_DATA->inode_no_state())
+        md.inode_no(generate_inode_no());
 
-    return db_put_metadentry(path, val) ? 0 : -1;
+    return db_put_metadentry(path, md.to_KVentry()) ? 0 : -1;
 }
-
-///**
-// * Converts the dentry db value into a stat struct, which is needed by Linux
-// * @param path
-// * @param db_val
-// * @param attr
-// * @return
-// */
-//int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr) {
-//
-//    auto pos = db_val.find(dentry_val_delim);
-//    if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
-//        attr.st_ino = ADAFS_DATA->hashf()(path);
-//        attr.st_mode = static_cast<unsigned int>(stoul(db_val));
-//        attr.st_nlink = 1;
-//        attr.st_uid = getuid();
-//        attr.st_gid = getgid();
-//        attr.st_size = 0;
-//        attr.st_blksize = ADAFS_DATA->blocksize();
-//        attr.st_blocks = 0;
-//        attr.st_atim.tv_sec = 0;
-//        attr.st_mtim.tv_sec = 0;
-//        attr.st_ctim.tv_sec = 0;
-//        return 0;
-//    }
-//    // some metadata is enabled
-//    attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
-//    db_val.erase(0, pos + 1);
-//    // The order is important. don't change.
-//    if (ADAFS_DATA->atime_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->mtime_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->ctime_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->uid_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->gid_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->inode_no_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->link_cnt_state()) {
-//        pos = db_val.find(dentry_val_delim);
-//        attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
-//        db_val.erase(0, pos + 1);
-//    }
-//    if (ADAFS_DATA->blocks_state()) { // last one will not encounter a delimiter anymore
-//        attr.st_blocks = static_cast<blkcnt_t>(stoul(db_val));
-//    }
-//    return 0;
-//}
 
 /**
  * Returns the metadata of an object at a specific path. The metadata can be of dummy values if configured
@@ -169,4 +88,16 @@ int remove_node(const string& path) {
         destroy_chunk_space(
                 path); // XXX This removes only the data on that node. Leaving everything in inconsistent state
     return err;
+}
+
+int update_metadentry_size(const string& path, size_t size) {
+    string val;
+    auto err = db_get_metadentry(path, val);
+    if (!err || val.size() == 0) {
+        return -1;
+    }
+    Metadata md{path, val};
+    md.size(size); // update size
+    return db_update_metadentry(path, path, md.to_KVentry()) ? 0 : -1; // update database atomically
+
 }

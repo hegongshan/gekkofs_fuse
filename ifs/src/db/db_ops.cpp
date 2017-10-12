@@ -35,3 +35,18 @@ bool db_is_dir_entry(const std::string& dir_path) {
     // TODO
     return true;
 }
+
+/**
+ * Updates a metadentry atomically and also allows to change keys
+ * @param old_key
+ * @param new_key
+ * @param val
+ * @return
+ */
+bool db_update_metadentry(const std::string& old_key, const std::string& new_key, const std::string& val) {
+    auto db = ADAFS_DATA->rdb();
+    rocksdb::WriteBatch batch;
+    batch.Delete(old_key);
+    batch.Put(new_key, val);
+    return db->Write(ADAFS_DATA->rdb_write_options(), &batch).ok();
+}

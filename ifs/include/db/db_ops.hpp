@@ -17,4 +17,6 @@ bool db_metadentry_exists(const std::string& key);
 
 bool db_is_dir_entry(const std::string& dir_path);
 
+bool db_update_metadentry(const std::string& old_key, const std::string& new_key, const std::string& val);
+
 #endif //IFS_DB_OPS_HPP

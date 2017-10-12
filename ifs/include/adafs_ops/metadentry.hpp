@@ -19,4 +19,6 @@ int remove_metadentry(const std::string& path);
 
 int remove_node(const std::string& path);
 
+int update_metadentry_size(const std::string& path, size_t size);
+
 #endif //IFS_METADENTRY_HPP

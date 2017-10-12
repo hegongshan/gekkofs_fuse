@@ -39,11 +39,23 @@ MERCURY_GEN_PROC(ipc_stat_out_t, ((hg_int32_t) (err))
 
 MERCURY_GEN_PROC(ipc_unlink_in_t, ((hg_const_string_t) (path)))
 
+MERCURY_GEN_PROC(ipc_update_metadentry_in_t,
+                 ((hg_const_string_t) (path))\
+((uint64_t) (nlink))\
+((hg_uint32_t) (mode))\
+((hg_uint32_t) (uid))\
+((hg_uint32_t) (gid))\
+((hg_int64_t) (size))\
+((hg_int64_t) (blocks))\
+((hg_int64_t) (atime))\
+((hg_int64_t) (mtime))\
+((hg_int64_t) (ctime)))
+
 // data
 MERCURY_GEN_PROC(ipc_read_data_in_t,
                  ((hg_const_string_t) (path))\
 ((hg_size_t) (size))\
-((int64_t) (offset))\
+((hg_int64_t) (offset))\
 ((hg_bulk_t) (bulk_handle)))
 
 MERCURY_GEN_PROC(ipc_data_out_t,
@@ -53,7 +65,7 @@ MERCURY_GEN_PROC(ipc_data_out_t,
 MERCURY_GEN_PROC(ipc_write_data_in_t,
                  ((hg_const_string_t) (path))\
 ((hg_size_t) (size))\
-((int64_t) (offset))\
+((hg_int64_t) (offset))\
 ((hg_bool_t) (append))\
 ((hg_bulk_t) (bulk_handle)))
 
