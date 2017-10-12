@@ -77,8 +77,6 @@ int rpc_send_read(const size_t recipient, const std::string& path, const size_t 
     HG_Destroy(handle);
 
     return err;
-
-    return 0;
 }
 
 int rpc_send_write(const size_t recipient, const std::string& path, const size_t in_size, const off_t in_offset,

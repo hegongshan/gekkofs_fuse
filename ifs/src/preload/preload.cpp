@@ -384,6 +384,8 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
+        // TODO if append flag has been given, set offset accordingly.
+        // XXX handle lseek too
         return pwrite(fd, buf, count, 0);
     }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
