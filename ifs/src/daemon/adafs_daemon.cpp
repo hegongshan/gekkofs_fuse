@@ -285,6 +285,7 @@ bool init_rpc_server() {
     return true;
 }
 
+// TODO these two can be merged as soon as ipc equals rpc (which it should)
 void register_server_ipcs() {
     auto hg_class = RPC_DATA->server_ipc_hg_class();
     // preload IPCs
@@ -293,12 +294,12 @@ void register_server_ipcs() {
     MERCURY_REGISTER(hg_class, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, ipc_srv_open_handler);
     MERCURY_REGISTER(hg_class, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, ipc_srv_stat_handler);
     MERCURY_REGISTER(hg_class, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, ipc_srv_unlink_handler);
-    MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry", update_metadentry_in_t, ipc_err_out_t,
-                     srv_update_metadentry_handler);
-    MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry_size", update_metadentry_size_in_t, ipc_err_out_t,
-                     srv_update_metadentry_size_handler);
-    MERCURY_REGISTER(hg_class, "ipc_srv_write_data", ipc_write_data_in_t, ipc_data_out_t, ipc_srv_write_data_handler);
-    MERCURY_REGISTER(hg_class, "ipc_srv_read_data", ipc_read_data_in_t, ipc_data_out_t, ipc_srv_read_data_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,
+                     rpc_srv_update_metadentry_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry_size", rpc_update_metadentry_size_in_t, ipc_err_out_t,
+                     rpc_srv_update_metadentry_size_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
 }
 
 /**
@@ -311,6 +312,10 @@ void register_server_rpcs() {
     MERCURY_REGISTER(hg_class, "rpc_srv_create_node", rpc_create_node_in_t, rpc_err_out_t, rpc_srv_create_node_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_remove_node", rpc_remove_node_in_t, rpc_err_out_t, rpc_srv_remove_node_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,
+                     rpc_srv_update_metadentry_handler);
+    MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry_size", rpc_update_metadentry_size_in_t, ipc_err_out_t,
+                     rpc_srv_update_metadentry_size_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data_handler);
     MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data_handler);
 }

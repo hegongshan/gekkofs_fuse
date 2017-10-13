@@ -13,7 +13,7 @@ set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/pre
         ../../include/preload/ipc_types.hpp margo_ipc.cpp ../../include/preload/margo_ipc.hpp
 
         rpc/ld_rpc_data.cpp rpc/ld_rpc_metadentry.cpp ../../include/preload/rpc/ld_rpc_data.hpp ../../include/preload/rpc/ld_rpc_metadentry.hpp
-        ../../include/rpc/rpc_utils.hpp)
+        ../../include/rpc/rpc_utils.hpp ../rpc/rpc_utils.cpp)
 add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
 target_link_libraries(iointer dl ${BMI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
         ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
