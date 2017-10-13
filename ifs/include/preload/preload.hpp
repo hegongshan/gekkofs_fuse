@@ -47,6 +47,35 @@ struct FsConfig {
     size_t host_size;
     std::string rpc_port;
 };
+// Used to bundle metadata into one place
+struct Metadentry {
+    time_t atime;
+    time_t mtime;
+    time_t ctime;
+    uid_t uid;
+    gid_t gid;
+    mode_t mode;
+    uint64_t inode_no;
+    nlink_t link_count;
+    off_t size;
+    blkcnt_t blocks;
+
+    std::string path;
+};
+struct MetadentryUpdateFlags {
+    bool atime = false;
+    bool mtime = false;
+    bool ctime = false;
+    bool uid = false;
+    bool gid = false;
+    bool mode = false;
+    bool inode_no = false;
+    bool link_count = false;
+    bool size = false;
+    bool blocks = false;
+    bool path = false;
+};
+
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern shared_ptr<struct FsConfig> fs_config;
 

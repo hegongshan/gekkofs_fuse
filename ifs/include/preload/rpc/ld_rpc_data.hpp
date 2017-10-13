@@ -19,28 +19,38 @@ extern "C" {
 #include <iostream>
 
 template<typename T>
-int rpc_send_read(const size_t recipient, const std::string& path, const size_t in_size, const off_t in_offset,
-                  T* tar_buf, size_t& read_size, const hg_id_t rpc_read_data_id) {
+int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id, const std::string& path,
+                  const size_t in_size, const off_t in_offset, T* tar_buf, size_t& read_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
+    bool local_op = true;
     rpc_read_data_in_t in;
     rpc_data_out_t out;
     int err;
+    hg_return_t ret;
     // fill in
     in.path = path.c_str();
     in.size = in_size;
     in.offset = in_offset;
-    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-    if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
-        return 1;
+
+    auto recipient = get_rpc_node(path);
+    if (is_local_op(recipient)) { // local
+        ret = HG_Create(margo_get_context(ld_margo_ipc_id()), daemon_addr(), ipc_read_data_id, &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_read to local daemon (IPC)\n");
+    } else { // remote
+        local_op = false;
+        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        if (!get_addr_by_hostid(recipient, svr_addr)) {
+            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            return 1;
+        }
+        ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_read_data_id, &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_read to remote daemon (RPC)\n");
     }
-    auto ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_read_data_id, &handle);
     if (ret != HG_SUCCESS) {
         LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
         return 1;
     }
-
     auto hgi = HG_Get_info(handle);
     /* register local target buffer for bulk access */
     auto b_buf = static_cast<void*>(tar_buf);
@@ -50,7 +60,7 @@ int rpc_send_read(const size_t recipient, const std::string& path, const size_t 
 
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(local_op ? ld_margo_ipc_id() : ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }
@@ -79,7 +89,7 @@ int rpc_send_read(const size_t recipient, const std::string& path, const size_t 
     return err;
 }
 
-int rpc_send_write(const size_t recipient, const std::string& path, const size_t in_size, const off_t in_offset,
-                   const void* buf, size_t& write_size, const bool append, const hg_id_t rpc_write_data_id);
+int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data_id, const string& path,
+                   const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size, const bool append);
 
 #endif //IFS_PRELOAD_C_DATA_HPP

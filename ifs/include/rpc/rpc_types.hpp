@@ -32,6 +32,32 @@ MERCURY_GEN_PROC(rpc_get_attr_out_t, ((hg_int32_t) (err))
 MERCURY_GEN_PROC(rpc_remove_node_in_t,
                  ((hg_const_string_t) (path)))
 
+MERCURY_GEN_PROC(rpc_update_metadentry_in_t,
+                 ((hg_const_string_t) (path))\
+((uint64_t) (nlink))\
+((hg_uint32_t) (mode))\
+((hg_uint32_t) (uid))\
+((hg_uint32_t) (gid))\
+((hg_int64_t) (size))\
+((hg_uint64_t) (inode_no))\
+((hg_int64_t) (blocks))\
+((hg_int64_t) (atime))\
+((hg_int64_t) (mtime))\
+((hg_int64_t) (ctime))\
+((hg_bool_t) (nlink_flag))\
+((hg_bool_t) (mode_flag))\
+((hg_bool_t) (uid_flag))\
+((hg_bool_t) (gid_flag))\
+((hg_bool_t) (size_flag))\
+((hg_bool_t) (inode_no_flag))\
+((hg_bool_t) (block_flag))\
+((hg_bool_t) (atime_flag))\
+((hg_bool_t) (mtime_flag))\
+((hg_bool_t) (ctime_flag)))
+
+MERCURY_GEN_PROC(rpc_update_metadentry_size_in_t, ((hg_const_string_t) (path))
+        ((hg_int64_t) (size)))
+
 // data
 MERCURY_GEN_PROC(rpc_read_data_in_t,
                  ((hg_const_string_t) (path))\

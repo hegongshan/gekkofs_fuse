@@ -28,6 +28,7 @@
 #include <rocksdb/options.h>
 #include <rocksdb/utilities/transaction.h>
 #include <rocksdb/utilities/optimistic_transaction_db.h>
+#include <rocksdb/write_batch.h>
 // margo
 extern "C" {
 #include <abt.h>

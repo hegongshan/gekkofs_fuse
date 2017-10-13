@@ -15,6 +15,7 @@ bool is_fs_path(const char* path) {
     return strstr(path, fs_config->mountdir.c_str()) == path;
 }
 
+// TODO merge the two stat functions
 /**
  * Converts the dentry db value into a stat struct, which is needed by Linux
  * @param path
@@ -39,9 +40,18 @@ int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr
         attr.st_ctim.tv_sec = 0;
         return 0;
     }
-    // some metadata is enabled
+    // some metadata is enabled: mode is always there
     attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
     db_val.erase(0, pos + 1);
+    // size is also there XXX
+    pos = db_val.find(dentry_val_delim);
+    if (pos != std::string::npos) {  // delimiter found. more metadata is coming
+        attr.st_size = stol(db_val.substr(0, pos));
+        db_val.erase(0, pos + 1);
+    } else {
+        attr.st_size = stol(db_val);
+        return 0;
+    }
     // The order is important. don't change.
     if (fs_config->atime_state) {
         pos = db_val.find(dentry_val_delim);
@@ -108,9 +118,18 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
         attr.st_ctim.tv_sec = 0;
         return 0;
     }
-    // some metadata is enabled
+    // some metadata is enabled: mode is always there
     attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
     db_val.erase(0, pos + 1);
+    // size is also there XXX
+    pos = db_val.find(dentry_val_delim);
+    if (pos != std::string::npos) {  // delimiter found. more metadata is coming
+        attr.st_size = stol(db_val.substr(0, pos));
+        db_val.erase(0, pos + 1);
+    } else {
+        attr.st_size = stol(db_val);
+        return 0;
+    }
     // The order is important. don't change.
     if (fs_config->atime_state) {
         pos = db_val.find(dentry_val_delim);

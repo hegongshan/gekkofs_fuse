@@ -3,6 +3,7 @@
 //
 
 #include <preload/rpc/ld_rpc_metadentry.hpp>
+#include <rpc/rpc_utils.hpp>
 
 
 using namespace std;
@@ -190,6 +191,144 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
         HG_Free_output(handle, &out);
     } else {
         LD_LOG_ERROR0(debug_fd, "RPC send_remove_node (timed out)\n");
+    }
+
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return err;
+}
+
+
+int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_id_t rpc_update_metadentry_id,
+                               const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    bool local_op = true;
+    rpc_update_metadentry_in_t in;
+    rpc_err_out_t out;
+    int err = EUNKNOWN;
+    hg_return_t ret;
+    // fill in
+    // add data
+    in.path = path.c_str();
+    in.size = md_flags.size ? md.size : 0;
+    in.nlink = md_flags.link_count ? md.link_count : 0;
+    in.gid = md_flags.gid ? md.gid : 0;
+    in.uid = md_flags.uid ? md.uid : 0;
+    in.blocks = md_flags.blocks ? md.blocks : 0;
+    in.inode_no = md_flags.inode_no ? md.inode_no : 0;
+    in.atime = md_flags.atime ? md.atime : 0;
+    in.mtime = md_flags.mtime ? md.mtime : 0;
+    in.ctime = md_flags.ctime ? md.ctime : 0;
+    // add data flags
+    in.size_flag = bool_to_merc_bool(md_flags.size);
+    in.nlink_flag = bool_to_merc_bool(md_flags.link_count);
+    in.gid_flag = bool_to_merc_bool(md_flags.gid);
+    in.uid_flag = bool_to_merc_bool(md_flags.uid);
+    in.block_flag = bool_to_merc_bool(md_flags.blocks);
+    in.inode_no_flag = bool_to_merc_bool(md_flags.inode_no);
+    in.atime_flag = bool_to_merc_bool(md_flags.atime);
+    in.mtime_flag = bool_to_merc_bool(md_flags.mtime);
+    in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
+
+    auto recipient = get_rpc_node(path);
+    if (is_local_op(recipient)) { // local
+        ret = HG_Create(margo_get_context(ld_margo_ipc_id()), daemon_addr(), ipc_update_metadentry_id, &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry to local daemon (IPC)\n");
+    } else { // remote
+        local_op = false;
+        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        if (!get_addr_by_hostid(recipient, svr_addr)) {
+            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            return 1;
+        }
+        ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_update_metadentry_id, &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry to remote daemon (RPC)\n");
+    }
+    if (ret != HG_SUCCESS) {
+        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        return 1;
+    }
+    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry RPC to daemon\n");
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        send_ret = margo_forward_timed(local_op ? ld_margo_ipc_id() : ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ret = HG_Get_output(handle, &out);
+
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry (timed out)\n");
+    }
+
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return err;
+}
+
+int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
+                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    bool local_op = true;
+    rpc_update_metadentry_size_in_t in;
+    rpc_err_out_t out;
+    // add data
+    in.path = path.c_str();
+    in.size = size;
+    int err = EUNKNOWN;
+    hg_return_t ret;
+    auto recipient = get_rpc_node(path);
+    if (is_local_op(recipient)) { // local
+        ret = HG_Create(margo_get_context(ld_margo_ipc_id()), daemon_addr(), ipc_update_metadentry_size_id,
+                        &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry_size to local daemon (IPC)\n");
+    } else { // remote
+        local_op = false;
+        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        if (!get_addr_by_hostid(recipient, svr_addr)) {
+            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            return 1;
+        }
+        ret = HG_Create(margo_get_context(ld_margo_rpc_id()), svr_addr, rpc_update_metadentry_size_id, &handle);
+        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry_size to remote daemon (RPC)\n");
+    }
+    if (ret != HG_SUCCESS) {
+        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        return 1;
+    }
+    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry size RPC to daemon\n");
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        send_ret = margo_forward_timed(local_op ? ld_margo_ipc_id() : ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ret = HG_Get_output(handle, &out);
+
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry_size (timed out)\n");
     }
 
     in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
