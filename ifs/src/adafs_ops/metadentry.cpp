@@ -5,7 +5,6 @@
 #include <adafs_ops/metadentry.hpp>
 #include <adafs_ops/data.hpp>
 #include <db/db_ops.hpp>
-#include <classes/metadata.hpp>
 
 using namespace std;
 
@@ -70,12 +69,15 @@ int create_metadentry(const std::string& path, mode_t mode) {
  * @param attr
  * @return
  */
-std::string get_attr(const std::string& path) {
+int get_metadentry(const std::string& path, Metadata& md) {
     string val;
-    db_get_metadentry(path, val);
-    return val;
-//    db_val_to_stat(path, val, *attr);
-//    return 0;
+    auto err = db_get_metadentry(path, val);
+    if (!err || val.size() == 0) {
+        return -1;
+    }
+    Metadata mdi{path, val};
+    md = mdi;
+    return 0;
 }
 
 int remove_metadentry(const string& path) {
@@ -90,7 +92,7 @@ int remove_node(const string& path) {
     return err;
 }
 
-int update_metadentry_size(const string& path, size_t size) {
+int update_metadentry_size(const string& path, off_t size) {
     string val;
     auto err = db_get_metadentry(path, val);
     if (!err || val.size() == 0) {
@@ -99,5 +101,8 @@ int update_metadentry_size(const string& path, size_t size) {
     Metadata md{path, val};
     md.size(size); // update size
     return db_update_metadentry(path, path, md.to_KVentry()) ? 0 : -1; // update database atomically
+}
 
+int update_metadentry(const string& path, Metadata& md) {
+    return db_update_metadentry(path, md.path(), md.to_KVentry()) ? 0 : -1;
 }

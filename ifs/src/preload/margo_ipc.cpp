@@ -6,6 +6,10 @@
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 
+hg_bool_t bool_to_merc_bool(const bool state) {
+    return state ? static_cast<hg_bool_t>(HG_TRUE) : static_cast<hg_bool_t>(HG_FALSE);
+}
+
 void send_minimal_ipc(const hg_id_t minimal_id) {
 
     hg_handle_t handle;
@@ -195,8 +199,105 @@ int ipc_send_stat(const string& path, string& attr, const hg_id_t ipc_stat_id) {
 
 int ipc_send_update_metadentry(const string& path, const hg_id_t ipc_update_metadentry_id, const Metadentry& md,
                                const MetadentryUpdateFlags& md_flags) {
-    // XXX call daemon to update metadentry for given md_flags
-    return 0;
+    hg_handle_t handle;
+    update_metadentry_in_t in;
+    ipc_err_out_t out;
+    // add data
+    in.path = path.c_str();
+    in.size = md_flags.size ? md.size : 0;
+    in.nlink = md_flags.link_count ? md.link_count : 0;
+    in.gid = md_flags.gid ? md.gid : 0;
+    in.uid = md_flags.uid ? md.uid : 0;
+    in.blocks = md_flags.blocks ? md.blocks : 0;
+    in.inode_no = md_flags.inode_no ? md.inode_no : 0;
+    in.atime = md_flags.atime ? md.atime : 0;
+    in.mtime = md_flags.mtime ? md.mtime : 0;
+    in.ctime = md_flags.ctime ? md.ctime : 0;
+    // add data flags
+    in.size_flag = bool_to_merc_bool(md_flags.size);
+    in.nlink_flag = bool_to_merc_bool(md_flags.link_count);
+    in.gid_flag = bool_to_merc_bool(md_flags.gid);
+    in.uid_flag = bool_to_merc_bool(md_flags.uid);
+    in.block_flag = bool_to_merc_bool(md_flags.blocks);
+    in.inode_no_flag = bool_to_merc_bool(md_flags.inode_no);
+    in.atime_flag = bool_to_merc_bool(md_flags.atime);
+    in.mtime_flag = bool_to_merc_bool(md_flags.mtime);
+    in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
+
+    int err = EUNKNOWN;
+    auto ret = HG_Create(margo_get_context(ld_margo_ipc_id()), daemon_addr(), ipc_update_metadentry_id, &handle);
+    if (ret != HG_SUCCESS) {
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
+        return 1;
+    }
+    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry IPC to daemon\n");
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ret = HG_Get_output(handle, &out);
+
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        LD_LOG_ERROR0(debug_fd, "IPC send_update_metadentry (timed out)\n");
+    }
+
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return err;
+}
+
+int ipc_send_update_metadentry_size(const string& path, const hg_id_t ipc_update_metadentry_size_id, const off_t size) {
+    hg_handle_t handle;
+    update_metadentry_size_in_t in;
+    ipc_err_out_t out;
+    // add data
+    in.path = path.c_str();
+    in.size = size;
+
+    int err = EUNKNOWN;
+    auto ret = HG_Create(margo_get_context(ld_margo_ipc_id()), daemon_addr(), ipc_update_metadentry_size_id, &handle);
+    if (ret != HG_SUCCESS) {
+        LD_LOG_DEBUG0(debug_fd, "creating handle FAILED\n");
+        return 1;
+    }
+    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry size IPC to daemon\n");
+    int send_ret = HG_FALSE;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        send_ret = margo_forward_timed(ld_margo_ipc_id(), handle, &in, RPC_TIMEOUT);
+        if (send_ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (send_ret == HG_SUCCESS) {
+        /* decode response */
+        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ret = HG_Get_output(handle, &out);
+
+        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        err = out.err;
+        /* clean up resources consumed by this rpc */
+        HG_Free_output(handle, &out);
+    } else {
+        LD_LOG_ERROR0(debug_fd, "IPC send_update_metadentry_size (timed out)\n");
+    }
+
+    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
+
+    HG_Free_input(handle, &in);
+    HG_Destroy(handle);
+    return err;
 }
 
 int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id) {

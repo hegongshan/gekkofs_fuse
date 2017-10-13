@@ -3,7 +3,9 @@
 //
 
 #include <rpc/rpc_defs.hpp>
+#include <rpc/rpc_utils.hpp>
 #include <preload/ipc_types.hpp>
+
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
 #include <db/db_ops.hpp>
@@ -84,6 +86,8 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
     }
 
+    in.path = nullptr;
+
     // Destroy handle when finished
     HG_Free_input(handle, &in);
     HG_Free_output(handle, &out);
@@ -130,6 +134,97 @@ static hg_return_t ipc_srv_stat(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_stat)
+
+static hg_return_t srv_update_metadentry(hg_handle_t handle) {
+    const struct hg_info* hgi;
+    update_metadentry_in_t in;
+    ipc_err_out_t out;
+
+
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got update metadentry IPC with path {}", in.path);
+
+    hgi = HG_Get_info(handle);
+
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // do update
+    Metadata md{};
+    auto err = get_metadentry(in.path, md);
+    if (err == 0) {
+        out.err = 0;
+        if (in.inode_no_flag == HG_TRUE)
+            md.inode_no(in.inode_no);
+        if (in.block_flag == HG_TRUE)
+            md.blocks(in.blocks);
+        if (in.uid_flag == HG_TRUE)
+            md.uid(in.uid);
+        if (in.gid_flag == HG_TRUE)
+            md.gid(in.gid);
+        if (in.nlink_flag == HG_TRUE)
+            md.link_count(in.nlink);
+        if (in.size_flag == HG_TRUE)
+            md.size(in.size);
+        if (in.atime_flag == HG_TRUE)
+            md.atime(in.atime);
+        if (in.mtime_flag == HG_TRUE)
+            md.mtime(in.mtime);
+        if (in.ctime_flag == HG_TRUE)
+            md.ctime(in.ctime);
+        out.err = update_metadentry(in.path, md);
+    } else {
+        out.err = 1;
+    }
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    auto hret = margo_respond(mid, handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry ipc");
+    }
+
+    in.path = nullptr;
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(srv_update_metadentry)
+
+static hg_return_t srv_update_metadentry_size(hg_handle_t handle) {
+    const struct hg_info* hgi;
+    update_metadentry_size_in_t in;
+    ipc_err_out_t out;
+
+
+    auto ret = HG_Get_input(handle, &in);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got update metadentry size IPC with path {}", in.path);
+
+    hgi = HG_Get_info(handle);
+
+    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+
+    // do update
+    out.err = update_metadentry_size(in.path, in.size);
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    auto hret = margo_respond(mid, handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry size ipc");
+    }
+
+    in.path = nullptr;
+
+    // Destroy handle when finished
+    HG_Free_input(handle, &in);
+    HG_Free_output(handle, &out);
+    HG_Destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(srv_update_metadentry_size)
 
 static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
     const struct hg_info* hgi;

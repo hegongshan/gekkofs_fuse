@@ -47,7 +47,6 @@ struct FsConfig {
     size_t host_size;
     std::string rpc_port;
 };
-
 // Used to bundle metadata into one place
 struct Metadentry {
     time_t atime;

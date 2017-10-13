@@ -33,6 +33,7 @@ static hg_id_t ipc_open_id;
 static hg_id_t ipc_stat_id;
 static hg_id_t ipc_unlink_id;
 static hg_id_t ipc_update_metadentry_id;
+static hg_id_t ipc_update_metadentry_size_id;
 static hg_id_t ipc_write_data_id;
 static hg_id_t ipc_read_data_id;
 // RPC IDs
@@ -405,18 +406,18 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             auto recipient = get_rpc_node(path);
             if (is_local_op(recipient)) { // local
                 err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
+                if (err == 0)
+                    ipc_send_update_metadentry_size(path, ipc_update_metadentry_size_id, write_size);
             } else { // remote
                 err = rpc_send_write(recipient, path, count, 0, buf, write_size, append_flag, rpc_write_data_id);
+                // TODO update write for rpc when ipc is sure to work
             }
         } else { // single node operation
             err = ipc_send_write(path, count, 0, buf, write_size, append_flag, ipc_write_data_id);
+            if (err == 0)
+                ipc_send_update_metadentry_size(path, ipc_update_metadentry_size_id, write_size);
+
         }
-        Metadentry md{};
-        md.size = write_size;
-        MetadentryUpdateFlags md_flags{};
-        md_flags.size = true;
-        ipc_send_update_metadentry(path, ipc_update_metadentry_id, md, md_flags);
-        // TODO handle written size that the rpc/ipc gets back in write_size
 #endif
         return err;
     }
@@ -449,7 +450,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
                 err = rpc_send_read(recipient, path, count, offset, buf, read_size, rpc_read_data_id);
             }
         } else { // single node operation
-            err = rpc_send_read(0, path, count, offset, buf, read_size, rpc_read_data_id);
+            err = ipc_send_read(path, count, offset, buf, read_size, ipc_read_data_id);
         }
 #endif
         // TODO check how much we need to deal with the read_size
@@ -541,7 +542,7 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         //found
         return true;
     } else {
-        LD_LOG_TRACE0(debug_fd, "not found in lrucache");
+        LD_LOG_TRACE0(debug_fd, "not found in lrucache\n");
         // not found, manual lookup and add address mapping to LRU cache
         auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
                         fs_config->rpc_port; // convert hostid to hostname and port
@@ -568,8 +569,10 @@ void register_client_ipcs(hg_class_t* hg_class) {
     ipc_open_id = MERCURY_REGISTER(hg_class, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, nullptr);
     ipc_stat_id = MERCURY_REGISTER(hg_class, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, nullptr);
     ipc_unlink_id = MERCURY_REGISTER(hg_class, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, nullptr);
-    ipc_update_metadentry_id = MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry", ipc_update_metadentry_in_t,
-                                                ipc_err_out_t, nullptr); // TODO create handler
+    ipc_update_metadentry_id = MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry", update_metadentry_in_t,
+                                                ipc_err_out_t, nullptr);
+    ipc_update_metadentry_size_id = MERCURY_REGISTER(hg_class, "ipc_srv_update_metadentry_size",
+                                                     update_metadentry_size_in_t, ipc_err_out_t, nullptr);
     ipc_config_id = MERCURY_REGISTER(hg_class, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
     ipc_write_data_id = MERCURY_REGISTER(hg_class, "ipc_srv_write_data", ipc_write_data_in_t, rpc_data_out_t,
