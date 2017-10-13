@@ -437,17 +437,6 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
 
 #else
         err = rpc_send_read(ipc_read_data_id, rpc_read_data_id, path, count, offset, buf, read_size);
-
-//        if (fs_config->host_size > 1) { // multiple node operation
-//            auto recipient = get_rpc_node(path);
-//            if (is_local_op(recipient)) { // local
-//                err = ipc_send_read(path, count, offset, buf, read_size, ipc_read_data_id);
-//            } else { // remote
-//                err = rpc_send_read(recipient, path, count, offset, buf, read_size, rpc_read_data_id);
-//            }
-//        } else { // single node operation
-//            err = ipc_send_read(path, count, offset, buf, read_size, ipc_read_data_id);
-//        }
 #endif
         // TODO check how much we need to deal with the read_size
         return err == 0 ? read_size : 0;
