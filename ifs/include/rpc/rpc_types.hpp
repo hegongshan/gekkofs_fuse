@@ -56,7 +56,11 @@ MERCURY_GEN_PROC(rpc_update_metadentry_in_t,
 ((hg_bool_t) (ctime_flag)))
 
 MERCURY_GEN_PROC(rpc_update_metadentry_size_in_t, ((hg_const_string_t) (path))
-        ((hg_int64_t) (size)))
+        ((hg_int64_t) (size))
+        ((hg_bool_t) (append)))
+
+MERCURY_GEN_PROC(rpc_update_metadentry_size_out_t, ((hg_int32_t) (err))
+        ((hg_int64_t) (ret_size)))
 
 // data
 MERCURY_GEN_PROC(rpc_read_data_in_t,
@@ -74,7 +78,8 @@ MERCURY_GEN_PROC(rpc_write_data_in_t,
 ((hg_size_t) (size))\
 ((int64_t) (offset))\
 ((hg_bool_t) (append))\
-((hg_bulk_t) (bulk_handle)))
+((hg_bulk_t) (bulk_handle))\
+((hg_int64_t) (updated_size)))
 
 
 

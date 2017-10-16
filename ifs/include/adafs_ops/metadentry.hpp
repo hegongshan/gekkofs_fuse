@@ -20,7 +20,7 @@ int remove_metadentry(const std::string& path);
 
 int remove_node(const std::string& path);
 
-int update_metadentry_size(const std::string& path, off_t size);
+long update_metadentry_size(const std::string& path, off_t size, bool append);
 
 int update_metadentry(const std::string& path, Metadata& md);
 

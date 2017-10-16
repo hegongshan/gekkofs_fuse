@@ -13,10 +13,15 @@ int main(int argc, char* argv[]) {
     auto nw = write(fd, &buf, strlen(buf));
     close(fd);
 
+    char buf_a[] = "456esta\n";
+    auto fd_a = open(p.c_str(), O_WRONLY | O_APPEND, 0777);
+    auto nw_a = write(fd, &buf_a, strlen(buf));
+    close(fd);
+
     fd = open(p.c_str(), O_RDONLY, 0777);
-    char buf_read[9] = {0};
-    auto rs = read(fd, &buf_read, strlen(buf));
-    buf_read[8] = '\0';
+    char buf_read[17] = {0};
+    auto rs = read(fd, &buf_read, strlen(buf) * 2);
+    buf_read[17] = '\0';
     printf("buffer read: %s\n", buf_read);
     close(fd);
 

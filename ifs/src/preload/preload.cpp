@@ -402,18 +402,28 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         auto path = adafs_fd->path();
         auto append_flag = adafs_fd->append_flag();
         size_t write_size;
-        int err;
+        int err = 0;
+        long updated_size = 0;
 #ifndef MARGOIPC
 
 #else
-        err = rpc_send_write(ipc_write_data_id, rpc_write_data_id, path, count, 0, buf, write_size, append_flag);
-        if (err == 0) {
+        /*
+         * Update the metadentry size first to prevent two processes to write to the same offset when O_APPEND is given.
+         * The metadentry size update is atomic XXX actually not yet. see metadentry.cpp
+         */
+//        if (append_flag)
             err = rpc_send_update_metadentry_size(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path,
-                                                  write_size);
-            if (err != 0) // ERR
-                return 0;
-        } else // ERR
+                                                  count, append_flag, updated_size);
+        if (err != 0) {
+            LD_LOG_ERROR0(debug_fd, "pwrite: update_metadentry_size failed\n");
+            return 0; // ERR
+        }
+        err = rpc_send_write(ipc_write_data_id, rpc_write_data_id, path, count, offset, buf, write_size, append_flag,
+                             updated_size);
+        if (err != 0) {
+            LD_LOG_ERROR0(debug_fd, "pwrite: write failed\n");
             return 0;
+        }
 #endif
         return write_size;
     }
@@ -559,7 +569,8 @@ void register_client_ipcs(hg_class_t* hg_class) {
     ipc_update_metadentry_id = MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
                                                 rpc_err_out_t, nullptr);
     ipc_update_metadentry_size_id = MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry_size",
-                                                     rpc_update_metadentry_size_in_t, rpc_err_out_t, nullptr);
+                                                     rpc_update_metadentry_size_in_t, rpc_update_metadentry_size_out_t,
+                                                     nullptr);
     ipc_config_id = MERCURY_REGISTER(hg_class, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
                                      nullptr);
     ipc_write_data_id = MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
@@ -578,7 +589,8 @@ void register_client_rpcs(hg_class_t* hg_class) {
     rpc_update_metadentry_id = MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
                                                 rpc_err_out_t, nullptr);
     rpc_update_metadentry_size_id = MERCURY_REGISTER(hg_class, "rpc_srv_update_metadentry_size",
-                                                     rpc_update_metadentry_size_in_t, rpc_err_out_t, nullptr);
+                                                     rpc_update_metadentry_size_in_t, rpc_update_metadentry_size_out_t,
+                                                     nullptr);
     rpc_write_data_id = MERCURY_REGISTER(hg_class, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
                                          nullptr);
     rpc_read_data_id = MERCURY_REGISTER(hg_class, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,

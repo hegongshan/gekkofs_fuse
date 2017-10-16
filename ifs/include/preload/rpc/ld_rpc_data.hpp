@@ -90,6 +90,7 @@ int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id
 }
 
 int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data_id, const string& path,
-                   const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size, const bool append);
+                   const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size, const bool append,
+                   const off_t updated_size);
 
 #endif //IFS_PRELOAD_C_DATA_HPP

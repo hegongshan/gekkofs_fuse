@@ -23,6 +23,7 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
                                const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags);
 
 int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
-                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size);
+                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size,
+                                    const bool append_flag, off_t& ret_size);
 
 #endif //IFS_PRELOAD_C_METADENTRY_HPP

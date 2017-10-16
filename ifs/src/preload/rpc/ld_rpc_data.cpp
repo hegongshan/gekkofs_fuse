@@ -9,7 +9,7 @@ using namespace std;
 
 int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data_id, const string& path,
                    const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size,
-                   const bool append) {
+                   const bool append, const off_t updated_size) {
 
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
@@ -22,6 +22,7 @@ int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data
     in.path = path.c_str();
     in.size = in_size;
     in.offset = in_offset;
+    in.updated_size = updated_size;
     if (append)
         in.append = HG_TRUE;
     else
