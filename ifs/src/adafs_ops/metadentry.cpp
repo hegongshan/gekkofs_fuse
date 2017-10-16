@@ -92,15 +92,27 @@ int remove_node(const string& path) {
     return err;
 }
 
-int update_metadentry_size(const string& path, off_t size) {
+/**
+ * Updates a metadentry's size atomically and returns the corresponding size after update
+ * @param path
+ * @param size
+ * @return the updated size
+ */
+long update_metadentry_size(const string& path, off_t size, bool append) {
+    // XXX This function has to be completely atomic. Do we need transactions here? or a separate locking db?
+    db_iterate_all_entries();
     string val;
     auto err = db_get_metadentry(path, val);
     if (!err || val.size() == 0) {
         return -1;
     }
     Metadata md{path, val};
-    md.size(size); // update size
-    return db_update_metadentry(path, path, md.to_KVentry()) ? 0 : -1; // update database atomically
+    // update size
+    if (append)
+        md.size(md.size() + size);
+    else
+        md.size(size);
+    return db_update_metadentry(path, path, md.to_KVentry()) ? md.size() : -1; // update database atomically
 }
 
 int update_metadentry(const string& path, Metadata& md) {

@@ -280,15 +280,20 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
 }
 
 int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
-                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size) {
+                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size,
+                                    const bool append_flag, off_t& ret_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     bool local_op = true;
     rpc_update_metadentry_size_in_t in;
-    rpc_err_out_t out;
+    rpc_update_metadentry_size_out_t out;
     // add data
     in.path = path.c_str();
     in.size = size;
+    if (append_flag)
+        in.append = HG_TRUE;
+    else
+        in.append = HG_FALSE;
     int err = EUNKNOWN;
     hg_return_t ret;
     auto recipient = get_rpc_node(path);
@@ -325,6 +330,7 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
 
         LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
         err = out.err;
+        ret_size = out.ret_size;
         /* clean up resources consumed by this rpc */
         HG_Free_output(handle, &out);
     } else {

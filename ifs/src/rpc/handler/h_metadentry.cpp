@@ -204,7 +204,7 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     const struct hg_info* hgi;
     rpc_update_metadentry_size_in_t in;
-    rpc_err_out_t out;
+    rpc_update_metadentry_size_out_t out;
 
 
     auto ret = HG_Get_input(handle, &in);
@@ -216,7 +216,12 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // do update
-    out.err = update_metadentry_size(in.path, in.size);
+    auto ret_size = update_metadentry_size(in.path, in.size, (in.append == HG_TRUE));
+    if (ret_size > 0) {
+        out.err = 0;
+        out.ret_size = ret_size;
+    } else
+        out.err = 1;
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(mid, handle, &out);
     if (hret != HG_SUCCESS) {

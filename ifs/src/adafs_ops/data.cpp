@@ -86,7 +86,7 @@ int read_file(char* buf, size_t& read_size, const string& path, const size_t siz
 }
 
 int write_file(const string& path, const char* buf, size_t& write_size, const size_t size, const off_t off,
-               const bool append) {
+               const bool append, const off_t updated_size) {
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
@@ -96,23 +96,21 @@ int write_file(const string& path, const char* buf, size_t& write_size, const si
     int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0777);
     if (fd < 0)
         return EIO;
-    write_size = static_cast<size_t>(pwrite(fd, buf, size, off));
+    if (append) // write at updated_size - size as this is the offset that the EOF corresponds to.
+        write_size = static_cast<size_t>(pwrite(fd, buf, size, (updated_size - size)));
+    else
+        write_size = static_cast<size_t>(pwrite(fd, buf, size, off));
     close(fd);
     // XXX DO WE NEED THE BELOW CODE?
     // Depending on if the file was appended or not metadata sizes need to be modified accordingly
-    /*
+
     if (append) {
-        // appending requires to read the old size first so that the new size can be added to it
-        Metadata md{};
-        read_metadata_field_md(inode, Md_fields::size, md);
+        // Metadata was already updated by the client before the write operation
         // truncating file
-        truncate(chnk_path.c_str(), md.size() + size);
-        // refresh metadata size field
-        write_metadata_field(inode, Md_fields::size, md.size() + static_cast<off_t>(size));
+        truncate(chnk_path.c_str(), updated_size);
     } else {
-        truncate(chnk_path.c_str(), size);
-        write_metadata_field(inode, Md_fields::size, static_cast<off_t>(size));
+        truncate(chnk_path.c_str(), size); // file is rewritten, thus, only written size is kept
     }
-    */
+
     return 0;
 }
