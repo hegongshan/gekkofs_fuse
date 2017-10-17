@@ -6,10 +6,14 @@
 #define IOINTERCEPT_PRELOAD_HPP
 
 #include <memory>
+#include <map>
+#include <mutex>
+#include <iostream>
 #include <sys/statfs.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "../../configure.hpp"
 
@@ -86,13 +90,13 @@ extern FILE* debug_fd;
 #define LD_LOG_TRACE(fd, fmt, ...) \
             do { if (LOG_PRELOAD_TRACE) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [trace] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
 #define LD_LOG_ERROR(fd, fmt, ...) \
-            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]" fmt, ##__VA_ARGS__); fflush(fd); } while (0)
+            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]   " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
 #define LD_LOG_DEBUG0(fd, fmt) \
             do { if (LOG_PRELOAD_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [debug] " fmt); fflush(fd); } while (0)
 #define LD_LOG_TRACE0(fd, fmt) \
             do { if (LOG_PRELOAD_TRACE) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [trace] " fmt); fflush(fd); } while (0)
 #define LD_LOG_ERROR0(fd, fmt) \
-            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]" fmt); fflush(fd); } while (0)
+            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]   " fmt); fflush(fd); } while (0)
 #define EUNKNOWN -1
 
 bool init_ld_argobots();

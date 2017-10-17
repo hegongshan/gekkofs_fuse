@@ -19,6 +19,6 @@ bool db_is_dir_entry(const std::string& dir_path);
 
 bool db_update_metadentry(const std::string& old_key, const std::string& new_key, const std::string& val);
 
-bool db_iterate_all_entries();
+void db_iterate_all_entries();
 
 #endif //IFS_DB_OPS_HPP

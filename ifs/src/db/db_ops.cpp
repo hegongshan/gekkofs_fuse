@@ -51,14 +51,13 @@ bool db_update_metadentry(const std::string& old_key, const std::string& new_key
     return db->Write(ADAFS_DATA->rdb_write_options(), &batch).ok();
 }
 
-bool db_iterate_all_entries() {
+void db_iterate_all_entries() {
     string key;
     string val;
     auto db = ADAFS_DATA->rdb();
     // Do RangeScan on parent inode
     auto iter = db->NewIterator(rocksdb::ReadOptions());
     for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
-//    while (iter->Valid()) {
         key = iter->key().ToString();
         val = iter->value().ToString();
         ADAFS_DATA->spdlogger()->trace("key '{}' value '{}'", key, val);

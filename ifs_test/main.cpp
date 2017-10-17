@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fcntl.h>
+#include <unistd.h>
 #include <chrono>
 
 using namespace std;
@@ -21,12 +22,13 @@ int main(int argc, char* argv[]) {
 
 
     auto start_t = get_time::now();
-
+    int fd;
     for (int i = 0; i < filen; ++i) {
         string p = "/tmp/mountdir/file" + to_string(i);
-        creat(p.c_str(), 0666);
+        fd = creat(p.c_str(), 0666);
         if (i % 25000 == 0)
             cout << i << " files processed." << endl;
+        close(fd);
     }
 
     auto end_t = get_time::now();
