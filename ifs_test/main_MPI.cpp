@@ -26,12 +26,13 @@ int main(int argc, char* argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     auto start_t = get_time::now();
-
+    int fd;
     for (int i = 0; i < filen; ++i) {
         string p = "/tmp/mountdir/file" + to_string(rank) + "_" + to_string(i);
-        creat(p.c_str(), 0666);
+        fd = creat(p.c_str(), 0666);
         if (i % 25000 == 0)
             cout << "Rank " << rank << ": " << i << " files processed." << endl;
+        close(fd);
     }
 
     auto end_t = get_time::now();
