@@ -81,6 +81,7 @@ struct MetadentryUpdateFlags {
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern shared_ptr<struct FsConfig> fs_config;
 
+// TODO get rid of that horrible, disgusting logging X.x
 extern FILE* debug_fd;
 
 #define LD_LOG_DEBUG(fd, fmt, ...) \
