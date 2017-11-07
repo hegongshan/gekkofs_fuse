@@ -8,60 +8,6 @@
 #include <rpc/rpc_defs.hpp>
 #include <preload/ipc_types.hpp>
 
-void daemon_loop(void* arg) {
-    ADAFS_DATA->spdlogger()->info("Starting application loop ...");
-    while (true) {
-        ADAFS_DATA->spdlogger()->info("sleeping");
-        sleep(10);
-        /* TODO for Nafiseh
-         * Connect to the IPC socket with the looping thread and listed for messages from the preload lib
-         * When new message is received spawn a new thread that will trigger the operation and respond to preload lib
-         * Ensure that messages from the lib are not lost. XXX
-         */
-
-        // connect to the ipc socket and a separate thread retrieves the message from the preload lib. in
-        ADAFS_DATA->spdlogger()->info("done sleeping. exiting ...");
-        break;
-    }
-}
-
-void run_daemon() {
-    ABT_xstream xstream;
-    ABT_pool pool;
-    ABT_thread loop_thread;
-
-    auto argo_ret = ABT_xstream_self(
-            &xstream); // get the current execution stream (1 core) to use (started with ABT_init())
-    if (argo_ret != 0) {
-        ADAFS_DATA->spdlogger()->error("Error getting the execution stream when starting the daemon.");
-        return;
-    }
-    argo_ret = ABT_xstream_get_main_pools(xstream, 1, &pool); // get the thread pool
-    if (argo_ret != 0) {
-        ADAFS_DATA->spdlogger()->error("Error getting the thread pool when starting the daemon.");
-        return;
-    }
-    argo_ret = ABT_thread_create(pool, daemon_loop, nullptr, ABT_THREAD_ATTR_NULL, &loop_thread);
-    if (argo_ret != 0) {
-        ADAFS_DATA->spdlogger()->error("Error creating loop thread");
-        return;
-    }
-
-    // wait for the daemon to be closed and free the loop thread
-    ABT_thread_yield_to(loop_thread);
-    argo_ret = ABT_thread_join(loop_thread);
-    if (argo_ret != 0) {
-        ADAFS_DATA->spdlogger()->error("Error joining loop thread");
-        return;
-    }
-    argo_ret = ABT_thread_free(&loop_thread);
-    if (argo_ret != 0) {
-        ADAFS_DATA->spdlogger()->error("Error freeing loop thread.");
-        return;
-    }
-
-}
-
 void init_environment() {
     // Initialize rocksdb
     auto err = init_rocksdb();

@@ -7,9 +7,6 @@
 
 #include "../../main.hpp"
 
-void daemon_loop(void* arg);
-void run_daemon();
-
 void init_environment();
 void destroy_enviroment();
 

@@ -115,9 +115,6 @@ int main(int argc, const char* argv[]) {
     bfs::create_directories(ADAFS_DATA->mgmt_path());
 
     init_environment();
-#ifndef MARGOIPC
-    run_daemon(); // blocks here until application loop is exited TODO don't know yet how it'll be closed :D
-#else
 
     signal(SIGINT, shutdown_handler);
     signal(SIGTERM, shutdown_handler);
@@ -129,7 +126,7 @@ int main(int argc, const char* argv[]) {
 
     ADAFS_DATA->spdlogger()->info("Shutting done signal encountered. Shutting down ...");
 
-#endif
+
     destroy_enviroment();
 
     return 0;

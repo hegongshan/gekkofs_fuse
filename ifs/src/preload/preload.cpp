@@ -115,9 +115,6 @@ int open(const char* path, int flags, ...) {
     if (is_env_initialized && is_fs_path(path)) {
         auto err = 1;
         auto fd = file_map.add(path, (flags & O_APPEND) != 0);
-#ifndef MARGOIPC
-
-#else
         if (flags & O_CREAT) { // do file create TODO handle all other flags
             if (fs_config->host_size > 1) { // multiple node operation
                 auto recipient = get_rpc_node(path);
@@ -134,7 +131,6 @@ int open(const char* path, int flags, ...) {
             // TODO look up if file exists
             err = 0;
         }
-#endif
         if (err == 0)
             return fd;
         else {
@@ -192,8 +188,6 @@ int unlink(const char* path) __THROW {
     int err;
 //    LD_LOG_DEBUG(debug_fd, "unlink called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
-#ifndef MARGOIPC
-#else
         if (fs_config->host_size > 1) { // multiple node operation
             auto recipient = get_rpc_node(path);
             if (is_local_op(recipient)) { // local
@@ -206,8 +200,6 @@ int unlink(const char* path) __THROW {
         }
 
         return err;
-
-#endif
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
@@ -268,11 +260,7 @@ int stat(const char* path, struct stat* buf) __THROW {
     LD_LOG_DEBUG(debug_fd, "stat called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call daemon and return
-#ifndef MARGOIPC
-
-#else
         return adafs_stat(path, buf);
-#endif
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
@@ -283,11 +271,7 @@ int fstat(int fd, struct stat* buf) __THROW {
     if (is_env_initialized && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return
-#ifndef MARGOIPC
-
-#else
         return adafs_stat(path, buf);
-#endif
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
 }
@@ -297,11 +281,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     LD_LOG_DEBUG(debug_fd, "__xstat called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call stat
-#ifndef MARGOIPC
-
-#else
         return adafs_stat(path, buf);
-#endif
     }
     return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
 }
@@ -310,11 +290,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     LD_LOG_DEBUG(debug_fd, "__xstat64 called with path %s\n", path);
     if (is_env_initialized && is_fs_path(path)) {
-#ifndef MARGOIPC
-
-#else
         return adafs_stat64(path, buf);
-#endif
 //        // Not implemented
 //        return -1;
     }
@@ -327,11 +303,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat
         auto path = file_map.get(fd)->path();
-#ifndef MARGOIPC
-
-#else
         return adafs_stat(path, buf);
-#endif
     }
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
 }
@@ -342,11 +314,7 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat64
         auto path = file_map.get(fd)->path();
-#ifndef MARGOIPC
-
-#else
         return adafs_stat64(path, buf);
-#endif
     }
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
 }
@@ -372,11 +340,7 @@ extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
 int access(const char* path, int mode) __THROW {
     init_passthrough_if_needed();
     if (is_env_initialized && is_fs_path(path)) {
-#ifndef MARGOIPC
-
-#else
-
-#endif
+        // TODO
     }
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mode);
 }
@@ -404,9 +368,6 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         size_t write_size;
         int err = 0;
         long updated_size = 0;
-#ifndef MARGOIPC
-
-#else
         /*
          * Update the metadentry size first to prevent two processes to write to the same offset when O_APPEND is given.
          * The metadentry size update is atomic XXX actually not yet. see metadentry.cpp
@@ -424,7 +385,6 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             LD_LOG_ERROR0(debug_fd, "pwrite: write failed\n");
             return 0;
         }
-#endif
         return write_size;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
@@ -445,11 +405,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         auto path = adafs_fd->path();
         size_t read_size = 0;
         int err;
-#ifndef MARGOIPC
-
-#else
         err = rpc_send_read(ipc_read_data_id, rpc_read_data_id, path, count, offset, buf, read_size);
-#endif
         // TODO check how much we need to deal with the read_size
         return err == 0 ? read_size : 0;
     }
@@ -461,11 +417,6 @@ ssize_t pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
     if (is_env_initialized && file_map.exist(fd)) {
 //        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return size written
-#ifndef MARGOIPC
-
-#else
-
-#endif
         return 0; // TODO
     }
     return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, nbyte, offset);
@@ -716,7 +667,6 @@ hg_addr_t daemon_addr() {
  * This function is only called in the preload constructor
  */
 void init_environment() {
-#ifdef MARGOIPC
     // init margo client for IPC
     auto err = init_ld_argobots();
     assert(err);
@@ -726,7 +676,6 @@ void init_environment() {
     assert(err);
     err = init_rpc_client();
     assert(err);
-#endif
     is_env_initialized = true;
     LD_LOG_DEBUG0(debug_fd, "Environment initialized.\n");
 }
@@ -792,7 +741,6 @@ void init_preload(void) {
  */
 void destroy_preload(void) {
 
-#ifdef MARGOIPC
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo IPC client ...\n");
@@ -821,6 +769,6 @@ void destroy_preload(void) {
     HG_Finalize(mercury_ipc_class);
     HG_Finalize(mercury_rpc_class);
     LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
-#endif
+
     fclose(debug_fd);
 }
