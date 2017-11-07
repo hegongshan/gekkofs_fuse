@@ -17,19 +17,6 @@ cd $CURR/build
 make -j8
 make install
 
-#echo "Installing CCI"
-# CCI
-#CURR=$GIT/cci
-#cd $CURR
-#./autogen.pl
-#if [ ! -d "$CURR/build" ]; then
-#	mkdir $CURR/build
-#fi
-#cd $CURR/build
-#../configure --prefix=$INSTALL
-#make -j8
-#make install
-
 echo "Installing Mercury"
 
 # Mercury 

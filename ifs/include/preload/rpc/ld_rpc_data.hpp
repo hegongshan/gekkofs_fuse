@@ -60,7 +60,7 @@ int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id
 
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(local_op ? ld_margo_ipc_id() : ld_margo_rpc_id(), handle, &in, RPC_TIMEOUT);
+        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
             break;
         }

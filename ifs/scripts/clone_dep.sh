@@ -40,10 +40,12 @@ assertdir "bmi" "git clone git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed
 # get Mercury
 assertdir "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "afd70055d21a6df2faefe38d5f6ce1ae11f365a5"
 # get Argobots
-assertdir "argobots" "git clone https://github.com/pmodels/argobots" "8394f8ae6542f977457a6008d29ddd9a6036f246"
+assertdir "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "a5a6b2036c75ad05804ccb72d2fe31cea1bfef88"
 # get Argobots-snoozer
 assertdir "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
 # get Margo
 assertdir "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "3375e1168185e4443a784e66420d91e122d03a61"
+# get rocksdb
+assertdir "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.8"
 
 echo "Nothing left to do. Exiting."

@@ -7,6 +7,11 @@
 
 #include <preload/preload.hpp>
 
+extern "C" {
+#include <mercury_proc_string.h>
+#include <margo.h>
+}
+
 MERCURY_GEN_PROC(ipc_err_out_t, ((hg_int32_t) (err))) // generic return type
 
 MERCURY_GEN_PROC(ipc_config_in_t, ((hg_int32_t) (dummy))) // XXX remove that.

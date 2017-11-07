@@ -14,27 +14,22 @@ using namespace std;
 static hg_return_t rpc_minimal(hg_handle_t handle) {
     rpc_minimal_in_t in;
     rpc_minimal_out_t out;
-    const struct hg_info* hgi;
     // Get input
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
 
     ADAFS_DATA->spdlogger()->debug("Got simple RPC with input {}", in.input);
-    // Get hg_info handle
-    hgi = HG_Get_info(handle);
-    // extract margo id from hg_info (needed to know where to send response)
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // Create output and send it
     out.output = in.input * 2;
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.output);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     assert(hret == HG_SUCCESS);
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &in);
+    margo_destroy(handle);
     ADAFS_DATA->spdlogger()->debug("Done with minimal rpc handler!");
 
     return HG_SUCCESS;
@@ -43,24 +38,19 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
 
 static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
-    const struct hg_info* hgi;
     rpc_create_node_in_t in;
     rpc_err_out_t out;
 
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got create node RPC with path {}", in.path);
-
-    hgi = HG_Get_info(handle);
-
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // create metadentry
     out.err = create_metadentry(in.path, in.mode);
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to create node rpc");
     }
@@ -68,9 +58,9 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
@@ -79,12 +69,9 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_create_node)
 static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     rpc_get_attr_in_t in;
     rpc_get_attr_out_t out;
-    const struct hg_info* hgi;
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got get attr RPC for path {}", in.path);
-    hgi = HG_Get_info(handle);
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
     // get the metadata
     string val;
     auto err = db_get_metadentry(in.path, val);
@@ -96,37 +83,32 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     }
 
     ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     assert(hret == HG_SUCCESS);
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)
 
 static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
-    const struct hg_info* hgi;
     rpc_remove_node_in_t in;
     rpc_err_out_t out;
 
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got remove node RPC with path {}", in.path);
-
-    hgi = HG_Get_info(handle);
-
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // create metadentry
     out.err = remove_node(in.path);
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to remove node rpc");
     }
@@ -134,9 +116,9 @@ static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
@@ -144,18 +126,13 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove_node)
 
 
 static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
-    const struct hg_info* hgi;
     rpc_update_metadentry_in_t in;
     rpc_err_out_t out;
 
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got update metadentry RPC with path {}", in.path);
-
-    hgi = HG_Get_info(handle);
-
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // do update
     Metadata md{};
@@ -185,7 +162,7 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
         out.err = 1;
     }
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry RPC");
     }
@@ -193,27 +170,22 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
 static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
-    const struct hg_info* hgi;
     rpc_update_metadentry_size_in_t in;
     rpc_update_metadentry_size_out_t out;
 
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got update metadentry size RPC with path {}", in.path);
-
-    hgi = HG_Get_info(handle);
-
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
 
     // do update
     auto ret_size = update_metadentry_size(in.path, in.size, (in.append == HG_TRUE));
@@ -223,7 +195,7 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     } else
         out.err = 1;
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry size RPC");
     }
@@ -231,9 +203,9 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 

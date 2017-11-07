@@ -13,23 +13,9 @@ class RPCData {
 private:
     RPCData() {}
 
-    // Can't use shared pointers here 'cause the Mercury environment has problems with it, e.g., unable to finalize,
-    // resulting into a faulty fuse shutdown
-    // Mercury RPC server
-    hg_class_t* server_rpc_hg_class_;
-    hg_context_t* server_rpc_hg_context_;
-    // Mercury IPC server with shared memory
-    hg_class_t* server_ipc_hg_class_;
-    hg_context_t* server_ipc_hg_context_;
-
-    // Mercury Client
-    hg_class_t* client_hg_class_;
-    hg_context_t* client_hg_context_;
-
     // Margo IDs. They can also be used to retrieve the Mercury classes and contexts that were created at init time
     margo_instance_id server_rpc_mid_;
     margo_instance_id server_ipc_mid_;
-    margo_instance_id client_rpc_mid_;
 
     lru11::Cache<uint64_t, hg_addr_t> address_cache_{32768, 4096}; // XXX Set values are not based on anything...
 
@@ -65,30 +51,6 @@ public:
 
     // Getter/Setter
 
-    hg_class_t* server_rpc_hg_class() const;
-
-    void server_rpc_hg_class(hg_class_t* server_rpc_hg_class);
-
-    hg_context_t* server_rpc_hg_context() const;
-
-    void server_rpc_hg_context(hg_context_t* server_rpc_hg_context);
-
-    hg_class_t* server_ipc_hg_class() const;
-
-    void server_ipc_hg_class(hg_class_t* server_ipc_hg_class);
-
-    hg_context_t* server_ipc_hg_context() const;
-
-    void server_ipc_hg_context(hg_context_t* server_ipc_hg_context);
-
-    hg_class_t* client_hg_class() const;
-
-    void client_hg_class(hg_class_t* client_hg_class);
-
-    hg_context_t* client_hg_context() const;
-
-    void client_hg_context(hg_context_t* client_hg_context);
-
     margo_instance* server_rpc_mid();
 
     void server_rpc_mid(margo_instance* server_rpc_mid);
@@ -96,10 +58,6 @@ public:
     margo_instance* server_ipc_mid();
 
     void server_ipc_mid(margo_instance* server_ipc_mid);
-
-    margo_instance* client_mid();
-
-    void client_mid(margo_instance* client_mid);
 
     hg_id_t rpc_minimal_id() const;
 

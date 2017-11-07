@@ -8,30 +8,30 @@ using namespace std;
 
 // Utility functions
 bool RPCData::get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-
-    if (address_cache_.tryGet(hostid, svr_addr)) {
-        ADAFS_DATA->spdlogger()->debug("tryGet successful and put in svr_addr ");
-        //found
-        return true;
-    } else {
-        ADAFS_DATA->spdlogger()->debug("not found in lrucache");
-        // not found, manual lookup and add address mapping to LRU cache
-#ifndef RPC_TEST
-        auto hostname = RPC_PROTOCOL + "://"s + ADAFS_DATA->hosts().at(hostid) + ":"s +
-                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
-#else
-        auto hostname = "bmi+tcp://127.0.0.1:" +
-                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
-//        auto hostname = "bmi+tcp://134.93.182.11:" +
+    return true;// XXX UNUSED
+//    if (address_cache_.tryGet(hostid, svr_addr)) {
+//        ADAFS_DATA->spdlogger()->debug("tryGet successful and put in svr_addr ");
+//        //found
+//        return true;
+//    } else {
+//        ADAFS_DATA->spdlogger()->debug("not found in lrucache");
+//        // not found, manual lookup and add address mapping to LRU cache
+//#ifndef RPC_TEST
+//        auto hostname = RPC_PROTOCOL + "://"s + ADAFS_DATA->hosts().at(hostid) + ":"s +
 //                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
-#endif
-        ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
-        margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
-        if (svr_addr == HG_ADDR_NULL)
-            return false;
-        address_cache_.insert(hostid, svr_addr);
-        return true;
-    }
+//#else
+//        auto hostname = "bmi+tcp://127.0.0.1:" +
+//                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
+////        auto hostname = "bmi+tcp://134.93.182.11:" +
+////                        ADAFS_DATA->rpc_port(); // convert hostid to hostname and port
+//#endif
+//        ADAFS_DATA->spdlogger()->debug("generated hostid {}", hostname);
+//        margo_addr_lookup(RPC_DATA->client_mid(), hostname.c_str(), &svr_addr);
+//        if (svr_addr == HG_ADDR_NULL)
+//            return false;
+//        address_cache_.insert(hostid, svr_addr);
+//        return true;
+//    }
 }
 
 size_t RPCData::get_rpc_node(const std::string& to_hash) {
@@ -43,54 +43,6 @@ size_t RPCData::get_rpc_node(const std::string& to_hash) {
 //}
 
 // Getter/Setter
-
-hg_class_t* RPCData::server_rpc_hg_class() const {
-    return server_rpc_hg_class_;
-}
-
-void RPCData::server_rpc_hg_class(hg_class_t* server_rpc_hg_class) {
-    RPCData::server_rpc_hg_class_ = server_rpc_hg_class;
-}
-
-hg_context_t* RPCData::server_rpc_hg_context() const {
-    return server_rpc_hg_context_;
-}
-
-void RPCData::server_rpc_hg_context(hg_context_t* server_rpc_hg_context) {
-    RPCData::server_rpc_hg_context_ = server_rpc_hg_context;
-}
-
-hg_class_t* RPCData::server_ipc_hg_class() const {
-    return server_ipc_hg_class_;
-}
-
-void RPCData::server_ipc_hg_class(hg_class_t* server_ipc_hg_class) {
-    RPCData::server_ipc_hg_class_ = server_ipc_hg_class;
-}
-
-hg_context_t* RPCData::server_ipc_hg_context() const {
-    return server_ipc_hg_context_;
-}
-
-void RPCData::server_ipc_hg_context(hg_context_t* server_ipc_hg_context) {
-    RPCData::server_ipc_hg_context_ = server_ipc_hg_context;
-}
-
-hg_class_t* RPCData::client_hg_class() const {
-    return client_hg_class_;
-}
-
-void RPCData::client_hg_class(hg_class_t* client_hg_class) {
-    RPCData::client_hg_class_ = client_hg_class;
-}
-
-hg_context_t* RPCData::client_hg_context() const {
-    return client_hg_context_;
-}
-
-void RPCData::client_hg_context(hg_context_t* client_hg_context) {
-    RPCData::client_hg_context_ = client_hg_context;
-}
 
 margo_instance* RPCData::server_rpc_mid() {
     return server_rpc_mid_;
@@ -106,14 +58,6 @@ margo_instance* RPCData::server_ipc_mid() {
 
 void RPCData::server_ipc_mid(margo_instance* server_ipc_mid) {
     RPCData::server_ipc_mid_ = server_ipc_mid;
-}
-
-margo_instance* RPCData::client_mid() {
-    return client_rpc_mid_;
-}
-
-void RPCData::client_mid(margo_instance* client_mid) {
-    RPCData::client_rpc_mid_ = client_mid;
 }
 
 hg_id_t RPCData::rpc_minimal_id() const {

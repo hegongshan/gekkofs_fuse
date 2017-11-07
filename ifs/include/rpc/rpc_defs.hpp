@@ -6,11 +6,9 @@
 #define LFS_RPC_DEFS_HPP
 
 extern "C" {
-#include <mercury_types.h>
-#include <mercury_proc_string.h>
+#include <mercury.h>
 #include <margo.h>
 }
-//#include "../../main.hpp"
 
 /* visible API for RPC operations */
 
