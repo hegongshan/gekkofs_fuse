@@ -93,15 +93,11 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
             printf("[ERR] Retrieving fs configurations from daemon");
         }
         /* clean up resources consumed by this rpc */
-        out.rootdir = nullptr;
-        out.mountdir = nullptr;
-        out.hosts_raw = nullptr;
         margo_free_output(handle, &out);
     } else {
         LD_LOG_ERROR0(debug_fd, "IPC send_get_config (timed out)\n");
     }
 
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return ret == HG_SUCCESS;
 }
@@ -141,9 +137,6 @@ int ipc_send_open(const string& path, int flags, const mode_t mode, const hg_id_
         LD_LOG_ERROR0(debug_fd, "IPC send_open (timed out)\n");
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -179,16 +172,12 @@ int ipc_send_stat(const string& path, string& attr, const hg_id_t ipc_stat_id) {
             attr = out.db_val;
         }
         /* clean up resources consumed by this rpc */
-        out.db_val = nullptr;
         margo_free_output(handle, &out);
     } else {
         LD_LOG_ERROR0(debug_fd, "IPC send_stat (timed out)\n");
         err = 1;
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -226,9 +215,6 @@ int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id) {
         LD_LOG_ERROR0(debug_fd, "IPC send_unlink (timed out)\n");
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }

@@ -530,7 +530,7 @@ bool init_ipc_client() {
     LD_LOG_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
 
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 0, 0);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 1, -1);
 
     if (mid == MARGO_INSTANCE_NULL) {
         LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo IPC client\n");
@@ -540,6 +540,7 @@ bool init_ipc_client() {
 
 
     margo_ipc_id_ = mid;
+//    margo_diag_start(mid);
 
     auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
     if (adafs_daemon_pid == -1) {
@@ -567,7 +568,7 @@ bool init_rpc_client() {
     LD_LOG_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
 
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 0, 0);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 1, -1);
 
     if (mid == MARGO_INSTANCE_NULL) {
         LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo RPC client\n");
@@ -675,12 +676,10 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
-
+//    margo_diag_dump(margo_ipc_id_, "-", 0);
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo IPC client ...\n");
-    auto mercury_ipc_class = margo_get_class(margo_ipc_id_);
-    auto mercury_ipc_context = margo_get_context(margo_ipc_id_);
     margo_finalize(margo_ipc_id_);
 
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury RPC addresses ...\n");
@@ -690,19 +689,7 @@ void destroy_preload() {
     };
     rpc_address_cache_.cwalk(free_all_addr);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo RPC client ...\n");
-    auto mercury_rpc_class = margo_get_class(margo_rpc_id_);
-    auto mercury_rpc_context = margo_get_context(margo_rpc_id_);
     margo_finalize(margo_rpc_id_);
-
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
-    ABT_finalize();
-
-    LD_LOG_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
-    HG_Context_destroy(mercury_ipc_context);
-    HG_Context_destroy(mercury_rpc_context);
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
-    HG_Finalize(mercury_ipc_class);
-    HG_Finalize(mercury_rpc_class);
     LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
 
     fclose(debug_fd);

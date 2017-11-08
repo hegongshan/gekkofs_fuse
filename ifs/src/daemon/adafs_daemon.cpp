@@ -32,6 +32,7 @@ void init_environment() {
  * Destroys the margo, argobots, and mercury environments
  */
 void destroy_enviroment() {
+//    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
     ADAFS_DATA->spdlogger()->info("About to finalize the margo server");
     margo_finalize(RPC_DATA->server_rpc_mid());
     margo_finalize(RPC_DATA->server_ipc_mid());

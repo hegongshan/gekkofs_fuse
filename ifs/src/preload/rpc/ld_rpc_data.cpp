@@ -69,16 +69,13 @@ int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data
         write_size = static_cast<size_t>(out.io_size);
         LD_LOG_TRACE(debug_fd, "Got response %d\n", out.res);
         /* clean up resources consumed by this rpc */
+        margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
     } else {
         LD_LOG_ERROR0(debug_fd, "RPC rpc_send_write (timed out)");
         err = EAGAIN;
     }
 
-    in.path = nullptr;
-
-    margo_bulk_free(in.bulk_handle);
-    margo_free_input(handle, &in);
     margo_destroy(handle);
 
     return err;

@@ -32,7 +32,6 @@
 // margo
 extern "C" {
 #include <abt.h>
-#include <abt-snoozer.h>
 #include <mercury.h>
 #include <margo.h>
 }

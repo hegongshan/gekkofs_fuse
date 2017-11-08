@@ -13,9 +13,8 @@
 using namespace std;
 
 static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
-    ipc_config_in_t in;
-    ipc_config_out_t out;
-
+    ipc_config_in_t in{};
+    ipc_config_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
@@ -43,13 +42,8 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
     }
 
-    out.mountdir = nullptr;
-    out.rootdir = nullptr;
-    out.hosts_raw = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -57,8 +51,8 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
 
 static hg_return_t ipc_srv_open(hg_handle_t handle) {
-    ipc_open_in_t in;
-    ipc_err_out_t out;
+    ipc_open_in_t in{};
+    ipc_err_out_t out{};
 
 
     auto ret = margo_get_input(handle, &in);
@@ -75,11 +69,10 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
     }
 
-    in.path = nullptr;
+//    in.path = nullptr;
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -87,8 +80,8 @@ static hg_return_t ipc_srv_open(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_open)
 
 static hg_return_t ipc_srv_stat(hg_handle_t handle) {
-    ipc_stat_in_t in;
-    ipc_stat_out_t out;
+    ipc_stat_in_t in{};
+    ipc_stat_out_t out{};
 
 
     auto ret = margo_get_input(handle, &in);
@@ -112,7 +105,6 @@ static hg_return_t ipc_srv_stat(hg_handle_t handle) {
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -120,8 +112,8 @@ static hg_return_t ipc_srv_stat(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_stat)
 
 static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
-    ipc_unlink_in_t in;
-    ipc_err_out_t out;
+    ipc_unlink_in_t in{};
+    ipc_err_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
@@ -135,11 +127,10 @@ static hg_return_t ipc_srv_unlink(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to unlink ipc");
     }
 
-    in.path = nullptr;
+//    in.path = nullptr;
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }

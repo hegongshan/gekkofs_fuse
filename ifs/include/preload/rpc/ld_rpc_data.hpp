@@ -74,16 +74,13 @@ int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id
         err = out.res;
         LD_LOG_TRACE(debug_fd, "Got response %d\n", out.res);
         /* clean up resources consumed by this rpc */
+        margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
     } else {
         LD_LOG_ERROR0(debug_fd, "RPC rpc_send_read (timed out)");
         err = EAGAIN;
     }
 
-    in.path = nullptr;
-
-    margo_bulk_free(in.bulk_handle);
-    margo_free_input(handle, &in);
     margo_destroy(handle);
 
     return err;

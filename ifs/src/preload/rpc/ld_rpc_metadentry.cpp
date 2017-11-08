@@ -103,9 +103,6 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
         LD_LOG_ERROR0(debug_fd, "RPC send_create_node (timed out)\n");
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -149,9 +146,6 @@ int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, con
         err = 1;
         LD_LOG_ERROR0(debug_fd, "RPC send_get_attr (timed out)\n");
     }
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -192,10 +186,6 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
     } else {
         LD_LOG_ERROR0(debug_fd, "RPC send_remove_node (timed out)\n");
     }
-
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -270,9 +260,6 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
         LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry (timed out)\n");
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }
@@ -333,9 +320,6 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
         LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry_size (timed out)\n");
     }
 
-    in.path = nullptr; // XXX temporary. If this is not done free input crashes because of invalid pointer?!
-
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return err;
 }

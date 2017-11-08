@@ -12,8 +12,8 @@
 using namespace std;
 
 static hg_return_t rpc_minimal(hg_handle_t handle) {
-    rpc_minimal_in_t in;
-    rpc_minimal_out_t out;
+    rpc_minimal_in_t in{};
+    rpc_minimal_out_t out{};
     // Get input
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
@@ -28,7 +28,6 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &in);
     margo_destroy(handle);
     ADAFS_DATA->spdlogger()->debug("Done with minimal rpc handler!");
 
@@ -38,9 +37,8 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
 
 static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
-    rpc_create_node_in_t in;
-    rpc_err_out_t out;
-
+    rpc_create_node_in_t in{};
+    rpc_err_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
@@ -55,11 +53,8 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to create node rpc");
     }
 
-    in.path = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -67,8 +62,8 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_create_node)
 
 static hg_return_t rpc_srv_attr(hg_handle_t handle) {
-    rpc_get_attr_in_t in;
-    rpc_get_attr_out_t out;
+    rpc_get_attr_in_t in{};
+    rpc_get_attr_out_t out{};
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got get attr RPC for path {}", in.path);
@@ -88,7 +83,6 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -96,8 +90,8 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)
 
 static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
-    rpc_remove_node_in_t in;
-    rpc_err_out_t out;
+    rpc_remove_node_in_t in{};
+    rpc_err_out_t out{};
 
 
     auto ret = margo_get_input(handle, &in);
@@ -112,12 +106,8 @@ static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to remove node rpc");
     }
-
-    in.path = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -126,8 +116,8 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove_node)
 
 
 static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
-    rpc_update_metadentry_in_t in;
-    rpc_err_out_t out;
+    rpc_update_metadentry_in_t in{};
+    rpc_err_out_t out{};
 
 
     auto ret = margo_get_input(handle, &in);
@@ -167,11 +157,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry RPC");
     }
 
-    in.path = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -179,8 +166,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
 static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
-    rpc_update_metadentry_size_in_t in;
-    rpc_update_metadentry_size_out_t out;
+    rpc_update_metadentry_size_in_t in{};
+    rpc_update_metadentry_size_out_t out{};
 
 
     auto ret = margo_get_input(handle, &in);
@@ -200,11 +187,8 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry size RPC");
     }
 
-    in.path = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }

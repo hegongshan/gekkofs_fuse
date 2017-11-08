@@ -8,6 +8,8 @@
 #include <preload/preload.hpp>
 
 extern "C" {
+#include <mercury.h>
+#include <mercury_types.h>
 #include <mercury_proc_string.h>
 #include <margo.h>
 }
