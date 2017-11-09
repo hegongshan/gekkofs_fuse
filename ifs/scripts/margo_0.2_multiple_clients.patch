@@ -1,0 +1,27 @@
+diff --git a/src/margo.c b/src/margo.c
+index e5e2e2c..cef5357 100644
+--- a/src/margo.c
++++ b/src/margo.c
+@@ -144,15 +144,16 @@ margo_instance_id margo_init(const char *addr_str, int mode,
+     struct margo_instance *mid = MARGO_INSTANCE_NULL;
+ 
+     if(mode != MARGO_CLIENT_MODE && mode != MARGO_SERVER_MODE) goto err;
++    if (ABT_initialized() == ABT_ERR_UNINITIALIZED) {
++        ret = ABT_init(0, NULL); /* XXX: argc/argv not currently used by ABT ... */
++        if(ret != 0) goto err;
+ 
+-    ret = ABT_init(0, NULL); /* XXX: argc/argv not currently used by ABT ... */
+-    if(ret != 0) goto err;
+-
+-    /* set caller (self) ES to idle without polling */
++        /* set caller (self) ES to idle without polling */
+ #ifdef HAVE_ABT_SNOOZER
+-    ret = ABT_snoozer_xstream_self_set();
+-    if(ret != 0) goto err;
++        ret = ABT_snoozer_xstream_self_set();
++        if(ret != 0) goto err;
+ #endif
++    }
+ 
+     if (use_progress_thread)
+     {

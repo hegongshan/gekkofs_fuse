@@ -530,7 +530,7 @@ bool init_ipc_client() {
     LD_LOG_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
 
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 1, -1);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 0, 0);
 
     if (mid == MARGO_INSTANCE_NULL) {
         LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo IPC client\n");
@@ -568,7 +568,7 @@ bool init_rpc_client() {
     LD_LOG_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
 
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 1, -1);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_CLIENT_MODE, 0, 0);
 
     if (mid == MARGO_INSTANCE_NULL) {
         LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init failed to initialize the Margo RPC client\n");
@@ -680,7 +680,7 @@ void destroy_preload() {
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo IPC client ...\n");
-    margo_finalize(margo_ipc_id_);
+//    margo_finalize(margo_ipc_id_);
 
     LD_LOG_DEBUG0(debug_fd, "Freeing Mercury RPC addresses ...\n");
     // free all rpc addresses in LRU map and finalize margo rpc
@@ -689,7 +689,7 @@ void destroy_preload() {
     };
     rpc_address_cache_.cwalk(free_all_addr);
     LD_LOG_DEBUG0(debug_fd, "Finalizing Margo RPC client ...\n");
-    margo_finalize(margo_rpc_id_);
+//    margo_finalize(margo_rpc_id_);
     LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
 
     fclose(debug_fd);
