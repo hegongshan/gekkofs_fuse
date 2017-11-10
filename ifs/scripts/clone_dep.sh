@@ -44,7 +44,7 @@ assertdir "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/ar
 # get Argobots-snoozer
 assertdir "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
 # get Margo
-assertdir "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "3375e1168185e4443a784e66420d91e122d03a61"
+assertdir "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "68ef7f14178e9066cf38846d90d451e00aaca61d"
 # get rocksdb
 assertdir "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.8"
 
