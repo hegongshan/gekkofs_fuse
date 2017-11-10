@@ -6,7 +6,6 @@
 #define LFS_RPC_TYPES_HPP
 
 extern "C" {
-#include <mercury_types.h>
 #include <mercury_proc_string.h>
 #include <margo.h>
 }

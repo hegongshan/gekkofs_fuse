@@ -32,9 +32,7 @@
 // margo
 extern "C" {
 #include <abt.h>
-#include <abt-snoozer.h>
-#include <mercury_types.h>
-#include <mercury_proc_string.h>
+#include <mercury.h>
 #include <margo.h>
 }
 // adafs

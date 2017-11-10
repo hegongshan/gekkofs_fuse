@@ -22,7 +22,6 @@ find_package(ZStd REQUIRED)
 find_package(RocksDB REQUIRED)
 # margo dependencies
 find_package(Libev REQUIRED)
-#find_package(CCI REQUIRED)
 find_package(BMI REQUIRED)
 find_package(Mercury REQUIRED)
 find_package(MercuryUtil REQUIRED)

@@ -1,7 +1,20 @@
 #!/bin/bash
-HOME=/home/evie
-GIT=$HOME/adafs/git
-INSTALL=$HOME/adafs/install
+
+if [ -z ${1+x} ]; then
+    echo "Please give git destination path as first parameter and install path as second";
+    exit
+else
+    echo "Git path is set to '$1'";
+    echo "Install path is set to '$2'";
+    echo "Install output is logged at /tmp/adafs_dep_install.log"
+fi
+
+LOG=/tmp/adafs_install.log
+echo "" &> $LOG
+GIT=$1
+INSTALL=$2
+
+mkdir -p $GIT
 
 echo "Installing BMI"
 # BMI
@@ -19,7 +32,7 @@ make install
 
 echo "Installing Mercury"
 
-# Mercury 
+# Mercury
 CURR=$GIT/mercury
 if [ ! -d "$CURR/build" ]; then
 	mkdir $CURR/build
@@ -41,7 +54,7 @@ rm -rf $CURR/build/*
 cd $CURR
 ./autogen.sh
 cd $CURR/build
-../configure --prefix=$INSTALL 
+../configure --prefix=$INSTALL
 make -j8
 make install
 make check

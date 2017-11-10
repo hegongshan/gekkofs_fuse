@@ -15,12 +15,12 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     int err;
     hg_bulk_t bulk_handle;
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got read RPC with path {} size {} offset {}", in.path, in.size, in.offset);
 
-    auto hgi = HG_Get_info(handle);
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+    auto hgi = margo_get_info(handle);
+    auto mid = margo_hg_info_get_instance(hgi);
 
     // set up buffer to read
     auto buf = make_unique<char[]>(in.size);
@@ -31,7 +31,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Could not open file with path: {}", in.path);
         out.res = err;
         ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
-        auto hret = margo_respond(mid, handle, &out);
+        auto hret = margo_respond(handle, &out);
         if (hret != HG_SUCCESS) {
             ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
         }
@@ -51,7 +51,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         }
         ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
         // respond rpc
-        auto hret = margo_respond(mid, handle, &out);
+        auto hret = margo_respond(handle, &out);
         if (hret != HG_SUCCESS) {
             ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
         }
@@ -61,9 +61,9 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
@@ -75,12 +75,12 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     void* b_buf;
     hg_bulk_t bulk_handle;
 
-    auto ret = HG_Get_input(handle, &in);
+    auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got write RPC with path {} size {} offset {}", in.path, in.size, in.offset);
 
-    auto hgi = HG_Get_info(handle);
-    auto mid = margo_hg_class_to_instance(hgi->hg_class);
+    auto hgi = margo_get_info(handle);
+    auto mid = margo_hg_info_get_instance(hgi);
     // register local buffer to fill for bulk pull
     auto b_buf_wrap = make_unique<char[]>(in.size);
     b_buf = static_cast<void*>(b_buf_wrap.get());
@@ -103,7 +103,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         out.io_size = 0;
     }
     ADAFS_DATA->spdlogger()->debug("Sending output response {}", out.res);
-    auto hret = margo_respond(mid, handle, &out);
+    auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to write request");
     }
@@ -111,9 +111,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     in.path = nullptr;
 
     // Destroy handle when finished
-    HG_Free_input(handle, &in);
-    HG_Free_output(handle, &out);
-    HG_Destroy(handle);
+    margo_free_input(handle, &in);
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
     return HG_SUCCESS;
 }
 
