@@ -32,7 +32,12 @@ void init_environment() {
  * Destroys the margo, argobots, and mercury environments
  */
 void destroy_enviroment() {
-//    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
+#ifdef MARGODIAG
+    cout << "\n####################\n\nMargo IPC server stats: " << endl;
+    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
+    cout << "\n####################\n\nMargo RPC server stats: " << endl;
+    margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
+#endif
     ADAFS_DATA->spdlogger()->info("About to finalize the margo server");
     margo_finalize(RPC_DATA->server_rpc_mid());
     margo_finalize(RPC_DATA->server_ipc_mid());
@@ -55,9 +60,9 @@ bool init_ipc_server() {
         ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo IPC server");
         return false;
     }
-
-//    margo_diag_start(mid);
-
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
     // Figure out what address this server is listening on (must be freed when finished)
     auto hret = margo_addr_self(mid, &addr_self);
     if (hret != HG_SUCCESS) {
@@ -98,9 +103,9 @@ bool init_rpc_server() {
         ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo RPC server");
         return false;
     }
-
-//    margo_diag_start(mid);
-
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
     // Figure out what address this server is listening on (must be freed when finished)
     auto hret = margo_addr_self(mid, &addr_self);
     if (hret != HG_SUCCESS) {

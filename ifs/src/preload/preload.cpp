@@ -560,8 +560,9 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
         margo_rpc_id_ = mid;
 
     register_client_rpcs(mid);
-//    margo_diag_start(mid);
-
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
 //    for (int i = 0; i < 10; ++i) {
 //        printf("Running %d iteration\n", i);
 //        send_minimal_ipc(minimal_id);
@@ -677,7 +678,12 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
-//    margo_diag_dump(margo_ipc_id_, "-", 0);
+#ifdef MARGODIAG
+    cout << "\n####################\n\nMargo IPC client stats: " << endl;
+    margo_diag_dump(margo_ipc_id_, "-", 0);
+    cout << "\n####################\n\nMargo RPC client stats: " << endl;
+    margo_diag_dump(margo_rpc_id_, "-", 0);
+#endif
     ld_logger->info("Freeing Mercury daemon addr ...");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
     ld_logger->info("Finalizing Margo IPC client ...");
