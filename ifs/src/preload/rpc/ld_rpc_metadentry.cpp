@@ -28,7 +28,7 @@ void send_minimal_rpc(const hg_id_t minimal_id) {
 //    /* create handle */
 //    auto ret = margo_create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_minimal_id(), &handle);
 //    if (ret != HG_SUCCESS) {
-//        printf("Creating handle FAILED\n");
+//        printf("Creating handle FAILED");
 //        return;
 //    }
 //
@@ -75,16 +75,16 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
     int err = EUNKNOWN;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+        ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
         return 1;
     }
     auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_create_node_id, &handle);
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
     int send_ret = HG_FALSE;
-    LD_LOG_TRACE0(debug_fd, "About to send create_node RPC ...\n");
+    ld_logger->debug("{}() About to send RPC ...", __func__);
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
         if (send_ret == HG_SUCCESS) {
@@ -95,12 +95,12 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
         /* decode response */
         ret = margo_get_output(handle, &out);
 
-        LD_LOG_TRACE(debug_fd, "Got response success: %d\n", out.err);
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC send_create_node (timed out)\n");
+        ld_logger->warn("{}() timed out");
     }
 
     margo_destroy(handle);
@@ -117,14 +117,15 @@ int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, con
     int err;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+        ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
         return 1;
     }
     auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_get_attr_id, &handle);
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
+    ld_logger->debug("{}() About to send RPC ...", __func__);
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
@@ -135,7 +136,7 @@ int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, con
     if (send_ret == HG_SUCCESS) {
         /* decode response */
         ret = margo_get_output(handle, &out);
-        LD_LOG_TRACE(debug_fd, "Got response success: %d\n", out.err);
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
         if (out.err == 0)
             attr = out.db_val;
@@ -144,7 +145,7 @@ int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, con
         margo_free_output(handle, &out);
     } else {
         err = 1;
-        LD_LOG_ERROR0(debug_fd, "RPC send_get_attr (timed out)\n");
+        ld_logger->warn("{}() timed out", __func__);
     }
     margo_destroy(handle);
     return err;
@@ -160,14 +161,15 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
     int err = EUNKNOWN;
     // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
     if (!get_addr_by_hostid(recipient, svr_addr)) {
-        LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %d\n", static_cast<int>(recipient));
+        ld_logger->error("{}() server address not resolvable for host id {}", __func__, static_cast<int>(recipient));
         return 1;
     }
     auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_remove_node_id, &handle);
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
+    ld_logger->debug("{}() About to send RPC ...", __func__);
     int send_ret = HG_FALSE;
     for (int i = 0; i < max_retries; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
@@ -179,12 +181,12 @@ int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipien
         /* decode response */
         ret = margo_get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC send_remove_node (timed out)\n");
+        ld_logger->warn("{}() timed out", __func__);
     }
     margo_destroy(handle);
     return err;
@@ -225,21 +227,20 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
     auto recipient = get_rpc_node(path);
     if (is_local_op(recipient)) { // local
         ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_update_metadentry_id, &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry to local daemon (IPC)\n");
+        ld_logger->debug("{}() to local daemon (IPC)");
     } else { // remote
         // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
         if (!get_addr_by_hostid(recipient, svr_addr)) {
-            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return 1;
         }
         ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_update_metadentry_id, &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry to remote daemon (RPC)\n");
+        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
     }
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
-    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry RPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
@@ -249,15 +250,15 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ld_logger->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry (timed out)\n");
+        ld_logger->warn("{}() timed out", __func__);
     }
 
     margo_destroy(handle);
@@ -284,21 +285,20 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
     if (is_local_op(recipient)) { // local
         ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_update_metadentry_size_id,
                            &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry_size to local daemon (IPC)\n");
+        ld_logger->debug("{}() to local daemon (IPC)", __func__);
     } else { // remote
         // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
         if (!get_addr_by_hostid(recipient, svr_addr)) {
-            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return 1;
         }
         ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_update_metadentry_size_id, &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_update_metadentry_size to remote daemon (RPC)\n");
+        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
     }
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
-    LD_LOG_DEBUG0(debug_fd, "About to send update metadentry size RPC to daemon\n");
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
@@ -308,16 +308,16 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        LD_LOG_DEBUG0(debug_fd, "Waiting for response\n");
+        ld_logger->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
 
-        LD_LOG_DEBUG(debug_fd, "Got response success: %d\n", out.err);
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
         ret_size = out.ret_size;
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC send_update_metadentry_size (timed out)\n");
+        ld_logger->warn("{}() timed out", __func__);
     }
 
     margo_destroy(handle);

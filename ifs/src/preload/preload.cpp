@@ -9,10 +9,6 @@
 #include <extern/lrucache/LRUCache11.hpp>
 
 #include <dlfcn.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <atomic>
 #include <cassert>
 #include <preload/rpc/ld_rpc_data.hpp>
 
@@ -56,8 +52,8 @@ KVCache rpc_address_cache_{32768, 4096}; // XXX Set values are not based on anyt
 static std::atomic<bool> is_env_initialized(false);
 
 // external variables
-FILE* debug_fd;
 shared_ptr<FsConfig> fs_config;
+shared_ptr<spdlog::logger> ld_logger;
 
 // function pointer for preloading
 void* libc;
@@ -107,7 +103,7 @@ static OpenFileMap file_map{};
 
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "open called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list vl;
@@ -146,7 +142,7 @@ int open(const char* path, int flags, ...) {
 
 int open64(__const char* path, int flags, ...) {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "open64 called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     mode_t mode;
     if (flags & O_CREAT) {
         va_list ap;
@@ -174,7 +170,7 @@ int open64(__const char* path, int flags, ...) {
 #undef creat
 int creat(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "creat called with path %s with mode %d\n", path, mode);
+    ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
     return open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
 
@@ -182,7 +178,7 @@ int creat(const char* path, mode_t mode) {
 
 int creat64(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "creat64 called with path %s with mode %d\n", path, mode);
+    ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
 
@@ -260,7 +256,7 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
 
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "stat called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call daemon and return
         return adafs_stat(path, buf);
@@ -270,7 +266,7 @@ int stat(const char* path, struct stat* buf) __THROW {
 
 int fstat(int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "fstat called with fd %d\n", fd);
+    ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (is_env_initialized && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
         // TODO call daemon and return
@@ -281,7 +277,7 @@ int fstat(int fd, struct stat* buf) __THROW {
 
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "__xstat called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     if (is_env_initialized && is_fs_path(path)) {
         // TODO call stat
         return adafs_stat(path, buf);
@@ -291,7 +287,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "__xstat64 called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     if (is_env_initialized && is_fs_path(path)) {
         return adafs_stat64(path, buf);
 //        // Not implemented
@@ -302,7 +298,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
 
 int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "__fxstat called with fd %d\n", fd);
+    ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat
         auto path = file_map.get(fd)->path();
@@ -313,7 +309,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
 
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    LD_LOG_DEBUG(debug_fd, "__fxstat64 called with fd %d\n", fd);
+    ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (is_env_initialized && file_map.exist(fd)) {
         // TODO call fstat64
         auto path = file_map.get(fd)->path();
@@ -379,13 +375,13 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             err = rpc_send_update_metadentry_size(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path,
                                                   count, append_flag, updated_size);
         if (err != 0) {
-            LD_LOG_ERROR0(debug_fd, "pwrite: update_metadentry_size failed\n");
+            ld_logger->error("{}() update_metadentry_size failed", __func__);
             return 0; // ERR
         }
         err = rpc_send_write(ipc_write_data_id, rpc_write_data_id, path, count, offset, buf, write_size, append_flag,
                              updated_size);
         if (err != 0) {
-            LD_LOG_ERROR0(debug_fd, "pwrite: write failed\n");
+            ld_logger->error("{}() write failed", __func__);
             return 0;
         }
         return write_size;
@@ -468,37 +464,36 @@ int dup2(int oldfd, int newfd) __THROW {
  * @return
  */
 bool init_ld_argobots() {
-    LD_LOG_DEBUG0(debug_fd, "Initializing Argobots ...\n");
+    ld_logger->info("Initializing Argobots ...");
 
     // We need no arguments to init
     auto argo_err = ABT_init(0, nullptr);
     if (argo_err != 0) {
-        LD_LOG_DEBUG0(debug_fd, "ABT_init() Failed to init Argobots (client)\n");
+        ld_logger->info("ABT_init() Failed to init Argobots (client)");
         return false;
     }
     // Set primary execution stream to idle without polling. Normally xstreams cannot sleep. This is what ABT_snoozer does
     argo_err = ABT_snoozer_xstream_self_set();
     if (argo_err != 0) {
-        LD_LOG_DEBUG0(debug_fd, "ABT_snoozer_xstream_self_set()  (client)\n");
+        ld_logger->info("ABT_snoozer_xstream_self_set()  (client)");
         return false;
     }
-    LD_LOG_DEBUG0(debug_fd, "Success.\n");
+    ld_logger->info("Success.");
     return true;
 }
 
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
 
     if (rpc_address_cache_.tryGet(hostid, svr_addr)) {
-        LD_LOG_TRACE0(debug_fd, "tryGet successful and put in svr_addr\n");
+        ld_logger->trace("tryGet successful and put in svr_addr");
         //found
         return true;
     } else {
-        LD_LOG_TRACE0(debug_fd, "not found in lrucache\n");
+        ld_logger->trace("not found in lrucache");
         // not found, manual lookup and add address mapping to LRU cache
         auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
                         fs_config->rpc_port; // convert hostid to hostname and port
-        LD_LOG_TRACE(debug_fd, "generated hostname %s with rpc_port %s\n", hostname.c_str(),
-                     fs_config->rpc_port.c_str());
+        ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
         margo_addr_lookup(margo_rpc_id_, hostname.c_str(), &svr_addr);
         if (svr_addr == HG_ADDR_NULL)
             return false;
@@ -563,48 +558,48 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
     ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
     if (ret != ABT_SUCCESS) return false;
     if (mode == Margo_mode::IPC)
-        LD_LOG_DEBUG0(debug_fd, "Initializing Mercury IPC client ...\n");
+        ld_logger->info("Initializing Mercury IPC client ...");
     else
-        LD_LOG_DEBUG0(debug_fd, "Initializing Mercury RPC client ...\n");
+        ld_logger->info("Initializing Mercury RPC client ...");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
     hg_class = HG_Init(na_plugin.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        LD_LOG_DEBUG0(debug_fd, "HG_Init() Failed to init Mercury client layer\n");
+        ld_logger->info("HG_Init() Failed to init Mercury client layer");
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        LD_LOG_DEBUG0(debug_fd, "HG_Context_create() Failed to create Mercury client context\n");
+        ld_logger->info("HG_Context_create() Failed to create Mercury client context");
         HG_Finalize(hg_class);
         return false;
     }
-    LD_LOG_DEBUG0(debug_fd, "Success.\n");
+    ld_logger->info("Success.");
 
     /* MARGO PART */
     if (mode == Margo_mode::IPC)
-        LD_LOG_DEBUG0(debug_fd, "Initializing Margo IPC client ...\n");
+        ld_logger->info("Initializing Margo IPC client ...");
     else
-        LD_LOG_DEBUG0(debug_fd, "Initializing Margo RPC client ...\n");
+        ld_logger->info("Initializing Margo RPC client ...");
     // margo will run in the context of thread
     auto mid = margo_init_pool(pool, pool, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        LD_LOG_DEBUG0(debug_fd, "[ERR]: margo_init_pool failed to initialize the Margo client\n");
+        ld_logger->error("margo_init_pool failed to initialize the Margo client");
         return false;
     }
-    LD_LOG_DEBUG0(debug_fd, "Success.\n");
+    ld_logger->info("Success.");
 
     if (mode == Margo_mode::IPC) {
         margo_ipc_id_ = mid;
         auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
         if (adafs_daemon_pid == -1) {
-            printf("[ERR] ADA-FS daemon not started. Exiting ...\n");
+            ld_logger->error("{}() ADA-FS daemon not started. Exiting ...", __func__);
             return false;
         }
-        printf("[INFO] ADA-FS daemon with PID %d found.\n", adafs_daemon_pid);
+        ld_logger->info("{}() ADA-FS daemon with PID {} found.", __func__, adafs_daemon_pid);
 
         string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
         margo_addr_lookup(margo_ipc_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
@@ -650,7 +645,7 @@ void init_environment() {
     err = init_margo_client(Margo_mode::RPC, RPC_PROTOCOL);
     assert(err);
     is_env_initialized = true;
-    LD_LOG_DEBUG0(debug_fd, "Environment initialized.\n");
+    ld_logger->info("Environment initialized.");
 }
 
 void init_passthrough_() {
@@ -691,9 +686,27 @@ void init_passthrough_() {
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
 
-    debug_fd = fopen(LOG_PRELOAD_PATH, "a+");
     fs_config = make_shared<struct FsConfig>();
-    LD_LOG_DEBUG0(debug_fd, "Passthrough initialized.\n");
+    //set the spdlogger and initialize it with spdlog
+    ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
+    // set logger format
+    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
+    // flush log when info, warning, error messages are encountered
+    ld_logger->flush_on(spdlog::level::info);
+#if defined(LOG_PRELOAD_TRACE)
+    spdlog::set_level(spdlog::level::trace);
+//    ld_logger->flush_on(spdlog::level::trace);
+#elif defined(LOG_PRELOAD_DEBUG)
+    spdlog::set_level(spdlog::level::debug);
+//    ld_logger->flush_on(spdlog::level::debug);
+#elif defined(LOG_PRELOAD_INFO)
+    spdlog::set_level(spdlog::level::info);
+//    ld_logger->flush_on(spdlog::level::info);
+#else
+    spdlog::set_level(spdlog::level::off);
+#endif
+
+    ld_logger->info("Passthrough initialized.");
 }
 
 void init_passthrough_if_needed() {
@@ -706,7 +719,7 @@ void init_passthrough_if_needed() {
 void init_preload() {
     init_passthrough_if_needed();
     init_environment();
-    printf("[INFO] preload init successful.\n");
+    ld_logger->info("{}() successful.", __func__);
 }
 
 /**
@@ -714,34 +727,32 @@ void init_preload() {
  */
 void destroy_preload() {
 //    margo_diag_dump(margo_ipc_id_, "-", 0);
-    LD_LOG_DEBUG0(debug_fd, "Freeing Mercury daemon addr ...\n");
+    ld_logger->info("Freeing Mercury daemon addr ...");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo IPC client ...\n");
+    ld_logger->info("Finalizing Margo IPC client ...");
     auto mercury_ipc_class = margo_get_class(margo_ipc_id_);
     auto mercury_ipc_context = margo_get_context(margo_ipc_id_);
     margo_finalize(margo_ipc_id_);
 
-    LD_LOG_DEBUG0(debug_fd, "Freeing Mercury RPC addresses ...\n");
+    ld_logger->info("Freeing Mercury RPC addresses ...");
     // free all rpc addresses in LRU map and finalize margo rpc
     auto free_all_addr = [&](const KVCache::node_type& n) {
         HG_Addr_free(margo_get_class(ld_margo_rpc_id()), n.value);
     };
     rpc_address_cache_.cwalk(free_all_addr);
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Margo RPC client ...\n");
+    ld_logger->info("Finalizing Margo RPC client ...");
     auto mercury_rpc_class = margo_get_class(margo_rpc_id_);
     auto mercury_rpc_context = margo_get_context(margo_rpc_id_);
     margo_finalize(margo_rpc_id_);
 
-    LD_LOG_DEBUG0(debug_fd, "Destroying Mercury context ...\n");
+    ld_logger->info("Destroying Mercury context ...");
     HG_Context_destroy(mercury_ipc_context);
     HG_Context_destroy(mercury_rpc_context);
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Mercury class ...\n");
+    ld_logger->info("Finalizing Mercury class ...");
     HG_Finalize(mercury_ipc_class);
     HG_Finalize(mercury_rpc_class);
-    LD_LOG_DEBUG0(debug_fd, "Preload library shut down.\n");
+    ld_logger->info("Preload library shut down.");
 
-    LD_LOG_DEBUG0(debug_fd, "Finalizing Argobots ...\n");
+    ld_logger->info("Finalizing Argobots ...");
     ABT_finalize();
-
-    fclose(debug_fd);
 }

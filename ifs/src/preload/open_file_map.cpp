@@ -9,7 +9,7 @@ using namespace std;
 OpenFile::OpenFile(const string& path, const bool append_flag) : path_(path), append_flag_(append_flag) {
     tmp_file_ = tmpfile(); // create a temporary file in memory and
     if (tmp_file_ == NULL) {
-        LD_LOG_ERROR(debug_fd, "Error while creating temporary file in OpenFile constructor %s\n", strerror(errno));
+        ld_logger->error("{}() While creating temporary file in OpenFile constructor {}", __func__, strerror(errno));
         cout << strerror(errno) << endl;
         exit(1);
     }

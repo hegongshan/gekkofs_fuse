@@ -36,27 +36,27 @@ int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id
     auto recipient = get_rpc_node(path);
     if (is_local_op(recipient)) { // local
         ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_read_data_id, &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_read to local daemon (IPC)\n");
+        ld_logger->debug("{}() to local daemon (IPC)", __func__);
         used_mid = ld_margo_ipc_id();
     } else { // remote
         // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
         if (!get_addr_by_hostid(recipient, svr_addr)) {
-            LD_LOG_ERROR(debug_fd, "server address not resolvable for host id %lu\n", recipient);
+            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return 1;
         }
         ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_read_data_id, &handle);
-        LD_LOG_TRACE0(debug_fd, "rpc_send_read to remote daemon (RPC)\n");
+        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
         used_mid = ld_margo_rpc_id();
     }
     if (ret != HG_SUCCESS) {
-        LD_LOG_ERROR0(debug_fd, "creating handle FAILED\n");
+        ld_logger->error("{}() creating handle FAILED", __func__);
         return 1;
     }
     /* register local target buffer for bulk access */
     auto b_buf = static_cast<void*>(tar_buf);
     ret = margo_bulk_create(used_mid, 1, &b_buf, &in_size, HG_BULK_WRITE_ONLY, &in.bulk_handle);
     if (ret != 0)
-        LD_LOG_ERROR0(debug_fd, "failed to create bulk on client\n");
+        ld_logger->error("{}() failed to create bulk on client", __func__);
 
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
@@ -72,12 +72,12 @@ int rpc_send_read(const hg_id_t ipc_read_data_id, const hg_id_t rpc_read_data_id
         tar_buf = static_cast<T*>(b_buf);
         read_size = static_cast<size_t>(out.io_size);
         err = out.res;
-        LD_LOG_TRACE(debug_fd, "Got response %d\n", out.res);
+        ld_logger->debug("{}() Got response {}", __func__, out.res);
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
     } else {
-        LD_LOG_ERROR0(debug_fd, "RPC rpc_send_read (timed out)");
+        ld_logger->warn("{}() timed out", __func__);
         err = EAGAIN;
     }
 

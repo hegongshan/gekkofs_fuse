@@ -23,6 +23,9 @@ extern "C" {
 #include <margo.h>
 }
 
+// third party libs
+#include <extern/spdlog/spdlog.h>
+
 #include <preload/open_file_map.hpp>
 #include <preload/preload_util.hpp>
 
@@ -80,22 +83,8 @@ struct MetadentryUpdateFlags {
 
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern shared_ptr<struct FsConfig> fs_config;
+extern shared_ptr<spdlog::logger> ld_logger;
 
-// TODO get rid of that horrible, disgusting logging X.x
-extern FILE* debug_fd;
-
-#define LD_LOG_DEBUG(fd, fmt, ...) \
-            do { if (LOG_PRELOAD_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [debug] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
-#define LD_LOG_TRACE(fd, fmt, ...) \
-            do { if (LOG_PRELOAD_TRACE) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [trace] " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
-#define LD_LOG_ERROR(fd, fmt, ...) \
-            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]   " fmt, ##__VA_ARGS__); fflush(fd); } while (0)
-#define LD_LOG_DEBUG0(fd, fmt) \
-            do { if (LOG_PRELOAD_DEBUG) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [debug] " fmt); fflush(fd); } while (0)
-#define LD_LOG_TRACE0(fd, fmt) \
-            do { if (LOG_PRELOAD_TRACE) fprintf(fd, "[" __DATE__ ":" __TIME__ "] [trace] " fmt); fflush(fd); } while (0)
-#define LD_LOG_ERROR0(fd, fmt) \
-            do { fprintf(fd, "[" __DATE__ ":" __TIME__ "] [err]   " fmt); fflush(fd); } while (0)
 #define EUNKNOWN -1
 
 bool init_ld_argobots();
