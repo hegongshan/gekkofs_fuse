@@ -29,8 +29,7 @@ MERCURY_GEN_PROC(rpc_stat_in_t, ((hg_const_string_t) (path)))
 MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))
         ((hg_const_string_t) (db_val)))
 
-MERCURY_GEN_PROC(rpc_remove_node_in_t,
-                 ((hg_const_string_t) (path)))
+MERCURY_GEN_PROC(rpc_unlink_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_update_metadentry_in_t,
                  ((hg_const_string_t) (path))\

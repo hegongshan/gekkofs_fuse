@@ -34,6 +34,4 @@ MERCURY_GEN_PROC(ipc_config_out_t, ((hg_const_string_t) (mountdir))
 ((hg_uint64_t) (host_id)) \
 ((hg_uint64_t) (host_size)))
 
-MERCURY_GEN_PROC(ipc_unlink_in_t, ((hg_const_string_t) (path)))
-
 #endif //IFS_IPC_TYPES_HPP

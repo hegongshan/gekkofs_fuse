@@ -11,12 +11,8 @@ void init_environment();
 void destroy_enviroment();
 
 bool init_ipc_server();
-
 bool init_rpc_server();
 
-bool init_rpc_client();
-
-void register_server_ipcs();
-void register_server_rpcs();
+void register_server_rpcs(margo_instance_id mid);
 
 #endif //IFS_ADAFS_DAEMON_HPP

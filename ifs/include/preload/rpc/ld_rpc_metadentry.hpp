@@ -20,7 +20,7 @@ int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const st
 int
 rpc_send_stat(const hg_id_t ipc_stat_id, const hg_id_t rpc_stat_id, const std::string& path, string& attr);
 
-int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipient, const std::string& path);
+int rpc_send_unlink(const hg_id_t ipc_unlink_id, const hg_id_t rpc_unlink_id, const std::string& path);
 
 int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_id_t rpc_update_metadentry_id,
                                const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags);
