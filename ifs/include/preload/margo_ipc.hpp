@@ -16,8 +16,6 @@ void send_minimal_ipc(const hg_id_t minimal_id);
 
 bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id);
 
-int ipc_send_stat(const string& path, std::string& attr, const hg_id_t ipc_stat_id);
-
 int ipc_send_unlink(const string& path, const hg_id_t ipc_unlink_id);
 
 #endif //IFS_MARGO_IPC_HPP

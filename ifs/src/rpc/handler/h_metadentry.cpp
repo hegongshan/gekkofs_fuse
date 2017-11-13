@@ -62,9 +62,9 @@ static hg_return_t rpc_srv_open(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_open)
 
-static hg_return_t rpc_srv_attr(hg_handle_t handle) {
-    rpc_get_attr_in_t in{};
-    rpc_get_attr_out_t out{};
+static hg_return_t rpc_srv_stat(hg_handle_t handle) {
+    rpc_stat_in_t in{};
+    rpc_stat_out_t out{};
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got get attr RPC for path {}", in.path);
@@ -88,7 +88,7 @@ static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_attr)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
 static hg_return_t rpc_srv_remove_node(hg_handle_t handle) {
     rpc_remove_node_in_t in{};

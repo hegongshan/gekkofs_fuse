@@ -38,7 +38,7 @@ static hg_id_t ipc_read_data_id;
 // RPC IDs
 static hg_id_t rpc_minimal_id;
 static hg_id_t rpc_open_id;
-static hg_id_t rpc_attr_id;
+static hg_id_t rpc_stat_id;
 static hg_id_t rpc_remove_node_id;
 static hg_id_t rpc_update_metadentry_id;
 static hg_id_t rpc_update_metadentry_size_id;
@@ -205,37 +205,15 @@ int __close(int fd) {
 
 // TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const std::string& path, struct stat* buf) {
-    int err;
     string attr = ""s;
-    if (fs_config->host_size > 1) { // multiple node operation
-        auto recipient = get_rpc_node(path);
-        if (is_local_op(recipient)) { // local
-            err = ipc_send_stat(path, attr, ipc_stat_id);
-        } else { // remote
-            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
-        }
-    } else { // single node operation
-        err = ipc_send_stat(path, attr, ipc_stat_id);
-    }
-
+    auto err = rpc_send_stat(ipc_stat_id, rpc_stat_id, path, attr);
     db_val_to_stat(path, attr, *buf);
-
     return err;
 }
 
 int adafs_stat64(const std::string& path, struct stat64* buf) {
-    int err;
     string attr = ""s;
-    if (fs_config->host_size > 1) { // multiple node operation
-        auto recipient = get_rpc_node(path);
-        if (is_local_op(recipient)) { // local
-            err = ipc_send_stat(path, attr, ipc_stat_id);
-        } else { // remote
-            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
-        }
-    } else { // single node operation
-        err = ipc_send_stat(path, attr, ipc_stat_id);
-    }
+    auto err = rpc_send_stat(ipc_stat_id, rpc_stat_id, path, attr);
     db_val_to_stat64(path, attr, *buf);
     return err;
 }
@@ -499,7 +477,7 @@ bool is_local_op(const size_t recipient) {
 void register_client_ipcs(margo_instance_id mid) {
     minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
     ipc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
-    ipc_stat_id = MARGO_REGISTER(mid, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, NULL);
+    ipc_stat_id = MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, NULL);
     ipc_unlink_id = MARGO_REGISTER(mid, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, NULL);
     ipc_update_metadentry_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
                                               rpc_err_out_t, NULL);
@@ -517,7 +495,7 @@ void register_client_ipcs(margo_instance_id mid) {
 void register_client_rpcs(margo_instance_id mid) {
     rpc_minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
     rpc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
-    rpc_attr_id = MARGO_REGISTER(mid, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, NULL);
+    rpc_stat_id = MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, NULL);
     rpc_remove_node_id = MARGO_REGISTER(mid, "rpc_srv_remove_node", rpc_remove_node_in_t,
                                         rpc_err_out_t, NULL);
     rpc_update_metadentry_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,

@@ -24,9 +24,9 @@ MERCURY_GEN_PROC(rpc_open_in_t,
 ((hg_int32_t) (flags)) \
 ((uint32_t) (mode)))
 
-MERCURY_GEN_PROC(rpc_get_attr_in_t, ((hg_const_string_t) (path)))
+MERCURY_GEN_PROC(rpc_stat_in_t, ((hg_const_string_t) (path)))
 
-MERCURY_GEN_PROC(rpc_get_attr_out_t, ((hg_int32_t) (err))
+MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))
         ((hg_const_string_t) (db_val)))
 
 MERCURY_GEN_PROC(rpc_remove_node_in_t,
