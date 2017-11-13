@@ -36,21 +36,22 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
 
-static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
-    rpc_create_node_in_t in{};
+static hg_return_t rpc_srv_open(hg_handle_t handle) {
+    rpc_open_in_t in{};
     rpc_err_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
+    ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got create node RPC with path {}", in.path);
-
+    ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
+                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path);
     // create metadentry
     out.err = create_metadentry(in.path, in.mode);
 
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to create node rpc");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
     }
 
     // Destroy handle when finished
@@ -59,7 +60,7 @@ static hg_return_t rpc_srv_create_node(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_create_node)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_open)
 
 static hg_return_t rpc_srv_attr(hg_handle_t handle) {
     rpc_get_attr_in_t in{};

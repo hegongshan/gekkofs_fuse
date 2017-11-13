@@ -102,45 +102,6 @@ bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
     return ret == HG_SUCCESS;
 }
 
-int ipc_send_open(const string& path, int flags, const mode_t mode, const hg_id_t ipc_open_id) {
-    hg_handle_t handle;
-    ipc_open_in_t in{};
-    ipc_err_out_t out{};
-    // fill in
-    in.mode = mode;
-    in.flags = flags;
-    in.path = path.c_str();
-    int err = EUNKNOWN;
-    auto ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_open_id, &handle);
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle failed", __func__);
-        return 1;
-    }
-    ld_logger->debug("{}() About to send IPC to daemon", __func__);
-    int send_ret = HG_FALSE;
-    for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
-            break;
-        }
-    }
-    if (send_ret == HG_SUCCESS) {
-        /* decode response */
-        ld_logger->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-
-        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
-        err = out.err;
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        ld_logger->warn("{}() timed out");
-    }
-
-    margo_destroy(handle);
-    return err;
-}
-
 int ipc_send_stat(const string& path, string& attr, const hg_id_t ipc_stat_id) {
     hg_handle_t handle;
     ipc_stat_in_t in{};

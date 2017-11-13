@@ -11,8 +11,8 @@
 
 void send_minimal_rpc(const hg_id_t minimal_id);
 
-int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipient, const std::string& path,
-                         const mode_t mode);
+int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const std::string& path, const mode_t mode,
+                  const int flags);
 
 int
 rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, const std::string& path, std::string& attr);

@@ -138,7 +138,7 @@ void register_server_ipcs() {
     // preload IPCs
     MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
     MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
-    MARGO_REGISTER(mid, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, ipc_srv_open);
+    MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, rpc_srv_open);
     MARGO_REGISTER(mid, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, ipc_srv_stat);
     MARGO_REGISTER(mid, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, ipc_srv_unlink);
     MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,
@@ -156,7 +156,7 @@ void register_server_ipcs() {
 void register_server_rpcs() {
     auto mid = RPC_DATA->server_rpc_mid();
     MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
-    MARGO_REGISTER(mid, "rpc_srv_create_node", rpc_create_node_in_t, rpc_err_out_t, rpc_srv_create_node);
+    MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, rpc_srv_open);
     MARGO_REGISTER(mid, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr);
     MARGO_REGISTER(mid, "rpc_srv_remove_node", rpc_remove_node_in_t, rpc_err_out_t, rpc_srv_remove_node);
     MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,

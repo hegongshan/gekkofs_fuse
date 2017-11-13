@@ -50,35 +50,6 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
 
-static hg_return_t ipc_srv_open(hg_handle_t handle) {
-    ipc_open_in_t in{};
-    ipc_err_out_t out{};
-
-
-    auto ret = margo_get_input(handle, &in);
-    assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got open IPC with path {}", in.path);
-
-    // do open TODO handle da flags
-    string path = in.path;
-    out.err = create_metadentry(in.path, in.mode);
-
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
-    auto hret = margo_respond(handle, &out);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
-    }
-
-//    in.path = nullptr;
-
-    // Destroy handle when finished
-    margo_free_input(handle, &in);
-    margo_destroy(handle);
-    return HG_SUCCESS;
-}
-
-DEFINE_MARGO_RPC_HANDLER(ipc_srv_open)
-
 static hg_return_t ipc_srv_stat(hg_handle_t handle) {
     ipc_stat_in_t in{};
     ipc_stat_out_t out{};

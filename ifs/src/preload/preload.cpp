@@ -37,7 +37,7 @@ static hg_id_t ipc_write_data_id;
 static hg_id_t ipc_read_data_id;
 // RPC IDs
 static hg_id_t rpc_minimal_id;
-static hg_id_t rpc_create_node_id;
+static hg_id_t rpc_open_id;
 static hg_id_t rpc_attr_id;
 static hg_id_t rpc_remove_node_id;
 static hg_id_t rpc_update_metadentry_id;
@@ -104,32 +104,18 @@ static OpenFileMap file_map{};
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    mode_t mode;
+    mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list vl;
         va_start(vl, flags);
-        mode = va_arg(vl, int);
+        mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
     if (is_env_initialized && is_fs_path(path)) {
         auto err = 1;
         auto fd = file_map.add(path, (flags & O_APPEND) != 0);
-        if (flags & O_CREAT) { // do file create TODO handle all other flags
-            if (fs_config->host_size > 1) { // multiple node operation
-                auto recipient = get_rpc_node(path);
-                if (is_local_op(recipient)) { // local
-                    err = ipc_send_open(path, flags, mode, ipc_open_id);
-                } else { // remote
-                    err = rpc_send_create_node(rpc_create_node_id, recipient, path,
-                                               mode);
-                }
-            } else { // single node operationHG_Destroy
-                err = ipc_send_open(path, flags, mode, ipc_open_id);
-            }
-        } else {
-            // TODO look up if file exists
-            err = 0;
-        }
+        // TODO look up if file exists configurable
+        err = rpc_send_open(ipc_open_id, rpc_open_id, path, mode, flags);
         if (err == 0)
             return fd;
         else {
@@ -143,7 +129,7 @@ int open(const char* path, int flags, ...) {
 int open64(__const char* path, int flags, ...) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    mode_t mode;
+    mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list ap;
         va_start(ap, flags);
@@ -512,7 +498,7 @@ bool is_local_op(const size_t recipient) {
 
 void register_client_ipcs(margo_instance_id mid) {
     minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-    ipc_open_id = MARGO_REGISTER(mid, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, NULL);
+    ipc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
     ipc_stat_id = MARGO_REGISTER(mid, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, NULL);
     ipc_unlink_id = MARGO_REGISTER(mid, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, NULL);
     ipc_update_metadentry_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
@@ -530,8 +516,7 @@ void register_client_ipcs(margo_instance_id mid) {
 
 void register_client_rpcs(margo_instance_id mid) {
     rpc_minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-    rpc_create_node_id = MARGO_REGISTER(mid, "rpc_srv_create_node", rpc_create_node_in_t,
-                                        rpc_err_out_t, NULL);
+    rpc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
     rpc_attr_id = MARGO_REGISTER(mid, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, NULL);
     rpc_remove_node_id = MARGO_REGISTER(mid, "rpc_srv_remove_node", rpc_remove_node_in_t,
                                         rpc_err_out_t, NULL);
@@ -695,7 +680,7 @@ void init_passthrough_() {
     ld_logger->flush_on(spdlog::level::info);
 #if defined(LOG_PRELOAD_TRACE)
     spdlog::set_level(spdlog::level::trace);
-//    ld_logger->flush_on(spdlog::level::trace);
+    ld_logger->flush_on(spdlog::level::trace);
 #elif defined(LOG_PRELOAD_DEBUG)
     spdlog::set_level(spdlog::level::debug);
 //    ld_logger->flush_on(spdlog::level::debug);
