@@ -26,8 +26,8 @@ find_library(ABT_SNOOZER_LIBRARY abt-snoozer
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/argobots
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/argobots
         )
 
 set(ABT_SNOOZER_INCLUDE_DIRS ${ABT_SNOOZER_INCLUDE_DIR})

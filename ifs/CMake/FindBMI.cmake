@@ -28,8 +28,8 @@ find_library(BMI_LIBRARY bmi
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/bmi
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/bmi
         )
 
 set(BMI_INCLUDE_DIRS ${BMI_INCLUDE_DIR})

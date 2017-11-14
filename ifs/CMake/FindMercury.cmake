@@ -28,8 +28,8 @@ find_library(MERCURY_LIBRARY
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/mercury
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/mercury
         )
 
 set(MERCURY_INCLUDE_DIRS ${MERCURY_INCLUDE_DIR})

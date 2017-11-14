@@ -16,8 +16,8 @@ find_library(MERCURY_UTIL_LIBRARY
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/mercury_util
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/mercury_util
         )
 
 set(MERCURY_UTIL_LIBRARIES ${MERCURY_UTIL_LIBRARY})

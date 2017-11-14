@@ -28,8 +28,8 @@ find_library(ABT_IO_LIBRARY abt-io
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/abt-io
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/abt-io
         )
 
 set(ABT_IO_INCLUDE_DIRS ${ABT_IO_INCLUDE_DIR})

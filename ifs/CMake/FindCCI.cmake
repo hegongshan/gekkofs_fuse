@@ -28,8 +28,8 @@ find_library(CCI_LIBRARY cci
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/cci
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/cci
         )
 
 set(CCI_INCLUDE_DIRS ${CCI_INCLUDE_DIR})

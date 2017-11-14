@@ -46,8 +46,8 @@ find_library(MARGO_LIBRARY margo
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/margo
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/margo
         )
 
 set(MARGO_INCLUDE_DIRS ${MARGO_INCLUDE_DIR})

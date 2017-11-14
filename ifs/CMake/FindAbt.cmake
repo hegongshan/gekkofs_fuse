@@ -28,8 +28,8 @@ find_library(ABT_LIBRARY abt
         /usr/local
         /usr/local/adafs
         /opt/
-        PATH SUFFIXES lib
-        PATH SUFFIXES lib/argobots
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/argobots
         )
 
 set(ABT_INCLUDE_DIRS ${ABT_INCLUDE_DIR})

@@ -18,8 +18,8 @@ else ()
             /usr/local
             /usr/local/adafs
             /opt/
-            PATH SUFFIXES include
-            PATH SUFFIXES include/libev
+            PATH_SUFFIXES include
+            PATH_SUFFIXES include/libev
     )
 
     find_library(
@@ -32,8 +32,8 @@ else ()
             /usr/local
             /usr/local/adafs
             /opt/
-            PATH SUFFIXES lib
-            PATH SUFFIXES lib/libev
+            PATH_SUFFIXES lib
+            PATH_SUFFIXES lib/libev
     )
 
     set(LIBEV_INCLUDE_DIRS ${LIBEV_INCLUDE_DIR})
