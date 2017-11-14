@@ -44,6 +44,10 @@ int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const st
     in.mode = mode;
 
     // TODO handle all flags. currently only file create
+    if (!(flags & O_CREAT)) {
+        ld_logger->debug("{}() No create flag given, assuming file exists ...", __func__);
+        return 0; // XXX This is a temporary quickfix for read. Look up if file exists. Do it on server end.
+    }
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
     margo_create_wrap(ipc_open_id, rpc_open_id, path, handle, svr_addr);
 

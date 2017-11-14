@@ -304,6 +304,7 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         // TODO if append flag has been given, set offset accordingly.
         // XXX handle lseek too
         return pwrite(fd, buf, count, 0);
@@ -314,6 +315,7 @@ ssize_t write(int fd, const void* buf, size_t count) {
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
         auto append_flag = adafs_fd->append_flag();
@@ -345,6 +347,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         return pread(fd, buf, count, 0);
     }
     return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
@@ -353,6 +356,7 @@ ssize_t read(int fd, void* buf, size_t count) {
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (is_env_initialized && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
         size_t read_size = 0;

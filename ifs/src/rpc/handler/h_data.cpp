@@ -9,8 +9,8 @@
 using namespace std;
 
 static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
-    rpc_read_data_in_t in;
-    rpc_data_out_t out;
+    rpc_read_data_in_t in{};
+    rpc_data_out_t out{};
     void* b_buf;
     int err;
     hg_bulk_t bulk_handle;
@@ -39,7 +39,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         // set up buffer for bulk transfer
         b_buf = (void*) buf.get();
 
-        ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in.size, HG_BULK_READ_ONLY, &bulk_handle);
+        ret = margo_bulk_create(mid, 1, &b_buf, &in.size, HG_BULK_READ_ONLY, &bulk_handle);
 
         // push data to client
         if (ret == HG_SUCCESS)
@@ -55,14 +55,11 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         if (hret != HG_SUCCESS) {
             ADAFS_DATA->spdlogger()->error("Failed to respond to read request");
         }
-        HG_Bulk_free(bulk_handle);
+        margo_bulk_free(bulk_handle);
     }
-
-    in.path = nullptr;
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
@@ -70,8 +67,8 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 
 static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
-    rpc_write_data_in_t in;
-    rpc_data_out_t out;
+    rpc_write_data_in_t in{};
+    rpc_data_out_t out{};
     void* b_buf;
     hg_bulk_t bulk_handle;
 
@@ -84,7 +81,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     // register local buffer to fill for bulk pull
     auto b_buf_wrap = make_unique<char[]>(in.size);
     b_buf = static_cast<void*>(b_buf_wrap.get());
-    ret = HG_Bulk_create(hgi->hg_class, 1, &b_buf, &in.size, HG_BULK_WRITE_ONLY, &bulk_handle);
+    ret = margo_bulk_create(mid, 1, &b_buf, &in.size, HG_BULK_WRITE_ONLY, &bulk_handle);
     // push data to client
     if (ret == HG_SUCCESS) {
         // pull data from client here
@@ -96,7 +93,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
             ADAFS_DATA->spdlogger()->error("Failed to write data to local disk.");
             out.io_size = 0;
         }
-        HG_Bulk_free(bulk_handle);
+        margo_bulk_free(bulk_handle);
     } else {
         ADAFS_DATA->spdlogger()->error("Failed to pull data from client in write operation");
         out.res = EIO;
@@ -108,11 +105,8 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to write request");
     }
 
-    in.path = nullptr;
-
     // Destroy handle when finished
     margo_free_input(handle, &in);
-    margo_free_output(handle, &out);
     margo_destroy(handle);
     return HG_SUCCESS;
 }
