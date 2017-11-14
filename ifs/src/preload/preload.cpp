@@ -26,7 +26,7 @@ hg_addr_t daemon_svr_addr_ = HG_ADDR_NULL;
 margo_instance_id margo_rpc_id_;
 
 // IPC IDs
-static hg_id_t minimal_id;
+static hg_id_t ipc_minimal_id;
 static hg_id_t ipc_config_id;
 static hg_id_t ipc_open_id;
 static hg_id_t ipc_stat_id;
@@ -37,9 +37,9 @@ static hg_id_t ipc_write_data_id;
 static hg_id_t ipc_read_data_id;
 // RPC IDs
 static hg_id_t rpc_minimal_id;
-static hg_id_t rpc_create_node_id;
-static hg_id_t rpc_attr_id;
-static hg_id_t rpc_remove_node_id;
+static hg_id_t rpc_open_id;
+static hg_id_t rpc_stat_id;
+static hg_id_t rpc_unlink_id;
 static hg_id_t rpc_update_metadentry_id;
 static hg_id_t rpc_update_metadentry_size_id;
 static hg_id_t rpc_write_data_id;
@@ -104,32 +104,18 @@ static OpenFileMap file_map{};
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    mode_t mode;
+    mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list vl;
         va_start(vl, flags);
-        mode = va_arg(vl, int);
+        mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
     if (is_env_initialized && is_fs_path(path)) {
         auto err = 1;
         auto fd = file_map.add(path, (flags & O_APPEND) != 0);
-        if (flags & O_CREAT) { // do file create TODO handle all other flags
-            if (fs_config->host_size > 1) { // multiple node operation
-                auto recipient = get_rpc_node(path);
-                if (is_local_op(recipient)) { // local
-                    err = ipc_send_open(path, flags, mode, ipc_open_id);
-                } else { // remote
-                    err = rpc_send_create_node(rpc_create_node_id, recipient, path,
-                                               mode);
-                }
-            } else { // single node operationHG_Destroy
-                err = ipc_send_open(path, flags, mode, ipc_open_id);
-            }
-        } else {
-            // TODO look up if file exists
-            err = 0;
-        }
+        // TODO look up if file exists configurable
+        err = rpc_send_open(ipc_open_id, rpc_open_id, path, mode, flags);
         if (err == 0)
             return fd;
         else {
@@ -143,7 +129,7 @@ int open(const char* path, int flags, ...) {
 int open64(__const char* path, int flags, ...) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    mode_t mode;
+    mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list ap;
         va_start(ap, flags);
@@ -168,6 +154,7 @@ int open64(__const char* path, int flags, ...) {
 //}
 
 #undef creat
+
 int creat(const char* path, mode_t mode) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
@@ -184,21 +171,9 @@ int creat64(const char* path, mode_t mode) {
 
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
-    int err;
-//    LD_LOG_DEBUG(debug_fd, "unlink called with path %s\n", path);
+    ld_logger->trace("{}() called with path {}", __func__, path);
     if (is_env_initialized && is_fs_path(path)) {
-        if (fs_config->host_size > 1) { // multiple node operation
-            auto recipient = get_rpc_node(path);
-            if (is_local_op(recipient)) { // local
-                err = ipc_send_unlink(path, ipc_unlink_id);
-            } else { // remote
-                err = rpc_send_remove_node(rpc_remove_node_id, recipient, path);
-            }
-        } else { // single node operation
-            err = ipc_send_unlink(path, ipc_unlink_id);
-        }
-
-        return err;
+        return rpc_send_unlink(ipc_unlink_id, rpc_unlink_id, path);
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
@@ -219,37 +194,15 @@ int __close(int fd) {
 
 // TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const std::string& path, struct stat* buf) {
-    int err;
     string attr = ""s;
-    if (fs_config->host_size > 1) { // multiple node operation
-        auto recipient = get_rpc_node(path);
-        if (is_local_op(recipient)) { // local
-            err = ipc_send_stat(path, attr, ipc_stat_id);
-        } else { // remote
-            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
-        }
-    } else { // single node operation
-        err = ipc_send_stat(path, attr, ipc_stat_id);
-    }
-
+    auto err = rpc_send_stat(ipc_stat_id, rpc_stat_id, path, attr);
     db_val_to_stat(path, attr, *buf);
-
     return err;
 }
 
 int adafs_stat64(const std::string& path, struct stat64* buf) {
-    int err;
     string attr = ""s;
-    if (fs_config->host_size > 1) { // multiple node operation
-        auto recipient = get_rpc_node(path);
-        if (is_local_op(recipient)) { // local
-            err = ipc_send_stat(path, attr, ipc_stat_id);
-        } else { // remote
-            err = rpc_send_get_attr(rpc_attr_id, recipient, path, attr);
-        }
-    } else { // single node operation
-        err = ipc_send_stat(path, attr, ipc_stat_id);
-    }
+    auto err = rpc_send_stat(ipc_stat_id, rpc_stat_id, path, attr);
     db_val_to_stat64(path, attr, *buf);
     return err;
 }
@@ -372,8 +325,8 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
          * The metadentry size update is atomic XXX actually not yet. see metadentry.cpp
          */
 //        if (append_flag)
-            err = rpc_send_update_metadentry_size(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path,
-                                                  count, append_flag, updated_size);
+        err = rpc_send_update_metadentry_size(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path,
+                                              count, append_flag, updated_size);
         if (err != 0) {
             ld_logger->error("{}() update_metadentry_size failed", __func__);
             return 0; // ERR
@@ -510,31 +463,31 @@ bool is_local_op(const size_t recipient) {
     return recipient == fs_config->host_id;
 }
 
-void register_client_ipcs(margo_instance_id mid) {
-    minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-    ipc_open_id = MARGO_REGISTER(mid, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, NULL);
-    ipc_stat_id = MARGO_REGISTER(mid, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, NULL);
-    ipc_unlink_id = MARGO_REGISTER(mid, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, NULL);
+void register_client_rpcs(margo_instance_id mid) {
+    // IPC IDs
+    ipc_config_id = MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
+                                   NULL);
+    ipc_minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
+    ipc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
+    ipc_stat_id = MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, NULL);
+    ipc_unlink_id = MARGO_REGISTER(mid, "rpc_srv_unlink", rpc_unlink_in_t,
+                                   rpc_err_out_t, NULL);
     ipc_update_metadentry_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
                                               rpc_err_out_t, NULL);
     ipc_update_metadentry_size_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry_size",
                                                    rpc_update_metadentry_size_in_t, rpc_update_metadentry_size_out_t,
                                                    NULL);
-    ipc_config_id = MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t,
-                                   NULL);
     ipc_write_data_id = MARGO_REGISTER(mid, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t,
                                        NULL);
     ipc_read_data_id = MARGO_REGISTER(mid, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t,
                                       NULL);
-}
 
-void register_client_rpcs(margo_instance_id mid) {
+    // RPC IDs
     rpc_minimal_id = MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-    rpc_create_node_id = MARGO_REGISTER(mid, "rpc_srv_create_node", rpc_create_node_in_t,
-                                        rpc_err_out_t, NULL);
-    rpc_attr_id = MARGO_REGISTER(mid, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, NULL);
-    rpc_remove_node_id = MARGO_REGISTER(mid, "rpc_srv_remove_node", rpc_remove_node_in_t,
-                                        rpc_err_out_t, NULL);
+    rpc_open_id = MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, NULL);
+    rpc_stat_id = MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, NULL);
+    rpc_unlink_id = MARGO_REGISTER(mid, "rpc_srv_unlink", rpc_unlink_in_t,
+                                   rpc_err_out_t, NULL);
     rpc_update_metadentry_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t,
                                               rpc_err_out_t, NULL);
     rpc_update_metadentry_size_id = MARGO_REGISTER(mid, "rpc_srv_update_metadentry_size",
@@ -603,14 +556,13 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
 
         string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
         margo_addr_lookup(margo_ipc_id_, sm_addr_str.c_str(), &daemon_svr_addr_);
-
-        register_client_ipcs(mid);
-    } else {
+    } else
         margo_rpc_id_ = mid;
-        register_client_rpcs(mid);
-    }
-//    margo_diag_start(mid);
 
+    register_client_rpcs(mid);
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
 //    for (int i = 0; i < 10; ++i) {
 //        printf("Running %d iteration\n", i);
 //        send_minimal_ipc(minimal_id);
@@ -695,7 +647,7 @@ void init_passthrough_() {
     ld_logger->flush_on(spdlog::level::info);
 #if defined(LOG_PRELOAD_TRACE)
     spdlog::set_level(spdlog::level::trace);
-//    ld_logger->flush_on(spdlog::level::trace);
+    ld_logger->flush_on(spdlog::level::trace);
 #elif defined(LOG_PRELOAD_DEBUG)
     spdlog::set_level(spdlog::level::debug);
 //    ld_logger->flush_on(spdlog::level::debug);
@@ -726,7 +678,12 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
-//    margo_diag_dump(margo_ipc_id_, "-", 0);
+#ifdef MARGODIAG
+    cout << "\n####################\n\nMargo IPC client stats: " << endl;
+    margo_diag_dump(margo_ipc_id_, "-", 0);
+    cout << "\n####################\n\nMargo RPC client stats: " << endl;
+    margo_diag_dump(margo_rpc_id_, "-", 0);
+#endif
     ld_logger->info("Freeing Mercury daemon addr ...");
     HG_Addr_free(margo_get_class(margo_ipc_id_), daemon_svr_addr_);
     ld_logger->info("Finalizing Margo IPC client ...");

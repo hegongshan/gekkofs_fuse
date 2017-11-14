@@ -8,91 +8,56 @@
 
 using namespace std;
 
-static int max_retries = 3;
-
-void send_minimal_rpc(const hg_id_t minimal_id) {
-
-//    hg_handle_t handle;
-//    rpc_minimal_in_t in{};
-//    rpc_minimal_out_t out{};
-//    hg_addr_t svr_addr = HG_ADDR_NULL;
-////    hg_addr_t* svr_addr = static_cast<hg_addr_t*>(arg);
-//
-//    ADAFS_DATA->spdlogger()->debug("Looking up address");
-//
-//    margo_addr_lookup(RPC_DATA->client_mid(), "bmi+tcp://134.93.182.11:1234"s.c_str(), &svr_addr);
-//
-//    ADAFS_DATA->spdlogger()->debug("minimal RPC is running...");
-//
-//
-//    /* create handle */
-//    auto ret = margo_create(RPC_DATA->client_hg_context(), svr_addr, RPC_DATA->rpc_minimal_id(), &handle);
-//    if (ret != HG_SUCCESS) {
-//        printf("Creating handle FAILED");
-//        return;
-//    }
-//
-//    /* Send rpc. Note that we are also transmitting the bulk handle in the
-//     * input struct.  It was set above.
-//     */
-//    in.input = 42;
-//    ADAFS_DATA->spdlogger()->debug("About to call RPC ...");
-//    int send_ret = HG_FALSE;
-//    for (int i = 1; i < max_retries; ++i) {
-//        send_ret = margo_forward_timed(RPC_DATA->client_mid(), handle, &in, 5);
-//        if (send_ret == HG_SUCCESS) {
-//            break;
-//        }
-//    }
-//
-//    if (send_ret == HG_SUCCESS) {
-//        /* decode response */
-//        ret = margo_get_output(handle, &out);
-//
-//        ADAFS_DATA->spdlogger()->debug("Got response ret: {}", out.output);
-//
-//        /* clean up resources consumed by this rpc */
-//        margo_free_output(handle, &out);
-//    } else {
-//        ADAFS_DATA->spdlogger()->info("RPC NOT send (timed out)");
-//    }
-//    HG_Addr_free(margo_get_class(RPC_DATA->client_mid()), svr_addr);
-//    margo_free_input(handle, &in);
-//    margo_destroy(handle);
-//
-//    ADAFS_DATA->spdlogger()->debug("minimal RPC is done.");
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
+                            hg_addr_t& svr_addr) {
+    hg_return_t ret;
+    auto recipient = get_rpc_node(path);
+    if (is_local_op(recipient)) { // local
+        ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_id, &handle);
+        ld_logger->debug("{}() to local daemon (IPC)", __func__);
+    } else { // remote
+        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        if (!get_addr_by_hostid(recipient, svr_addr)) {
+            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
+            return HG_OTHER_ERROR;
+        }
+        ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_id, &handle);
+        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
+    }
+    if (ret != HG_SUCCESS) {
+        ld_logger->error("{}() creating handle FAILED", __func__);
+        return HG_OTHER_ERROR;
+    }
+    return ret;
 }
 
-int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipient, const std::string& path,
-                         const mode_t mode) {
+int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const std::string& path, const mode_t mode,
+                  const int flags) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_create_node_in_t in{};
+    rpc_open_in_t in{};
     rpc_err_out_t out{};
+    hg_return_t ret;
+    int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
     in.mode = mode;
-    int err = EUNKNOWN;
-    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-    if (!get_addr_by_hostid(recipient, svr_addr)) {
-        ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
-        return 1;
-    }
-    auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_create_node_id, &handle);
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
-        return 1;
-    }
-    int send_ret = HG_FALSE;
+
+    // TODO handle all flags. currently only file create
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    margo_create_wrap(ipc_open_id, rpc_open_id, path, handle, svr_addr);
+
+    ret = HG_OTHER_ERROR;
     ld_logger->debug("{}() About to send RPC ...", __func__);
-    for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
+    if (ret == HG_SUCCESS) {
         /* decode response */
+        ld_logger->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
 
         ld_logger->debug("{}() Got response success: {}", __func__, out.err);
@@ -107,34 +72,29 @@ int rpc_send_create_node(const hg_id_t rpc_create_node_id, const size_t recipien
     return err;
 }
 
-int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, const std::string& path, string& attr) {
+int rpc_send_stat(const hg_id_t ipc_stat_id, const hg_id_t rpc_stat_id, const std::string& path, string& attr) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_get_attr_in_t in{};
-    rpc_get_attr_out_t out{};
+    rpc_stat_in_t in{};
+    rpc_stat_out_t out{};
+    hg_return_t ret;
+    int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
-    int err;
-    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-    if (!get_addr_by_hostid(recipient, svr_addr)) {
-        ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
-        return 1;
-    }
-    auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_get_attr_id, &handle);
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
-        return 1;
-    }
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, svr_addr);
+
     ld_logger->debug("{}() About to send RPC ...", __func__);
-    int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+    ret = HG_OTHER_ERROR;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
+    if (ret == HG_SUCCESS) {
         /* decode response */
+        ld_logger->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;
@@ -151,34 +111,29 @@ int rpc_send_get_attr(const hg_id_t rpc_get_attr_id, const size_t recipient, con
     return err;
 }
 
-int rpc_send_remove_node(const hg_id_t rpc_remove_node_id, const size_t recipient, const std::string& path) {
+int rpc_send_unlink(const hg_id_t ipc_unlink_id, const hg_id_t rpc_unlink_id, const std::string& path) {
+    rpc_unlink_in_t in{};
+    rpc_err_out_t out{};
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_remove_node_in_t in{};
-    rpc_err_out_t out{};
+    int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
-    int err = EUNKNOWN;
-    // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-    if (!get_addr_by_hostid(recipient, svr_addr)) {
-        ld_logger->error("{}() server address not resolvable for host id {}", __func__, static_cast<int>(recipient));
-        return 1;
-    }
-    auto ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_remove_node_id, &handle);
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
-        return 1;
-    }
+
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    margo_create_wrap(ipc_unlink_id, rpc_unlink_id, path, handle, svr_addr);
+
     ld_logger->debug("{}() About to send RPC ...", __func__);
-    int send_ret = HG_FALSE;
-    for (int i = 0; i < max_retries; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+    auto ret = HG_OTHER_ERROR;
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
+    if (ret == HG_SUCCESS) {
         /* decode response */
+        ld_logger->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
 
         ld_logger->debug("{}() Got response success: {}", __func__, out.err);

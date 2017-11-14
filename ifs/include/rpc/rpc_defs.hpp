@@ -16,11 +16,11 @@ DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
 
 DECLARE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_node)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_open)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_node)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_unlink)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
@@ -30,13 +30,6 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
-
-// IPCs
-DECLARE_MARGO_RPC_HANDLER(ipc_srv_open)
-
-DECLARE_MARGO_RPC_HANDLER(ipc_srv_stat)
-
-DECLARE_MARGO_RPC_HANDLER(ipc_srv_unlink)
 
 
 /** OLD BELOW

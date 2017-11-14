@@ -35,7 +35,7 @@ int main(int argc, const char* argv[]) {
     ADAFS_DATA->spdlogger()->flush_on(spdlog::level::info);
 #if defined(LOG_TRACE)
     spdlog::set_level(spdlog::level::trace);
-//    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::trace);
+    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::trace);
 #elif defined(LOG_DEBUG)
     spdlog::set_level(spdlog::level::debug);
 //    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::debug);

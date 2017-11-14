@@ -43,6 +43,7 @@
 #define RPC_TRIES 3
 #define RPC_TIMEOUT 150000
 #define RPC_PROTOCOL "bmi+tcp"
+//#define MARGODIAG // enables diagnostics of margo (printed after shutting down
 
 // Debug configurations
 //#define RPC_TEST //unused

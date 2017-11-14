@@ -32,7 +32,12 @@ void init_environment() {
  * Destroys the margo, argobots, and mercury environments
  */
 void destroy_enviroment() {
-//    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
+#ifdef MARGODIAG
+    cout << "\n####################\n\nMargo IPC server stats: " << endl;
+    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
+    cout << "\n####################\n\nMargo RPC server stats: " << endl;
+    margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
+#endif
     ADAFS_DATA->spdlogger()->info("About to finalize the margo server");
     margo_finalize(RPC_DATA->server_rpc_mid());
     margo_finalize(RPC_DATA->server_ipc_mid());
@@ -55,10 +60,9 @@ bool init_ipc_server() {
         ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo IPC server");
         return false;
     }
-    ADAFS_DATA->spdlogger()->info("Success.");
-
-//    margo_diag_start(mid);
-
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
     // Figure out what address this server is listening on (must be freed when finished)
     auto hret = margo_addr_self(mid, &addr_self);
     if (hret != HG_SUCCESS) {
@@ -82,7 +86,7 @@ bool init_ipc_server() {
     RPC_DATA->server_ipc_mid(mid);
 
     // register RPCs
-    register_server_ipcs();
+    register_server_rpcs(mid);
 
     return true;
 }
@@ -99,10 +103,9 @@ bool init_rpc_server() {
         ADAFS_DATA->spdlogger()->error("margo_init failed to initialize the Margo RPC server");
         return false;
     }
-    ADAFS_DATA->spdlogger()->info("Success.");
-
-//    margo_diag_start(mid);
-
+#ifdef MARGODIAG
+    margo_diag_start(mid);
+#endif
     // Figure out what address this server is listening on (must be freed when finished)
     auto hret = margo_addr_self(mid, &addr_self);
     if (hret != HG_SUCCESS) {
@@ -127,39 +130,23 @@ bool init_rpc_server() {
     RPC_DATA->server_rpc_mid(mid);
 
     // register RPCs
-    register_server_rpcs();
+    register_server_rpcs(mid);
 
     return true;
-}
-
-// TODO these two can be merged as soon as ipc equals rpc (which it should)
-void register_server_ipcs() {
-    auto mid = RPC_DATA->server_ipc_mid();
-    // preload IPCs
-    MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
-    MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
-    MARGO_REGISTER(mid, "ipc_srv_open", ipc_open_in_t, ipc_err_out_t, ipc_srv_open);
-    MARGO_REGISTER(mid, "ipc_srv_stat", ipc_stat_in_t, ipc_stat_out_t, ipc_srv_stat);
-    MARGO_REGISTER(mid, "ipc_srv_unlink", ipc_unlink_in_t, ipc_err_out_t, ipc_srv_unlink);
-    MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,
-                   rpc_srv_update_metadentry);
-    MARGO_REGISTER(mid, "rpc_srv_update_metadentry_size", rpc_update_metadentry_size_in_t,
-                   rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
-    MARGO_REGISTER(mid, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
-    MARGO_REGISTER(mid, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
 }
 
 /**
  * Register the rpcs for the server. There is no need to store rpc ids for the server
  * @param hg_class
  */
-void register_server_rpcs() {
-    auto mid = RPC_DATA->server_rpc_mid();
+void register_server_rpcs(margo_instance_id mid) {
+    if (RPC_DATA->server_ipc_mid() == mid)
+        MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
     MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
-    MARGO_REGISTER(mid, "rpc_srv_create_node", rpc_create_node_in_t, rpc_err_out_t, rpc_srv_create_node);
-    MARGO_REGISTER(mid, "rpc_srv_attr", rpc_get_attr_in_t, rpc_get_attr_out_t, rpc_srv_attr);
-    MARGO_REGISTER(mid, "rpc_srv_remove_node", rpc_remove_node_in_t, rpc_err_out_t, rpc_srv_remove_node);
-    MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, ipc_err_out_t,
+    MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, rpc_srv_open);
+    MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, "rpc_srv_unlink", rpc_unlink_in_t, rpc_err_out_t, rpc_srv_unlink);
+    MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
     MARGO_REGISTER(mid, "rpc_srv_update_metadentry_size", rpc_update_metadentry_size_in_t,
                    rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
