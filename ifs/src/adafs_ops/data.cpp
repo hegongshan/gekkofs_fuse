@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/8/17.
-//
 
 #include <adafs_ops/data.hpp>
 

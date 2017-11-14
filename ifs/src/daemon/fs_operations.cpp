@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/4/17.
-//
 
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>

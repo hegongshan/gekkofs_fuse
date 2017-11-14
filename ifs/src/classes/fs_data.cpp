@@ -1,6 +1,3 @@
-//
-// Created by evie on 4/18/17.
-//
 
 #include <classes/fs_data.hpp>
 

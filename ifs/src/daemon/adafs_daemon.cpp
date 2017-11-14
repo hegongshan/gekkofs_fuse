@@ -1,6 +1,3 @@
-//
-// Created by evie on 8/31/17.
-//
 
 #include <daemon/adafs_daemon.hpp>
 #include <db/db_util.hpp>

@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/8/17.
-//
 
 #ifndef IFS_PRELOAD_C_DATA_HPP
 #define IFS_PRELOAD_C_DATA_HPP

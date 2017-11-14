@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/19/17.
-//
 
 #include "fuse3/fuse_util.hpp"
 #include <boost/archive/binary_iarchive.hpp>

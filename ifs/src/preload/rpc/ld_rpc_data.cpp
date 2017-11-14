@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/8/17.
-//
 
 #include <preload/rpc/ld_rpc_data.hpp>
 

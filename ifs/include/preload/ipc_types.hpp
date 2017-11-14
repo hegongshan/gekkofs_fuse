@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/12/17.
-//
 
 #ifndef IFS_IPC_TYPES_HPP
 #define IFS_IPC_TYPES_HPP

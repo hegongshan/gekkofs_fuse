@@ -1,6 +1,3 @@
-//
-// Created by evie on 4/18/17.
-//
 
 #ifndef LFS_FS_DATA_H
 #define LFS_FS_DATA_H

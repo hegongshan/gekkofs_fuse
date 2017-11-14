@@ -1,6 +1,3 @@
-//
-// Created by evie on 7/21/17.
-//
 
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP

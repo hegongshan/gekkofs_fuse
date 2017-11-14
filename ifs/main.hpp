@@ -1,6 +1,3 @@
-//
-// Created by evie on 8/31/17.
-//
 
 #ifndef IFS_MAIN_HPP
 #define IFS_MAIN_HPP
