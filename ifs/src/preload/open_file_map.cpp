@@ -1,6 +1,3 @@
-//
-// Created by evie on 8/25/17.
-//
 
 #include <preload/open_file_map.hpp>
 

@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/4/17.
-//
 
 #ifndef IFS_FS_OPERATIONS_HPP
 #define IFS_FS_OPERATIONS_HPP

@@ -1,6 +1,3 @@
-//
-// Created by aelycia on 9/13/17.
-//
 
 #ifndef IFS_MARGO_IPC_HPP
 #define IFS_MARGO_IPC_HPP

@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/19/17.
-//
 
 #ifndef IFS_FUSE_UTIL_HPP
 #define IFS_FUSE_UTIL_HPP

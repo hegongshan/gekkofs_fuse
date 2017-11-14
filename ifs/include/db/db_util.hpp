@@ -1,6 +1,3 @@
-//
-// Created by evie on 6/8/17.
-//
 
 #ifndef LFS_DB_UTIL_HPP
 #define LFS_DB_UTIL_HPP

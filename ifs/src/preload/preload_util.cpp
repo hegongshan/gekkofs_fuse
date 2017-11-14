@@ -1,11 +1,7 @@
-//
-// Created by evie on 9/4/17.
-//
 
 #include <preload/preload_util.hpp>
 #include <preload/preload.hpp>
 
-#include <cstring>
 #include <dirent.h>
 #include <fstream>
 

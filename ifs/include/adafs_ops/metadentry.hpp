@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/6/17.
-//
 
 #ifndef IFS_METADENTRY_HPP
 #define IFS_METADENTRY_HPP

@@ -1,6 +1,3 @@
-//
-// Created by evie on 6/21/17.
-//
 
 #ifndef LFS_RPC_DATA_HPP
 #define LFS_RPC_DATA_HPP

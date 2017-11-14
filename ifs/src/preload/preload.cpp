@@ -1,6 +1,3 @@
-//
-// Created by evie on 7/21/17.
-//
 
 #include <preload/preload.hpp>
 #include <preload/ipc_types.hpp>
@@ -12,7 +9,7 @@
 #include <cassert>
 #include <preload/rpc/ld_rpc_data.hpp>
 
-// TODO my god... someone clean up this mess of a file :_:
+// TODO my gosh... someone clean up this mess of a file :_:
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 

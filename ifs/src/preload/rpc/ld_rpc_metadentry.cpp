@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/7/17.
-//
 
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <rpc/rpc_utils.hpp>

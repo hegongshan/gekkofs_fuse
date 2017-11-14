@@ -1,6 +1,3 @@
-//
-// Created by evie on 4/6/17.
-//
 
 #include "../../../main.hpp"
 #include "../fuse_ops.hpp"

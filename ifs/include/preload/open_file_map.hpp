@@ -1,6 +1,3 @@
-//
-// Created by evie on 8/25/17.
-//
 
 #ifndef IFS_OPEN_FILE_MAP_HPP
 #define IFS_OPEN_FILE_MAP_HPP

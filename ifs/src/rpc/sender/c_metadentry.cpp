@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/7/17.
-//
 
 #include <rpc/sender/c_metadentry.hpp>
 #include <rpc/rpc_types.hpp>

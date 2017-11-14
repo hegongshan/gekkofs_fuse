@@ -1,6 +1,3 @@
-//
-// Created by aelycia on 9/13/17.
-//
 
 #include <preload/margo_ipc.hpp>
 #include <boost/token_functions.hpp>

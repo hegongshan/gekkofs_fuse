@@ -1,6 +1,3 @@
-//
-// Created by evie on 10/13/17.
-//
 
 #include <rpc/rpc_utils.hpp>
 

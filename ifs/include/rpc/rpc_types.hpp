@@ -1,6 +1,3 @@
-//
-// Created by evie on 6/22/17.
-//
 
 #ifndef LFS_RPC_TYPES_HPP
 #define LFS_RPC_TYPES_HPP

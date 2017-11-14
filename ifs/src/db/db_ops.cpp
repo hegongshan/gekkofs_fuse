@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/6/17.
-//
 
 #include <db/db_ops.hpp>
 

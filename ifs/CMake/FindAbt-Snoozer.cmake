@@ -9,22 +9,25 @@ find_path(ABT_SNOOZER_DIR
 find_path(ABT_SNOOZER_INCLUDE_DIR abt-snoozer.h
         HINTS
         $ENV{HOME}/adafs/install
+        ${ABT_SNOOZER_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_SNOOZER_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/abt-snoozer
         )
 
 find_library(ABT_SNOOZER_LIBRARY abt-snoozer
         HINTS
         $ENV{HOME}/adafs/install/lib
+        ${ABT_SNOOZER_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_SNOOZER_DIR}
-        #        PATH SUFFIXES lib
-        #        PATH_SUFFIXES lib/margo
+        /opt/
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/argobots
         )
 
 set(ABT_SNOOZER_INCLUDE_DIRS ${ABT_SNOOZER_INCLUDE_DIR})

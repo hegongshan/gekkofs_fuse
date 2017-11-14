@@ -1,6 +1,3 @@
-//
-// Created by evie on 9/6/17.
-//
 
 #include <adafs_ops/metadentry.hpp>
 #include <adafs_ops/data.hpp>

@@ -1,6 +1,3 @@
-//
-// Created by evie on 8/31/17.
-//
 
 #ifndef IFS_ADAFS_DAEMON_HPP
 #define IFS_ADAFS_DAEMON_HPP

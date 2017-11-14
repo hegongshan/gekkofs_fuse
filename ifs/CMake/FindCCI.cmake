@@ -4,27 +4,32 @@ find_path(CCI_DIR
         /usr/local
         /usr/local/adafs/
         $ENV{HOME}/adafs/install
-        $ENV{HOME}/adafs/install
         )
 
 find_path(CCI_INCLUDE_DIR cci.h
         HINTS
         $ENV{HOME}/adafs/install
-        $ENV{HOME}/adafs/install
+        ${CCI_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${CCI_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/cci
         )
 
 find_library(CCI_LIBRARY cci
         HINTS
         $ENV{HOME}/adafs/install/lib
+        ${CCI_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${CCI_DIR}
+        /opt/
+        PATH_SUFFIXES lib
+        PATH_SUFFIXES lib/cci
         )
 
 set(CCI_INCLUDE_DIRS ${CCI_INCLUDE_DIR})

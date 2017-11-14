@@ -28,21 +28,25 @@ find_path(MARGO_DIR
 find_path(MARGO_INCLUDE_DIR margo.h
         HINTS
         $ENV{HOME}/adafs/install
+        ${MARGO_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${MARGO_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/margo
         )
 
 find_library(MARGO_LIBRARY margo
         HINTS
         $ENV{HOME}/adafs/install/lib
+        ${MARGO_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${MARGO_DIR}
-        PATH SUFFIXES lib
+        /opt/
+        PATH_SUFFIXES lib
         PATH_SUFFIXES lib/margo
         )
 

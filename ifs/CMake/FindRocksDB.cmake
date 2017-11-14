@@ -22,29 +22,32 @@ find_path(ROCKSDB_DIR
         /usr
         /usr/local
         /usr/local/adafs/
+        PATH_SUFFIXES rocksdb
         )
 
 find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
         HINTS
-        $ENV{HOME}/adafs/git/rocksdb
+        $ENV{HOME}/adafs/install
+        ${ROCKSDB_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ROCKSDB_DIR}
+        /opt/
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/rocksdb
         )
 
 find_library(ROCKSDB_LIBRARY rocksdb
         HINTS
-        $ENV{HOME}/adafs/git/rocksdb
+        $ENV{HOME}/adafs/install
+        ${ROCKSDB_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${ROCKSDB_DIR}
-        PATH SUFFIXES lib
+        /opt/
+        PATH_SUFFIXES lib
         PATH_SUFFIXES lib/rocksdb
-        #        ${ROCKSDB_ROOT_DIR}/lib
-        #        ${ROCKSDB_ROOT_DIR}/lib/rocksdb
         )
 
 set(ROCKSDB_INCLUDE_DIRS ${ROCKSDB_INCLUDE_DIR})
@@ -53,8 +56,8 @@ set(ROCKSDB_LIBRARIES ${ROCKSDB_LIBRARY})
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(RocksDB DEFAULT_MSG
-        ROCKSDB_INCLUDE_DIR
         ROCKSDB_LIBRARY
+        ROCKSDB_INCLUDE_DIR
         )
 
 mark_as_advanced(

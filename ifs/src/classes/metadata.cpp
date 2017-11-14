@@ -1,6 +1,3 @@
-//
-// Created by draze on 3/5/17.
-//
 
 #include <classes/metadata.hpp>
 
