@@ -10,14 +10,22 @@ find_path(
         ZSTD_INCLUDE_DIR
         NAMES "zstd.h"
         HINTS
-        "/usr/include"
+        $ENV{HOME}/opt
+        /usr
+        /usr/local
+        /opt/
+        PATH SUFFIXES include
 )
 
 find_library(
         ZSTD_LIBRARY
         NAMES zstd
         HINTS
-        "/usr/lib"
+        $ENV{HOME}/opt
+        /usr
+        /usr/local
+        /opt/
+        PATH SUFFIXES lib
 )
 
 set(ZSTD_LIBRARIES ${ZSTD_LIBRARY})

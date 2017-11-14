@@ -9,22 +9,27 @@ find_path(ABT_DIR
 find_path(ABT_INCLUDE_DIR abt.h
         HINTS
         $ENV{HOME}/adafs/install
+        $ENV{HOME}/opt
+        ${ABT_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/argobots
         )
 
 find_library(ABT_LIBRARY abt
         HINTS
         $ENV{HOME}/adafs/install/lib
+        $ENV{HOME}/opt
+        ${ABT_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_DIR}
-        #        PATH SUFFIXES lib
-        #        PATH_SUFFIXES lib/margo
+        /opt/
+        PATH SUFFIXES lib
+        PATH SUFFIXES lib/argobots
         )
 
 set(ABT_INCLUDE_DIRS ${ABT_INCLUDE_DIR})

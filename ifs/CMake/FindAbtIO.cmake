@@ -8,21 +8,28 @@ find_path(ABT_IO_DIR
 
 find_path(ABT_IO_INCLUDE_DIR abt-io.h
         HINTS
+        ${ABT_IO_DIR}
         $ENV{HOME}/adafs/install
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_IO_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/abt-io
         )
 
 find_library(ABT_IO_LIBRARY abt-io
         HINTS
+        ${ABT_IO_DIR}
         $ENV{HOME}/adafs/install/lib
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${ABT_IO_DIR}
+        /opt/
+        PATH SUFFIXES lib
+        PATH SUFFIXES lib/abt-io
         )
 
 set(ABT_IO_INCLUDE_DIRS ${ABT_IO_INCLUDE_DIR})

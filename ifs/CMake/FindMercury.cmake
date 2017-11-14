@@ -9,21 +9,27 @@ find_path(MERCURY_DIR
 find_path(MERCURY_INCLUDE_DIR mercury.h
         HINTS
         $ENV{HOME}/adafs/install
+        ${MERCURY_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${MERCURY_DIR}
+        /opt
         PATH_SUFFIXES include
+        PATH_SUFFIXES include/mercury
         )
 
 find_library(MERCURY_LIBRARY
         NAMES mercury
         HINTS
         $ENV{HOME}/adafs/install/lib
+        ${MERCURY_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${MERCURY_DIR}
+        /opt/
+        PATH SUFFIXES lib
+        PATH SUFFIXES lib/mercury
         )
 
 set(MERCURY_INCLUDE_DIRS ${MERCURY_INCLUDE_DIR})

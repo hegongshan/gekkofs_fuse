@@ -12,13 +12,29 @@ else ()
             LIBEV_INCLUDE_DIR
             NAMES ev.h
             HINTS ${LIBEV_ROOT_DIR}
-            PATH_SUFFIXES include)
+            PATH_SUFFIXES include
+            $ENV{HOME}/opt
+            /usr
+            /usr/local
+            /usr/local/adafs
+            /opt/
+            PATH SUFFIXES include
+            PATH SUFFIXES include/libev
+    )
 
     find_library(
             LIBEV_LIBRARY
             NAME ev
             HINTS ${LIBEV_ROOT_DIR}
-            PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR})
+            PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR}
+            $ENV{HOME}/opt
+            /usr
+            /usr/local
+            /usr/local/adafs
+            /opt/
+            PATH SUFFIXES lib
+            PATH SUFFIXES lib/libev
+    )
 
     set(LIBEV_INCLUDE_DIRS ${LIBEV_INCLUDE_DIR})
     set(LIBEV_LIBRARIES ${LIBEV_LIBRARY})

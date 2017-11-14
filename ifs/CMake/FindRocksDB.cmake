@@ -27,24 +27,26 @@ find_path(ROCKSDB_DIR
 find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
         HINTS
         $ENV{HOME}/adafs/git/rocksdb
+        ${ROCKSDB_DIR}
         /usr
         /usr/local
         /usr/local/adafs
-        ${ROCKSDB_DIR}
-        PATH_SUFFIXES include
+        /opt/
+        PATH SUFFIXES include
+        PATH SUFFIXES include/rocksdb
         )
 
 find_library(ROCKSDB_LIBRARY rocksdb
         HINTS
         $ENV{HOME}/adafs/git/rocksdb
+        ${ROCKSDB_DIR}
+        $ENV{HOME}/opt
         /usr
         /usr/local
         /usr/local/adafs
-        ${ROCKSDB_DIR}
+        /opt/
         PATH SUFFIXES lib
-        PATH_SUFFIXES lib/rocksdb
-        #        ${ROCKSDB_ROOT_DIR}/lib
-        #        ${ROCKSDB_ROOT_DIR}/lib/rocksdb
+        PATH SUFFIXES lib/rocksdb
         )
 
 set(ROCKSDB_INCLUDE_DIRS ${ROCKSDB_INCLUDE_DIR})
