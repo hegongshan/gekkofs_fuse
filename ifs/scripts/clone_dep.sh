@@ -21,22 +21,47 @@ assertdir()
     echo "Done"
 }
 
-if [ -z ${1+x} ]; then
-    echo "No git clone destination path given as first parameter.";
+usage() {
+
+    echo "Usage:
+    ./clone_dep [ clone_path ] [ NA_Plugin ]
+    Valid NA_Plugin arguments: {bmi,cci,ofi,all}"
+}
+
+if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
+    echo "Arguments missing."
+    usage
     exit
-else
-    echo "Clone path is set to '$1'";
-    echo "Cloning output is logged at /tmp/adafs_clone.log"
 fi
 
 LOG=/tmp/adafs_clone.log
 echo "" &> $LOG
 GIT=$1
+NA_LAYER=$2
+if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
+    echo "$NA_LAYER plugin(s) selected"
+else
+    echo "No valid plugin selected"
+    usage
+    exit
+fi
+echo "Clone path is set to '$1'"
+echo "Cloning output is logged at /tmp/adafs_clone.log"
 
 mkdir -p $GIT
 
 # get BMI
-assertdir "bmi" "git clone git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b"
+if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
+    assertdir "bmi" "git clone git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b"
+fi
+# get CCI
+if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
+    assertdir "cci" "git clone https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2"
+fi
+# get libfabric
+if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
+    assertdir "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.2"
+fi
 # get Mercury
 assertdir "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "afd70055d21a6df2faefe38d5f6ce1ae11f365a5"
 # get Argobots

@@ -1,20 +1,11 @@
 #!/bin/bash
 
-if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
-    echo "Please give git destination path as first parameter and install path as second";
-    exit
-else
-    echo "Git path is set to '$1'";
-    echo "Install path is set to '$2'";
-#    echo "Install output is logged at /tmp/adafs_dep_install.log"
-fi
+usage() {
 
-#LOG=/tmp/adafs_install.log
-#echo "" &> $LOG
-GIT=$1
-INSTALL=$2
-
-mkdir -p $GIT
+    echo "Usage:
+    ./compile_dep [ clone_path ] [ install_path ] [ na_plugin ]
+    Valid na_plugin arguments: {bmi,cci,ofi,all}"
+}
 
 prepare_build_dir() {
     if [ ! -d "$1/build" ]; then
@@ -23,16 +14,78 @@ prepare_build_dir() {
     rm -rf $1/build/*
 }
 
-echo "Installing BMI"
-# BMI
-CURR=$GIT/bmi
-prepare_build_dir $CURR
-cd $CURR
-./prepare || exit 1
-cd $CURR/build
-../configure --prefix=$INSTALL --enable-shared --enable-bmi-only  || exit 1
-make -j8 || exit 1
-make install || exit 1
+if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
+    echo "Arguments missing."
+    usage
+    exit
+fi
+
+#LOG=/tmp/adafs_install.log
+#echo "" &> $LOG
+GIT=$1
+INSTALL=$2
+NA_LAYER=$3
+USE_BMI="-DNA_USE_BMI:BOOL=OFF"
+USE_CCI="-DNA_USE_CCI:BOOL=OFF"
+USE_OFI="-DNA_USE_OFI:BOOL=OFF"
+
+
+if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
+    echo "$NA_LAYER plugin(s) selected"
+else
+    echo "No valid plugin selected"
+    usage
+    exit
+fi
+
+echo "Git path is set to '$1'";
+echo "Install path is set to '$2'";
+
+mkdir -p $GIT
+
+if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
+    USE_BMI="-DNA_USE_BMI:BOOL=ON"
+    echo "Installing BMI"
+    # BMI
+    CURR=$GIT/bmi
+    prepare_build_dir $CURR
+    cd $CURR
+    ./prepare || exit 1
+    cd $CURR/build
+    ../configure --prefix=$INSTALL --enable-shared --enable-bmi-only  || exit 1
+    make -j8 || exit 1
+    make install || exit 1
+fi
+
+if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
+    USE_CCI="-DNA_USE_CCI:BOOL=ON"
+    echo "Installing CCI"
+    # CCI
+    CURR=$GIT/cci
+    prepare_build_dir $CURR
+    cd $CURR
+    ./autogen.pl || exit 1
+    cd $CURR/build
+    ../configure --prefix=$INSTALL LIBS="-lpthread"  || exit 1
+    make -j8 || exit 1
+    make install || exit 1
+    make check || exit 1
+fi
+
+if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
+    USE_OFI="-DNA_USE_OFI:BOOL=ON"
+    echo "Installing LibFabric"
+    #libfabric
+    CURR=$GIT/libfabric
+    prepare_build_dir $CURR
+    cd $CURR
+    ./autogen.sh || exit 1
+    cd $CURR/build
+    ../configure --prefix=$INSTALL  || exit 1
+    make -j8 || exit 1
+    make install || exit 1
+    make check || exit 1
+fi
 
 echo "Installing Mercury"
 
@@ -42,7 +95,7 @@ prepare_build_dir $CURR
 cd $CURR/build
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$INSTALL \
--DCMAKE_BUILD_TYPE:STRING=Release -DNA_USE_BMI:BOOL=ON ../  || exit 1
+-DCMAKE_BUILD_TYPE:STRING=Release $USE_BMI $USE_CCI $USE_OFI ../  || exit 1
 make -j8  || exit 1
 make install  || exit 1
 

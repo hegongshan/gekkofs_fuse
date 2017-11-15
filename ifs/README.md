@@ -53,8 +53,16 @@ __Notice:__ Once installed, please add the include path for gflags to your CPAT
 
 ## Clone and compile direct ADA-FS dependencies
 
-- Go to the subfolder `ifs/scripts` and first clone all dependencies projects: `./clone_dep.sh <git_clone_path>`
-- Now use the install script to compile them and install them to the desired directory: `./compile_dep.sh <git_clone_path> <install_path>`
+- Go to the subfolder `ifs/scripts` and first clone all dependencies projects. You can choose the according na_plugin (execute the script for help):
+
+```bash
+./clone_dep.sh <git_clone_path> <na_layer>
+```
+- Now use the install script to compile them and install them to the desired directory. You can choose the according na_plugin (execute the script for help):
+
+```bash
+./compile_dep.sh <git_clone_path> <install_path> <na_layer>
+```
 
 ## Compile ADA-FS
 You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is considered stable at the moment.
