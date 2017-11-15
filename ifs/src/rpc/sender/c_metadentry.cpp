@@ -16,7 +16,7 @@ void send_minimal_rpc(const hg_id_t minimal_id) {
 
     ADAFS_DATA->spdlogger()->debug("Looking up address");
 
-    margo_addr_lookup(RPC_DATA->client_mid(), "bmi+tcp://134.93.182.11:1234"s.c_str(), &svr_addr);
+    margo_addr_lookup(RPC_DATA->client_mid(), RPC_PROTOCOL+"://134.93.182.11:1234"s.c_str(), &svr_addr);
 
     ADAFS_DATA->spdlogger()->debug("minimal RPC is running...");
 

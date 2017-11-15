@@ -12,5 +12,5 @@ include_directories(${FUSE3_INCLUDE_DIR})
 set(SOURCE_FILES_FUSE fuse_main.cpp
         ../../include/fuse3/fuse_main.hpp ../../include/fuse3/fuse_ops.hpp fuse_util.cpp ../../include/fuse3/fuse_util.hpp)
 add_executable(adafs_fuse ${SOURCE_FILES_FUSE})
-target_link_libraries(adafs_fuse ${FUSE3_LIBRARIES} ${BMI_LIBRARIES} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES}
+target_link_libraries(adafs_fuse ${FUSE3_LIBRARIES} ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES}
         ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES})

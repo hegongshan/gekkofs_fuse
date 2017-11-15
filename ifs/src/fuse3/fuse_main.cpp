@@ -48,7 +48,7 @@ void register_client_fuse_ipcs() {
 }
 
 bool init_ipc_fuse_client() {
-    auto protocol_port = "bmi+tcp"s;
+    auto protocol_port = RPC_PROTOCOL+s;
     DAEMON_DEBUG0(debug_fd, "Initializing Mercury client ...\n");
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
