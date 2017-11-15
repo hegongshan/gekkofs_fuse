@@ -1,4 +1,6 @@
-
+/**
+ * XXX Currently unused. Might become interesting when Fuse is added to the system.
+ */
 #include <daemon/fs_operations.hpp>
 #include <adafs_ops/metadentry.hpp>
 #include <adafs_ops/data.hpp>

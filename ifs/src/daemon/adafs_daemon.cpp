@@ -133,20 +133,20 @@ bool init_rpc_server() {
 }
 
 /**
- * Register the rpcs for the server. There is no need to store rpc ids for the server
+ *
  * @param hg_class
  */
 void register_server_rpcs(margo_instance_id mid) {
     if (RPC_DATA->server_ipc_mid() == mid)
-        MARGO_REGISTER(mid, "ipc_srv_fs_config", ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
-    MARGO_REGISTER(mid, "rpc_minimal", rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
-    MARGO_REGISTER(mid, "rpc_srv_open", rpc_open_in_t, rpc_err_out_t, rpc_srv_open);
-    MARGO_REGISTER(mid, "rpc_srv_stat", rpc_stat_in_t, rpc_stat_out_t, rpc_srv_stat);
-    MARGO_REGISTER(mid, "rpc_srv_unlink", rpc_unlink_in_t, rpc_err_out_t, rpc_srv_unlink);
-    MARGO_REGISTER(mid, "rpc_srv_update_metadentry", rpc_update_metadentry_in_t, rpc_err_out_t,
+        MARGO_REGISTER(mid, IPC_FS_CONFIG_TAG, ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
+    MARGO_REGISTER(mid, RPC_MINIMAL_TAG, rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
+    MARGO_REGISTER(mid, RPC_OPEN_TAG, rpc_open_in_t, rpc_err_out_t, rpc_srv_open);
+    MARGO_REGISTER(mid, RPC_STAT_TAG, rpc_stat_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, RPC_UNLINK_TAG, rpc_unlink_in_t, rpc_err_out_t, rpc_srv_unlink);
+    MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_TAG, rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
-    MARGO_REGISTER(mid, "rpc_srv_update_metadentry_size", rpc_update_metadentry_size_in_t,
+    MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_SIZE_TAG, rpc_update_metadentry_size_in_t,
                    rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
-    MARGO_REGISTER(mid, "rpc_srv_write_data", rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
-    MARGO_REGISTER(mid, "rpc_srv_read_data", rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
+    MARGO_REGISTER(mid, RPC_WRITE_DATA_TAG, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
+    MARGO_REGISTER(mid, RPC_READ_DATA_TAG, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
 }

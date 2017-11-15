@@ -5,31 +5,7 @@
 
 using namespace std;
 
-hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
-                            hg_addr_t& svr_addr) {
-    hg_return_t ret;
-    auto recipient = get_rpc_node(path);
-    if (is_local_op(recipient)) { // local
-        ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_id, &handle);
-        ld_logger->debug("{}() to local daemon (IPC)", __func__);
-    } else { // remote
-        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-        if (!get_addr_by_hostid(recipient, svr_addr)) {
-            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
-            return HG_OTHER_ERROR;
-        }
-        ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_id, &handle);
-        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
-    }
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
-        return HG_OTHER_ERROR;
-    }
-    return ret;
-}
-
-int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const std::string& path, const mode_t mode,
-                  const int flags) {
+int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_open_in_t in{};
@@ -73,7 +49,7 @@ int rpc_send_open(const hg_id_t ipc_open_id, const hg_id_t rpc_open_id, const st
     return err;
 }
 
-int rpc_send_stat(const hg_id_t ipc_stat_id, const hg_id_t rpc_stat_id, const std::string& path, string& attr) {
+int rpc_send_stat(const std::string& path, string& attr) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_stat_in_t in{};
@@ -112,7 +88,7 @@ int rpc_send_stat(const hg_id_t ipc_stat_id, const hg_id_t rpc_stat_id, const st
     return err;
 }
 
-int rpc_send_unlink(const hg_id_t ipc_unlink_id, const hg_id_t rpc_unlink_id, const std::string& path) {
+int rpc_send_unlink(const std::string& path) {
     rpc_unlink_in_t in{};
     rpc_err_out_t out{};
     hg_handle_t handle;
@@ -149,8 +125,7 @@ int rpc_send_unlink(const hg_id_t ipc_unlink_id, const hg_id_t rpc_unlink_id, co
 }
 
 
-int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_id_t rpc_update_metadentry_id,
-                               const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags) {
+int rpc_send_update_metadentry(const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_update_metadentry_in_t in{};
@@ -182,7 +157,7 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
 
     auto recipient = get_rpc_node(path);
     if (is_local_op(recipient)) { // local
-        ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_update_metadentry_id, &handle);
+        ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_update_metadentry_id, &handle);
         ld_logger->debug("{}() to local daemon (IPC)");
     } else { // remote
         // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
@@ -190,7 +165,7 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
             ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return 1;
         }
-        ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_update_metadentry_id, &handle);
+        ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_update_metadentry_id, &handle);
         ld_logger->debug("{}() to remote daemon (RPC)", __func__);
     }
     if (ret != HG_SUCCESS) {
@@ -221,9 +196,7 @@ int rpc_send_update_metadentry(const hg_id_t ipc_update_metadentry_id, const hg_
     return err;
 }
 
-int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
-                                    const hg_id_t rpc_update_metadentry_size_id, const string& path, const off_t size,
-                                    const bool append_flag, off_t& ret_size) {
+int rpc_send_update_metadentry_size(const string& path, const off_t size, const bool append_flag, off_t& ret_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_update_metadentry_size_in_t in{};
@@ -239,7 +212,7 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
     hg_return_t ret;
     auto recipient = get_rpc_node(path);
     if (is_local_op(recipient)) { // local
-        ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_update_metadentry_size_id,
+        ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_update_metadentry_size_id,
                            &handle);
         ld_logger->debug("{}() to local daemon (IPC)", __func__);
     } else { // remote
@@ -248,7 +221,7 @@ int rpc_send_update_metadentry_size(const hg_id_t ipc_update_metadentry_size_id,
             ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return 1;
         }
-        ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_update_metadentry_size_id, &handle);
+        ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_update_metadentry_size_id, &handle);
         ld_logger->debug("{}() to remote daemon (RPC)", __func__);
     }
     if (ret != HG_SUCCESS) {

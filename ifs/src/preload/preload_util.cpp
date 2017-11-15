@@ -1,6 +1,5 @@
 
 #include <preload/preload_util.hpp>
-#include <preload/preload.hpp>
 
 #include <dirent.h>
 #include <fstream>
@@ -168,12 +167,17 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
     return 0;
 }
 
+/**
+ * Returns the process id for a process name
+ * @param procName
+ * @return
+ */
 int getProcIdByName(string procName) {
     int pid = -1;
 
     // Open the /proc directory
     DIR* dp = opendir("/proc");
-    if (dp != NULL) {
+    if (dp != nullptr) {
         // Enumerate all entries in directory until process found
         struct dirent* dirp;
         while (pid < 0 && (dirp = readdir(dp))) {
@@ -205,4 +209,80 @@ int getProcIdByName(string procName) {
     closedir(dp);
 
     return pid;
+}
+
+/**
+ * Creates an abstract rpc address for a given hostid and puts it into an address cache map
+ * @param hostid
+ * @param svr_addr
+ * @return
+ */
+bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+
+    if (rpc_address_cache.tryGet(hostid, svr_addr)) {
+        ld_logger->trace("tryGet successful and put in svr_addr");
+        //found
+        return true;
+    } else {
+        ld_logger->trace("not found in lrucache");
+        // not found, manual lookup and add address mapping to LRU cache
+        auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
+                        fs_config->rpc_port; // convert hostid to hostname and port
+        ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
+        margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
+        if (svr_addr == HG_ADDR_NULL)
+            return false;
+        rpc_address_cache.insert(hostid, svr_addr);
+        return true;
+    }
+}
+
+/**
+ * Determines the node id for a given path
+ * @param to_hash
+ * @return
+ */
+size_t get_rpc_node(const string& to_hash) {
+    return std::hash<string>{}(to_hash) % fs_config->host_size;
+}
+
+/**
+ * Determines if the recipient id in an RPC is refering to the local or an remote node
+ * @param recipient
+ * @return
+ */
+bool is_local_op(const size_t recipient) {
+    return recipient == fs_config->host_id;
+}
+
+/**
+ * Wraps certain margo functions to create a Mercury handle
+ * @param ipc_id
+ * @param rpc_id
+ * @param path
+ * @param handle
+ * @param svr_addr
+ * @return
+ */
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
+                            hg_addr_t& svr_addr) {
+    hg_return_t ret;
+    auto recipient = get_rpc_node(path);
+    if (is_local_op(recipient)) { // local
+        ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_id, &handle);
+        ld_logger->debug("{}() to local daemon (IPC)", __func__);
+    } else { // remote
+        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        if (!get_addr_by_hostid(recipient, svr_addr)) {
+            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
+            return HG_OTHER_ERROR;
+        }
+        ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
+        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
+    }
+    if (ret != HG_SUCCESS) {
+        ld_logger->error("{}() creating handle FAILED", __func__);
+        return HG_OTHER_ERROR;
+    }
+    return ret;
 }

@@ -4,8 +4,7 @@
 
 using namespace std;
 
-int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data_id, const string& path,
-                   const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size,
+int rpc_send_write(const string& path, const size_t in_size, const off_t in_offset, const void* buf, size_t& write_size,
                    const bool append, const off_t updated_size) {
 
     hg_handle_t handle;
@@ -14,7 +13,6 @@ int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data
     rpc_data_out_t out{};
     int err;
     hg_return_t ret;
-    margo_instance_id used_mid;
     // fill in
     in.path = path.c_str();
     in.size = in_size;
@@ -25,25 +23,10 @@ int rpc_send_write(const hg_id_t ipc_write_data_id, const hg_id_t rpc_write_data
     else
         in.append = HG_FALSE;
 
-    auto recipient = get_rpc_node(path);
-    if (is_local_op(recipient)) { // local
-        ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_write_data_id, &handle);
-        ld_logger->debug("{}() send to local daemon (IPC)", __func__);
-        used_mid = ld_margo_ipc_id();
-    } else { // remote
-        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
-        if (!get_addr_by_hostid(recipient, svr_addr)) {
-            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
-            return 1;
-        }
-        ret = margo_create(ld_margo_rpc_id(), svr_addr, rpc_write_data_id, &handle);
-        ld_logger->debug("{}() send to remote daemon (RPC)", __func__);
-        used_mid = ld_margo_ipc_id();
-    }
-    if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
-        return 1;
-    }
+    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, path, handle, svr_addr);
+
+    auto used_mid = margo_hg_handle_get_instance(handle);
+
     /* register local target buffer for bulk access */
     // remove constness from buffer for transfer
     void* b_buf = const_cast<void*>(buf);

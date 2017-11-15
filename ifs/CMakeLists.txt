@@ -56,7 +56,7 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
         src/rpc/handler/h_metadentry.cpp
         src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp
         src/rpc/handler/h_preload.cpp
-        include/rpc/rpc_utils.hpp src/rpc/rpc_utils.cpp)
+        include/rpc/rpc_utils.hpp src/rpc/rpc_utils.cpp include/global_defs.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs
