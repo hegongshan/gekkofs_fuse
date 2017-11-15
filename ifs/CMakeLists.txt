@@ -49,7 +49,7 @@ if(USE_CCI)
 endif()
 
 option(USE_BMI "Use bmi plugin." OFF)
-if(USE_OFI)
+if(USE_BMI)
     find_package(BMI REQUIRED)
     set(NA_LIB
             ${NA_LIB}
