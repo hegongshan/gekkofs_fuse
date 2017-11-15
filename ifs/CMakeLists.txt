@@ -28,8 +28,8 @@ find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 
-option(USE_OFI "Use libfabric plugin." OFF)
-if(USE_OFI)
+option(USE_OFI_VERBS "Use libfabric plugin with verbs." OFF)
+if (USE_OFI_VERBS)
     find_package(LibFabric REQUIRED)
     set(NA_LIB
             ${NA_LIB}
@@ -37,6 +37,16 @@ if(USE_OFI)
             )
     add_definitions(-DRPC_PROTOCOL="ofi+verbs")
 endif()
+
+option(USE_OFI_PSM2 "Use libfabric plugin with verbs." OFF)
+if (USE_OFI_PSM2)
+    find_package(LibFabric REQUIRED)
+    set(NA_LIB
+            ${NA_LIB}
+            ${LIBFABRIC_LIBRARIES}
+            )
+    add_definitions(-DRPC_PROTOCOL="ofi+psm2")
+endif ()
 
 option(USE_CCI "Use cci plugin." OFF)
 if(USE_CCI)
@@ -58,10 +68,14 @@ if(USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 
-if(NOT USE_OFI)
-elseif(NOT USE_CCI)
-elseif(NOT USE_BMI)
-    message("one protocol must be selected")
+if (NOT USE_OFI AND NOT USE_CCI AND NOT USE_BMI)
+    message("No Mercury NA plugin selected. BMI automatically selected ... Use -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON for other plugins")
+    find_package(BMI REQUIRED)
+    set(NA_LIB
+            ${NA_LIB}
+            ${BMI_LIBRARIES}
+            )
+    add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 # boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
 find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)

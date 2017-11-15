@@ -14,6 +14,7 @@ This is a file system.
 - Install bzip2: `sudo apt-get install libbz2-dev`
 - Install zstandard: `sudo apt-get install libzstd-dev`
 - Install lz4 `sudo apt-get install liblz4-dev`
+
 ### CentOS/Red Hat - Dependencies
 - Upgrade your gcc to version at least 4.8 to get C++11 support: yum install gcc48-c++
 - Install gflags:
@@ -56,9 +57,16 @@ __Notice:__ Once installed, please add the include path for gflags to your CPAT
 - Now use the install script to compile them and install them to the desired directory: `./compile_dep.sh <git_clone_path> <install_path>`
 
 ## Compile ADA-FS
+You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is considered stable at the moment.
+The following options are available with cmake:
+- `-DUSE_BMI` for using the bmi plugin with the tcp protocol
+- `-DUSE_CCI` for using the cci plugin with Infiniband verbs
+- `-DUSE_OFI_VERBS` for using the libfabric plugin with Infiniband verbs
+- `-DUSE_OFI_PSM2` for using the libfabric plugin with Intel Omnipath
+
 ```bash
 mkdir build && cd build
-cmake ..
+cmake -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2} ..
 make
 ```
 
