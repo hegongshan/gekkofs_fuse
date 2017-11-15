@@ -13,7 +13,7 @@ private:
     FILE* tmp_file_;
 
 public:
-    OpenFile(const std::string& path, const bool append_flag);
+    OpenFile(const std::string& path, bool append_flag);
 
     ~OpenFile();
 
@@ -46,10 +46,12 @@ public:
     OpenFileMap();
 
     OpenFile* get(int fd);
-    bool exist(const int fd);
 
-    int add(std::string path, const bool append);
-    bool remove(const int fd);
+    bool exist(int fd);
+
+    int add(std::string path, bool append);
+
+    bool remove(int fd);
 
 };
 

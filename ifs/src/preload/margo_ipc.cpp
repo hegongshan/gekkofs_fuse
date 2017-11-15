@@ -12,7 +12,7 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("minimal RPC is running...\n");
 
     /* create handle */
-    auto ret = margo_create(ld_margo_ipc_id(), daemon_addr(), minimal_id, &handle);
+    auto ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, minimal_id, &handle);
     assert(ret == HG_SUCCESS);
 
     /* Send rpc. Note that we are also transmitting the bulk handle in the
@@ -35,13 +35,17 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("minimal RPC is done.\n");
 }
 
-bool ipc_send_get_fs_config(const hg_id_t ipc_get_config_id) {
+/**
+ * Gets fs configuration information from the running daemon and transfers it to the memory of the library
+ * @return
+ */
+bool ipc_send_get_fs_config() {
     hg_handle_t handle;
     ipc_config_in_t in{};
     ipc_config_out_t out{};
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
-    auto ret = margo_create(ld_margo_ipc_id(), daemon_addr(), ipc_get_config_id, &handle);
+    auto ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_config_id, &handle);
     if (ret != HG_SUCCESS) {
         ld_logger->error("{}() creating handle for failed", __func__);
         return false;
