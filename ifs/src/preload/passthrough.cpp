@@ -8,8 +8,8 @@
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
 // external variables that are initialized here
-shared_ptr<spdlog::logger> ld_logger;
-shared_ptr<FsConfig> fs_config;
+std::shared_ptr<spdlog::logger> ld_logger;
+std::shared_ptr<FsConfig> fs_config;
 
 // function pointer for preloading
 void* libc;
@@ -93,7 +93,7 @@ void init_passthrough_() {
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
 
-    fs_config = make_shared<struct FsConfig>();
+    fs_config = std::make_shared<struct FsConfig>();
     //set the spdlogger and initialize it with spdlog
     ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
     // set logger format

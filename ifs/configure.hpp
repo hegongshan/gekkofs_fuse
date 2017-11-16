@@ -17,6 +17,7 @@
 // If ACM time should be considered
 #define ACMtime //unused
 #define BLOCKSIZE 4 // in kilobytes
+#define CHUNKSIZE 400 // in bytes
 
 // What metadata is used TODO this has to be parametrized or put into a configuration file
 #define MDATA_USE_ATIME false

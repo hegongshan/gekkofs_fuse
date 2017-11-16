@@ -82,13 +82,13 @@ int read_file(char* buf, size_t& read_size, const string& path, const size_t siz
     return 0;
 }
 
-int write_file(const string& path, const char* buf, size_t& write_size, const size_t size, const off_t off,
-               const bool append, const off_t updated_size) {
+int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id, const size_t size, const off_t off,
+               const bool append, const off_t updated_size, size_t& write_size) {
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
     bfs::create_directories(chnk_path);
-    chnk_path /= "data"s;
+    chnk_path /= fmt::FormatInt(chnk_id).c_str();
     // write to local file
     int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0777);
     if (fd < 0)
@@ -109,5 +109,28 @@ int write_file(const string& path, const char* buf, size_t& write_size, const si
         truncate(chnk_path.c_str(), size); // file is rewritten, thus, only written size is kept
     }
 
+    return 0;
+}
+
+int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
+                 size_t& write_size) {
+    write_size = 0;
+    // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
+    auto chnk_n = buf_sizes.size() / 2;
+    for (int i = 0; i < chnk_n; i++) {
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i * 2]));
+        auto chnk_ptr = static_cast<char*>(buf_ptrs[(i * 2) + 1]);
+        auto chnk_size = buf_sizes[(i * 2) + 1];
+        size_t written_chnk_size;
+        // TODO 5,6,7 params (append and offset stuff)
+        if (write_file(path, chnk_ptr, chnk_id, chnk_size, 0, false, 0, written_chnk_size) != 0) {
+            // TODO How do we handle already written chunks? Ideally, we would need to remove them after failure.
+            ADAFS_DATA->spdlogger()->error("{}() Writing chunk failed with path {} and id {}. Aborting ...", __func__,
+                                           path, chnk_id);
+            write_size = 0;
+            return -1;
+        }
+        write_size += written_chnk_size;
+    }
     return 0;
 }

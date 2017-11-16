@@ -4,6 +4,8 @@
 #include <dirent.h>
 #include <fstream>
 
+using namespace std;
+
 static const std::string dentry_val_delim = ","s;
 
 bool is_fs_path(const char* path) {
@@ -265,10 +267,10 @@ bool is_local_op(const size_t recipient) {
  * @return
  */
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
-                            hg_addr_t& svr_addr) {
+                            hg_addr_t& svr_addr, bool force_rpc) {
     hg_return_t ret;
     auto recipient = get_rpc_node(path);
-    if (is_local_op(recipient)) { // local
+    if (is_local_op(recipient) && !force_rpc) { // local
         ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_id, &handle);
         ld_logger->debug("{}() to local daemon (IPC)", __func__);
     } else { // remote

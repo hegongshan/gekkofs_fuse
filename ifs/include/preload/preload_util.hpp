@@ -8,8 +8,6 @@
 #include <extern/lrucache/LRUCache11.hpp>
 #include <string>
 
-using namespace std;
-
 
 struct FsConfig {
     // configurable metadata
@@ -95,6 +93,9 @@ extern std::shared_ptr<spdlog::logger> ld_logger;
 typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
 extern KVCache rpc_address_cache;
 
+// typedefs
+typedef unsigned long rpc_chnk_id_t;
+
 bool is_fs_path(const char* path);
 
 // TODO template these two suckers
@@ -110,7 +111,7 @@ size_t get_rpc_node(const std::string& to_hash);
 
 bool is_local_op(size_t recipient);
 
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
-                            hg_addr_t& svr_addr);
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
+                            hg_addr_t& svr_addr, bool force_rpc);
 
 #endif //IFS_PRELOAD_UTIL_HPP

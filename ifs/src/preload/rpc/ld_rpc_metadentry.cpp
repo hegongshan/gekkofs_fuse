@@ -22,7 +22,7 @@ int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
         return 0; // XXX This is a temporary quickfix for read. Look up if file exists. Do it on server end.
     }
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    margo_create_wrap(ipc_open_id, rpc_open_id, path, handle, svr_addr);
+    margo_create_wrap(ipc_open_id, rpc_open_id, path, handle, svr_addr, false);
 
     ret = HG_OTHER_ERROR;
     ld_logger->debug("{}() About to send RPC ...", __func__);
@@ -59,7 +59,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     // fill in
     in.path = path.c_str();
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, svr_addr);
+    margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, svr_addr, false);
 
     ld_logger->debug("{}() About to send RPC ...", __func__);
     ret = HG_OTHER_ERROR;
@@ -98,7 +98,7 @@ int rpc_send_unlink(const std::string& path) {
     in.path = path.c_str();
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    margo_create_wrap(ipc_unlink_id, rpc_unlink_id, path, handle, svr_addr);
+    margo_create_wrap(ipc_unlink_id, rpc_unlink_id, path, handle, svr_addr, false);
 
     ld_logger->debug("{}() About to send RPC ...", __func__);
     auto ret = HG_OTHER_ERROR;

@@ -15,6 +15,19 @@ extern "C" {
 
 #include <iostream>
 
+struct write_args {
+    std::string& path;
+    size_t in_size;
+    off_t in_offset;
+    const void* buf;
+    bool append;
+    off_t updated_size;
+    std::vector<unsigned long>& chnk_ids;
+    size_t write_size;
+};
+
+void rpc_send_write_abt(void* _arg);
+
 template<typename T>
 int rpc_send_read(const std::string& path, const size_t in_size, const off_t in_offset, T* tar_buf, size_t& read_size) {
     hg_handle_t handle;
@@ -28,7 +41,7 @@ int rpc_send_read(const std::string& path, const size_t in_size, const off_t in_
     in.size = in_size;
     in.offset = in_offset;
 
-    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, path, handle, svr_addr);
+    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, path, handle, svr_addr, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
     /* register local target buffer for bulk access */
@@ -65,7 +78,7 @@ int rpc_send_read(const std::string& path, const size_t in_size, const off_t in_
     return err;
 }
 
-int rpc_send_write(const string& path, size_t in_size, off_t in_offset, const void* buf, size_t& write_size,
+int rpc_send_write(const std::string& path, size_t in_size, off_t in_offset, void* buf, size_t& write_size,
                    bool append, off_t updated_size);
 
 #endif //IFS_PRELOAD_C_DATA_HPP

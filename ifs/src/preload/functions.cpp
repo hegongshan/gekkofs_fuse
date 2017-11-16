@@ -7,6 +7,8 @@
 #include <preload/passthrough.hpp>
 #include <preload/open_file_map.hpp>
 
+using namespace std;
+
 static OpenFileMap file_map{};
 
 int open(const char* path, int flags, ...) {
@@ -230,22 +232,72 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         size_t write_size;
         int err = 0;
         long updated_size = 0;
-        /*
-         * Update the metadentry size first to prevent two processes to write to the same offset when O_APPEND is given.
-         * The metadentry size update is atomic XXX actually not yet. see metadentry.cpp
-         */
+
 //        if (append_flag)
         err = rpc_send_update_metadentry_size(path, count, append_flag, updated_size);
         if (err != 0) {
             ld_logger->error("{}() update_metadentry_size failed", __func__);
             return 0; // ERR
         }
-        err = rpc_send_write(path, count, offset, buf, write_size, append_flag, updated_size);
-        if (err != 0) {
-            ld_logger->error("{}() write failed", __func__);
-            return 0;
+
+        // started here // TODO handle offset
+        auto chunk_n = static_cast<size_t>(ceil(
+                count / static_cast<float>(CHUNKSIZE))); // get number of chunks needed for writing
+        ABT_xstream xstream;
+        ABT_pool pool;
+        auto ret = ABT_xstream_self(&xstream);
+        ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
+
+
+        // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
+        map<unsigned long, vector<unsigned long>> dest_ids{};
+        for (unsigned long i = 0; i < chunk_n; i++) {
+            auto recipient = get_rpc_node(path + fmt::FormatInt(i).str());
+            if (dest_ids.count(recipient) == 0)
+                dest_ids.insert(make_pair(recipient, vector<unsigned long>{i}));
+            else
+                dest_ids[recipient].push_back(i);
         }
-        return write_size;
+        // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
+        auto dest_n = dest_ids.size();
+        vector<ABT_thread> threads(dest_n);
+        vector<struct write_args*> thread_args(dest_n);
+        for (unsigned long i = 0; i < dest_n; i++) {
+            struct write_args args = {
+                    path, // path
+                    count, // total size to write
+                    offset, // writing offset
+                    buf, // pointer to write buffer
+                    append_flag, // append flag when file was opened
+                    updated_size, // for append truncate TODO needed?
+                    dest_ids[i], // pointer to list of chunk ids that all go to the same destination
+                    0, // out: actual written size
+            };
+            thread_args[i] = &args;
+            ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        }
+        // yield to one of the threads
+//        ABT_thread_yield_to(threads[0]);
+        // TODO we need abt_eventual for it to be asynchronous and to be able to return us the written size
+        // TODO Errorhandling should also take place here after we implement with abt eventual
+        for (unsigned long i = 0; i < dest_n; i++) {
+            ret = ABT_thread_join(threads[i]);
+            if (ret != 0) {
+                ld_logger->error("{}() Unable to ABT_thread_join()", __func__);
+                return -1;
+            }
+            ret = ABT_thread_free(&threads[i]);
+            if (ret != 0) {
+                ld_logger->error("{}() Unable to ABT_thread_free()", __func__);
+                return -1;
+            }
+        }
+//        if (err != 0) {
+//            ld_logger->error("{}() write failed", __func__);
+//            return 0;
+//        }
+//        return write_size; // XXX use after abt eventual is used
+        return count;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
 }

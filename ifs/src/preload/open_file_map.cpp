@@ -37,8 +37,10 @@ OpenFile::~OpenFile() {
 }
 
 void OpenFile::annul_fd() {
-    if (tmp_file_ != nullptr)
-        fclose(tmp_file_);
+    if (tmp_file_ != nullptr) {
+        if (fclose(tmp_file_) != 0)
+            ld_logger->error("{}() Unable to close tmp fd for path {}", __func__, this->path_);
+    }
 }
 
 bool OpenFile::append_flag() const {
