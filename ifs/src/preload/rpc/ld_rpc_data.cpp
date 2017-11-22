@@ -36,7 +36,6 @@ void rpc_send_write_abt(void* _arg) {
             buf_ptrs[i] = chnks[i / 2];
     }
 
-
     // RPC
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
@@ -55,7 +54,7 @@ void rpc_send_write_abt(void* _arg) {
         in.append = HG_FALSE;
 
 
-    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->path, handle, svr_addr, true);
+    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->path, handle, svr_addr, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
 

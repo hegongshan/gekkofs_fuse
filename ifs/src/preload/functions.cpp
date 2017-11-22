@@ -229,7 +229,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
         auto append_flag = adafs_fd->append_flag();
-        size_t write_size;
+        size_t write_size;// XXX use after abt eventual is used
         int err = 0;
         long updated_size = 0;
 
@@ -296,7 +296,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 //            ld_logger->error("{}() write failed", __func__);
 //            return 0;
 //        }
-//        return write_size; // XXX use after abt eventual is used
+//        return write_size;
         return count;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);

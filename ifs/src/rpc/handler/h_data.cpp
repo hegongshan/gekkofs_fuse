@@ -2,6 +2,7 @@
 #include <rpc/rpc_types.hpp>
 #include <rpc/rpc_defs.hpp>
 #include <adafs_ops/data.hpp>
+#include <rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -75,13 +76,16 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
 
+
     auto segment_count = margo_bulk_get_segment_count(in.bulk_handle);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
+    // is write happening over shared memory on the same node?
+    auto local_write = is_handle_sm(mid, hgi->addr);
 
     // set buffer sizes
     vector<hg_size_t> buf_sizes(segment_count);
     size_t chnk_size = 0;
-    for (int i = 0; i < segment_count; i++) {
+    for (size_t i = 0; i < segment_count; i++) {
         if (i % 2 == 0)
             buf_sizes[i] = sizeof(rpc_chnk_id_t);
         else {
@@ -95,32 +99,43 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     }
     // allocate memory for bulk transfer
     vector<void*> buf_ptrs(segment_count);
-    for (int i = 0; i < segment_count; i++) {
+    for (size_t i = 0; i < segment_count; i++) {
         if (i % 2 == 0)
             buf_ptrs[i] = new rpc_chnk_id_t;
-        else {
+        else
+            // On a local operation the buffers are allocated in the client on the same node.
+            // Hence no memory allocation is necessary
+        if (!local_write)
             buf_ptrs[i] = new char[buf_sizes[i]];
+    }
+    // If local operation the data does not need to be transferred. We just need access to the data ptrs
+    if (local_write) {
+        uint32_t actual_count;
+        // The data is not transferred. We directly access the data from the client on the same node
+        ret = margo_bulk_access(in.bulk_handle, 0, bulk_size, HG_BULK_READ_ONLY, segment_count, buf_ptrs.data(),
+                                buf_sizes.data(), &actual_count);
+        if (ret != HG_SUCCESS || segment_count != actual_count)
+            ADAFS_DATA->spdlogger()->error("{}() margo_bulk_access failed with ret {}", __func__, ret);
+    } else {
+        // create bulk handle
+        ret = margo_bulk_create(mid, segment_count, buf_ptrs.data(), buf_sizes.data(), HG_BULK_WRITE_ONLY,
+                                &bulk_handle);
+        if (ret == HG_SUCCESS) {
+            // pull data from client here
+            ret = margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, bulk_size);
+            if (ret != HG_SUCCESS)
+                ADAFS_DATA->spdlogger()->error("Failed to pull data from client in write operation");
+            margo_bulk_free(bulk_handle);
         }
     }
-    // create bulk handle
-    ret = margo_bulk_create(mid, segment_count, buf_ptrs.data(), buf_sizes.data(), HG_BULK_WRITE_ONLY, &bulk_handle);
-    // push data to client
-    if (ret == HG_SUCCESS) {
-        // pull data from client here TODO use margo_bulk_access for local transfer
-        ret = margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, bulk_size);
-        if (ret != HG_SUCCESS) {
-            ADAFS_DATA->spdlogger()->error("Failed to pull data from client in write operation");
-            out.res = EIO;
-            out.io_size = 0;
-        }
 
-        // do write operation
+    // do write operation if all is good
+    if (ret == HG_SUCCESS) {
         out.res = write_chunks(in.path, buf_ptrs, buf_sizes, out.io_size);
         if (out.res != 0) {
             ADAFS_DATA->spdlogger()->error("Failed to write data to local disk.");
             out.io_size = 0;
         }
-        margo_bulk_free(bulk_handle);
     } else {
         ADAFS_DATA->spdlogger()->error("Failed to create bulk handle in write operation");
         out.res = EIO;
@@ -133,9 +148,20 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("Failed to respond to write request");
     }
 
+
     // Destroy handle when finished
     margo_free_input(handle, &in);
     margo_destroy(handle);
+
+    // free memory in buf_ptrs
+    for (size_t i = 0; i < segment_count; i++) {
+        if (i % 2 == 0)
+            delete static_cast<rpc_chnk_id_t*>(buf_ptrs[i]);
+        else
+            // On a local operation the data is owned by the client who is responsible to free its buffers
+        if (!local_write)
+            delete[] static_cast<char*>(buf_ptrs[i]);
+    }
     return HG_SUCCESS;
 }
 

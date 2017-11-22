@@ -9,7 +9,8 @@ extern "C" {
 }
 #include <string>
 
-hg_bool_t bool_to_merc_bool(const bool state);
+hg_bool_t bool_to_merc_bool(bool state);
 
+bool is_handle_sm(margo_instance_id mid, const hg_addr_t& addr);
 
 #endif //IFS_RPC_UTILS_HPP

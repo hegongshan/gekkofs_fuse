@@ -117,7 +117,7 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
     write_size = 0;
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
     auto chnk_n = buf_sizes.size() / 2;
-    for (int i = 0; i < chnk_n; i++) {
+    for (size_t i = 0; i < chnk_n; i++) {
         auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i * 2]));
         auto chnk_ptr = static_cast<char*>(buf_ptrs[(i * 2) + 1]);
         auto chnk_size = buf_sizes[(i * 2) + 1];
