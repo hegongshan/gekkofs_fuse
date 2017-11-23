@@ -71,7 +71,6 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got write RPC with path {} size {} offset {}", in.path, in.size, in.offset);
 
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
@@ -81,6 +80,12 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     // is write happening over shared memory on the same node?
     auto local_write = is_handle_sm(mid, hgi->addr);
+    if (local_write)
+        ADAFS_DATA->spdlogger()->debug("Got local write IPC with path {} size {} offset {}", in.path, bulk_size,
+                                       in.offset);
+    else
+        ADAFS_DATA->spdlogger()->debug("Got write RPC with path {} size {} offset {}", in.path, bulk_size, in.offset);
+
 
     // set buffer sizes
     vector<hg_size_t> buf_sizes(segment_count);
