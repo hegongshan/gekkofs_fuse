@@ -102,11 +102,12 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     for (size_t i = 0; i < segment_count; i++) {
         if (i % 2 == 0)
             buf_ptrs[i] = new rpc_chnk_id_t;
-        else
+        else {
             // On a local operation the buffers are allocated in the client on the same node.
             // Hence no memory allocation is necessary
-        if (!local_write)
-            buf_ptrs[i] = new char[buf_sizes[i]];
+            if (!local_write)
+                buf_ptrs[i] = new char[buf_sizes[i]];
+        }
     }
     // If local operation the data does not need to be transferred. We just need access to the data ptrs
     if (local_write) {
@@ -157,10 +158,11 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     for (size_t i = 0; i < segment_count; i++) {
         if (i % 2 == 0)
             delete static_cast<rpc_chnk_id_t*>(buf_ptrs[i]);
-        else
+        else {
             // On a local operation the data is owned by the client who is responsible to free its buffers
-        if (!local_write)
-            delete[] static_cast<char*>(buf_ptrs[i]);
+            if (!local_write)
+                delete[] static_cast<char*>(buf_ptrs[i]);
+        }
     }
     return HG_SUCCESS;
 }

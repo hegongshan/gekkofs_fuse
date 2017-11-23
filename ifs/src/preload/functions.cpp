@@ -229,7 +229,6 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
         auto append_flag = adafs_fd->append_flag();
-        size_t write_size;// XXX use after abt eventual is used
         int err = 0;
         long updated_size = 0;
 
@@ -261,8 +260,10 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
         auto dest_n = dest_ids.size();
         vector<ABT_thread> threads(dest_n);
+        vector<ABT_eventual> eventuals(dest_n);
         vector<struct write_args*> thread_args(dest_n);
         for (unsigned long i = 0; i < dest_n; i++) {
+            ABT_eventual_create(sizeof(size_t), &eventuals[i]);
             struct write_args args = {
                     path, // path
                     count, // total size to write
@@ -271,16 +272,21 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
                     append_flag, // append flag when file was opened
                     updated_size, // for append truncate TODO needed?
                     dest_ids[i], // pointer to list of chunk ids that all go to the same destination
-                    0, // out: actual written size
+                    &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
             };
             thread_args[i] = &args;
             ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
         }
-        // yield to one of the threads
-//        ABT_thread_yield_to(threads[0]);
-        // TODO we need abt_eventual for it to be asynchronous and to be able to return us the written size
-        // TODO Errorhandling should also take place here after we implement with abt eventual
+        auto write_size_total = static_cast<size_t>(0);
         for (unsigned long i = 0; i < dest_n; i++) {
+            size_t* thread_ret_size;
+            ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
+            if (thread_ret_size == nullptr || *thread_ret_size == 0) {
+                // TODO error handling if write of a thread failed. all data needs to be deleted and size update reverted
+                ld_logger->error("{}() Writing thread {} did not write anything. NO ACTION WAS DONE", __func__, i);
+            } else
+                write_size_total += *thread_ret_size;
+            ABT_eventual_free(&eventuals[i]);
             ret = ABT_thread_join(threads[i]);
             if (ret != 0) {
                 ld_logger->error("{}() Unable to ABT_thread_join()", __func__);
@@ -292,12 +298,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
                 return -1;
             }
         }
-//        if (err != 0) {
-//            ld_logger->error("{}() write failed", __func__);
-//            return 0;
-//        }
-//        return write_size;
-        return count;
+        return write_size_total;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
 }

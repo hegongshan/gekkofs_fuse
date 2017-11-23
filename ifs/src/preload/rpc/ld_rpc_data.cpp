@@ -77,7 +77,13 @@ void rpc_send_write_abt(void* _arg) {
         /* decode response */
         ret = margo_get_output(handle, &out);
         err = out.res;
-        arg->write_size = static_cast<size_t>(out.io_size);
+        size_t write_size;
+        if (err != 0)
+            write_size = static_cast<size_t>(0);
+        else
+            write_size = static_cast<size_t>(out.io_size);
+        // Signal calling process that RPC is finished and put written size into return value
+        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(write_size));
         ld_logger->debug("{}() Got response {}", __func__, out.res);
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);

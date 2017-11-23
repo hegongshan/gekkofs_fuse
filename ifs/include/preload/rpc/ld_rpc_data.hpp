@@ -23,7 +23,7 @@ struct write_args {
     bool append;
     off_t updated_size;
     std::vector<unsigned long>& chnk_ids;
-    size_t write_size;
+    ABT_eventual* eventual;
 };
 
 void rpc_send_write_abt(void* _arg);
