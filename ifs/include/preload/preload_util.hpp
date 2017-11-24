@@ -8,7 +8,7 @@
 #include <extern/lrucache/LRUCache11.hpp>
 #include <string>
 
-
+// TODO singleton this stuff away
 struct FsConfig {
     // configurable metadata
     bool atime_state;

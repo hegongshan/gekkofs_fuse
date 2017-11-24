@@ -25,8 +25,19 @@ struct write_args {
     std::vector<unsigned long>& chnk_ids;
     ABT_eventual* eventual;
 };
+struct read_args {
+    std::string& path;
+    size_t in_size;
+    off_t in_offset;
+    void* buf;
+    std::vector<unsigned long>& chnk_ids;
+    ABT_eventual* eventual;
+};
 
 void rpc_send_write_abt(void* _arg);
+
+void rpc_send_read_abt(void* _arg);
+
 
 template<typename T>
 int rpc_send_read(const std::string& path, const size_t in_size, const off_t in_offset, T* tar_buf, size_t& read_size) {

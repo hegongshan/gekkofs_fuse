@@ -245,9 +245,15 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         ABT_xstream xstream;
         ABT_pool pool;
         auto ret = ABT_xstream_self(&xstream);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get self xstream. Is Argobots initialized?", __func__);
+            return -1;
+        }
         ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
-
-
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get main pools from ABT xstream", __func__);
+            return -1;
+        }
         // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
         map<unsigned long, vector<unsigned long>> dest_ids{};
         for (unsigned long i = 0; i < chunk_n; i++) {
@@ -319,10 +325,81 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
         size_t read_size = 0;
-        int err;
-        err = rpc_send_read(path, count, offset, buf, read_size);
-        // TODO check how much we need to deal with the read_size
-        return err == 0 ? read_size : 0;
+        auto err = 0;
+
+
+        // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
+        auto chunk_n = static_cast<size_t>(ceil(
+                count / static_cast<float>(CHUNKSIZE))); // get number of chunks needed for writing
+        auto chnk_id_start = offset / CHUNKSIZE;
+        vector<unsigned long> dest_idx{}; // contains the recipient ids, used to access the dest_ids map
+        map<unsigned long, vector<unsigned long>> dest_ids{}; // contains the chnk ids (value list) per recipient (key)
+        for (unsigned long i = 0; i < chunk_n; i++) {
+            auto chnk_id = i + chnk_id_start;
+            auto recipient = get_rpc_node(path + fmt::FormatInt(chnk_id).str());
+            if (dest_ids.count(recipient) == 0) {
+                dest_ids.insert(make_pair(recipient, vector<unsigned long>{chnk_id}));
+                dest_idx.push_back(recipient);
+            } else
+                dest_ids[recipient].push_back(chnk_id);
+        }
+
+        // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
+        ABT_xstream xstream;
+        ABT_pool pool;
+        auto ret = ABT_xstream_self(&xstream);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get self xstream. Is Argobots initialized?", __func__);
+            return -1;
+        }
+        ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get main pools from ABT xstream", __func__);
+            return -1;
+        }
+        auto dest_n = dest_idx.size();
+        vector<ABT_thread> threads(dest_n);
+        vector<ABT_eventual> eventuals(dest_n);
+        vector<struct read_args*> thread_args(dest_n);
+        for (unsigned long i = 0; i < dest_n; i++) {
+            ABT_eventual_create(sizeof(size_t), &eventuals[i]);
+            struct read_args args = {
+                    path, // path
+                    count, // total size to read
+                    0, // reading offset only for the first chunk
+                    buf, // pointer to write buffer
+                    dest_ids[dest_idx[i]], // pointer to list of chunk ids that all go to the same destination
+                    &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
+            };
+            if (i == 0)
+                args.in_offset = offset % CHUNKSIZE;
+            thread_args[i] = &args;
+            ABT_thread_create(pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        }
+
+        auto read_size_total = static_cast<size_t>(0);
+        for (unsigned long i = 0; i < dest_n; i++) {
+            size_t* thread_ret_size;
+            ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
+            if (thread_ret_size == nullptr || *thread_ret_size == 0) {
+                err = -1;
+                ld_logger->error("{}() Reading thread {} did not read anything. NO ACTION WAS DONE", __func__, i);
+            } else
+                read_size_total += *thread_ret_size;
+            ABT_eventual_free(&eventuals[i]);
+            ret = ABT_thread_join(threads[i]);
+            if (ret != 0) {
+                ld_logger->error("{}() Unable to ABT_thread_join()", __func__);
+                err = -1;
+            }
+            ret = ABT_thread_free(&threads[i]);
+            if (ret != 0) {
+                ld_logger->error("{}() Unable to ABT_thread_free()", __func__);
+                err = -1;
+            }
+        }
+        // XXX check how much we need to deal with the read_size
+        return err == 0 ? read_size_total : 0;;
     }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }
