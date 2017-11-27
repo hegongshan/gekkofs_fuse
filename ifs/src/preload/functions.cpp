@@ -231,6 +231,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         auto append_flag = adafs_fd->append_flag();
         int err = 0;
         long updated_size = 0;
+        auto write_size = static_cast<size_t>(0);
 
 //        if (append_flag)
         err = rpc_send_update_metadentry_size(path, count, append_flag, updated_size);
@@ -283,7 +284,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             thread_args[i] = &args;
             ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
         }
-        auto write_size_total = static_cast<size_t>(0);
+
         for (unsigned long i = 0; i < dest_n; i++) {
             size_t* thread_ret_size;
             ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
@@ -291,7 +292,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
                 // TODO error handling if write of a thread failed. all data needs to be deleted and size update reverted
                 ld_logger->error("{}() Writing thread {} did not write anything. NO ACTION WAS DONE", __func__, i);
             } else
-                write_size_total += *thread_ret_size;
+                write_size += *thread_ret_size;
             ABT_eventual_free(&eventuals[i]);
             ret = ABT_thread_join(threads[i]);
             if (ret != 0) {
@@ -304,7 +305,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
                 return -1;
             }
         }
-        return write_size_total;
+        return write_size;
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
 }
@@ -324,9 +325,8 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         auto adafs_fd = file_map.get(fd);
         auto path = adafs_fd->path();
-        size_t read_size = 0;
+        auto read_size = static_cast<size_t>(0);
         auto err = 0;
-
 
         // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
         auto chunk_n = static_cast<size_t>(ceil(
@@ -377,7 +377,6 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
             ABT_thread_create(pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
         }
 
-        auto read_size_total = static_cast<size_t>(0);
         for (unsigned long i = 0; i < dest_n; i++) {
             size_t* thread_ret_size;
             ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
@@ -385,7 +384,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
                 err = -1;
                 ld_logger->error("{}() Reading thread {} did not read anything. NO ACTION WAS DONE", __func__, i);
             } else
-                read_size_total += *thread_ret_size;
+                read_size += *thread_ret_size;
             ABT_eventual_free(&eventuals[i]);
             ret = ABT_thread_join(threads[i]);
             if (ret != 0) {
@@ -399,7 +398,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
             }
         }
         // XXX check how much we need to deal with the read_size
-        return err == 0 ? read_size_total : 0;;
+        return err == 0 ? read_size : 0;
     }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }

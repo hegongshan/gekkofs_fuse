@@ -108,9 +108,9 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
     auto chnk_n = buf_sizes.size() / 2;
     // TODO this can be parallized
     for (size_t i = 0; i < chnk_n; i++) {
-        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i * 2]));
-        auto chnk_ptr = static_cast<char*>(buf_ptrs[(i * 2) + 1]);
-        auto chnk_size = buf_sizes[(i * 2) + 1];
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
+        auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
+        auto chnk_size = buf_sizes[i + chnk_n];
         size_t written_chnk_size;
         // TODO 5,6,7 params (append and offset stuff)
         if (write_file(path, chnk_ptr, chnk_id, chnk_size, 0, false, 0, written_chnk_size) != 0) {
