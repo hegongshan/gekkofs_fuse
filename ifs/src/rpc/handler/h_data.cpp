@@ -225,7 +225,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     }
 
     // do write operation if all is good
-    out.res = write_chunks(in.path, buf_ptrs, buf_sizes, out.io_size);
+    out.res = write_chunks(in.path, buf_ptrs, buf_sizes, in.offset, out.io_size);
     if (out.res != 0) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to write data to local disk.");
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);

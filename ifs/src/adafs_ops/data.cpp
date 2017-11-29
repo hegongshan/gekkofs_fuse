@@ -94,16 +94,19 @@ int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id,
         // Metadata was already updated by the client before the write operation
         // truncating file
         truncate(chnk_path.c_str(), updated_size);
-    } else {
-        truncate(chnk_path.c_str(), size); // file is rewritten, thus, only written size is kept
     }
+//    else {
+//        truncate(chnk_path.c_str(), size); // file is rewritten, thus, only written size is kept
+//    }
 
     return 0;
 }
 
-int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
-                 size_t& write_size) {
+int
+write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes, const off_t offset,
+             size_t& write_size) {
     write_size = 0;
+    auto err = static_cast<int>(0);
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
     auto chnk_n = buf_sizes.size() / 2;
     // TODO this can be parallized
@@ -113,7 +116,11 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
         auto chnk_size = buf_sizes[i + chnk_n];
         size_t written_chnk_size;
         // TODO 5,6,7 params (append and offset stuff)
-        if (write_file(path, chnk_ptr, chnk_id, chnk_size, 0, false, 0, written_chnk_size) != 0) {
+        if (i == 0) // only the first chunk gets the offset. the chunks are sorted on the client site
+            err = write_file(path, chnk_ptr, chnk_id, chnk_size, offset, false, 0, written_chnk_size);
+        else
+            err = write_file(path, chnk_ptr, chnk_id, chnk_size, 0, false, 0, written_chnk_size);
+        if (err != 0) {
             // TODO How do we handle already written chunks? Ideally, we would need to remove them after failure.
             ADAFS_DATA->spdlogger()->error("{}() Writing chunk failed with path {} and id {}. Aborting ...", __func__,
                                            path, chnk_id);

@@ -240,9 +240,20 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             return 0; // ERR
         }
 
-        // started here // TODO handle offset
         auto chunk_n = static_cast<size_t>(ceil(
                 count / static_cast<float>(CHUNKSIZE))); // get number of chunks needed for writing
+        // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
+        map<unsigned long, vector<unsigned long>> dest_ids{};
+        vector<unsigned long> dest_idx{}; // contains the recipient ids, used to access the dest_ids map
+        for (unsigned long i = 0; i < chunk_n; i++) {
+            auto recipient = get_rpc_node(path + fmt::FormatInt(i).str());
+            if (dest_ids.count(recipient) == 0) {
+                dest_ids.insert(make_pair(recipient, vector<unsigned long>{i}));
+                dest_idx.push_back(recipient);
+            } else
+                dest_ids[recipient].push_back(i);
+        }
+        // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
         ABT_xstream xstream;
         ABT_pool pool;
         auto ret = ABT_xstream_self(&xstream);
@@ -255,17 +266,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             ld_logger->error("{}() Unable to get main pools from ABT xstream", __func__);
             return -1;
         }
-        // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-        map<unsigned long, vector<unsigned long>> dest_ids{};
-        for (unsigned long i = 0; i < chunk_n; i++) {
-            auto recipient = get_rpc_node(path + fmt::FormatInt(i).str());
-            if (dest_ids.count(recipient) == 0)
-                dest_ids.insert(make_pair(recipient, vector<unsigned long>{i}));
-            else
-                dest_ids[recipient].push_back(i);
-        }
-        // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-        auto dest_n = dest_ids.size();
+        auto dest_n = dest_idx.size();
         vector<ABT_thread> threads(dest_n);
         vector<ABT_eventual> eventuals(dest_n);
         vector<struct write_args*> thread_args(dest_n);
@@ -274,13 +275,15 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             struct write_args args = {
                     path, // path
                     count, // total size to write
-                    offset, // writing offset
+                    0, // writing offset only relevant for the first chunk that is written
                     buf, // pointer to write buffer
                     append_flag, // append flag when file was opened
                     updated_size, // for append truncate TODO needed?
-                    dest_ids[i], // pointer to list of chunk ids that all go to the same destination
+                    dest_ids[dest_idx[i]], // pointer to list of chunk ids that all go to the same destination
                     &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
             };
+            if (i == 0)
+                args.in_offset = offset % CHUNKSIZE;
             thread_args[i] = &args;
             ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
         }
