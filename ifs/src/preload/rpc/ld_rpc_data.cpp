@@ -155,8 +155,7 @@ void rpc_send_read_abt(void* _arg) {
     in.size = arg->in_size;
     in.offset = arg->in_offset;
 
-    // TODO bulk_access on the handler site doesn't work with HG_BULK_READWRITE, This is why we force rpc for now ...
-    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, in.path, handle, svr_addr, true);
+    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, in.path, handle, svr_addr, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
     /* register local target buffer for bulk access */

@@ -93,9 +93,10 @@ echo "Installing Mercury"
 CURR=$GIT/mercury
 prepare_build_dir $CURR
 cd $CURR/build
+# XXX Note: USE_EAGER_BULK is temporarily disabled due to bugs in Mercury with smaller amounts of data
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$INSTALL \
--DCMAKE_BUILD_TYPE:STRING=Release $USE_BMI $USE_CCI $USE_OFI ../  || exit 1
+-DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=OFF $USE_BMI $USE_CCI $USE_OFI ../  || exit 1
 make -j8  || exit 1
 make install  || exit 1
 
