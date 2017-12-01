@@ -20,7 +20,7 @@ struct write_args {
     size_t in_size;
     off_t in_offset;
     const void* buf;
-    bool append;
+    size_t chnk_start;
     off_t updated_size;
     std::vector<unsigned long>& chnk_ids;
     ABT_eventual* eventual;

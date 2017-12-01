@@ -20,15 +20,26 @@ void rpc_send_write_abt(void* _arg) {
         if (i < buf_sizes.size() / 2)
             buf_sizes[i] = sizeof(rpc_chnk_id_t);
         else {
-            if (i + 1 == buf_sizes.size()) {// if current chunk size is last chunk
-                // the last chunk will have the rest of the size, i.e., write size - all applied chunk sizes
-                buf_sizes[i] = arg->in_size - (chnk_ids[i - chnks.size()] * CHUNKSIZE);
+            if (i == buf_sizes.size() / 2) { // first chunk which might have an offset
+                if (arg->in_size + arg->in_offset > CHUNKSIZE)
+                    buf_sizes[i] = static_cast<size_t>(CHUNKSIZE - arg->in_offset);
+                else
+                    buf_sizes[i] = static_cast<size_t>(arg->in_size);
+
+                chnks[i - chnks.size()] =
+                        static_cast<char*>(const_cast<void*>(arg->buf)) +
+                        (CHUNKSIZE * (chnk_ids[i - chnk_ids.size()] - arg->chnk_start));
+                continue;
+            } else if (i + 1 == buf_sizes.size()) {// last chunk has remaining size
+                buf_sizes[i] =
+                        arg->in_size - (((chnk_ids[i - chnks.size()] - arg->chnk_start) * CHUNKSIZE) - arg->in_offset);
             } else {
                 buf_sizes[i] = CHUNKSIZE;
             }
             // position the pointer according to the chunk number
             chnks[i - chnks.size()] =
-                    static_cast<char*>(const_cast<void*>(arg->buf)) + (CHUNKSIZE * chnk_ids[i - chnk_ids.size()]);
+                    static_cast<char*>(const_cast<void*>(arg->buf)) +
+                    ((CHUNKSIZE * (chnk_ids[i - chnk_ids.size()] - arg->chnk_start)) - arg->in_offset);
         }
     }
     // setting pointers to the ids and to the chunks
@@ -52,10 +63,7 @@ void rpc_send_write_abt(void* _arg) {
     in.path = arg->path.c_str();
     in.offset = arg->in_offset;
     in.updated_size = arg->updated_size;
-    if (arg->append)
-        in.append = HG_TRUE;
-    else
-        in.append = HG_FALSE;
+    in.append = HG_FALSE; // unused
 
 
     margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->path, handle, svr_addr, false);

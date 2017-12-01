@@ -25,15 +25,9 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
 
     auto segment_count = margo_bulk_get_segment_count(in.bulk_handle);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
-    // is write happening over shared memory on the same node?
-    auto local_read = is_handle_sm(mid, hgi->addr);
-    if (local_read)
-        ADAFS_DATA->spdlogger()->debug("{}() Got local read IPC with path {} size {} offset {}", __func__, in.path,
-                                       bulk_size,
-                                       in.offset);
-    else
-        ADAFS_DATA->spdlogger()->debug("{}() Got read RPC with path {} size {} offset {}", __func__, in.path, bulk_size,
-                                       in.offset);
+    ADAFS_DATA->spdlogger()->debug("{}() Got read RPC (local {}) with path {} size {} offset {}", __func__,
+                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
+                                   in.offset);
 
     // set buffer sizes
     vector<hg_size_t> buf_sizes(segment_count);
@@ -121,15 +115,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
 
     auto segment_count = margo_bulk_get_segment_count(in.bulk_handle);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
-    // is write happening over shared memory on the same node?
-    auto local_write = is_handle_sm(mid, hgi->addr);
-    if (local_write)
-        ADAFS_DATA->spdlogger()->debug("{}() Got local write IPC with path {} size {} offset {}", __func__, in.path,
-                                       bulk_size,
-                                       in.offset);
-    else
-        ADAFS_DATA->spdlogger()->debug("{}() Got write RPC with path {} size {} offset {}", __func__, in.path,
-                                       bulk_size, in.offset);
+    ADAFS_DATA->spdlogger()->debug("{}() Got write RPC (local {}) with path {} size {} offset {}", __func__,
+                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
+                                   in.offset);
 
 
     // set buffer sizes information
@@ -142,8 +130,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
             id_size += sizeof(rpc_chnk_id_t);
 
         } else {
-            // case for last chunk size
-            if ((chnk_size + CHUNKSIZE) > bulk_size)
+            if (i == segment_count / 2) { // first chunk
+                buf_sizes[i] = static_cast<unsigned long>(CHUNKSIZE - in.offset);
+            } else if ((chnk_size + CHUNKSIZE + id_size) > bulk_size) // last chunk
                 buf_sizes[i] = bulk_size - chnk_size - id_size;
             else
                 buf_sizes[i] = CHUNKSIZE;

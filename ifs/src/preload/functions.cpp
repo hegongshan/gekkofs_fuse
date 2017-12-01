@@ -239,13 +239,19 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
             ld_logger->error("{}() update_metadentry_size failed", __func__);
             return 0; // ERR
         }
+        // TODO this does only work without an offset continue here
 
-        auto chunk_n = static_cast<size_t>(ceil(
-                count / static_cast<float>(CHUNKSIZE))); // get number of chunks needed for writing
+        auto chnk_start = static_cast<size_t>(offset) / CHUNKSIZE; // first chunk number
+        auto chnk_end = (offset + count) / CHUNKSIZE + 1; // last chunk number (right-open) [chnk_start,chnk_end)
+        if ((offset + count) % CHUNKSIZE == 0)
+            chnk_end--;
+
+        auto chnk_n = chnk_end - chnk_start; // total number of chunks
         // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
         map<unsigned long, vector<unsigned long>> dest_ids{};
-        vector<unsigned long> dest_idx{}; // contains the recipient ids, used to access the dest_ids map
-        for (unsigned long i = 0; i < chunk_n; i++) {
+        // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
+        vector<unsigned long> dest_idx{};
+        for (auto i = chnk_start; i < chnk_end; i++) {
             auto recipient = get_rpc_node(path + fmt::FormatInt(i).str());
             if (dest_ids.count(recipient) == 0) {
                 dest_ids.insert(make_pair(recipient, vector<unsigned long>{i}));
@@ -272,17 +278,22 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
         vector<struct write_args*> thread_args(dest_n);
         for (unsigned long i = 0; i < dest_n; i++) {
             ABT_eventual_create(sizeof(size_t), &eventuals[i]);
+            auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
+            if (i == 0) // receiver of first chunk must subtract the offset from first chunk
+                total_chunk_size -= offset % CHUNKSIZE;
+            if (i == dest_n - 1 && ((offset + count) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
+                total_chunk_size -= CHUNKSIZE - ((offset + count) % CHUNKSIZE);
             struct write_args args = {
                     path, // path
-                    count, // total size to write
+                    total_chunk_size, // total size to write
                     0, // writing offset only relevant for the first chunk that is written
                     buf, // pointer to write buffer
-                    append_flag, // append flag when file was opened
+                    chnk_start, // append flag when file was opened
                     updated_size, // for append truncate TODO needed?
                     dest_ids[dest_idx[i]], // pointer to list of chunk ids that all go to the same destination
                     &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
             };
-            if (i == 0)
+            if (i == 0) // first offset in dest_idx is the chunk with a potential offset
                 args.in_offset = offset % CHUNKSIZE;
             thread_args[i] = &args;
             ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
