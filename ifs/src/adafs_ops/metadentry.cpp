@@ -92,24 +92,38 @@ int remove_node(const string& path) {
 /**
  * Updates a metadentry's size atomically and returns the corresponding size after update
  * @param path
- * @param size
+ * @param io_size
  * @return the updated size
  */
-long update_metadentry_size(const string& path, off_t size, bool append) {
+int update_metadentry_size(const string& path, size_t io_size, off_t offset, bool append, size_t& read_size) {
     // XXX This function has to be completely atomic. Do we need transactions here? or a separate locking db?
+#ifdef LOG_TRACE
     db_iterate_all_entries();
+#endif
     string val;
     auto err = db_get_metadentry(path, val);
     if (!err || val.size() == 0) {
-        return -1;
+        return ENOENT;
     }
     Metadata md{path, val};
-    // update size
+    if (static_cast<unsigned long>(offset) > md.size()) // Writing beyond file dimensions is prohibited for now
+        return EFAULT;
+    // update io_size
     if (append)
-        md.size(md.size() + size);
-    else
-        md.size(size);
-    return db_update_metadentry(path, path, md.to_KVentry()) ? md.size() : -1; // update database atomically
+        md.size(md.size() + io_size);
+    else { // if no append but io_size exceeds the file's size, update the size correspondingly
+        if (io_size + static_cast<unsigned long>(offset) > md.size())
+            md.size(io_size + offset);
+        else {
+            read_size = md.size();
+            return 0;
+        }
+    }
+    read_size = db_update_metadentry(path, path, md.to_KVentry()) ? md.size() : -1; // update database atomically
+#ifdef LOG_TRACE
+    db_iterate_all_entries();
+#endif
+    return 0;
 }
 
 int update_metadentry(const string& path, Metadata& md) {

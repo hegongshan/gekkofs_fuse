@@ -9,7 +9,10 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     auto err = 1;
     auto fd = file_map.add(path, (flags & O_APPEND) != 0);
     // TODO look up if file exists configurable
-    err = rpc_send_open(path, mode, flags);
+    if (flags & O_CREAT)
+        err = rpc_send_open(path, mode, flags);
+    else
+        err = 0; //TODO default if no o_creat flag, assume file exists. This should be an rpc to see if file is there
     if (err == 0)
         return fd;
     else {
@@ -120,13 +123,13 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
     long updated_size = 0;
     auto write_size = static_cast<size_t>(0);
 
-//        if (append_flag)
-    err = rpc_send_update_metadentry_size(path, count, append_flag, updated_size);
+    err = rpc_send_update_metadentry_size(path, count, offset, append_flag, updated_size);
     if (err != 0) {
-        ld_logger->error("{}() update_metadentry_size failed", __func__);
+        ld_logger->error("{}() update_metadentry_size failed with err {}", __func__, err);
         return 0; // ERR
     }
-    // TODO this does only work without an offset continue here
+    if (append_flag)
+        offset = updated_size - count;
 
     auto chnk_start = static_cast<size_t>(offset) / CHUNKSIZE; // first chunk number
     auto chnk_end = (offset + count) / CHUNKSIZE + 1; // last chunk number (right-open) [chnk_start,chnk_end)

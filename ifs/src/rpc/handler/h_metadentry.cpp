@@ -181,12 +181,15 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Got update metadentry size RPC with path {}", in.path);
 
     // do update
-    auto ret_size = update_metadentry_size(in.path, in.size, (in.append == HG_TRUE));
-    if (ret_size > 0) {
+    size_t read_size;
+    auto err = update_metadentry_size(in.path, in.size, in.offset, (in.append == HG_TRUE), read_size);
+    if (err == 0) {
         out.err = 0;
-        out.ret_size = ret_size;
-    } else
-        out.err = 1;
+        out.ret_size = read_size;
+    } else {
+        out.err = err;
+        out.ret_size = 0;
+    }
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
