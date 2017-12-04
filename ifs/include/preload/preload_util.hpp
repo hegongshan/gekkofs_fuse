@@ -3,6 +3,7 @@
 #define IFS_PRELOAD_UTIL_HPP
 
 #include <preload/preload.hpp>
+#include <preload/open_file_map.hpp>
 // third party libs
 #include <extern/spdlog/spdlog.h>
 #include <extern/lrucache/LRUCache11.hpp>
@@ -61,6 +62,8 @@ struct MetadentryUpdateFlags {
     bool path = false;
 };
 
+// file map instance for mapping paths to file descriptors
+extern OpenFileMap file_map;
 // Margo instances
 extern margo_instance_id ld_margo_ipc_id;
 extern margo_instance_id ld_margo_rpc_id;

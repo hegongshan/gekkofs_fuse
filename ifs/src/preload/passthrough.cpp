@@ -41,6 +41,7 @@ void* libc_puts;
 
 void* libc_write;
 void* libc_pwrite;
+void* libc_pwrite64;
 void* libc_read;
 void* libc_pread;
 void* libc_pread64;
@@ -81,6 +82,7 @@ void init_passthrough_() {
 
     libc_write = dlsym(libc, "write");
     libc_pwrite = dlsym(libc, "pwrite");
+    libc_pwrite64 = dlsym(libc, "pwrite64");
     libc_read = dlsym(libc, "read");
     libc_pread = dlsym(libc, "pread");
     libc_pread64 = dlsym(libc, "pread64");

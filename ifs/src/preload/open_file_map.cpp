@@ -1,5 +1,6 @@
 
 #include <preload/open_file_map.hpp>
+#include <preload/preload_util.hpp>
 
 using namespace std;
 

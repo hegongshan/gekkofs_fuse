@@ -12,8 +12,8 @@ set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/pre
 
         ../../include/preload/ipc_types.hpp margo_ipc.cpp ../../include/preload/margo_ipc.hpp
 
-        rpc/ld_rpc_data.cpp rpc/ld_rpc_metadentry.cpp ../../include/preload/rpc/ld_rpc_data.hpp ../../include/preload/rpc/ld_rpc_metadentry.hpp
-        ../../include/rpc/rpc_utils.hpp ../rpc/rpc_utils.cpp functions.cpp passthrough.cpp ../../include/preload/passthrough.hpp ../../include/global_defs.hpp)
+        rpc/ld_rpc_data_ws.cpp rpc/ld_rpc_metadentry.cpp ../../include/preload/rpc/ld_rpc_data_ws.hpp ../../include/preload/rpc/ld_rpc_metadentry.hpp
+        ../../include/rpc/rpc_utils.hpp ../rpc/rpc_utils.cpp intcp_functions.cpp passthrough.cpp ../../include/preload/passthrough.hpp ../../include/global_defs.hpp adafs_functions.cpp adafs_functions.cpp ../../include/preload/adafs_functions.hpp)
 add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
 target_link_libraries(iointer dl ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
         ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}

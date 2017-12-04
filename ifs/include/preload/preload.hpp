@@ -23,7 +23,7 @@ extern "C" {
 
 #include <preload/preload_util.hpp>
 
-#define EUNKNOWN -1
+#define EUNKNOWN (-1)
 
 bool ld_is_env_initialized();
 

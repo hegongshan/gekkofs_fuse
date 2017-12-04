@@ -3,7 +3,7 @@
 #include <preload/preload.hpp>
 #include <preload/ipc_types.hpp>
 #include <preload/margo_ipc.hpp>
-#include <preload/rpc/ld_rpc_data.hpp>
+#include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/passthrough.hpp>
 
 enum class Margo_mode {

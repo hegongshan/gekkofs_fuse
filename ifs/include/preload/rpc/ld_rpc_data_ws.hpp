@@ -1,6 +1,6 @@
 
-#ifndef IFS_PRELOAD_C_DATA_HPP
-#define IFS_PRELOAD_C_DATA_HPP
+#ifndef IFS_PRELOAD_C_DATA_WS_HPP
+#define IFS_PRELOAD_C_DATA_WS_HPP
 
 extern "C" {
 #include <abt.h>
@@ -92,4 +92,4 @@ int rpc_send_read(const std::string& path, const size_t in_size, const off_t in_
 int rpc_send_write(const std::string& path, size_t in_size, off_t in_offset, void* buf, size_t& write_size,
                    bool append, off_t updated_size);
 
-#endif //IFS_PRELOAD_C_DATA_HPP
+#endif //IFS_PRELOAD_C_DATA_WS_HPP
