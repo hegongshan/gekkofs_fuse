@@ -36,10 +36,12 @@ void destroy_enviroment() {
     margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
 #endif
     ADAFS_DATA->spdlogger()->info("About to finalize the margo server");
-    margo_finalize(RPC_DATA->server_rpc_mid());
+    // The shutdown order is important because the RPC server is started first, it has to be stopped last due to Argobots
     margo_finalize(RPC_DATA->server_ipc_mid());
-    ADAFS_DATA->spdlogger()->info("Success.");
-    ADAFS_DATA->spdlogger()->info("All services shut down.");
+    ADAFS_DATA->spdlogger()->info("Shut down Margo IPC server successful");
+    margo_finalize(RPC_DATA->server_rpc_mid());
+    ADAFS_DATA->spdlogger()->info("Shut down Margo RPC server successful");
+    ADAFS_DATA->spdlogger()->info("All services shut down. ADA-FS shutdown complete.");
 }
 
 bool init_ipc_server() {

@@ -66,7 +66,7 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     cd $CURR
     ./autogen.pl || exit 1
     cd $CURR/build
-    ../configure --prefix=$INSTALL LIBS="-lpthread"  || exit 1
+    ../configure --with-verbs --prefix=$INSTALL LIBS="-lpthread"  || exit 1
     make -j8 || exit 1
     make install || exit 1
     make check || exit 1
