@@ -80,6 +80,9 @@ cmake-build-release
 playground
 .fuse_hidden*
 
+# python stuff
+*.pyc
+
 ifs/\.hidden_playground/
 
 ifs_test/build/
