@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import time
 
 import os
 
@@ -12,6 +13,7 @@ __email__ = "vef@uni-mainz.de"
 
 global PRETEND
 global PSSH_PATH
+global WAITTIME
 
 
 def check_dependencies():
@@ -98,6 +100,11 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
             print '[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!'
             exit(1)
 
+    print 'Give it some time (%d second) to startup ...' % WAITTIME
+    for i in range(WAITTIME):
+        print '%d\r' % (WAITTIME - i),
+        time.sleep(1)
+
     # Check adafs logs for errors
     cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
@@ -157,6 +164,7 @@ or a path to a nodefile (one node per line)''')
     else:
         PRETEND = False
     PSSH_PATH = args.pssh
+    WAITTIME = 5
     init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot)
 
     print '\nNothing left to do; exiting. :)'

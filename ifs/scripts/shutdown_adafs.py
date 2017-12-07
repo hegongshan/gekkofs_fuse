@@ -142,7 +142,7 @@ if __name__ == "__main__":
     else:
         PRETEND = False
     PSSH_PATH = args.pssh
-    WAITTIME = 10
+    WAITTIME = 5
     shutdown_system(args.daemonpath, args.nodelist, args.sigkill)
 
     print '\nNothing left to do; exiting. :)'
