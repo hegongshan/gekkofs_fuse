@@ -29,6 +29,7 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
+CORES=$(grep -c ^processor /proc/cpuinfo)
 
 if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     echo "$NA_LAYER plugin(s) selected"
@@ -53,7 +54,7 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     ./prepare || exit 1
     cd $CURR/build
     ../configure --prefix=$INSTALL --enable-shared --enable-bmi-only  || exit 1
-    make -j8 || exit 1
+    make -j$CORES || exit 1
     make install || exit 1
 fi
 
@@ -67,7 +68,7 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     ./autogen.pl || exit 1
     cd $CURR/build
     ../configure --with-verbs --prefix=$INSTALL LIBS="-lpthread"  || exit 1
-    make -j8 || exit 1
+    make -j$CORES || exit 1
     make install || exit 1
     make check || exit 1
 fi
@@ -82,7 +83,7 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     ./autogen.sh || exit 1
     cd $CURR/build
     ../configure --prefix=$INSTALL  || exit 1
-    make -j8 || exit 1
+    make -j$CORES || exit 1
     make install || exit 1
     make check || exit 1
 fi
@@ -97,7 +98,7 @@ cd $CURR/build
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=$INSTALL \
 -DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=OFF $USE_BMI $USE_CCI $USE_OFI ../  || exit 1
-make -j8  || exit 1
+make -j$CORES  || exit 1
 make install  || exit 1
 
 echo "Installing Argobots"
@@ -109,7 +110,7 @@ cd $CURR
 ./autogen.sh || exit 1
 cd $CURR/build
 ../configure --prefix=$INSTALL || exit 1
-make -j8 || exit 1
+make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
@@ -121,7 +122,7 @@ cd $CURR
 ./prepare.sh || exit 1
 cd $CURR/build
 ../configure --prefix=$INSTALL PKG_CONFIG_PATH=$INSTALL/lib/pkgconfig || exit 1
-make -j8 || exit 1
+make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
@@ -133,7 +134,7 @@ cd $CURR
 ./prepare.sh || exit 1
 cd $CURR/build
 ../configure --prefix=$INSTALL PKG_CONFIG_PATH=$INSTALL/lib/pkgconfig CFLAGS="-g -Wall" || exit 1
-make -j8 || exit 1
+make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
@@ -143,7 +144,7 @@ CURR=$GIT/rocksdb
 cd $CURR
 make clean || exit 1
 sed -i.bak "s#INSTALL_PATH ?= /usr/local#INSTALL_PATH ?= $INSTALL#g" Makefile
-make -j8 static_lib || exit 1
+make -j$CORES static_lib || exit 1
 make install || exit 1
 
 echo "Done"

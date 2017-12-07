@@ -42,6 +42,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
+    pssh_nodelist = ''
     if not os.path.exists(daemon_path) or not os.path.isfile(daemon_path):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
@@ -50,12 +51,12 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
         nodefile = True  # TODO
         print 'Nodefiles are not supported yet'
         exit(1)
-    else:
-        nodelist.replace(',', ' ')
     if PSSH_PATH is '':
         check_dependencies()
-    cmd_str = '%s -i -H "%s" "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-              % (PSSH_PATH, nodelist, daemon_path, rootdir, mountdir, nodelist)
+    # set pssh arguments
+    pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
+    cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+              % (pssh, daemon_path, rootdir, mountdir, nodelist)
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -74,7 +75,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
             print '[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!'
             exit(1)
 
-    cmd_chk_str = '%s -i -H "%s" "head -6 /tmp/adafs_daemon.log"' % (PSSH_PATH, nodelist)
+    cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
         print 'Pretending: %s' % cmd_chk_str
     else:
