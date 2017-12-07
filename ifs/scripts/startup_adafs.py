@@ -27,7 +27,7 @@ def check_dependencies():
     exit(1)
 
 
-def init_system(daemon_path, rootdir, mountdir, nodelist):
+def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
     """Initializes ADAFS on specified nodes.
 
     Args:
@@ -55,6 +55,29 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
         check_dependencies()
     # set pssh arguments
     pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
+
+    # clean root dir if needed
+    if cleanroot:
+        cmd_rm_str = '%s "rm -rf %s/*"' % (pssh, rootdir)
+        if PRETEND:
+            print 'Pretending: %s' % cmd_rm_str
+        else:
+            print 'Running: %s' % cmd_rm_str
+            pssh_ret = util.exec_shell(cmd_rm_str, True)
+            err = False
+            for line in pssh_ret:
+                if 'FAILURE' in line.strip()[:30]:
+                    err = True
+                    print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
+                          (line[line.find('FAILURE'):].strip().split(' ')[1])
+                    print line
+            if not err:
+                print 'pssh daemon launch successfully executed. Root dir is cleaned.\n'
+            else:
+                print '[ERR] with pssh. Aborting!'
+                exit(1)
+
+    # Start deamons
     cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
               % (pssh, daemon_path, rootdir, mountdir, nodelist)
     if PRETEND:
@@ -75,6 +98,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
             print '[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!'
             exit(1)
 
+    # Check adafs logs for errors
     cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
         print 'Pretending: %s' % cmd_chk_str
@@ -125,12 +149,14 @@ or a path to a nodefile (one node per line)''')
                         help='Output adafs launch command and do not actually execute it')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
+    parser.add_argument('-c', '--cleanroot', action='store_true',
+                        help='Removes contents of root directory before starting ADA-FS Daemon. Be careful!')
     args = parser.parse_args()
     if args.pretend:
         PRETEND = True
     else:
         PRETEND = False
     PSSH_PATH = args.pssh
-    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist)
+    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot)
 
     print '\nNothing left to do; exiting. :)'
