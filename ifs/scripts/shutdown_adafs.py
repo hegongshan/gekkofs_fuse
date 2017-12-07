@@ -80,10 +80,11 @@ def shutdown_system(daemon_path, nodelist, sigkill):
             print '[ERR] with pssh. Aborting...'
             exit(1)
 
-    print 'Give it some time (%d second) to finish up ...' % WAITTIME
-    for i in range(WAITTIME):
-        print '%d\r' % (WAITTIME - i),
-        time.sleep(1)
+    if not PRETEND:
+        print 'Give it some time (%d second) to finish up ...' % WAITTIME
+        for i in range(WAITTIME):
+            print '%d\r' % (WAITTIME - i),
+            time.sleep(1)
     print 'Checking logs ...\n'
 
     cmd_chk_str = '%s "tail -4 /tmp/adafs_daemon.log"' % pssh

@@ -100,10 +100,11 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
             print '[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!'
             exit(1)
 
-    print 'Give it some time (%d second) to startup ...' % WAITTIME
-    for i in range(WAITTIME):
-        print '%d\r' % (WAITTIME - i),
-        time.sleep(1)
+    if not PRETEND:
+        print 'Give it some time (%d second) to startup ...' % WAITTIME
+        for i in range(WAITTIME):
+            print '%d\r' % (WAITTIME - i),
+            time.sleep(1)
 
     # Check adafs logs for errors
     cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
