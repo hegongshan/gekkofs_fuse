@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <chrono>
 #include <mpi.h>
+
 using namespace std;
 
 using ns = chrono::nanoseconds;
@@ -22,16 +23,21 @@ int main(int argc, char* argv[]) {
 
 //    int filen = 3;
 
-    printf("Hello from rank %d\n", rank);
+//    printf("Hello from rank %d\n", rank);
     MPI_Barrier(MPI_COMM_WORLD);
 
     auto start_t = get_time::now();
+    auto end_tmp = start_t;
     int fd;
     for (int i = 0; i < filen; ++i) {
         string p = "/tmp/mountdir/file" + to_string(rank) + "_" + to_string(i);
         fd = creat(p.c_str(), 0666);
-        if (i % 25000 == 0)
-            cout << "Rank " << rank << ": " << i << " files processed." << endl;
+        if (i % 25000 == 0) {
+            end_tmp = get_time::now();
+            auto diff_tmp = end_tmp - start_t;
+            cout << "Rank " << rank << ":\t" << i << " files processed.\t "
+                 << (i / (chrono::duration_cast<ns>(diff_tmp).count() / 1000000000.)) << " ops/sec" << endl;
+        }
         close(fd);
     }
 
