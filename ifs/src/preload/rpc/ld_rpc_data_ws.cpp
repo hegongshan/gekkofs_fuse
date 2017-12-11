@@ -11,8 +11,9 @@ using namespace std;
 void rpc_send_write_abt(void* _arg) {
     auto* arg = static_cast<struct write_args*>(_arg);
 
-    auto recipient_size = arg->chnk_ids.size();
-    auto chnk_ids = arg->chnk_ids;
+    ld_logger->info("{}() recipient {}", __func__, arg->recipient);
+    auto recipient_size = arg->chnk_ids->size();
+    auto chnk_ids = *arg->chnk_ids;
     vector<char*> chnks(recipient_size);
     vector<size_t> buf_sizes(recipient_size * 2);
     for (size_t i = 0; i < buf_sizes.size(); i++) {
@@ -60,7 +61,8 @@ void rpc_send_write_abt(void* _arg) {
     hg_return_t ret;
     auto write_size = static_cast<size_t>(0);
     // fill in
-    in.path = arg->path.c_str();
+    arg->path->c_str();
+    in.path = arg->path->c_str();
     in.offset = arg->in_offset;
     in.updated_size = arg->updated_size;
     in.append = HG_FALSE; // unused
@@ -121,8 +123,8 @@ void rpc_send_read_abt(void* _arg) {
 
     // Prepare buffers
     auto* arg = static_cast<struct read_args*>(_arg);
-    auto recipient_size = arg->chnk_ids.size();
-    auto chnk_ids = arg->chnk_ids;
+    auto recipient_size = arg->chnk_ids->size();
+    auto chnk_ids = *arg->chnk_ids;
     vector<char*> chnks(recipient_size);
     vector<size_t> buf_sizes(recipient_size * 2);
 
@@ -160,7 +162,7 @@ void rpc_send_read_abt(void* _arg) {
     hg_return_t ret;
     auto read_size = static_cast<size_t>(0);
     // fill in
-    in.path = arg->path.c_str();
+    in.path = arg->path->c_str();
     in.size = arg->in_size;
     in.offset = arg->in_offset;
 
