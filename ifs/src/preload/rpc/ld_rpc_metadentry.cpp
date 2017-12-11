@@ -131,7 +131,6 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
     int err = EUNKNOWN;
-    hg_return_t ret;
     // fill in
     // add data
     in.path = path.c_str();
@@ -170,7 +169,7 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     if (send_ret == HG_SUCCESS) {
         /* decode response */
         ld_logger->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
+        margo_get_output(handle, &out);
 
         ld_logger->debug("{}() Got response success: {}", __func__, out.err);
         err = out.err;

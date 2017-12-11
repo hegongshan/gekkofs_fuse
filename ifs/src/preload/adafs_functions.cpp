@@ -83,6 +83,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
                 0, // reading offset only for the first chunk
                 buf, // pointer to write buffer
                 dest_ids[dest_idx[i]], // pointer to list of chunk ids that all go to the same destination
+                dest_idx[i], // recipient
                 &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
         };
         if (i == 0)
@@ -180,6 +181,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
                 chnk_start, // append flag when file was opened
                 updated_size, // for append truncate TODO needed?
                 dest_ids[dest_idx[i]], // pointer to list of chunk ids that all go to the same destination
+                dest_idx[i], // recipient
                 &eventuals[i], // pointer to an eventual which has allocated memory for storing the written size
         };
         if (i == 0) // first offset in dest_idx is the chunk with a potential offset

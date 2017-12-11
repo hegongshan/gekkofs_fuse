@@ -66,7 +66,8 @@ void rpc_send_write_abt(void* _arg) {
     in.append = HG_FALSE; // unused
 
 
-    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->path, handle, svr_addr, false);
+    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->recipient, handle, svr_addr, false);
+
 
     auto used_mid = margo_hg_handle_get_instance(handle);
 
@@ -163,7 +164,7 @@ void rpc_send_read_abt(void* _arg) {
     in.size = arg->in_size;
     in.offset = arg->in_offset;
 
-    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, in.path, handle, svr_addr, false);
+    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, arg->recipient, handle, svr_addr, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
     /* register local target buffer for bulk access */

@@ -23,6 +23,7 @@ struct write_args {
     size_t chnk_start;
     off_t updated_size;
     std::vector<unsigned long>& chnk_ids;
+    size_t recipient;
     ABT_eventual* eventual;
 };
 struct read_args {
@@ -31,6 +32,7 @@ struct read_args {
     off_t in_offset;
     void* buf;
     std::vector<unsigned long>& chnk_ids;
+    size_t recipient;
     ABT_eventual* eventual;
 };
 
