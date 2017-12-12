@@ -172,9 +172,8 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
             total_chunk_size -= CHUNKSIZE - ((offset + count) % CHUNKSIZE);
         auto args = make_unique<write_args>();
         args->path = path; // path
-        args->in_size = total_chunk_size;// total size to write
-        args->in_offset = (i == 0) ? offset % CHUNKSIZE
-                                   : 0;// first offset in dest_idx is the chunk with a potential offset
+        args->in_size = total_chunk_size; // total size to write
+        args->in_offset = offset % CHUNKSIZE;// first offset in dest_idx is the chunk with a potential offset
         args->buf = buf;// pointer to write buffer
         args->chnk_start = chnk_start;// append flag when file was opened
         args->updated_size = updated_size;// for append truncate TODO needed?
@@ -182,6 +181,8 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
         args->recipient = dest_idx[i];// recipient
         args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
         thread_args[i] = std::move(args);
+        ld_logger->info("{}() Starting thread with recipient {} and chnk_ids_n {}", __func__, dest_idx[i],
+                        dest_ids[dest_idx[i]].size());
         ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
     }
 
