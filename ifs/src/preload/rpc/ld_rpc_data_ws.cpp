@@ -124,22 +124,32 @@ void rpc_send_read_abt(void* _arg) {
     auto chnk_ids = *arg->chnk_ids;
     vector<char*> chnks(recipient_size);
     vector<size_t> buf_sizes(recipient_size * 2);
-
+    auto buf_size = 0; // counter for how much of the buffer is already mapped into chunks
+    size_t chunk_offset = 0;
+    // if the first chunk is not the very first chunk in the buffer, the previous chunksizes have to be set as an offset
+    if (chnk_ids[0] != arg->chnk_start)
+        chunk_offset = ((chnk_ids[0] - arg->chnk_start) * CHUNKSIZE) - arg->in_offset;
     for (size_t i = 0; i < buf_sizes.size(); i++) {
         // even numbers contain the sizes of ids, while uneven contain the chunksize
         if (i < buf_sizes.size() / 2)
             buf_sizes[i] = sizeof(rpc_chnk_id_t);
         else {
-            if (i / 2 == 0) { // First chunk might have an offset
-                buf_sizes[i] = CHUNKSIZE - static_cast<unsigned long>(arg->in_offset);
-            } else if (i + 1 == buf_sizes.size()) {// if current chunk size is last chunk
-                // the last chunk will have the rest of the size, i.e., write size - all applied chunk sizes
-                buf_sizes[i] = arg->in_size - (chnk_ids[i / 2] * CHUNKSIZE);
+            if (i == buf_sizes.size() / 2) { // first chunk which might have an offset
+                if (arg->in_size + arg->in_offset < CHUNKSIZE)
+                    buf_sizes[i] = static_cast<size_t>(arg->in_size);
+                else if (chunk_offset == 0) // if the first chunk is the very first chunk in the buffer
+                    buf_sizes[i] = static_cast<size_t>(CHUNKSIZE - arg->in_offset);
+                else
+                    buf_sizes[i] = CHUNKSIZE;
+            } else if (i + 1 == buf_sizes.size()) {// last chunk has remaining size
+                buf_sizes[i] = arg->in_size - buf_size;
             } else {
                 buf_sizes[i] = CHUNKSIZE;
             }
-            // position the pointer according to the chunk number
-            chnks[i - chnks.size()] = static_cast<char*>(arg->buf) + (CHUNKSIZE * chnk_ids[i - chnk_ids.size()]);
+
+            // position the pointer according to the chunk number this code is executed for the second chunk+
+            chnks[i - chnks.size()] = static_cast<char*>(const_cast<void*>(arg->buf)) + chunk_offset + buf_size;
+            buf_size += buf_sizes[i];
         }
     }
     // setting pointers to the ids and to the chunks
@@ -161,7 +171,7 @@ void rpc_send_read_abt(void* _arg) {
     // fill in
     in.path = arg->path->c_str();
     in.size = arg->in_size;
-    in.offset = arg->in_offset;
+    in.offset = (chunk_offset == 0) ? arg->in_offset : 0;
 
     margo_create_wrap(ipc_read_data_id, rpc_read_data_id, arg->recipient, handle, svr_addr, false);
 

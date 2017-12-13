@@ -32,6 +32,7 @@ struct read_args {
     size_t in_size;
     off_t in_offset;
     void* buf;
+    size_t chnk_start;
     std::vector<unsigned long>* chnk_ids;
     size_t recipient;
     ABT_eventual* eventual;

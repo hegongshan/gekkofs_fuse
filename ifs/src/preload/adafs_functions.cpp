@@ -43,19 +43,19 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
     auto err = 0;
 
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-    auto chunk_n = static_cast<size_t>(ceil(
-            count / static_cast<float>(CHUNKSIZE))); // get number of chunks needed for writing
-    auto chnk_id_start = offset / CHUNKSIZE;
+    auto chnk_start = static_cast<size_t>(offset) / CHUNKSIZE; // first chunk number
+    auto chnk_end = (offset + count) / CHUNKSIZE + 1; // last chunk number (right-open) [chnk_start,chnk_end)
+    if ((offset + count) % CHUNKSIZE == 0)
+        chnk_end--;
     vector<unsigned long> dest_idx{}; // contains the recipient ids, used to access the dest_ids map
     map<unsigned long, vector<unsigned long>> dest_ids{}; // contains the chnk ids (value list) per recipient (key)
-    for (unsigned long i = 0; i < chunk_n; i++) {
-        auto chnk_id = i + chnk_id_start;
-        auto recipient = get_rpc_node(*path + fmt::FormatInt(chnk_id).str());
+    for (unsigned long i = chnk_start; i < chnk_end; i++) {
+        auto recipient = get_rpc_node(*path + fmt::FormatInt(i).str());
         if (dest_ids.count(recipient) == 0) {
-            dest_ids.insert(make_pair(recipient, vector<unsigned long>{chnk_id}));
+            dest_ids.insert(make_pair(recipient, vector<unsigned long>{i}));
             dest_idx.push_back(recipient);
         } else
-            dest_ids[recipient].push_back(chnk_id);
+            dest_ids[recipient].push_back(i);
     }
 
     // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
@@ -77,12 +77,18 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
     vector<unique_ptr<struct read_args>> thread_args(dest_n);
     for (unsigned long i = 0; i < dest_n; i++) {
         ABT_eventual_create(sizeof(size_t), &eventuals[i]);
-
+        auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
+        if (i == 0) // receiver of first chunk must subtract the offset from first chunk
+            total_chunk_size -= offset % CHUNKSIZE;
+        if (i == dest_n - 1 && ((offset + count) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
+            total_chunk_size -= CHUNKSIZE - ((offset + count) % CHUNKSIZE);
         auto args = make_unique<read_args>();
         args->path = path;
-        args->in_size = count;// total size to read
-        args->in_offset = (i == 0) ? offset % CHUNKSIZE : 0;// reading offset only for the first chunk
+        args->in_size = total_chunk_size;// total size to read
+        args->in_offset = offset % CHUNKSIZE;// reading offset only for the first chunk
+        args->buf = buf;
         args->chnk_ids = &dest_ids[dest_idx[i]]; // pointer to list of chunk ids that all go to the same destination
+        args->chnk_start = chnk_start;
         args->recipient = dest_idx[i];// recipient
         args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
         thread_args[i] = std::move(args);

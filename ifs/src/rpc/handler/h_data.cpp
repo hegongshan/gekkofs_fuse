@@ -31,19 +31,26 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
 
     // set buffer sizes
     vector<hg_size_t> buf_sizes(segment_count);
-    size_t chnk_size = 0;
+    size_t buf_size = 0;
     size_t id_size = 0;
     for (size_t i = 0; i < segment_count; i++) {
         if (i < segment_count / 2) {
             buf_sizes[i] = sizeof(rpc_chnk_id_t);
             id_size += sizeof(rpc_chnk_id_t);
         } else {
-            // case for last chunk size
-            if ((chnk_size + CHUNKSIZE) > bulk_size)
-                buf_sizes[i] = bulk_size - chnk_size - id_size;
-            else
+            if (i == segment_count / 2) { // first chunk which might have an offset
+                if (in.size + in.offset < CHUNKSIZE)
+                    buf_sizes[i] = static_cast<size_t>(in.size);
+                else if (in.offset > 0) // if the first chunk is the very first chunk in the buffer
+                    buf_sizes[i] = static_cast<size_t>(CHUNKSIZE - in.offset);
+                else
+                    buf_sizes[i] = CHUNKSIZE;
+            } else if (i + 1 == buf_sizes.size()) {// last chunk has remaining size
+                buf_sizes[i] = in.size - buf_size;
+            } else {
                 buf_sizes[i] = CHUNKSIZE;
-            chnk_size += buf_sizes[i];
+            }
+            buf_size += buf_sizes[i];
         }
     }
     // array of pointers for bulk transfer (allocated in bulk_create)
@@ -71,7 +78,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     }
 
     // read the data
-    err = read_chunks(in.path, buf_ptrs, buf_sizes, read_size);
+    err = read_chunks(in.path, in.offset, buf_ptrs, buf_sizes, read_size);
 
     if (err != 0 || in.size != read_size) {
         out.res = err;
@@ -80,7 +87,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     }
     // get the data on the offset after the ids
     ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, id_size, bulk_handle, id_size,
-                              chnk_size);
+                              buf_size);
     if (ret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("{}() Failed push the data to the client in read operation", __func__);
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);

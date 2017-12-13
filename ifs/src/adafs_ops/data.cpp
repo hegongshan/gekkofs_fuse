@@ -157,7 +157,8 @@ int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size
     return 0;
 }
 
-int read_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
+int read_chunks(const string& path, const off_t offset, const vector<void*>& buf_ptrs,
+                const vector<hg_size_t>& buf_sizes,
                 size_t& read_size) {
     read_size = 0;
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
@@ -168,8 +169,8 @@ int read_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<
         auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
         auto chnk_size = buf_sizes[i + chnk_n];
         size_t read_chnk_size;
-        // TODO append
-        if (read_file(path, chnk_id, chnk_size, 0, chnk_ptr, read_chnk_size) != 0) {
+        // read_file but only first chunk can have an offset
+        if (read_file(path, chnk_id, chnk_size, (i == 0) ? offset : 0, chnk_ptr, read_chnk_size) != 0) {
             // TODO How do we handle errors?
             ADAFS_DATA->spdlogger()->error("{}() read chunk failed with path {} and id {}. Aborting ...", __func__,
                                            path, chnk_id);
