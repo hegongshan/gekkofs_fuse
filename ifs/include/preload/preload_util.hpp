@@ -3,14 +3,13 @@
 #define IFS_PRELOAD_UTIL_HPP
 
 #include <preload/preload.hpp>
+#include <preload/open_file_map.hpp>
 // third party libs
 #include <extern/spdlog/spdlog.h>
 #include <extern/lrucache/LRUCache11.hpp>
 #include <string>
 
-using namespace std;
-
-
+// TODO singleton this stuff away
 struct FsConfig {
     // configurable metadata
     bool atime_state;
@@ -63,6 +62,8 @@ struct MetadentryUpdateFlags {
     bool path = false;
 };
 
+// file map instance for mapping paths to file descriptors
+extern OpenFileMap file_map;
 // Margo instances
 extern margo_instance_id ld_margo_ipc_id;
 extern margo_instance_id ld_margo_rpc_id;
@@ -95,6 +96,9 @@ extern std::shared_ptr<spdlog::logger> ld_logger;
 typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
 extern KVCache rpc_address_cache;
 
+// typedefs
+typedef unsigned long rpc_chnk_id_t;
+
 bool is_fs_path(const char* path);
 
 // TODO template these two suckers
@@ -110,7 +114,9 @@ size_t get_rpc_node(const std::string& to_hash);
 
 bool is_local_op(size_t recipient);
 
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
-                            hg_addr_t& svr_addr);
+template<typename T>
+hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const T&, hg_handle_t& handle,
+                            hg_addr_t& svr_addr, bool force_rpc);
+
 
 #endif //IFS_PRELOAD_UTIL_HPP

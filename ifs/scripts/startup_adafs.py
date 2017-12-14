@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import time
 
 import os
 
@@ -12,6 +13,7 @@ __email__ = "vef@uni-mainz.de"
 
 global PRETEND
 global PSSH_PATH
+global WAITTIME
 
 
 def check_dependencies():
@@ -27,7 +29,7 @@ def check_dependencies():
     exit(1)
 
 
-def init_system(daemon_path, rootdir, mountdir, nodelist):
+def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
     """Initializes ADAFS on specified nodes.
 
     Args:
@@ -42,6 +44,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
+    pssh_nodelist = ''
     if not os.path.exists(daemon_path) or not os.path.isfile(daemon_path):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
@@ -50,12 +53,35 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
         nodefile = True  # TODO
         print 'Nodefiles are not supported yet'
         exit(1)
-    else:
-        nodelist.replace(',', ' ')
     if PSSH_PATH is '':
         check_dependencies()
-    cmd_str = '%s -i -H "%s" "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-              % (PSSH_PATH, nodelist, daemon_path, rootdir, mountdir, nodelist)
+    # set pssh arguments
+    pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
+
+    # clean root dir if needed
+    if cleanroot:
+        cmd_rm_str = '%s "rm -rf %s/*"' % (pssh, rootdir)
+        if PRETEND:
+            print 'Pretending: %s' % cmd_rm_str
+        else:
+            print 'Running: %s' % cmd_rm_str
+            pssh_ret = util.exec_shell(cmd_rm_str, True)
+            err = False
+            for line in pssh_ret:
+                if 'FAILURE' in line.strip()[:30]:
+                    err = True
+                    print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
+                          (line[line.find('FAILURE'):].strip().split(' ')[1])
+                    print line
+            if not err:
+                print 'pssh daemon launch successfully executed. Root dir is cleaned.\n'
+            else:
+                print '[ERR] with pssh. Aborting!'
+                exit(1)
+
+    # Start deamons
+    cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+              % (pssh, daemon_path, rootdir, mountdir, nodelist)
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -74,7 +100,14 @@ def init_system(daemon_path, rootdir, mountdir, nodelist):
             print '[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!'
             exit(1)
 
-    cmd_chk_str = '%s -i -H "%s" "head -6 /tmp/adafs_daemon.log"' % (PSSH_PATH, nodelist)
+    if not PRETEND:
+        print 'Give it some time (%d second) to startup ...' % WAITTIME
+        for i in range(WAITTIME):
+            print '%d\r' % (WAITTIME - i),
+            time.sleep(1)
+
+    # Check adafs logs for errors
+    cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
         print 'Pretending: %s' % cmd_chk_str
     else:
@@ -124,12 +157,15 @@ or a path to a nodefile (one node per line)''')
                         help='Output adafs launch command and do not actually execute it')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
+    parser.add_argument('-c', '--cleanroot', action='store_true',
+                        help='Removes contents of root directory before starting ADA-FS Daemon. Be careful!')
     args = parser.parse_args()
     if args.pretend:
         PRETEND = True
     else:
         PRETEND = False
     PSSH_PATH = args.pssh
-    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist)
+    WAITTIME = 5
+    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot)
 
     print '\nNothing left to do; exiting. :)'

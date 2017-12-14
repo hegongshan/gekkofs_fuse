@@ -226,11 +226,11 @@ void Metadata::link_count(nlink_t link_count_) {
     Metadata::link_count_ = link_count_;
 }
 
-off_t Metadata::size() const {
+size_t Metadata::size() const {
     return size_;
 }
 
-void Metadata::size(off_t size_) {
+void Metadata::size(size_t size_) {
     Metadata::size_ = size_;
 }
 

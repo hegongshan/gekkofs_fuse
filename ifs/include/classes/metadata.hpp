@@ -15,7 +15,7 @@ private:
     mode_t mode_;
     uint64_t inode_no_;
     nlink_t link_count_;       // number of names for this inode (hardlinks)
-    off_t size_;               // size_ in bytes, might be computed instead of stored
+    size_t size_;               // size_ in bytes, might be computed instead of stored
     blkcnt_t blocks_;          // allocated file system blocks_
 
     std::string path_;
@@ -23,7 +23,7 @@ private:
 public:
     Metadata();
 
-    Metadata(const std::string& path, const mode_t mode);
+    Metadata(const std::string& path, mode_t mode);
 
     Metadata(const std::string& path, std::string db_val);
 
@@ -66,9 +66,9 @@ public:
 
     void link_count(nlink_t link_count_);
 
-    off_t size() const;
+    size_t size() const;
 
-    void size(off_t size_);
+    void size(size_t size_);
 
     blkcnt_t blocks() const;
 

@@ -42,6 +42,7 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     global WAITTIME
     # get absolute paths
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
+    pssh_nodelist = ''
     if not os.path.exists(daemon_path) or not os.path.isfile(daemon_path):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
@@ -49,15 +50,14 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     if os.path.exists(nodelist):
         nodefile = True  # TODO
         print 'Nodefiles are not supported yet'
-    else:
-        nodelist.replace(',', ' ')
     if PSSH_PATH is '':
         check_dependencies()
-    # get absolute daemon path
+    # set pssh arguments
+    pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
     if sigkill:
-        cmd_str = '%s -i -H "%s" "pkill -f -SIGKILL \"%s\""' % (PSSH_PATH, nodelist, daemon_path)
+        cmd_str = '%s "pkill -f -SIGKILL \"%s\""' % (pssh, daemon_path)
     else:
-        cmd_str = '%s -i -H "%s" "pkill -f -SIGTERM \"%s\""' % (PSSH_PATH, nodelist, daemon_path)
+        cmd_str = '%s "pkill -f -SIGTERM \"%s\""' % (pssh, daemon_path)
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -80,13 +80,14 @@ def shutdown_system(daemon_path, nodelist, sigkill):
             print '[ERR] with pssh. Aborting...'
             exit(1)
 
-    print 'Give it some time (%d second) to finish up ...' % WAITTIME
-    for i in range(WAITTIME):
-        print '%d\r' % (WAITTIME - i),
-        time.sleep(1)
+    if not PRETEND:
+        print 'Give it some time (%d second) to finish up ...' % WAITTIME
+        for i in range(WAITTIME):
+            print '%d\r' % (WAITTIME - i),
+            time.sleep(1)
     print 'Checking logs ...\n'
 
-    cmd_chk_str = '%s -i -H "%s" "tail -4 /tmp/adafs_daemon.log"' % (PSSH_PATH, nodelist)
+    cmd_chk_str = '%s "tail -4 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
         print 'Pretending: %s' % cmd_chk_str
     else:
@@ -142,7 +143,7 @@ if __name__ == "__main__":
     else:
         PRETEND = False
     PSSH_PATH = args.pssh
-    WAITTIME = 10
+    WAITTIME = 5
     shutdown_system(args.daemonpath, args.nodelist, args.sigkill)
 
     print '\nNothing left to do; exiting. :)'

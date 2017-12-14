@@ -2,7 +2,9 @@
 #ifndef IFS_OPEN_FILE_MAP_HPP
 #define IFS_OPEN_FILE_MAP_HPP
 
-#include <preload/preload.hpp>
+#include <map>
+#include <mutex>
+#include <memory>
 
 class OpenFile {
 private:

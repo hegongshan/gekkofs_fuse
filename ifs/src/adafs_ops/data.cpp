@@ -60,54 +60,120 @@ int destroy_chunk_space(const std::string& path) {
 }
 
 /**
- * pread wrapper
- * @param buf
- * @param read_size
+ *
  * @param path
+ * @param buf
+ * @param chnk_id
  * @param size
  * @param off
+ * @param append
+ * @param updated_size
+ * @param [out] write_size
  * @return
  */
-int read_file(char* buf, size_t& read_size, const string& path, const size_t size, const off_t off) {
-    auto fs_path = path_to_fspath(path);
-    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
-    chnk_path /= fs_path;
-    chnk_path /= "data"s;
-
-    int fd = open(chnk_path.c_str(), R_OK);
-    if (fd < 0)
-        return EIO;
-    read_size = static_cast<size_t>(pread(fd, buf, size, off));
-    close(fd);
-    return 0;
-}
-
-int write_file(const string& path, const char* buf, size_t& write_size, const size_t size, const off_t off,
-               const bool append, const off_t updated_size) {
+int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id, const size_t size, const off_t off,
+               size_t& write_size) {
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
     bfs::create_directories(chnk_path);
-    chnk_path /= "data"s;
+    chnk_path /= fmt::FormatInt(chnk_id).c_str();
     // write to local file
     int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0777);
     if (fd < 0)
         return EIO;
-    if (append) // write at updated_size - size as this is the offset that the EOF corresponds to.
-        write_size = static_cast<size_t>(pwrite(fd, buf, size, (updated_size - size)));
-    else
-        write_size = static_cast<size_t>(pwrite(fd, buf, size, off));
+    auto err = static_cast<size_t>(pwrite(fd, buf, size, off));
+    if (err < 0) {
+        ADAFS_DATA->spdlogger()->error("{}() Error {} while pwriting file {} chunk_id {} size {} off {}", __func__,
+                                       strerror(errno), chnk_path.c_str(), chnk_id, size, off);
+        write_size = 0;
+    } else
+        write_size = static_cast<size_t>(err); // This is cast safe
     close(fd);
-    // XXX DO WE NEED THE BELOW CODE?
-    // Depending on if the file was appended or not metadata sizes need to be modified accordingly
+    return 0;
+}
 
-    if (append) {
-        // Metadata was already updated by the client before the write operation
-        // truncating file
-        truncate(chnk_path.c_str(), updated_size);
-    } else {
-        truncate(chnk_path.c_str(), size); // file is rewritten, thus, only written size is kept
+int
+write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes, const off_t offset,
+             size_t& write_size) {
+    write_size = 0;
+    int err;
+    // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
+    auto chnk_n = buf_sizes.size() / 2;
+    // TODO this can be parallized
+    for (size_t i = 0; i < chnk_n; i++) {
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
+        auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
+        auto chnk_size = buf_sizes[i + chnk_n];
+        size_t written_chnk_size;
+        if (i == 0) // only the first chunk gets the offset. the chunks are sorted on the client site
+            err = write_file(path, chnk_ptr, chnk_id, chnk_size, offset, written_chnk_size);
+        else
+            err = write_file(path, chnk_ptr, chnk_id, chnk_size, 0, written_chnk_size);
+        if (err != 0) {
+            // TODO How do we handle already written chunks? Ideally, we would need to remove them after failure.
+            ADAFS_DATA->spdlogger()->error("{}() Writing chunk failed with path {} and id {}. Aborting ...", __func__,
+                                           path, chnk_id);
+            write_size = 0;
+            return -1;
+        }
+        write_size += written_chnk_size;
     }
+    return 0;
+}
 
+/**
+ *
+ * @param path
+ * @param chnk_id
+ * @param size
+ * @param off
+ * @param [out] buf
+ * @param [out] read_size
+ * @return
+ */
+int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size, const off_t off, char* buf,
+              size_t& read_size) {
+    auto fs_path = path_to_fspath(path);
+    auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
+    chnk_path /= fs_path;
+    chnk_path /= fmt::FormatInt(chnk_id).c_str();;
+
+    int fd = open(chnk_path.c_str(), R_OK);
+    if (fd < 0)
+        return EIO;
+    auto err = pread(fd, buf, size, off);
+    if (err < 0) {
+        ADAFS_DATA->spdlogger()->error("{}() Error {} while preading file {} chunk_id {} size {} off {}", __func__,
+                                       strerror(errno), chnk_path.c_str(), chnk_id, size, off);
+        read_size = 0;
+    } else
+        read_size = static_cast<size_t>(err); // This is cast safe
+    close(fd);
+    return 0;
+}
+
+int read_chunks(const string& path, const off_t offset, const vector<void*>& buf_ptrs,
+                const vector<hg_size_t>& buf_sizes,
+                size_t& read_size) {
+    read_size = 0;
+    // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
+    auto chnk_n = buf_sizes.size() / 2;
+    // TODO this can be parallized
+    for (size_t i = 0; i < chnk_n; i++) {
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
+        auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
+        auto chnk_size = buf_sizes[i + chnk_n];
+        size_t read_chnk_size;
+        // read_file but only first chunk can have an offset
+        if (read_file(path, chnk_id, chnk_size, (i == 0) ? offset : 0, chnk_ptr, read_chnk_size) != 0) {
+            // TODO How do we handle errors?
+            ADAFS_DATA->spdlogger()->error("{}() read chunk failed with path {} and id {}. Aborting ...", __func__,
+                                           path, chnk_id);
+            read_size = 0;
+            return -1;
+        }
+        read_size += read_chnk_size;
+    }
     return 0;
 }

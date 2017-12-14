@@ -3,11 +3,12 @@
  */
 #include <preload/preload.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
-#include <preload/rpc/ld_rpc_data.hpp>
 #include <preload/passthrough.hpp>
-#include <preload/open_file_map.hpp>
+#include <preload/adafs_functions.hpp>
 
-static OpenFileMap file_map{};
+using namespace std;
+
+OpenFileMap file_map{};
 
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
@@ -20,16 +21,7 @@ int open(const char* path, int flags, ...) {
         va_end(vl);
     }
     if (ld_is_env_initialized() && is_fs_path(path)) {
-        auto err = 1;
-        auto fd = file_map.add(path, (flags & O_APPEND) != 0);
-        // TODO look up if file exists configurable
-        err = rpc_send_open(path, mode, flags);
-        if (err == 0)
-            return fd;
-        else {
-            file_map.remove(fd);
-            return -1;
-        }
+        return adafs_open(path, mode, flags);
     }
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
@@ -100,26 +92,10 @@ int __close(int fd) {
     return close(fd);
 }
 
-// TODO combine adafs_stat and adafs_stat64
-int adafs_stat(const std::string& path, struct stat* buf) {
-    string attr = ""s;
-    auto err = rpc_send_stat(path, attr);
-    db_val_to_stat(path, attr, *buf);
-    return err;
-}
-
-int adafs_stat64(const std::string& path, struct stat64* buf) {
-    string attr = ""s;
-    auto err = rpc_send_stat(path, attr);
-    db_val_to_stat64(path, attr, *buf);
-    return err;
-}
-
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
     if (ld_is_env_initialized() && is_fs_path(path)) {
-// TODO call daemon and return
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
@@ -129,8 +105,7 @@ int fstat(int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (ld_is_env_initialized() && file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
-// TODO call daemon and return
+        auto path = file_map.get(fd)->path();
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
@@ -140,7 +115,6 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
     if (ld_is_env_initialized() && is_fs_path(path)) {
-// TODO call stat
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
@@ -161,7 +135,6 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (ld_is_env_initialized() && file_map.exist(fd)) {
-// TODO call fstat
         auto path = file_map.get(fd)->path();
         return adafs_stat(path, buf);
     }
@@ -172,7 +145,6 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
     if (ld_is_env_initialized() && file_map.exist(fd)) {
-// TODO call fstat64
         auto path = file_map.get(fd)->path();
         return adafs_stat64(path, buf);
     }
@@ -224,30 +196,18 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (ld_is_env_initialized() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
-        auto adafs_fd = file_map.get(fd);
-        auto path = adafs_fd->path();
-        auto append_flag = adafs_fd->append_flag();
-        size_t write_size;
-        int err = 0;
-        long updated_size = 0;
-        /*
-         * Update the metadentry size first to prevent two processes to write to the same offset when O_APPEND is given.
-         * The metadentry size update is atomic XXX actually not yet. see metadentry.cpp
-         */
-//        if (append_flag)
-        err = rpc_send_update_metadentry_size(path, count, append_flag, updated_size);
-        if (err != 0) {
-            ld_logger->error("{}() update_metadentry_size failed", __func__);
-            return 0; // ERR
-        }
-        err = rpc_send_write(path, count, offset, buf, write_size, append_flag, updated_size);
-        if (err != 0) {
-            ld_logger->error("{}() write failed", __func__);
-            return 0;
-        }
-        return write_size;
+        return adafs_pwrite_ws(fd, buf, count, offset);
     }
     return (reinterpret_cast<decltype(&pwrite)>(libc_pwrite))(fd, buf, count, offset);
+}
+
+ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
+    init_passthrough_if_needed();
+    if (ld_is_env_initialized() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
+        return adafs_pwrite_ws(fd, buf, count, offset);
+    }
+    return (reinterpret_cast<decltype(&pwrite64)>(libc_pwrite64))(fd, buf, count, offset);
 }
 
 ssize_t read(int fd, void* buf, size_t count) {
@@ -263,25 +223,18 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
     if (ld_is_env_initialized() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
-        auto adafs_fd = file_map.get(fd);
-        auto path = adafs_fd->path();
-        size_t read_size = 0;
-        int err;
-        err = rpc_send_read(path, count, offset, buf, read_size);
-        // TODO check how much we need to deal with the read_size
-        return err == 0 ? read_size : 0;
+        return adafs_pread_ws(fd, buf, count, offset);
     }
     return (reinterpret_cast<decltype(&pread)>(libc_pread))(fd, buf, count, offset);
 }
 
-ssize_t pread64(int fd, void* buf, size_t nbyte, __off64_t offset) {
+ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
     if (ld_is_env_initialized() && file_map.exist(fd)) {
-//        auto path = file_map.get(fd)->path(); // TODO use this to send to the daemon (call directly)
-        // TODO call daemon and return size written
-        return 0; // TODO
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
+        return adafs_pread_ws(fd, buf, count, offset);
     }
-    return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, nbyte, offset);
+    return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, count, offset);
 }
 
 off_t lseek(int fd, off_t offset, int whence) __THROW {
