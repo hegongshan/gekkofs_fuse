@@ -73,9 +73,7 @@ MERCURY_GEN_PROC(rpc_data_out_t,
 MERCURY_GEN_PROC(rpc_write_data_in_t,
                  ((hg_const_string_t) (path))\
 ((int64_t) (offset))\
-((hg_bool_t) (append))\
-((hg_bulk_t) (bulk_handle))\
-((hg_int64_t) (updated_size)))
+((hg_bulk_t) (bulk_handle)))
 
 
 

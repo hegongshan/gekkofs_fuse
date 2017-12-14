@@ -16,7 +16,7 @@ void rpc_send_write_abt(void* _arg) {
     vector<char*> chnks(recipient_size);
     vector<size_t> buf_sizes(recipient_size * 2);
     auto buf_size = 0; // counter for how much of the buffer is already mapped into chunks
-    size_t chunk_offset = 0;
+    auto chunk_offset = static_cast<size_t>(0);
     // if the first chunk is not the very first chunk in the buffer, the previous chunksizes have to be set as an offset
     if (chnk_ids[0] != arg->chnk_start)
         chunk_offset = ((chnk_ids[0] - arg->chnk_start) * CHUNKSIZE) - arg->in_offset;
@@ -63,8 +63,6 @@ void rpc_send_write_abt(void* _arg) {
     arg->path->c_str();
     in.path = arg->path->c_str();
     in.offset = (chunk_offset == 0) ? arg->in_offset : 0;
-    in.updated_size = arg->updated_size;
-    in.append = HG_FALSE; // unused
 
     margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->recipient, handle, svr_addr, false);
 
@@ -125,7 +123,7 @@ void rpc_send_read_abt(void* _arg) {
     vector<char*> chnks(recipient_size);
     vector<size_t> buf_sizes(recipient_size * 2);
     auto buf_size = 0; // counter for how much of the buffer is already mapped into chunks
-    size_t chunk_offset = 0;
+    auto chunk_offset = static_cast<size_t>(0);
     // if the first chunk is not the very first chunk in the buffer, the previous chunksizes have to be set as an offset
     if (chnk_ids[0] != arg->chnk_start)
         chunk_offset = ((chnk_ids[0] - arg->chnk_start) * CHUNKSIZE) - arg->in_offset;
@@ -241,11 +239,6 @@ int rpc_send_write(const string& path, const size_t in_size, const off_t in_offs
     // fill in
     in.path = path.c_str();
     in.offset = in_offset;
-    in.updated_size = updated_size;
-    if (append)
-        in.append = HG_TRUE;
-    else
-        in.append = HG_FALSE;
 
     margo_create_wrap(ipc_write_data_id, rpc_write_data_id, path, handle, svr_addr, false);
 

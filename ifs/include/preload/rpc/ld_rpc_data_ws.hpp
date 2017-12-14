@@ -15,13 +15,13 @@ extern "C" {
 
 #include <iostream>
 
+// XXX these two structs can be merged. How to deal with const void* then?
 struct write_args {
     std::shared_ptr<std::string> path;
     size_t in_size;
     off_t in_offset;
     const void* buf;
     size_t chnk_start;
-    off_t updated_size;
     std::vector<unsigned long>* chnk_ids;
     size_t recipient;
     ABT_eventual* eventual;

@@ -182,7 +182,6 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
         args->in_offset = offset % CHUNKSIZE;// first offset in dest_idx is the chunk with a potential offset
         args->buf = buf;// pointer to write buffer
         args->chnk_start = chnk_start;// append flag when file was opened
-        args->updated_size = updated_size;// for append truncate TODO needed?
         args->chnk_ids = &dest_ids[dest_idx[i]];// pointer to list of chunk ids that all go to the same destination
         args->recipient = dest_idx[i];// recipient
         args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
