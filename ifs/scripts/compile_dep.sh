@@ -3,8 +3,9 @@
 usage() {
 
     echo "Usage:
-    ./compile_dep [ clone_path ] [ install_path ] [ na_plugin ]
-    Valid na_plugin arguments: {bmi,cci,ofi,all}"
+    ./compile_dep [ clone_path ] [ install_path ] [ na_plugin ] [ cluster ]
+    Valid na_plugin arguments: {bmi,cci,ofi,all}
+    Valid cluster arguments: {mogon1}"
 }
 
 prepare_build_dir() {
@@ -18,6 +19,11 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
     echo "Arguments missing."
     usage
     exit
+fi
+# if cluster is given, put it into a variable
+CLUSTER=""
+if [[ (-z ${4+x} ) ]]; then
+    CLUSTER=$4
 fi
 
 #LOG=/tmp/adafs_install.log
@@ -39,10 +45,47 @@ else
     exit
 fi
 
+if [ "$CLUSTER" != "" ]; then
+    if [ "$CLUSTER" == "mogon1" ]; then
+        echo "$CLUSTER cluster configuration selected"
+    else
+        echo "$CLUSTER cluster configuration is invalid. Exiting ..."
+        usage
+        exit
+    fi
+else
+    echo "No cluster configuration set."
+fi
+
+
+
 echo "Git path is set to '$1'";
 echo "Install path is set to '$2'";
 
 mkdir -p $GIT
+
+# Set cluster dependencies first
+if [ "$CLUSTER" == "mogon1" ]; then
+    # load required modules
+    module load devel/CMake/3.8.0 || exit 1
+    module load mpi/MVAPICH2/2.2-GCC-6.3.0-slurm || exit 1
+    module load devel/Boost/1.63.0-intel-2017.02-Python-2.7.13 || exit 1 # because of mercury
+    # get libtool
+    CURR=$GIT/libtool
+    prepare_build_dir $CURR
+    cd $CURR/build
+    ../configure --prefix=$INSTALL || exit 1
+    make -j$CORES || exit 1
+    make install || exit 1
+    # compile libev
+    CURR=$GIT/libev
+    prepare_build_dir $CURR
+    cd $CURR/build
+    ../configure --prefix=$INSTALL || exit 1
+    make -j$CORES || exit 1
+    make install || exit 1
+    # TODO rocksdb deps
+fi
 
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_BMI="-DNA_USE_BMI:BOOL=ON"
