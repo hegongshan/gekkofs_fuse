@@ -32,10 +32,14 @@ wgetdeps() {
         mkdir $GIT/$FOLDER
     fi
     cd $GIT
+    FILENAME=$(basename $URL)
+    if [ -f "$GIT/$FILENAME" ]; then
+        rm $GIT/$FILENAME
+    fi
     wget $URL &>> $LOG || exit 1
-    FILENAME =$(basename http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz)
     tar -xf $FILENAME --directory $GIT/$FOLDER  &>> $LOG
     rm $FILENAME
+    echo "Done"
 }
 
 usage() {
@@ -53,7 +57,7 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
 fi
 # if cluster is given, put it into a variable
 CLUSTER=""
-if [[ (-z ${3+x} ) ]]; then
+if [[ ! (-z ${3+x} ) ]]; then
     CLUSTER=$3
 fi
 

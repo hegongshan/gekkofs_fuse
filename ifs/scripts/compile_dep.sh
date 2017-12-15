@@ -22,7 +22,7 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
 fi
 # if cluster is given, put it into a variable
 CLUSTER=""
-if [[ (-z ${4+x} ) ]]; then
+if [[ ! (-z ${4+x} ) ]]; then
     CLUSTER=$4
 fi
 
@@ -67,10 +67,13 @@ mkdir -p $GIT
 # Set cluster dependencies first
 if [ "$CLUSTER" == "mogon1" ]; then
     # load required modules
+    echo "Setting cluster module settings ..."
     module load devel/CMake/3.8.0 || exit 1
     module load mpi/MVAPICH2/2.2-GCC-6.3.0-slurm || exit 1
     module load devel/Boost/1.63.0-intel-2017.02-Python-2.7.13 || exit 1 # because of mercury
+    echo "Done"
     # get libtool
+    echo "Installing libtool"
     CURR=$GIT/libtool
     prepare_build_dir $CURR
     cd $CURR/build
@@ -78,6 +81,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     make -j$CORES || exit 1
     make install || exit 1
     # compile libev
+    echo "Installing libev"
     CURR=$GIT/libev
     prepare_build_dir $CURR
     cd $CURR/build
