@@ -5,13 +5,13 @@
 // To enabled logging with info level
 #define LOG_INFO
 //#define LOG_DEBUG
-#define LOG_TRACE
+//#define LOG_TRACE
 #define LOG_DAEMON_PATH "/tmp/adafs_daemon.log"
 
 // Enable logging for daemon
 #define LOG_PRELOAD_INFO
 //#define LOG_PRELOAD_DEBUG
-#define LOG_PRELOAD_TRACE
+//#define LOG_PRELOAD_TRACE
 #define LOG_PRELOAD_PATH "/tmp/adafs_preload.log"
 
 // If ACM time should be considered
@@ -40,6 +40,8 @@
 #define RPCPORT 4433
 #define RPC_TRIES 3
 #define RPC_TIMEOUT 150000
+// Set a hostname suffix when a connection is built. E.g., "-ib" to use Infiniband
+#define HOSTNAME_SUFFIX ""
 //#define MARGODIAG // enables diagnostics of margo (printed after shutting down
 
 // Debug configurations

@@ -220,7 +220,7 @@ int getProcIdByName(string procName) {
  * @return
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    string rpcprotocol(RPC_PROTOCOL);
+
     if (rpc_address_cache.tryGet(hostid, svr_addr)) {
         ld_logger->trace("tryGet successful and put in svr_addr");
         //found
@@ -228,17 +228,10 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
     } else {
         ld_logger->trace("not found in lrucache");
         // not found, manual lookup and add address mapping to LRU cache
-        if (rpcprotocol.find("verbs") != std::string::npos){
-            auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + "-ib:"s +
-                            fs_config->rpc_port; // convert hostid to hostname and port
-            ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
-            margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
-        }
-        else {auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + ":"s +
-                              fs_config->rpc_port; // convert hostid to hostname and port
-            ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
-            margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
-        }
+        auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX + ":"s +
+                        fs_config->rpc_port; // convert hostid to hostname and port
+        ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
+        margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
         if (svr_addr == HG_ADDR_NULL)
             return false;
         rpc_address_cache.insert(hostid, svr_addr);
