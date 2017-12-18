@@ -96,7 +96,10 @@ if [ "$CLUSTER" == "mogon1" ]; then
     wgetdeps "libtool" "http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     # get libev for mercury
     wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz"
-    # TODO rocksdb deps
+    # get gflags for rocksdb
+    wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
+    # get zstd for fast compression in rocksdb
+    wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz"
 fi
 
 # get BMI
