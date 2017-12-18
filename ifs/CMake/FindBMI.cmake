@@ -21,7 +21,7 @@ find_path(BMI_INCLUDE_DIR bmi.h
 
 find_library(BMI_LIBRARY bmi
         HINTS
-        $ENV{HOME}/adafs/install/lib
+        $ENV{HOME}/adafs/install
         ${BMI_DIR}
         $ENV{HOME}/opt
         /usr

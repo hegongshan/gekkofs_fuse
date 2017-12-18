@@ -11,8 +11,9 @@ else ()
     find_path(
             LIBEV_INCLUDE_DIR
             NAMES ev.h
-            HINTS ${LIBEV_ROOT_DIR}
-            PATH_SUFFIXES include
+            HINTS
+            ${LIBEV_ROOT_DIR}
+            $ENV{HOME}/adafs/install
             $ENV{HOME}/opt
             /usr
             /usr/local
@@ -25,8 +26,9 @@ else ()
     find_library(
             LIBEV_LIBRARY
             NAME ev
-            HINTS ${LIBEV_ROOT_DIR}
-            PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR}
+            HINTS
+            ${LIBEV_ROOT_DIR}
+            $ENV{HOME}/adafs/install
             $ENV{HOME}/opt
             /usr
             /usr/local

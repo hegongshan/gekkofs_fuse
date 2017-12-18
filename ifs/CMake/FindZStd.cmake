@@ -11,21 +11,23 @@ find_path(
         NAMES "zstd.h"
         HINTS
         $ENV{HOME}/opt
+        $ENV{HOME}/adafs/install
         /usr
         /usr/local
         /opt/
-        PATH SUFFIXES include
+        PATH_SUFFIXES include
 )
 
 find_library(
         ZSTD_LIBRARY
         NAMES zstd
         HINTS
+        $ENV{HOME}/adafs/install
         $ENV{HOME}/opt
         /usr
         /usr/local
         /opt/
-        PATH SUFFIXES lib
+        PATH_SUFFIXES lib
 )
 
 set(ZSTD_LIBRARIES ${ZSTD_LIBRARY})

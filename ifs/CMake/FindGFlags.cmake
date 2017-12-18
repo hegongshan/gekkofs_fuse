@@ -29,6 +29,9 @@ if (UNIX)
     FIND_PATH(GFlags_ROOT_DIR
             libgflags.so
             HINTS
+            $ENV{HOME}/adafs/install
+            PATH_SUFFIXES lib
+            PATH_SUFFIXES lib64
             /usr/local/lib
             )
 endif (UNIX)

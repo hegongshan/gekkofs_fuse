@@ -37,7 +37,7 @@ wgetdeps() {
         rm $GIT/$FILENAME
     fi
     wget $URL &>> $LOG || exit 1
-    tar -xf $FILENAME --directory $GIT/$FOLDER  &>> $LOG
+    tar -xf $FILENAME --directory $GIT/$FOLDER --strip-components=1 &>> $LOG
     rm $FILENAME
     echo "Done"
 }
@@ -97,9 +97,11 @@ if [ "$CLUSTER" == "mogon1" ]; then
     # get libev for mercury
     wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz"
     # get gflags for rocksdb
-    wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
+    #wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
     # get zstd for fast compression in rocksdb
     wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz"
+    # get zlib for rocksdb
+    wgetdeps "lz4" "https://github.com/lz4/lz4/archive/v1.8.0.tar.gz"
 fi
 
 # get BMI

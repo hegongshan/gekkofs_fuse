@@ -89,13 +89,13 @@ if [ "$CLUSTER" == "mogon1" ]; then
     make -j$CORES || exit 1
     make install || exit 1
     # compile gflags
-    echo "Installing gflags"
-    CURR=$GIT/gflags
-    prepare_build_dir $CURR
-    cd $CURR/build
-    cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
-    make -j$CORES || exit 1
-    make install || exit 1
+#    echo "Installing gflags"
+#    CURR=$GIT/gflags
+#    prepare_build_dir $CURR
+#    cd $CURR/build
+#    cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
+#    make -j$CORES || exit 1
+#    make install || exit 1
     # compile zstd
     echo "Installing zstd"
     CURR=$GIT/zstd/build/cmake
@@ -104,6 +104,19 @@ if [ "$CLUSTER" == "mogon1" ]; then
     cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
     make -j$CORES || exit 1
     make install || exit 1
+    echo "Installing lz4"
+    CURR=$GIT/lz4
+    make -j$CORES || exit 1
+    make DESTDIR=$INSTALL PREFIX= install || exit 1
+    echo "Installing snappy"
+    CURR=$GIT/snappy
+    prepare_build_dir $CURR
+    cd $CURR/build
+    cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
+    make -j$CORES || exit 1
+    make install || exit 1
+
+
 fi
 
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
