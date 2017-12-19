@@ -70,7 +70,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     echo "Setting cluster module settings ..."
     module load devel/CMake/3.8.0 || exit 1
     module load mpi/MVAPICH2/2.2-GCC-6.3.0-slurm || exit 1
-    module load devel/Boost/1.63.0-intel-2017.02-Python-2.7.13 || exit 1 # because of mercury
+    module load devel/Boost/1.63.0-foss-2017a || exit 1 # because of mercury
     echo "Done"
     # get libtool
     echo "Installing libtool"
