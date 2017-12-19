@@ -16,6 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
+find_package(GFlags REQUIRED) 
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(RocksDB REQUIRED)
@@ -107,7 +108,7 @@ set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
 add_executable(adafs_daemon ${SOURCE_FILES})
 target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
         # rocksdb libs
-        ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY}
+		${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
         # margo libs
         ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
         -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)

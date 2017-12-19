@@ -97,7 +97,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     # get libev for mercury
     wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz"
     # get gflags for rocksdb
-    #wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
+    wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
     # get zstd for fast compression in rocksdb
     wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz"
     # get zlib for rocksdb
