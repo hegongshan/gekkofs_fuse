@@ -9,7 +9,6 @@ find_path(snappy_DIR
 find_path(snappy_INCLUDE_DIR snappy.h
         HINTS
         $ENV{HOME}/adafs/install
-        ${snappy_DIR}
         $ENV{HOME}/opt
         /usr
         /usr/local
@@ -22,7 +21,6 @@ find_path(snappy_INCLUDE_DIR snappy.h
 find_library(snappy_LIBRARY snappy
         HINTS
         $ENV{HOME}/adafs/install
-        ${snappy_DIR}
         $ENV{HOME}/opt
         /usr
         /usr/local

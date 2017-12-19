@@ -6,8 +6,28 @@
 # LZ4_LIBRARY
 #
 
-find_path(LZ4_INCLUDE_DIR NAMES lz4.h)
-find_library(LZ4_LIBRARY NAMES lz4)
+find_path(LZ4_INCLUDE_DIR lz4.h
+	HINTS
+	$ENV{HOME}/adafs/install
+	$ENV{HOME}/opt
+	/usr
+	/usr/local
+	/usr/local/adafs
+	/opt
+	PATH_SUFFIXES include
+	PATH_SUFFIXES include/lz4
+	)
+find_library(LZ4_LIBRARY lz4
+	HINTS
+	$ENV{HOME}/adafs/install
+	$ENV{HOME}/opt
+	/usr
+	/usr/local
+	/usr/local/adafs
+	/opt/
+	PATH_SUFFIXES lib
+	PATH_SUFFIXES lib/lz4
+	)
 
 # We require LZ4_compress_default() which was added in v1.7.0
 if (LZ4_LIBRARY)

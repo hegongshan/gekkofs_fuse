@@ -102,6 +102,10 @@ if [ "$CLUSTER" == "mogon1" ]; then
     wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz"
     # get zlib for rocksdb
     wgetdeps "lz4" "https://github.com/lz4/lz4/archive/v1.8.0.tar.gz"
+	# get snappy for rocksdb
+    wgetdeps "snappy" "https://github.com/google/snappy/archive/1.1.7.tar.gz"
+	# get pssh
+	wgetdeps "pssh" "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/parallel-ssh/pssh-2.3.1.tar.gz"
 fi
 
 # get BMI

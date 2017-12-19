@@ -73,7 +73,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     module load devel/Boost/1.63.0-foss-2017a || exit 1 # because of mercury
     echo "Done"
     # get libtool
-    echo "Installing libtool"
+    echo "############################################################ Installing:  libtool"
     CURR=$GIT/libtool
     prepare_build_dir $CURR
     cd $CURR/build
@@ -81,7 +81,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     make -j$CORES || exit 1
     make install || exit 1
     # compile libev
-    echo "Installing libev"
+    echo "############################################################ Installing:  libev"
     CURR=$GIT/libev
     prepare_build_dir $CURR
     cd $CURR/build
@@ -89,7 +89,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
     make -j$CORES || exit 1
     make install || exit 1
     # compile gflags
-#    echo "Installing gflags"
+#    echo "############################################################ Installing:  gflags"
 #    CURR=$GIT/gflags
 #    prepare_build_dir $CURR
 #    cd $CURR/build
@@ -97,31 +97,38 @@ if [ "$CLUSTER" == "mogon1" ]; then
 #    make -j$CORES || exit 1
 #    make install || exit 1
     # compile zstd
-    echo "Installing zstd"
+    echo "############################################################ Installing:  zstd"
     CURR=$GIT/zstd/build/cmake
     prepare_build_dir $CURR
     cd $CURR/build
     cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
     make -j$CORES || exit 1
     make install || exit 1
-    echo "Installing lz4"
+    echo "############################################################ Installing:  lz4"
     CURR=$GIT/lz4
+	cd $CURR
     make -j$CORES || exit 1
-    make DESTDIR=$INSTALL PREFIX= install || exit 1
-    echo "Installing snappy"
+    make DESTDIR=$INSTALL PREFIX="" install || exit 1
+    echo "############################################################ Installing:  snappy"
     CURR=$GIT/snappy
     prepare_build_dir $CURR
     cd $CURR/build
     cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
     make -j$CORES || exit 1
     make install || exit 1
-
-
+	echo "############################################################ Installing:  pssh"
+	CURR=$GIT/pssh
+	cd $CURR
+	python2 setup.py install || exit 1
+    if [ ! -d "$INSTALL/bin" ]; then
+		mkdir $INSTALL/bin
+	fi
+	mv $CURR/bin/* $INSTALL/bin/ || exit 1
 fi
 
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_BMI="-DNA_USE_BMI:BOOL=ON"
-    echo "Installing BMI"
+    echo "############################################################ Installing:  BMI"
     # BMI
     CURR=$GIT/bmi
     prepare_build_dir $CURR
@@ -135,7 +142,7 @@ fi
 
 if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     USE_CCI="-DNA_USE_CCI:BOOL=ON"
-    echo "Installing CCI"
+    echo "############################################################ Installing:  CCI"
     # CCI
     CURR=$GIT/cci
     prepare_build_dir $CURR
@@ -150,7 +157,7 @@ fi
 
 if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_OFI="-DNA_USE_OFI:BOOL=ON"
-    echo "Installing LibFabric"
+    echo "############################################################ Installing:  LibFabric"
     #libfabric
     CURR=$GIT/libfabric
     prepare_build_dir $CURR
@@ -163,7 +170,7 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     make check || exit 1
 fi
 
-echo "Installing Mercury"
+echo "############################################################ Installing:  Mercury"
 
 # Mercury
 CURR=$GIT/mercury
@@ -176,7 +183,7 @@ cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUIL
 make -j$CORES  || exit 1
 make install  || exit 1
 
-echo "Installing Argobots"
+echo "############################################################ Installing:  Argobots"
 
 # Argobots
 CURR=$GIT/argobots
@@ -189,7 +196,7 @@ make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
-echo "Installing Abt-snoozer"
+echo "############################################################ Installing:  Abt-snoozer"
 # Abt snoozer
 CURR=$GIT/abt-snoozer
 prepare_build_dir $CURR
@@ -201,7 +208,7 @@ make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
-echo "Installing Margo"
+echo "############################################################ Installing:  Margo"
 # Margo
 CURR=$GIT/margo
 prepare_build_dir $CURR
@@ -213,7 +220,7 @@ make -j$CORES || exit 1
 make install || exit 1
 make check || exit 1
 
-echo "Installing Rocksdb"
+echo "############################################################ Installing:  Rocksdb"
 # Margo
 CURR=$GIT/rocksdb
 cd $CURR
