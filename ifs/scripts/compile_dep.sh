@@ -115,14 +115,6 @@ if [ "$CLUSTER" == "mogon1" ]; then
     cmake -DCMAKE_INSTALL_PREFIX=$INSTALL -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
     make -j$CORES || exit 1
     make install || exit 1
-	echo "############################################################ Installing:  pssh"
-	CURR=$GIT/pssh
-	cd $CURR
-	python2 setup.py install
-    if [ ! -d "$INSTALL/bin" ]; then
-		mkdir $INSTALL/bin
-	fi
-	mv $CURR/bin/* $INSTALL/bin/ || exit 1
 fi
 
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then

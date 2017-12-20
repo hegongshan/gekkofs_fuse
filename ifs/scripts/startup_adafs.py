@@ -19,11 +19,13 @@ global WAITTIME
 def check_dependencies():
     global PSSH_PATH
     """Check if pssh is installed"""
-    if os.path.exists('/usr/bin/pssh'):
-        PSSH_PATH = '/usr/bin/pssh'
+    pssh_path = os.popen('which pssh').read().strip()
+    if pssh_path != '':
+        PSSH_PATH = pssh_path
         return
-    if os.path.exists('/usr/bin/parallel-ssh'):
-        PSSH_PATH = '/usr/bin/parallel-ssh'
+    pssh_path = os.popen('which parallel-ssh').read().strip()
+    if pssh_path != '':
+        PSSH_PATH = pssh_path
         return
     print '[ERR] parallel-ssh/pssh executable cannot be found. Please add it to the parameter list'
     exit(1)
