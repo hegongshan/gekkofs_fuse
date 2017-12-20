@@ -148,7 +148,11 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     cd $CURR
     ./autogen.pl || exit 1
     cd $CURR/build
+if [ "$CLUSTER" == "mogon1" ]; then
     ../configure --with-verbs --prefix=$INSTALL LIBS="-lpthread"  || exit 1
+else
+    ../configure --prefix=$INSTALL LIBS="-lpthread"  || exit 1
+fi
     make -j$CORES || exit 1
     make install || exit 1
     make check || exit 1

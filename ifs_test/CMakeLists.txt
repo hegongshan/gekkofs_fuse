@@ -15,4 +15,4 @@ add_executable(ifs_test ${SOURCE_FILES})
 add_executable(ifs_test_MPI ${SOURCE_FILES_MPI})
 add_executable(ifs_test_temp ${SOURCE_FILES_TEMP})
 
-target_link_libraries(ifs_test_MPI ${MPI_C_LIBRARIES})
+target_link_libraries(ifs_test_MPI ${MPI_CXX_LIBRARIES})
