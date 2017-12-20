@@ -66,11 +66,10 @@ mkdir -p $GIT
 
 # Set cluster dependencies first
 if [ "$CLUSTER" == "mogon1" ]; then
-    # load required modules
-    echo "Setting cluster module settings ..."
-    module load devel/CMake/3.8.0 || exit 1
-    module load mpi/MVAPICH2/2.2-GCC-6.3.0-slurm || exit 1
-    module load devel/Boost/1.63.0-foss-2017a || exit 1 # because of mercury
+	# Make sure these modules are enabled
+    #module load devel/CMake/3.8.0 || exit 1
+    #module load mpi/OpenMPI/2.0.2-GCC-6.3.0 || exit 1
+    #module load devel/Boost/1.63.0-foss-2017a || exit 1 # because of mercury
     echo "Done"
     # get libtool
     echo "############################################################ Installing:  libtool"
@@ -119,7 +118,7 @@ if [ "$CLUSTER" == "mogon1" ]; then
 	echo "############################################################ Installing:  pssh"
 	CURR=$GIT/pssh
 	cd $CURR
-	python2 setup.py install || exit 1
+	python2 setup.py install
     if [ ! -d "$INSTALL/bin" ]; then
 		mkdir $INSTALL/bin
 	fi
