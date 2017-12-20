@@ -49,13 +49,15 @@ def shutdown_system(daemon_path, nodelist, sigkill):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
     nodefile = False
-    if os.path.exists(nodelist):
-        nodefile = True  # TODO
-        print 'Nodefiles are not supported yet'
+    if os.path.exists(nodelist):  # XXX Currently, we assume that the nodefile syntax is sane.
+        nodefile = True
     if PSSH_PATH is '':
         check_dependencies()
     # set pssh arguments
-    pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
+    if nodefile:
+        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, nodelist)
+    else:
+        pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
     if sigkill:
         cmd_str = '%s "pkill -f -SIGKILL \"%s\""' % (pssh, daemon_path)
     else:

@@ -53,7 +53,7 @@ int main(int argc, const char* argv[]) {
             ("help,h", "Help message")
             ("mountdir,m", po::value<string>(), "User Fuse mountdir.")
             ("rootdir,r", po::value<string>(), "ADA-FS data directory")
-            ("hostsfile", po::value<string>(), "Path to the hosts_file for all fs participants")
+            ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -64,19 +64,38 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
     if (vm.count("mountdir")) {
-        // XXX check that this is actually an existing directory and exit if not
         ADAFS_DATA->mountdir(vm["mountdir"].as<string>());
     }
     if (vm.count("rootdir")) {
-        // XXX check that this is actually an existing directory and exit if not
         ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
     }
-
-    // TODO Hostfile parsing here...
-    if (vm.count("hosts")) {
-        auto hosts = vm["hosts"].as<string>();
-        std::map<uint64_t, std::string> hostmap;
-        uint64_t i = 0;
+    // parse host parameters
+    vector<string> hosts{};
+    if (vm.count("hostfile")) {
+        auto host_path = vm["hostfile"].as<string>();
+        fstream host_file(host_path);
+        if (host_file.is_open()) {
+            for (string line; getline(host_file, line);) {
+                hosts.push_back(line);
+            }
+        } else {
+            cerr << "Hostfile path does not exist. Exiting ..." << endl;
+            ADAFS_DATA->spdlogger()->error("{}() Hostfile path does not exist. Exiting ...", __func__);
+            assert(host_file.is_open());
+        }
+    } else if (vm.count("hosts")) {
+        // split comma separated host string
+        boost::char_separator<char> sep(",");
+        boost::tokenizer<boost::char_separator<char>> tok(vm["hosts"].as<string>(), sep);
+        for (auto&& s : tok) {
+            hosts.push_back(s);
+        }
+    }
+    // convert host parameters into datastructures
+    std::map<uint64_t, std::string> hostmap;
+    auto hosts_raw = ""s;
+    if (!hosts.empty()) {
+        auto i = static_cast<uint64_t>(0);
         auto found_hostname = false;
         auto hostname = get_my_hostname();
         // TODO We remove the dot onwards from the hostname. This is not final and may only work for mogon and fh2
@@ -86,28 +105,42 @@ int main(int argc, const char* argv[]) {
 
         if (hostname.size() == 0) {
             cerr << "Unable to read the machine's hostname" << endl;
+            ADAFS_DATA->spdlogger()->error("{}() Unable to read the machine's hostname", __func__);
             assert(hostname.size() != 0);
         }
-        // split comma separated host string
-        boost::char_separator<char> sep(",");
-        boost::tokenizer<boost::char_separator<char>> tok(hosts, sep);
-        for (auto&& s : tok) {
-            hostmap[i] = s;
-            if (hostname == s) {
+        for (auto&& host : hosts) {
+            hostmap[i] = host;
+            hosts_raw += host + ","s;
+            if (hostname == host) {
                 ADAFS_DATA->host_id(i);
                 found_hostname = true;
             }
             i++;
         }
         if (!found_hostname) {
+            ADAFS_DATA->spdlogger()->error("{}() Hostname was not found in given parameters. Exiting ...", __func__);
             cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
             assert(found_hostname);
         }
-        ADAFS_DATA->hosts(hostmap);
-        ADAFS_DATA->host_size(hostmap.size());
-        ADAFS_DATA->rpc_port(fmt::FormatInt(RPCPORT).str());
-        ADAFS_DATA->hosts_raw(hosts);
+        hosts_raw = hosts_raw.substr(0, hosts_raw.size() - 1);
+    } else {
+        // single node mode
+        ADAFS_DATA->spdlogger()->info("{}() Single node mode set to self", __func__);
+        auto hostname = get_my_hostname();
+        // TODO We remove the dot onwards from the hostname. This is not final and may only work for mogon and fh2
+        auto pos = hostname.find("."s);
+        if (pos != std::string::npos)
+            hostname = hostname.substr(0, pos);
+        hostmap[0] = hostname;
+        hosts_raw = hostname;
+        ADAFS_DATA->host_id(0);
     }
+    ADAFS_DATA->hosts(hostmap);
+    ADAFS_DATA->host_size(hostmap.size());
+    ADAFS_DATA->rpc_port(fmt::FormatInt(RPCPORT).str());
+    ADAFS_DATA->hosts_raw(hosts_raw);
+
+
 
     //set all paths
     ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s); // XXX prob not needed anymore
