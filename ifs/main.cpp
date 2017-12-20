@@ -79,6 +79,11 @@ int main(int argc, const char* argv[]) {
         uint64_t i = 0;
         auto found_hostname = false;
         auto hostname = get_my_hostname();
+        // TODO We remove the dot onwards from the hostname. This is not final and may only work for mogon and fh2
+        auto pos = hostname.find("."s);
+        if (pos != std::string::npos)
+            hostname = hostname.substr(0, pos);
+
         if (hostname.size() == 0) {
             cerr << "Unable to read the machine's hostname" << endl;
             assert(hostname.size() != 0);
