@@ -18,10 +18,20 @@ void shutdown_handler(int dummy) {
  * Returns the machine's hostname
  * @return
  */
-string get_my_hostname() {
+string get_my_hostname(bool short_hostname) {
     char hostname[1024];
     auto ret = gethostname(hostname, 1024);
-    return ret == 0 ? string(hostname) : ""s;
+    if (ret == 0) {
+        string hostname_s(hostname);
+        if (!short_hostname)
+            return hostname_s;
+        // get short hostname
+        auto pos = hostname_s.find("."s);
+        if (pos != std::string::npos)
+            hostname_s = hostname_s.substr(0, pos);
+        return hostname_s;
+    } else
+        return ""s;
 }
 
 int main(int argc, const char* argv[]) {
@@ -97,16 +107,11 @@ int main(int argc, const char* argv[]) {
     if (!hosts.empty()) {
         auto i = static_cast<uint64_t>(0);
         auto found_hostname = false;
-        auto hostname = get_my_hostname();
-        // TODO We remove the dot onwards from the hostname. This is not final and may only work for mogon and fh2
-        auto pos = hostname.find("."s);
-        if (pos != std::string::npos)
-            hostname = hostname.substr(0, pos);
-
-        if (hostname.size() == 0) {
+        auto hostname = get_my_hostname(false);
+        if (hostname.empty()) {
             cerr << "Unable to read the machine's hostname" << endl;
             ADAFS_DATA->spdlogger()->error("{}() Unable to read the machine's hostname", __func__);
-            assert(hostname.size() != 0);
+            assert(!hostname.empty());
         }
         for (auto&& host : hosts) {
             hostmap[i] = host;
@@ -126,11 +131,7 @@ int main(int argc, const char* argv[]) {
     } else {
         // single node mode
         ADAFS_DATA->spdlogger()->info("{}() Single node mode set to self", __func__);
-        auto hostname = get_my_hostname();
-        // TODO We remove the dot onwards from the hostname. This is not final and may only work for mogon and fh2
-        auto pos = hostname.find("."s);
-        if (pos != std::string::npos)
-            hostname = hostname.substr(0, pos);
+        auto hostname = get_my_hostname(false);
         hostmap[0] = hostname;
         hosts_raw = hostname;
         ADAFS_DATA->host_id(0);
