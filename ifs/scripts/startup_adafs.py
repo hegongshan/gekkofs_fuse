@@ -130,7 +130,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
                 print line
             else:
                 # check for errors in log
-                if 'ERROR' in line[line.strip().find('\n') + 1:] or 'Assertion `err\'' in line[
+                if '[E]' in line[line.strip().find('\n') + 1:] or 'Assertion `err\'' in line[
                                                                                           line.strip().find('\n') + 1:]:
                     fs_err = True
                     print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \

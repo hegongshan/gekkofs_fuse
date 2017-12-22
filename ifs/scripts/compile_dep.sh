@@ -216,7 +216,7 @@ make install || exit 1
 make check || exit 1
 
 echo "############################################################ Installing:  Rocksdb"
-# Margo
+# Rocksdb
 CURR=$GIT/rocksdb
 cd $CURR
 make clean || exit 1
