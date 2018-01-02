@@ -19,11 +19,13 @@ global WAITTIME
 def check_dependencies():
     global PSSH_PATH
     """Check if pssh is installed"""
-    if os.path.exists('/usr/bin/pssh'):
-        PSSH_PATH = '/usr/bin/pssh'
+    pssh_path = os.popen('which pssh').read().strip()
+    if pssh_path != '':
+        PSSH_PATH = pssh_path
         return
-    if os.path.exists('/usr/bin/parallel-ssh'):
-        PSSH_PATH = '/usr/bin/parallel-ssh'
+    pssh_path = os.popen('which parallel-ssh').read().strip()
+    if pssh_path != '':
+        PSSH_PATH = pssh_path
         return
     print '[ERR] parallel-ssh/pssh executable cannot be found. Please add it to the parameter list'
     exit(1)
@@ -49,14 +51,15 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
     nodefile = False
-    if os.path.exists(nodelist):
-        nodefile = True  # TODO
-        print 'Nodefiles are not supported yet'
-        exit(1)
+    if os.path.exists(nodelist):  # XXX Currently, we assume that the nodefile syntax is sane.
+        nodefile = True
     if PSSH_PATH is '':
         check_dependencies()
     # set pssh arguments
-    pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
+    if nodefile:
+        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, nodelist)
+    else:
+        pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
 
     # clean root dir if needed
     if cleanroot:
@@ -80,8 +83,12 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
                 exit(1)
 
     # Start deamons
-    cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-              % (pssh, daemon_path, rootdir, mountdir, nodelist)
+    if nodefile:
+        cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                  % (pssh, daemon_path, rootdir, mountdir, nodelist)
+    else:
+        cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                  % (pssh, daemon_path, rootdir, mountdir, nodelist)
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -123,7 +130,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
                 print line
             else:
                 # check for errors in log
-                if 'ERROR' in line[line.strip().find('\n') + 1:] or 'Assertion `err\'' in line[
+                if '[E]' in line[line.strip().find('\n') + 1:] or 'Assertion `err\'' in line[
                                                                                           line.strip().find('\n') + 1:]:
                     fs_err = True
                     print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \

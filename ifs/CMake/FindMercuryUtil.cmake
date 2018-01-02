@@ -7,7 +7,7 @@ find_path(MERCURY_UTIL_DIR
         )
 
 find_library(MERCURY_UTIL_LIBRARY
-        NAMES mercury_util
+        NAMES mercury_util mercury_util_debug
         HINTS
         $ENV{HOME}/adafs/install/lib
         ${MERCURY_UTIL_DIR}

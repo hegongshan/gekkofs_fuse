@@ -232,32 +232,21 @@ void destroy_preload() {
     cout << "\n####################\n\nMargo RPC client stats: " << endl;
     margo_diag_dump(margo_rpc_id_, "-", 0);
 #endif
-    ld_logger->info("Freeing Mercury daemon addr ...");
-    HG_Addr_free(margo_get_class(ld_margo_ipc_id), daemon_svr_addr);
-    ld_logger->info("Finalizing Margo IPC client ...");
-    auto mercury_ipc_class = margo_get_class(ld_margo_ipc_id);
-    auto mercury_ipc_context = margo_get_context(ld_margo_ipc_id);
-    margo_finalize(ld_margo_ipc_id);
+    ld_logger->info("{}() Freeing Margo daemon addr ...", __func__);
+    auto ret = margo_addr_free(ld_margo_ipc_id, daemon_svr_addr);
+    ld_logger->info("{}() ret {}", __func__, ret);
 
-    ld_logger->info("Freeing Mercury RPC addresses ...");
     // free all rpc addresses in LRU map and finalize margo rpc
+    ld_logger->info("{}() Freeing Mercury RPC addresses ...", __func__);
     auto free_all_addr = [&](const KVCache::node_type& n) {
-        HG_Addr_free(margo_get_class(ld_margo_rpc_id), n.value);
+        ret = margo_addr_free(ld_margo_rpc_id, n.value);
+        ld_logger->info("{}() ret {}", __func__, ret);
     };
     rpc_address_cache.cwalk(free_all_addr);
-    ld_logger->info("Finalizing Margo RPC client ...");
-    auto mercury_rpc_class = margo_get_class(ld_margo_rpc_id);
-    auto mercury_rpc_context = margo_get_context(ld_margo_rpc_id);
+    ld_logger->info("{}() About to finalize the margo client", __func__);
     margo_finalize(ld_margo_rpc_id);
-
-    ld_logger->info("Destroying Mercury context ...");
-    HG_Context_destroy(mercury_ipc_context);
-    HG_Context_destroy(mercury_rpc_context);
-    ld_logger->info("Finalizing Mercury class ...");
-    HG_Finalize(mercury_ipc_class);
-    HG_Finalize(mercury_rpc_class);
-    ld_logger->info("Preload library shut down.");
-
-    ld_logger->info("Finalizing Argobots ...");
-    ABT_finalize();
+    ld_logger->info("{}() Shut down Margo RPC client successful", __func__);
+    margo_finalize(ld_margo_ipc_id);
+    ld_logger->info("{}() Shut down Margo IPC client successful", __func__);
+    ld_logger->info("{}() All services shut down. Client shutdown complete.", __func__);
 }
