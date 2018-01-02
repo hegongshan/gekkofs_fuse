@@ -3,7 +3,7 @@
 usage_short() {
 	echo "
 usage: compile_dep.sh [-h] [-n <NAPLUGIN>] [-c <CLUSTER>] [-j <COMPILE_CORES>]
-                      clone_path install_path
+                      source_path install_path
 	"
 }
 
@@ -14,7 +14,7 @@ help_msg() {
 This script compiles all ADA-FS dependencies (excluding the fs itself)
 
 positional arguments:
-	clone_path		path to the cloned dependencies path from clone_dep.sh
+	source_path		path to the cloned dependencies path from clone_dep.sh
 	install_path		path to the install path of the compiled dependencies
 
 
@@ -38,6 +38,11 @@ prepare_build_dir() {
     fi
     rm -rf $1/build/*
 }
+CLUSTER=""
+NA_LAYER=""
+CORES=""
+SOURCE=""
+INSTALL=""
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -79,7 +84,7 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
     usage_short
     exit
 fi
-GIT=$1
+SOURCE=$1
 INSTALL=$2
 
 # deal with optional arguments
@@ -107,7 +112,7 @@ else
     usage_short
     exit
 fi
-if [[ -v ${CLUSTER} ]]; then
+if [[ "${CLUSTER}" != "" ]]; then
 	if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
 		echo CLUSTER  = "${CLUSTER}"
     else
@@ -125,16 +130,16 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
-echo "Git path = '$1'";
+echo "Source path = '$1'";
 echo "Install path = '$2'";
 
-mkdir -p ${GIT}
+mkdir -p ${SOURCE}
 
 # Set cluster dependencies first
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     # get libtool
     echo "############################################################ Installing:  libtool"
-    CURR=${GIT}/libtool
+    CURR=${SOURCE}/libtool
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     ../configure --prefix=${INSTALL} || exit 1
@@ -142,7 +147,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     make install || exit 1
     # compile libev
     echo "############################################################ Installing:  libev"
-    CURR=${GIT}/libev
+    CURR=${SOURCE}/libev
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     ../configure --prefix=${INSTALL} || exit 1
@@ -150,7 +155,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     make install || exit 1
     # compile gflags
     echo "############################################################ Installing:  gflags"
-    CURR=${GIT}/gflags
+    CURR=${SOURCE}/gflags
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
@@ -158,19 +163,19 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     make install || exit 1
     # compile zstd
     echo "############################################################ Installing:  zstd"
-    CURR=${GIT}/zstd/build/cmake
+    CURR=${SOURCE}/zstd/build/cmake
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
     make -j${CORES} || exit 1
     make install || exit 1
     echo "############################################################ Installing:  lz4"
-    CURR=${GIT}/lz4
+    CURR=${SOURCE}/lz4
 	cd ${CURR}
     make -j${CORES} || exit 1
     make DESTDIR=${INSTALL} PREFIX="" install || exit 1
     echo "############################################################ Installing:  snappy"
-    CURR=${GIT}/snappy
+    CURR=${SOURCE}/snappy
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
@@ -182,7 +187,7 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_BMI="-DNA_USE_BMI:BOOL=ON"
     echo "############################################################ Installing:  BMI"
     # BMI
-    CURR=${GIT}/bmi
+    CURR=${SOURCE}/bmi
     prepare_build_dir ${CURR}
     cd ${CURR}
     ./prepare || exit 1
@@ -196,7 +201,7 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     USE_CCI="-DNA_USE_CCI:BOOL=ON"
     echo "############################################################ Installing:  CCI"
     # CCI
-    CURR=${GIT}/cci
+    CURR=${SOURCE}/cci
     prepare_build_dir ${CURR}
     cd ${CURR}
     ./autogen.pl || exit 1
@@ -215,7 +220,7 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_OFI="-DNA_USE_OFI:BOOL=ON"
     echo "############################################################ Installing:  LibFabric"
     #libfabric
-    CURR=${GIT}/libfabric
+    CURR=${SOURCE}/libfabric
     prepare_build_dir ${CURR}
     cd ${CURR}
     ./autogen.sh || exit 1
@@ -229,7 +234,7 @@ fi
 echo "############################################################ Installing:  Mercury"
 
 # Mercury
-CURR=${GIT}/mercury
+CURR=${SOURCE}/mercury
 prepare_build_dir ${CURR}
 cd ${CURR}/build
 # XXX Note: USE_EAGER_BULK is temporarily disabled due to bugs in Mercury with smaller amounts of data
@@ -242,7 +247,7 @@ make install  || exit 1
 echo "############################################################ Installing:  Argobots"
 
 # Argobots
-CURR=${GIT}/argobots
+CURR=${SOURCE}/argobots
 prepare_build_dir ${CURR}
 cd ${CURR}
 ./autogen.sh || exit 1
@@ -254,7 +259,7 @@ make check || exit 1
 
 echo "############################################################ Installing:  Abt-snoozer"
 # Abt snoozer
-CURR=${GIT}/abt-snoozer
+CURR=${SOURCE}/abt-snoozer
 prepare_build_dir ${CURR}
 cd ${CURR}
 ./prepare.sh || exit 1
@@ -266,7 +271,7 @@ make check || exit 1
 
 echo "############################################################ Installing:  Margo"
 # Margo
-CURR=${GIT}/margo
+CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
 ./prepare.sh || exit 1
@@ -278,7 +283,7 @@ make check || exit 1
 
 echo "############################################################ Installing:  Rocksdb"
 # Rocksdb
-CURR=${GIT}/rocksdb
+CURR=${SOURCE}/rocksdb
 cd ${CURR}
 make clean || exit 1
 sed -i.bak "s#INSTALL_PATH ?= /usr/local#INSTALL_PATH ?= ${INSTALL}#g" Makefile
