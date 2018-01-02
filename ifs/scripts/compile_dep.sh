@@ -3,9 +3,10 @@
 usage() {
 
     echo "Usage:
-    ./compile_dep [ clone_path ] [ install_path ] [ na_plugin ] [ cluster ]
+	./compile_dep [ clone_path ] [ install_path ] [ na_plugin ] [ cluster ] [ compile_cores (optional) ]
     Valid na_plugin arguments: {bmi,cci,ofi,all}
-    Valid cluster arguments: {mogon1}"
+    Valid cluster arguments: {mogon1,fh2}
+	Valid compile_cores arguments: numeric > 0; defaults to processor count of node"
 }
 
 prepare_build_dir() {
@@ -25,6 +26,7 @@ CLUSTER=""
 if [[ ! (-z ${4+x} ) ]]; then
     CLUSTER=$4
 fi
+
 
 #LOG=/tmp/adafs_install.log
 #echo "" &> $LOG
@@ -46,7 +48,7 @@ else
 fi
 
 if [ "$CLUSTER" != "" ]; then
-    if [ "$CLUSTER" == "mogon1" ]; then
+	if [[ ( "$CLUSTER" == "mogon1" ) || ( "$CLUSTER" == "fh2" ) ]]; then
         echo "$CLUSTER cluster configuration selected"
     else
         echo "$CLUSTER cluster configuration is invalid. Exiting ..."
@@ -65,12 +67,7 @@ echo "Install path is set to '$2'";
 mkdir -p $GIT
 
 # Set cluster dependencies first
-if [ "$CLUSTER" == "mogon1" ]; then
-	# Make sure these modules are enabled
-    #module load devel/CMake/3.8.0 || exit 1
-    #module load mpi/OpenMPI/2.0.2-GCC-6.3.0 || exit 1
-    #module load devel/Boost/1.63.0-foss-2017a || exit 1 # because of mercury
-    echo "Done"
+if [[ "$CLUSTER" == "mogon1" ) || ( "$CLUSTER" == "fh2" ) ]]; then
     # get libtool
     echo "############################################################ Installing:  libtool"
     CURR=$GIT/libtool

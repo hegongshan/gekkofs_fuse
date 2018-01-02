@@ -47,7 +47,7 @@ usage() {
     echo "Usage:
     ./clone_dep [ clone_path ] [ NA_Plugin ]
     Valid NA_Plugin arguments: {bmi,cci,ofi,all}
-    Valid cluster arguments: {mogon1}"
+    Valid cluster arguments: {mogon1,fh2}"
 }
 
 if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
@@ -74,7 +74,7 @@ else
     exit
 fi
 if [ "$CLUSTER" != "" ]; then
-    if [ "$CLUSTER" == "mogon1" ]; then
+	if [[ ( "$CLUSTER" == "mogon1" ) || ( "$CLUSTER" == "fh2" ) ]]; then
         echo "$CLUSTER cluster configuration selected"
     else
         echo "$CLUSTER cluster configuration is invalid. Exiting ..."
@@ -91,7 +91,7 @@ echo "Cloning output is logged at /tmp/adafs_clone.log"
 mkdir -p $GIT
 
 # get cluster dependencies
-if [ "$CLUSTER" == "mogon1" ]; then
+if [[ ( "$CLUSTER" == "mogon1" ) || ( "$CLUSTER" == "fh2" ) ]]; then
     # get libtool for cci
     wgetdeps "libtool" "http://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz"
     # get libev for mercury
@@ -105,6 +105,9 @@ if [ "$CLUSTER" == "mogon1" ]; then
 	# get snappy for rocksdb
     wgetdeps "snappy" "https://github.com/google/snappy/archive/1.1.7.tar.gz"
 fi
+#if [ "$CLUSTER" == "fh2" ]; then
+	# no distinct 3rd party software needed as of now.
+#fi
 
 # get BMI
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
