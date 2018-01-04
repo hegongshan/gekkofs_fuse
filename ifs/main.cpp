@@ -107,7 +107,7 @@ int main(int argc, const char* argv[]) {
     if (!hosts.empty()) {
         auto i = static_cast<uint64_t>(0);
         auto found_hostname = false;
-        auto hostname = get_my_hostname(false);
+        auto hostname = get_my_hostname(true);
         if (hostname.empty()) {
             cerr << "Unable to read the machine's hostname" << endl;
             ADAFS_DATA->spdlogger()->error("{}() Unable to read the machine's hostname", __func__);
