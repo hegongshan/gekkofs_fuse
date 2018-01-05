@@ -111,3 +111,31 @@ def check_shell_out(msg):
     if msg.err != '':
         raise OSError('Shell command failed with\n\t%s' % msg.err)
     return msg.output
+
+
+def create_pssh_hostfile(hostfile, hostfile_pssh):
+    """Function creates a pssh compatible hostfile
+
+    Args:
+        hostfile(str): Path to source hostfile
+        hostfile_pssh(str): Path to pssh compatible hostfile (contents will be created first)
+
+    Returns:
+        (bool): Returns true if successful
+    """
+    # truncate pssh hostfile
+    try:
+        open(hostfile_pssh, 'w').close()
+        # make nodefile pssh compatible
+        with open(hostfile, 'r') as rf:
+            for line in rf.readlines():
+                # skip commented lines
+                if line.startswith('#'):
+                    continue
+                with open(hostfile_pssh, 'a') as wf:
+                    wf.write(line.strip().split(' ')[0] + '\n')
+    except IOError as e:
+        print 'ERR while creating pssh compatible hostfile'
+        print e.strerror
+        return False
+    return True

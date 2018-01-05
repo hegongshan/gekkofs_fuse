@@ -15,6 +15,8 @@ global PRETEND
 global PSSH_PATH
 global WAITTIME
 
+CONST_PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh'
+
 
 def check_dependencies():
     global PSSH_PATH
@@ -49,8 +51,11 @@ def shutdown_system(daemon_path, nodelist, sigkill):
         print '[ERR] Daemon executable not found or not a file'
         exit(1)
     nodefile = False
-    if os.path.exists(nodelist):  # XXX Currently, we assume that the nodefile syntax is sane.
+    if os.path.exists(nodelist):
         nodefile = True
+        if not util.create_pssh_hostfile(nodelist, CONST_PSSH_HOSTFILE_PATH):
+            exit(1)
+        nodelist = CONST_PSSH_HOSTFILE_PATH
     if PSSH_PATH is '':
         check_dependencies()
     # set pssh arguments
