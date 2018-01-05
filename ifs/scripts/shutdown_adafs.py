@@ -55,12 +55,11 @@ def shutdown_system(daemon_path, nodelist, sigkill):
         nodefile = True
         if not util.create_pssh_hostfile(nodelist, CONST_PSSH_HOSTFILE_PATH):
             exit(1)
-        nodelist = CONST_PSSH_HOSTFILE_PATH
     if PSSH_PATH is '':
         check_dependencies()
     # set pssh arguments
     if nodefile:
-        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, nodelist)
+        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, CONST_PSSH_HOSTFILE_PATH)
     else:
         pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
     if sigkill:
