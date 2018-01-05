@@ -86,7 +86,10 @@ int main(int argc, const char* argv[]) {
         fstream host_file(host_path);
         if (host_file.is_open()) {
             for (string line; getline(host_file, line);) {
-                hosts.push_back(line);
+                if (line.at(0) != '#') {
+                    auto subline = line.substr(0, line.find(' '));
+                    hosts.push_back(subline);
+                }
             }
         } else {
             cerr << "Hostfile path does not exist. Exiting ..." << endl;
