@@ -17,7 +17,10 @@ extern void* libc_fopen64; // XXX Does not work with streaming pointers. If used
 
 //extern void* libc_creat; //unused
 //extern void* libc_creat64; //unused
+extern void* libc_mkdir;
+extern void* libc_mkdirat;
 extern void* libc_unlink;
+extern void* libc_rmdir;
 
 extern void* libc_close;
 //extern void* libc___close; //unused

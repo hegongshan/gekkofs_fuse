@@ -21,7 +21,10 @@ void* libc_fopen64; // XXX Does not work with streaming pointers. If used will b
 
 //void* libc_creat; //unused
 //void* libc_creat64; //unused
+void* libc_mkdir;
+void* libc_mkdirat;
 void* libc_unlink;
+void* libc_rmdir;
 
 void* libc_close;
 //void* libc___close; //unused
@@ -61,8 +64,11 @@ void init_passthrough_() {
     libc_open = dlsym(libc, "open");
 //    libc_fopen = dlsym(libc, "fopen");
 //    libc_fopen64 = dlsym(libc, "fopen64");
+    libc_mkdir = dlsym(libc, "mkdir");
+    libc_mkdirat = dlsym(libc, "mkdirat");
 
     libc_unlink = dlsym(libc, "unlink");
+    libc_rmdir = dlsym(libc, "rmdir");
 
     libc_close = dlsym(libc, "close");
 //    libc___close = dlsym(libc, "__close");

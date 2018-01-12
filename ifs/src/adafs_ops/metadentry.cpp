@@ -24,6 +24,7 @@ ino_t generate_inode_no() {
 int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_t mode) {
     auto err = create_metadentry(path, mode); // XXX errorhandling
 
+    // XXX Only do that for files and not for directories
     init_chunk_space(path);
 
     return err;
@@ -83,6 +84,7 @@ int remove_metadentry(const string& path) {
 
 int remove_node(const string& path) {
     auto err = remove_metadentry(path);
+    // XXX Only do that with a file. Directory needs to be handled differently
     if (err == 0)
         destroy_chunk_space(
                 path); // XXX This removes only the data on that node. Leaving everything in inconsistent state

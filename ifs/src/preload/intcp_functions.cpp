@@ -69,6 +69,28 @@ int creat64(const char* path, mode_t mode) {
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
 
+int mkdir(const char* path, mode_t mode) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
+    if (ld_is_env_initialized() && is_fs_path(path)) {
+        // XXX Possible don't use open here but a separate call to handle RPCs directly (unsure about O_DIRECTORY flag)
+        return open(path, O_CREAT | O_DIRECTORY | O_WRONLY, mode);
+    }
+    return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
+}
+
+int mkdirat(int dirfd, const char* path, mode_t mode) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
+    if (ld_is_env_initialized() && is_fs_path(path)) {
+        // not implemented
+        ld_logger->trace("{}() not implemented.", __func__);
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&mkdirat)>(libc_mkdirat))(dirfd, path, mode);
+}
+
+
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
@@ -76,6 +98,16 @@ int unlink(const char* path) __THROW {
         return rpc_send_unlink(path);
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
+}
+
+int rmdir(const char* path) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with path {}", __func__, path);
+    if (ld_is_env_initialized() && is_fs_path(path)) {
+        // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
+        return rpc_send_unlink(path);
+    }
+    return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
 }
 
 int close(int fd) {

@@ -16,7 +16,7 @@ int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
     in.path = path.c_str();
     in.mode = mode;
 
-    // TODO handle all flags. currently only file create
+    // TODO handle all flags. currently only file create. Directory are not handled differently than files XXX
     if (!(flags & O_CREAT)) {
         ld_logger->debug("{}() No create flag given, assuming file exists ...", __func__);
         return 0; // XXX This is a temporary quickfix for read. Look up if file exists. Do it on server end.
