@@ -49,6 +49,53 @@ int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
     return err;
 }
 
+int rpc_send_access(const std::string& path, const mode_t mode) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_access_in_t in{};
+    rpc_err_out_t out{};
+    hg_return_t ret;
+    int err = EUNKNOWN;
+    // fill in
+    in.path = path.c_str();
+    in.mode = mode;
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, svr_addr, false);
+
+    ret = HG_OTHER_ERROR;
+    ld_logger->debug("{}() About to send RPC ...", __func__);
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (ret == HG_SUCCESS) {
+        /* decode response */
+        ld_logger->trace("{}() Waiting for response", __func__);
+        ret = margo_get_output(handle, &out);
+        if (ret != HG_SUCCESS) {
+            ld_logger->error("{}() while getting margo output", __func__);
+            errno = EIO;
+            margo_free_output(handle, &out);
+            margo_destroy(handle);
+            return -1;
+        }
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+        if (out.err != 0)
+            errno = out.err;
+        else
+            err = 0;
+        /* clean up resources consumed by this rpc */
+        margo_free_output(handle, &out);
+    } else {
+        ld_logger->warn("{}() timed out");
+    }
+
+    margo_destroy(handle);
+    return err;
+}
+
 int rpc_send_stat(const std::string& path, string& attr) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;

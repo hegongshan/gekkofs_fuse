@@ -124,6 +124,27 @@ int __close(int fd) {
     return close(fd);
 }
 
+int access(const char* path, int mode) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called path {} mode {}", __func__, path, mode);
+    if (ld_is_env_initialized() && is_fs_path(path)) {
+        return adafs_access(path, static_cast<mode_t>(mode));
+    }
+    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mode);
+}
+
+int faccessat(int dirfd, const char* path, int mode, int flags) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
+    if (ld_is_env_initialized() && is_fs_path(path)) {
+        // not implemented
+        ld_logger->trace("{}() not implemented.", __func__);
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, path, mode, flags);
+}
+
+
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
@@ -199,14 +220,6 @@ extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
         return -1;
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
-}
-
-int access(const char* path, int mode) __THROW {
-    init_passthrough_if_needed();
-    if (ld_is_env_initialized() && is_fs_path(path)) {
-// TODO
-    }
-    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mode);
 }
 
 int puts(const char* str) {

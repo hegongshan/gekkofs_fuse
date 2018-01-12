@@ -10,6 +10,8 @@ void send_minimal_rpc(hg_id_t minimal_id);
 
 int rpc_send_open(const std::string& path, mode_t mode, int flags);
 
+int rpc_send_access(const std::string& path, mode_t mode);
+
 int rpc_send_stat(const std::string& path, std::string& attr);
 
 int rpc_send_unlink(const std::string& path);

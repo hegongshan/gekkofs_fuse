@@ -21,6 +21,11 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     }
 }
 
+int adafs_access(const std::string& path, const mode_t mode) {
+    auto err = rpc_send_access(path, mode);
+    return err; // XXX for any error, i.e., at least one permission bit is denied or object does not exists. 0 for success
+}
+
 // TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const std::string& path, struct stat* buf) {
     string attr = ""s;

@@ -21,6 +21,10 @@ MERCURY_GEN_PROC(rpc_open_in_t,
 ((hg_int32_t) (flags)) \
 ((uint32_t) (mode)))
 
+MERCURY_GEN_PROC(rpc_access_in_t,
+                 ((hg_const_string_t) (path))\
+((uint32_t) (mode)))
+
 MERCURY_GEN_PROC(rpc_stat_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))

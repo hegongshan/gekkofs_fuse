@@ -73,39 +73,41 @@ bool init_ld_argobots() {
 void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
     if (mode == Margo_mode::IPC) {
         // IPC IDs
-        ipc_config_id = MARGO_REGISTER(mid, IPC_FS_CONFIG_TAG, ipc_config_in_t, ipc_config_out_t,
+        ipc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t,
                                        NULL);
-        ipc_minimal_id = MARGO_REGISTER(mid, RPC_MINIMAL_TAG, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-        ipc_open_id = MARGO_REGISTER(mid, RPC_OPEN_TAG, rpc_open_in_t, rpc_err_out_t, NULL);
-        ipc_stat_id = MARGO_REGISTER(mid, RPC_STAT_TAG, rpc_stat_in_t, rpc_stat_out_t, NULL);
-        ipc_unlink_id = MARGO_REGISTER(mid, RPC_UNLINK_TAG, rpc_unlink_in_t,
+        ipc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
+        ipc_open_id = MARGO_REGISTER(mid, hg_tag::open, rpc_open_in_t, rpc_err_out_t, NULL);
+        ipc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
+        ipc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_stat_in_t, rpc_stat_out_t, NULL);
+        ipc_unlink_id = MARGO_REGISTER(mid, hg_tag::unlink, rpc_unlink_in_t,
                                        rpc_err_out_t, NULL);
-        ipc_update_metadentry_id = MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_TAG, rpc_update_metadentry_in_t,
+        ipc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
-        ipc_update_metadentry_size_id = MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_SIZE_TAG,
+        ipc_update_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::update_metadentry_size,
                                                        rpc_update_metadentry_size_in_t,
                                                        rpc_update_metadentry_size_out_t,
                                                        NULL);
-        ipc_write_data_id = MARGO_REGISTER(mid, RPC_WRITE_DATA_TAG, rpc_write_data_in_t, rpc_data_out_t,
+        ipc_write_data_id = MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t,
                                            NULL);
-        ipc_read_data_id = MARGO_REGISTER(mid, RPC_READ_DATA_TAG, rpc_read_data_in_t, rpc_data_out_t,
+        ipc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
                                           NULL);
     } else {
         // RPC IDs
-        rpc_minimal_id = MARGO_REGISTER(mid, RPC_MINIMAL_TAG, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-        rpc_open_id = MARGO_REGISTER(mid, RPC_OPEN_TAG, rpc_open_in_t, rpc_err_out_t, NULL);
-        rpc_stat_id = MARGO_REGISTER(mid, RPC_STAT_TAG, rpc_stat_in_t, rpc_stat_out_t, NULL);
-        rpc_unlink_id = MARGO_REGISTER(mid, RPC_UNLINK_TAG, rpc_unlink_in_t,
+        rpc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
+        rpc_open_id = MARGO_REGISTER(mid, hg_tag::open, rpc_open_in_t, rpc_err_out_t, NULL);
+        rpc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
+        rpc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_stat_in_t, rpc_stat_out_t, NULL);
+        rpc_unlink_id = MARGO_REGISTER(mid, hg_tag::unlink, rpc_unlink_in_t,
                                        rpc_err_out_t, NULL);
-        rpc_update_metadentry_id = MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_TAG, rpc_update_metadentry_in_t,
+        rpc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
-        rpc_update_metadentry_size_id = MARGO_REGISTER(mid, RPC_UPDATE_METADENTRY_SIZE_TAG,
+        rpc_update_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::update_metadentry_size,
                                                        rpc_update_metadentry_size_in_t,
                                                        rpc_update_metadentry_size_out_t,
                                                        NULL);
-        rpc_write_data_id = MARGO_REGISTER(mid, RPC_WRITE_DATA_TAG, rpc_write_data_in_t, rpc_data_out_t,
+        rpc_write_data_id = MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t,
                                            NULL);
-        rpc_read_data_id = MARGO_REGISTER(mid, RPC_READ_DATA_TAG, rpc_read_data_in_t, rpc_data_out_t,
+        rpc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
                                           NULL);
     }
 }
