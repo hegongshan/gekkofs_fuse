@@ -17,18 +17,20 @@ std::atomic<bool> is_env_initialized(false);
 // IPC IDs
 hg_id_t ipc_minimal_id;
 hg_id_t ipc_config_id;
-hg_id_t ipc_open_id;
+hg_id_t ipc_mk_node_id;
+hg_id_t ipc_access_id;
 hg_id_t ipc_stat_id;
-hg_id_t ipc_unlink_id;
+hg_id_t ipc_rm_node_id;
 hg_id_t ipc_update_metadentry_id;
 hg_id_t ipc_update_metadentry_size_id;
 hg_id_t ipc_write_data_id;
 hg_id_t ipc_read_data_id;
 // RPC IDs
 hg_id_t rpc_minimal_id;
-hg_id_t rpc_open_id;
+hg_id_t rpc_mk_node_id;
+hg_id_t rpc_access_id;
 hg_id_t rpc_stat_id;
-hg_id_t rpc_unlink_id;
+hg_id_t rpc_rm_node_id;
 hg_id_t rpc_update_metadentry_id;
 hg_id_t rpc_update_metadentry_size_id;
 hg_id_t rpc_write_data_id;
@@ -76,11 +78,11 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
         ipc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t,
                                        NULL);
         ipc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-        ipc_open_id = MARGO_REGISTER(mid, hg_tag::open, rpc_open_in_t, rpc_err_out_t, NULL);
+        ipc_mk_node_id = MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, NULL);
         ipc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
         ipc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_stat_in_t, rpc_stat_out_t, NULL);
-        ipc_unlink_id = MARGO_REGISTER(mid, hg_tag::unlink, rpc_unlink_in_t,
-                                       rpc_err_out_t, NULL);
+        ipc_rm_node_id = MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t,
+                                        rpc_err_out_t, NULL);
         ipc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
         ipc_update_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::update_metadentry_size,
@@ -94,11 +96,11 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
     } else {
         // RPC IDs
         rpc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
-        rpc_open_id = MARGO_REGISTER(mid, hg_tag::open, rpc_open_in_t, rpc_err_out_t, NULL);
+        rpc_mk_node_id = MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, NULL);
         rpc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
         rpc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_stat_in_t, rpc_stat_out_t, NULL);
-        rpc_unlink_id = MARGO_REGISTER(mid, hg_tag::unlink, rpc_unlink_in_t,
-                                       rpc_err_out_t, NULL);
+        rpc_rm_node_id = MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t,
+                                        rpc_err_out_t, NULL);
         rpc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
         rpc_update_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::update_metadentry_size,

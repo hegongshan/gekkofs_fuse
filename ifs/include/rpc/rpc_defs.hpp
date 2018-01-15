@@ -13,11 +13,13 @@ DECLARE_MARGO_RPC_HANDLER(rpc_minimal)
 
 DECLARE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_open)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_access)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_unlink)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_rm_node)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
@@ -27,24 +29,5 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
-
-
-/** OLD BELOW
-// mdata ops
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_mdata)
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_attr)
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_mdata)
-
-// dentry ops
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_lookup)
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_create_dentry)
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_dentry)
-
-// data
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
-
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
-*/
-
 
 #endif //LFS_RPC_DEFS_HPP

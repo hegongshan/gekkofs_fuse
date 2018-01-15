@@ -5,7 +5,11 @@
 
 int adafs_open(const std::string& path, mode_t mode, int flags);
 
-int adafs_access(const std::string& path, mode_t mode);
+int adafs_mk_node(const std::string& path, const mode_t mode);
+
+int adafs_rm_node(const std::string& path);
+
+int adafs_access(const std::string& path, const int mask);
 
 int adafs_stat(const std::string& path, struct stat* buf);
 

@@ -2,7 +2,6 @@
  * All intercepted functions are defined here
  */
 #include <preload/preload.hpp>
-#include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
 
@@ -73,8 +72,7 @@ int mkdir(const char* path, mode_t mode) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
     if (ld_is_env_initialized() && is_fs_path(path)) {
-        // XXX Possible don't use open here but a separate call to handle RPCs directly (unsure about O_DIRECTORY flag)
-        return open(path, O_CREAT | O_DIRECTORY | O_WRONLY, mode);
+        return adafs_mk_node(path, mode);
     }
     return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
 }
@@ -95,7 +93,7 @@ int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
     if (ld_is_env_initialized() && is_fs_path(path)) {
-        return rpc_send_unlink(path);
+        return adafs_rm_node(path);
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
@@ -105,7 +103,7 @@ int rmdir(const char* path) {
     ld_logger->trace("{}() called with path {}", __func__, path);
     if (ld_is_env_initialized() && is_fs_path(path)) {
         // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
-        return rpc_send_unlink(path);
+        return adafs_rm_node(path);
     }
     return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
 }
@@ -124,13 +122,13 @@ int __close(int fd) {
     return close(fd);
 }
 
-int access(const char* path, int mode) {
+int access(const char* path, int mask) {
     init_passthrough_if_needed();
-    ld_logger->trace("{}() called path {} mode {}", __func__, path, mode);
+    ld_logger->trace("{}() called path {} mask {}", __func__, path, mask);
     if (ld_is_env_initialized() && is_fs_path(path)) {
-        return adafs_access(path, static_cast<mode_t>(mode));
+        return adafs_access(path, mask);
     }
-    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mode);
+    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
 }
 
 int faccessat(int dirfd, const char* path, int mode, int flags) {

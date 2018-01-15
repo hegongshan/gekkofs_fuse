@@ -10,9 +10,9 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     auto fd = file_map.add(path, (flags & O_APPEND) != 0);
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
-        err = rpc_send_open(path, mode, flags);
+        err = adafs_mk_node(path, mode);
     else
-        err = 0; //TODO default if no o_creat flag, assume file exists. This should be an rpc to see if file is there
+        err = adafs_access(path, F_OK);
     if (err == 0)
         return fd;
     else {
@@ -21,9 +21,16 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     }
 }
 
-int adafs_access(const std::string& path, const mode_t mode) {
-    auto err = rpc_send_access(path, mode);
-    return err; // XXX for any error, i.e., at least one permission bit is denied or object does not exists. 0 for success
+int adafs_mk_node(const std::string& path, const mode_t mode) {
+    return rpc_send_mk_node(path, mode);
+}
+
+int adafs_rm_node(const std::string& path) {
+    return rpc_send_rm_node(path);
+}
+
+int adafs_access(const std::string& path, const int mask) {
+    return rpc_send_access(path, mask);
 }
 
 // TODO combine adafs_stat and adafs_stat64
@@ -37,7 +44,8 @@ int adafs_stat(const std::string& path, struct stat* buf) {
 int adafs_stat64(const std::string& path, struct stat64* buf) {
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
-    db_val_to_stat64(path, attr, *buf);
+    if (err == 0)
+        db_val_to_stat64(path, attr, *buf);
     return err;
 }
 

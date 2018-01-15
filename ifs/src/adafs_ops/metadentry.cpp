@@ -131,3 +131,53 @@ int update_metadentry_size(const string& path, size_t io_size, off_t offset, boo
 int update_metadentry(const string& path, Metadata& md) {
     return db_update_metadentry(path, md.path(), md.to_KVentry()) ? 0 : -1;
 }
+
+/**
+ * @param path of the object whose permissions are checked
+ * @param mask single bit mask to check against
+ * @return errno
+ */
+int check_access_mask(const string& path, const int mask) {
+    Metadata md{};
+    auto err = get_metadentry(path, md);
+    if (err == -1)  // metadentry not found
+        return ENOENT;
+
+    /*
+     * if only check if file exists is wanted, return success.
+     * According to POSIX (access(2)) the mask is either the value F_OK,
+     * or a mask consisting of the bitwise OR of one or more of R_OK, W_OK, and X_OK.
+     */
+    if (mask & F_OK)
+        return 0;
+
+    // root user is a god
+    if (ADAFS_DATA->uid_state() && md.uid() == 0)
+        return 0;
+
+    // We do not check for the actual user here, because the cluster batchsystem should take care of it
+    // check user leftmost 3 bits for rwx in md->mode
+    if (ADAFS_DATA->uid_state()) {
+        // Because mode comes only with the first 3 bits used, the user bits have to be shifted to the right to compare
+        if ((mask & md.mode() >> 6) == static_cast<unsigned int>(mask))
+            return 0;
+        else
+            return EACCES;
+    }
+
+    // check group middle 3 bits for rwx in md->mode
+    if (ADAFS_DATA->gid_state()) {
+        if ((mask & md.mode() >> 3) == static_cast<unsigned int>(mask))
+            return 0;
+        else
+            return EACCES;
+    }
+
+    // check other rightmost 3 bits for rwx in md->mode.
+    // Because they are the rightmost bits they don't need to be shifted
+    if ((mask & md.mode()) == static_cast<unsigned int>(mask)) {
+        return 0;
+    }
+
+    return EACCES;
+}
