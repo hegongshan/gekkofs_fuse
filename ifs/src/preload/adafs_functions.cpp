@@ -10,9 +10,26 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     auto fd = file_map.add(path, (flags & O_APPEND) != 0);
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
-        err = adafs_mk_node(path, mode);
-    else
-        err = adafs_access(path, F_OK);
+        // no access check required here. If one is using our FS they have the permissions.
+        err = rpc_send_mk_node(path, mode);
+    else {
+        auto mask = F_OK; // F_OK == 0
+#if defined(CHECK_ACCESS_DURING_OPEN)
+        if ((mode & S_IRUSR) || (mode & S_IRGRP) || (mode & S_IROTH))
+            mask = mask & R_OK;
+        if ((mode & S_IWUSR) || (mode & S_IWGRP) || (mode & S_IWOTH))
+            mask = mask & W_OK;
+        if ((mode & S_IXUSR) || (mode & S_IXGRP) || (mode & S_IXOTH))
+            mask = mask & X_OK;
+#endif
+#if defined(DO_LOOKUP)
+        // check if file exists
+        err = rpc_send_access(path, mask);
+#else
+        // file is assumed to be existing, even though it might not
+        err = 0;
+#endif
+    }
     if (err == 0)
         return fd;
     else {
@@ -30,7 +47,15 @@ int adafs_rm_node(const std::string& path) {
 }
 
 int adafs_access(const std::string& path, const int mask) {
+#if !defined(DO_LOOKUP)
+    // object is assumed to be existing, even though it might not
+    return 0;
+#endif
+#if defined(CHECK_ACCESS_DURING_OPEN)
     return rpc_send_access(path, mask);
+#else
+    return rpc_send_access(path, F_OK); // Only check for file exists
+#endif
 }
 
 // TODO combine adafs_stat and adafs_stat64
