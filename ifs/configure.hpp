@@ -30,11 +30,11 @@
 #define MDATA_USE_BLOCKS false
 #define MDATA_USE_SIZE true // XXX to be added in ADAFS_DATA. currently on by default
 
-// should permissions be checked when access() is called or discarded
+// should permissions be checked when access() is called or discarded (disabled by default)
 //#define CHECK_ACCESS
-// If access permissions should be checked while opening a file
+// If access permissions should be checked while opening a file (disabled by default)
 //#define CHECK_ACCESS_DURING_OPEN
-// If disabled, a file or directory is always presumed to be there (even if it is not). No check is executed
+// If disabled, a file or directory is always presumed to be there (even if it is not). No check is executed (enabled by default)
 #define DO_LOOKUP
 
 // Write-ahead logging of rocksdb

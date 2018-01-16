@@ -148,7 +148,7 @@ int check_access_mask(const string& path, const int mask) {
      * According to POSIX (access(2)) the mask is either the value F_OK,
      * or a mask consisting of the bitwise OR of one or more of R_OK, W_OK, and X_OK.
      */
-    if (mask & F_OK)
+    if (mask == F_OK)
         return 0;
 
     // root user is a god

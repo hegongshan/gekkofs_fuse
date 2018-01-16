@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     // Part
 
 
-    char buf1[] = "penis";
+    char buf1[] = "oops.";
     auto fd1 = open(p.c_str(), O_WRONLY | O_APPEND, 0777);
 //    auto nw1 = pwrite(fd1, &buf1, strlen(buf1), 1615);
     auto nw1 = write(fd1, &buf1, strlen(buf1));

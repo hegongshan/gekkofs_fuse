@@ -51,7 +51,7 @@ int adafs_access(const std::string& path, const int mask) {
     // object is assumed to be existing, even though it might not
     return 0;
 #endif
-#if defined(CHECK_ACCESS_DURING_OPEN)
+#if defined(CHECK_ACCESS)
     return rpc_send_access(path, mask);
 #else
     return rpc_send_access(path, F_OK); // Only check for file exists
