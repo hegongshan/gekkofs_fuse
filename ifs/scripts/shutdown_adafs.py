@@ -14,8 +14,7 @@ __email__ = "vef@uni-mainz.de"
 global PRETEND
 global PSSH_PATH
 global WAITTIME
-
-CONST_PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh'
+global PSSH_HOSTFILE_PATH
 
 
 def check_dependencies():
@@ -44,6 +43,7 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     global PSSH_PATH
     global PRETEND
     global WAITTIME
+    global PSSH_HOSTFILE_PATH
     # get absolute paths
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     pssh_nodelist = ''
@@ -53,13 +53,13 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     nodefile = False
     if os.path.exists(nodelist):
         nodefile = True
-        if not util.create_pssh_hostfile(nodelist, CONST_PSSH_HOSTFILE_PATH):
+        if not util.create_pssh_hostfile(nodelist, PSSH_HOSTFILE_PATH):
             exit(1)
     if PSSH_PATH is '':
         check_dependencies()
     # set pssh arguments
     if nodefile:
-        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, CONST_PSSH_HOSTFILE_PATH)
+        pssh = '%s -O StrictHostKeyChecking=no -i -h "%s"' % (PSSH_PATH, PSSH_HOSTFILE_PATH)
     else:
         pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
     if sigkill:
@@ -144,12 +144,18 @@ if __name__ == "__main__":
                         help='Force kill adafs_daemons')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
+    parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',
+                        help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
     args = parser.parse_args()
 
     if args.pretend is True:
         PRETEND = True
     else:
         PRETEND = False
+    if args.jobid == '':
+        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh'
+    else:
+        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
     PSSH_PATH = args.pssh
     WAITTIME = 5
     shutdown_system(args.daemonpath, args.nodelist, args.sigkill)
