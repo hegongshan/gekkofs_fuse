@@ -29,6 +29,9 @@ void* libc_rmdir;
 void* libc_close;
 //void* libc___close; //unused
 
+void* libc_access;
+void* libc_faccessat;
+
 void* libc_stat;
 void* libc_fstat;
 void* libc___xstat;
@@ -37,8 +40,6 @@ void* libc___fxstat;
 void* libc___fxstat64;
 void* libc___lxstat;
 void* libc___lxstat64;
-
-void* libc_access;
 
 void* libc_puts;
 
@@ -73,6 +74,9 @@ void init_passthrough_() {
     libc_close = dlsym(libc, "close");
 //    libc___close = dlsym(libc, "__close");
 
+    libc_access = dlsym(libc, "access");
+    libc_faccessat = dlsym(libc, "faccessat");
+
     libc_stat = dlsym(libc, "stat");
     libc_fstat = dlsym(libc, "fstat");
     libc___xstat = dlsym(libc, "__xstat");
@@ -82,7 +86,6 @@ void init_passthrough_() {
     libc___lxstat = dlsym(libc, "__lxstat");
     libc___lxstat64 = dlsym(libc, "__lxstat64");
 
-    libc_access = dlsym(libc, "access");
 
     libc_puts = dlsym(libc, "puts");
 

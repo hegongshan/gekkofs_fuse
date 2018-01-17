@@ -41,8 +41,8 @@ Metadata::Metadata(const std::string& path, std::string db_val) {
         inode_no_ = std::hash<std::string>{}(path);
         mode_ = static_cast<unsigned int>(stoul(db_val));
         link_count_ = 1;
-        uid_ = getuid();
-        gid_ = getgid();
+        uid_ = 0;
+        gid_ = 0;
         size_ = 0;
         blocks_ = 0;
         atime_ = 0;
@@ -249,4 +249,3 @@ const std::string& Metadata::path() const {
 void Metadata::path(const std::string& path) {
     Metadata::path_ = path;
 }
-

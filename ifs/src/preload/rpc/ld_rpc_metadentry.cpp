@@ -5,10 +5,10 @@
 
 using namespace std;
 
-int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
+int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_open_in_t in{};
+    rpc_mk_node_in_t in{};
     rpc_err_out_t out{};
     hg_return_t ret;
     int err = EUNKNOWN;
@@ -16,13 +16,8 @@ int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
     in.path = path.c_str();
     in.mode = mode;
 
-    // TODO handle all flags. currently only file create. Directory are not handled differently than files XXX
-    if (!(flags & O_CREAT)) {
-        ld_logger->debug("{}() No create flag given, assuming file exists ...", __func__);
-        return 0; // XXX This is a temporary quickfix for read. Look up if file exists. Do it on server end.
-    }
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    margo_create_wrap(ipc_open_id, rpc_open_id, path, handle, svr_addr, false);
+    margo_create_wrap(ipc_mk_node_id, rpc_mk_node_id, path, handle, svr_addr, false);
 
     ret = HG_OTHER_ERROR;
     ld_logger->debug("{}() About to send RPC ...", __func__);
@@ -38,7 +33,57 @@ int rpc_send_open(const std::string& path, const mode_t mode, const int flags) {
         ret = margo_get_output(handle, &out);
 
         ld_logger->debug("{}() Got response success: {}", __func__, out.err);
-        err = out.err;
+        if (out.err != 0)
+            errno = out.err;
+        else
+            err = 0;
+        /* clean up resources consumed by this rpc */
+        margo_free_output(handle, &out);
+    } else {
+        ld_logger->warn("{}() timed out");
+    }
+
+    margo_destroy(handle);
+    return err;
+}
+
+int rpc_send_access(const std::string& path, const int mask) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_access_in_t in{};
+    rpc_err_out_t out{};
+    hg_return_t ret;
+    int err = EUNKNOWN;
+    // fill in
+    in.path = path.c_str();
+    in.mask = mask;
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, svr_addr, false);
+
+    ret = HG_OTHER_ERROR;
+    ld_logger->debug("{}() About to send RPC ...", __func__);
+    for (int i = 0; i < RPC_TRIES; ++i) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
+            break;
+        }
+    }
+    if (ret == HG_SUCCESS) {
+        /* decode response */
+        ld_logger->trace("{}() Waiting for response", __func__);
+        ret = margo_get_output(handle, &out);
+        if (ret != HG_SUCCESS) {
+            ld_logger->error("{}() while getting margo output", __func__);
+            errno = EIO;
+            margo_free_output(handle, &out);
+            margo_destroy(handle);
+            return -1;
+        }
+        ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+        if (out.err != 0)
+            errno = out.err;
+        else
+            err = 0;
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
@@ -88,8 +133,8 @@ int rpc_send_stat(const std::string& path, string& attr) {
     return err;
 }
 
-int rpc_send_unlink(const std::string& path) {
-    rpc_unlink_in_t in{};
+int rpc_send_rm_node(const std::string& path) {
+    rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
@@ -98,7 +143,7 @@ int rpc_send_unlink(const std::string& path) {
     in.path = path.c_str();
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    margo_create_wrap(ipc_unlink_id, rpc_unlink_id, path, handle, svr_addr, false);
+    margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, handle, svr_addr, false);
 
     ld_logger->debug("{}() About to send RPC ...", __func__);
     auto ret = HG_OTHER_ERROR;

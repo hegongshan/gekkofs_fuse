@@ -33,8 +33,8 @@ static hg_return_t rpc_minimal(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
 
-static hg_return_t rpc_srv_open(hg_handle_t handle) {
-    rpc_open_in_t in{};
+static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
+    rpc_mk_node_in_t in{};
     rpc_err_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
@@ -58,7 +58,34 @@ static hg_return_t rpc_srv_open(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_open)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
+
+static hg_return_t rpc_srv_access(hg_handle_t handle) {
+    rpc_access_in_t in{};
+    rpc_err_out_t out{};
+
+    auto ret = margo_get_input(handle, &in);
+    if (ret != HG_SUCCESS)
+        ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
+                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path);
+    // access metadentry
+    out.err = check_access_mask(in.path, in.mask);
+
+    ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
+    auto hret = margo_respond(handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+    }
+
+    // Destroy handle when finished
+    margo_free_input(handle, &in);
+    margo_destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_access)
 
 static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     rpc_stat_in_t in{};
@@ -90,8 +117,8 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
-static hg_return_t rpc_srv_unlink(hg_handle_t handle) {
-    rpc_unlink_in_t in{};
+static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
+    rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
@@ -100,7 +127,7 @@ static hg_return_t rpc_srv_unlink(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got remove node RPC with path {}", in.path);
 
-    // do unlink
+    // do remove
     out.err = remove_node(in.path);
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
@@ -114,7 +141,7 @@ static hg_return_t rpc_srv_unlink(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_unlink)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_rm_node)
 
 
 static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {

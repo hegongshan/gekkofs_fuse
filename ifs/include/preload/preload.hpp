@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <fcntl.h>
 #include <cerrno>
+#include <unistd.h>
 
 #include "../../configure.hpp"
 #include <global_defs.hpp>

@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <cstdint>
+#include <cerrno>
 #include <unordered_map>
 #include <thread>
 

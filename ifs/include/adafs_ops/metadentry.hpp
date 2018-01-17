@@ -21,4 +21,6 @@ int update_metadentry_size(const std::string& path, size_t io_size, off_t offset
 
 int update_metadentry(const std::string& path, Metadata& md);
 
+int check_access_mask(const std::string& path, int mask);
+
 #endif //IFS_METADENTRY_HPP

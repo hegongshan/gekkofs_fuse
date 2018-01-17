@@ -25,6 +25,9 @@ extern void* libc_rmdir;
 extern void* libc_close;
 //extern void* libc___close; //unused
 
+extern void* libc_access;
+extern void* libc_faccessat;
+
 extern void* libc_stat;
 extern void* libc_fstat;
 extern void* libc___xstat;
@@ -33,8 +36,6 @@ extern void* libc___fxstat;
 extern void* libc___fxstat64;
 extern void* libc___lxstat;
 extern void* libc___lxstat64;
-
-extern void* libc_access;
 
 extern void* libc_puts;
 

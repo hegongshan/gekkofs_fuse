@@ -10,9 +10,11 @@ include_directories(${MPI_INCLUDE_PATH})
 
 set(SOURCE_FILES main.cpp)
 set(SOURCE_FILES_MPI main_MPI.cpp)
-set(SOURCE_FILES_TEMP main_temp_testing.cpp)
+set(SOURCE_FILES_IO main_IO_testing.cpp)
+set(SOURCE_FILES_TEMP main_temp.cpp)
 add_executable(ifs_test ${SOURCE_FILES})
 add_executable(ifs_test_MPI ${SOURCE_FILES_MPI})
+add_executable(ifs_test_IO ${SOURCE_FILES_IO})
 add_executable(ifs_test_temp ${SOURCE_FILES_TEMP})
 
 target_link_libraries(ifs_test_MPI ${MPI_CXX_LIBRARIES})
