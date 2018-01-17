@@ -38,6 +38,8 @@ prepare_build_dir() {
     fi
     rm -rf $1/build/*
 }
+PATCH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PATCH_DIR="${PATCH_DIR}/patches"
 CLUSTER=""
 NA_LAYER=""
 CORES=""
@@ -204,6 +206,9 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     CURR=${SOURCE}/cci
     prepare_build_dir ${CURR}
     cd ${CURR}
+    # patch hanging issue
+    echo "########## Applying cci hanging patch"
+    git apply ${PATCH_DIR}/cci_hang_final.patch || exit 1
     ./autogen.pl || exit 1
     cd ${CURR}/build
 if [ "$CLUSTER" == "mogon1" ]; then
