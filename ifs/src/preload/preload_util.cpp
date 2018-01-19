@@ -231,7 +231,21 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         auto hostname = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX + ":"s +
                         fs_config->rpc_port; // convert hostid to hostname and port
         ld_logger->trace("generated hostname {} with rpc_port {}", hostname, fs_config->rpc_port);
-        margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
+        // try to look up 3 times before erroring out
+        hg_return_t ret;
+        // TODO If this is solution is somewhat helpful, write a more versatile solution
+        for (unsigned int i = 0; i < 3; i++) {
+            ret = margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
+            if (ret != HG_SUCCESS) {
+                // still not working after 3 tries.
+                if (i == 2)
+                    return false;
+                // Wait a second then try again XXX This is a temporary solution to evaluate addr lookup with cci
+                sleep(1 * (i + 1));
+            } else {
+                break;
+            }
+        }
         if (svr_addr == HG_ADDR_NULL)
             return false;
         rpc_address_cache.insert(hostid, svr_addr);
