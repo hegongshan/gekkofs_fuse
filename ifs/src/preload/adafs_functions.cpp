@@ -62,7 +62,8 @@ int adafs_access(const std::string& path, const int mask) {
 int adafs_stat(const std::string& path, struct stat* buf) {
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
-    db_val_to_stat(path, attr, *buf);
+    if (err == 0)
+        db_val_to_stat(path, attr, *buf);
     return err;
 }
 

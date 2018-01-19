@@ -2,13 +2,13 @@
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
-// To enabled logging with info level
+// To enabled logging for daemon
 #define LOG_INFO
 //#define LOG_DEBUG
 //#define LOG_TRACE
 #define LOG_DAEMON_PATH "/tmp/adafs_daemon.log"
 
-// Enable logging for daemon
+// Enable logging for preload
 #define LOG_PRELOAD_INFO
 //#define LOG_PRELOAD_DEBUG
 //#define LOG_PRELOAD_TRACE
@@ -43,7 +43,13 @@
 // RPC configuration
 #define RPCPORT 4433
 #define RPC_TRIES 3
-#define RPC_TIMEOUT 150000
+// rpc timeout to try again in milliseconds
+#define RPC_TIMEOUT 180000
+// enables timing of sending rpcs
+//#define MARGO_FORWARD_TIMER
+// sets the threshold in milliseconds when a log entry should be created
+#define MARGO_FORWARD_TIMER_THRESHOLD 1000
+
 // Set a hostname suffix when a connection is built. E.g., "-ib" to use Infiniband
 #define HOSTNAME_SUFFIX ""
 //#define MARGODIAG // enables diagnostics of margo (printed after shutting down

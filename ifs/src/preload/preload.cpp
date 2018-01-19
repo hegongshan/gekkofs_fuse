@@ -232,9 +232,9 @@ void init_preload() {
 void destroy_preload() {
 #ifdef MARGODIAG
     cout << "\n####################\n\nMargo IPC client stats: " << endl;
-    margo_diag_dump(margo_ipc_id_, "-", 0);
+    margo_diag_dump(ld_margo_ipc_id, "-", 0);
     cout << "\n####################\n\nMargo RPC client stats: " << endl;
-    margo_diag_dump(margo_rpc_id_, "-", 0);
+    margo_diag_dump(ld_margo_rpc_id, "-", 0);
 #endif
     ld_logger->info("{}() Freeing Margo daemon addr ...", __func__);
     auto ret = margo_addr_free(ld_margo_ipc_id, daemon_svr_addr);

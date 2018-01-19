@@ -98,6 +98,7 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     // get the metadata
     string val;
     auto err = db_get_metadentry(in.path, val);
+    // TODO set return values proper with errorcodes the whole way
     if (err) {
         out.err = 0;
         out.db_val = val.c_str();
