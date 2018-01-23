@@ -67,7 +67,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
 
     # clean root dir if needed
     if cleanroot:
-        cmd_rm_str = '%s "rm -rf %s/*"' % (pssh, rootdir)
+        cmd_rm_str = '%s "rm -rf %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir)
         if PRETEND:
             print 'Pretending: %s' % cmd_rm_str
         else:
