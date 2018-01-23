@@ -211,7 +211,7 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     git apply ${PATCH_DIR}/cci_hang_final.patch || exit 1
     ./autogen.pl || exit 1
     cd ${CURR}/build
-if [ "$CLUSTER" == "mogon1" ]; then
+if [[ ("${CLUSTER}" == "mogon1") || ("${CLUSTER}" == "fh2") ]]; then
     ../configure --with-verbs --prefix=${INSTALL} LIBS="-lpthread"  || exit 1
 else
     ../configure --prefix=${INSTALL} LIBS="-lpthread"  || exit 1
@@ -241,11 +241,16 @@ echo "############################################################ Installing:  
 # Mercury
 CURR=${SOURCE}/mercury
 prepare_build_dir ${CURR}
+cd ${CURR}
+# patch cci verbs addr lookup error handling
+echo "########## Applying cci addr lookup error handling patch"
+git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch || exit 1
 cd ${CURR}/build
 # XXX Note: USE_EAGER_BULK is temporarily disabled due to bugs in Mercury with smaller amounts of data
+# Apparantly this is fixed in the new Mercury version. TODO check if it works now
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=OFF ${USE_BMI} ${USE_CCI} ${USE_OFI} ../  || exit 1
+-DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../  || exit 1
 make -j${CORES}  || exit 1
 make install  || exit 1
 
