@@ -237,17 +237,23 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         for (unsigned int i = 0; i < 3; i++) {
             ret = margo_addr_lookup(ld_margo_rpc_id, hostname.c_str(), &svr_addr);
             if (ret != HG_SUCCESS) {
-                // still not working after 3 tries.
-                if (i == 2)
+                // still not working after 5 tries.
+                if (i == 4) {
+                    ld_logger->error("{}() Unable to lookup address {} from host {}", __func__,
+                                     hostname, fs_config->hosts.at(fs_config->host_id));
                     return false;
-                // Wait a second then try again XXX This is a temporary solution to evaluate addr lookup with cci
+                }
+                // Wait a second then try again
                 sleep(1 * (i + 1));
             } else {
                 break;
             }
         }
-        if (svr_addr == HG_ADDR_NULL)
+        if (svr_addr == HG_ADDR_NULL) {
+            ld_logger->error("{}() looked up address is NULL for address {} from host {}", __func__,
+                             hostname, fs_config->hosts.at(fs_config->host_id));
             return false;
+        }
         rpc_address_cache.insert(hostid, svr_addr);
         return true;
     }
