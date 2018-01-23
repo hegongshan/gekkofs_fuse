@@ -1,5 +1,7 @@
 
 #include <db/db_util.hpp>
+#include <rocksdb/table.h>
+#include <rocksdb/filter_policy.h>
 
 using namespace std;
 
@@ -13,9 +15,7 @@ bool init_rocksdb() {
     // create the DB if it's not already present
     options.create_if_missing = true;
 
-#if defined(KV_OPTIMIZE)
     optimize_rocksdb(options);
-#endif
 
     // Disable Write-Ahead Logging if configured
     rocksdb::WriteOptions write_options{};
@@ -48,7 +48,26 @@ bool init_rocksdb() {
 }
 
 void optimize_rocksdb(rocksdb::Options& options) {
-
+#if defined(KV_OPTIMIZE_RAMDISK)
+    // as described at https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
+    // use mmap read
+    options.allow_mmap_reads = true;
+    // disable block cache, enable blook filters and reduce the delta encoding restart interval
+    rocksdb::BlockBasedTableOptions table_options{};
+    table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, true));
+    table_options.no_block_cache = true;
+    table_options.block_restart_interval = 4;
+    options.table_factory.reset(NewBlockBasedTableFactory(table_options));
+    // enable lightweight compression (snappy or lz4). We use lz4 for now
+    options.compression = rocksdb::CompressionType::kLZ4Compression;
+    // set up compression more aggressively and allocate more threads for flush and compaction
+    options.level0_file_num_compaction_trigger = 1;
+    options.max_background_flushes = 8;
+    options.max_background_compactions = 8;
+    options.max_subcompactions = 4;
+    // keep all the files open
+    options.max_open_files = -1;
+#elif defined(KV_OPTIMIZE)
     //    rocksdb::BlockBasedTableOptions block_options{};
 //    block_options.block_size = 16384 * 2;
 //    options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(block_options));
@@ -69,6 +88,5 @@ void optimize_rocksdb(rocksdb::Options& options) {
     options.level0_stop_writes_trigger = 56;
 //    options.arena_block_size = 1024 * 8;
 //    options.compression = rocksdb::kNoCompression; // doesnt do anything
-
-
+#endif
 }

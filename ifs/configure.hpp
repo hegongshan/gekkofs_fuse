@@ -39,8 +39,10 @@
 
 // Write-ahead logging of rocksdb
 //#define KV_WOL
-// Optimize key value store. Eventually, different modes will be available for different workloads. TODO
+// Optimize Key-Value store. Eventually, different modes will be available for different workloads. TODO
 //#define KV_OPTIMIZE
+// Optimize Key-Value store for tmpfs/ramdisk usage
+#define KV_OPTIMIZE_RAMDISK
 
 // RPC configuration
 #define RPCPORT 4433
