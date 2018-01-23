@@ -38,7 +38,9 @@
 #define DO_LOOKUP
 
 // Write-ahead logging of rocksdb
-//#define RDB_WOL
+//#define KV_WOL
+// Optimize key value store. Eventually, different modes will be available for different workloads. TODO
+//#define KV_OPTIMIZE
 
 // RPC configuration
 #define RPCPORT 4433
