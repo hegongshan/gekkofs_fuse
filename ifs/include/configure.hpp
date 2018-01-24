@@ -1,18 +1,7 @@
+#include "../configure_public.hpp"
 
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
-
-// To enabled logging for daemon
-#define LOG_INFO
-//#define LOG_DEBUG
-//#define LOG_TRACE
-#define LOG_DAEMON_PATH "/tmp/adafs_daemon.log"
-
-// Enable logging for preload
-#define LOG_PRELOAD_INFO
-//#define LOG_PRELOAD_DEBUG
-//#define LOG_PRELOAD_TRACE
-#define LOG_PRELOAD_PATH "/tmp/adafs_preload.log"
 
 // If ACM time should be considered
 #define ACMtime //unused
@@ -53,10 +42,6 @@
 //#define MARGO_FORWARD_TIMER
 // sets the threshold in milliseconds when a log entry should be created
 #define MARGO_FORWARD_TIMER_THRESHOLD 1000
-
-// Set a hostname suffix when a connection is built. E.g., "-ib" to use Infiniband
-#define HOSTNAME_SUFFIX ""
-//#define MARGODIAG // enables diagnostics of margo (printed after shutting down
 
 // Debug configurations
 //#define RPC_TEST //unused

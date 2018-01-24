@@ -89,7 +89,7 @@ include_directories(include)
 add_subdirectory(src/preload)
 #add_subdirectory(src/fuse3)
 
-set(SOURCE_FILES main.cpp main.hpp configure.hpp util.cpp
+set(SOURCE_FILES main.cpp main.hpp include/configure.hpp configure_public.hpp util.cpp
         src/db/db_util.cpp src/classes/fs_data.cpp src/classes/rpc_data.cpp
 
         include/db/db_util.hpp include/classes/fs_data.hpp include/classes/rpc_data.hpp

@@ -11,7 +11,7 @@
 #include <thread>
 
 // adafs config
-#include "configure.hpp"
+#include <configure.hpp>
 #include <global_defs.hpp>
 // boost libs
 #include <boost/filesystem.hpp>

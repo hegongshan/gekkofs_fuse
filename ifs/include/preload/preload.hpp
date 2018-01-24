@@ -13,7 +13,7 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include "../../configure.hpp"
+#include "configure.hpp"
 #include <global_defs.hpp>
 
 extern "C" {
