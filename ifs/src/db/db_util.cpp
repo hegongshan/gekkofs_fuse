@@ -28,7 +28,7 @@ bool init_rocksdb() {
 //    rocksdb::OptimisticTransactionDB* txn_db;
 //    rocksdb::OptimisticTransactionOptions txn_options{};
 //    ADAFS_DATA->txn_rdb_options(txn_options);
-    ADAFS_DATA->spdlogger()->info("RocksDB options set. About to connect...");
+    ADAFS_DATA->spdlogger()->info("{}() RocksDB options set. About to connect...", __func__);
     // open DB
 //    auto s = rocksdb::OptimisticTransactionDB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &txn_db);
     auto s = rocksdb::DB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &db);
@@ -39,10 +39,10 @@ bool init_rocksdb() {
         ADAFS_DATA->rdb(s_db);
 //        shared_ptr<rocksdb::OptimisticTransactionDB> s_txn_db(txn_db);
 //        ADAFS_DATA->txn_rdb(s_txn_db);
-        ADAFS_DATA->spdlogger()->info("RocksDB connection established.");
+        ADAFS_DATA->spdlogger()->info("{}() RocksDB connection established.", __func__);
         return true;
     } else {
-        ADAFS_DATA->spdlogger()->info("[ERROR] RocksDB connection FAILURE. Exiting...");
+        ADAFS_DATA->spdlogger()->error("{}() RocksDB connection FAILURE. Exiting...", __func__);
         return false;
     }
 }

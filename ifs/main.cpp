@@ -152,7 +152,7 @@ int main(int argc, const char* argv[]) {
     ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
-    ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
+    ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
 
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
@@ -160,18 +160,18 @@ int main(int argc, const char* argv[]) {
     bfs::create_directories(ADAFS_DATA->chunk_path());
     bfs::create_directories(ADAFS_DATA->mgmt_path());
 
-    init_environment();
+    if (init_environment()) {
+        signal(SIGINT, shutdown_handler);
+        signal(SIGTERM, shutdown_handler);
+        signal(SIGKILL, shutdown_handler);
 
-    signal(SIGINT, shutdown_handler);
-    signal(SIGTERM, shutdown_handler);
-    signal(SIGKILL, shutdown_handler);
-
-    while (!shutdown_please) {
-        sleep(1);
+        while (!shutdown_please) {
+            sleep(1);
+        }
+        ADAFS_DATA->spdlogger()->info("{}() Shutting done signal encountered. Shutting down ...", __func__);
+    } else {
+        ADAFS_DATA->spdlogger()->info("{}() Starting up daemon environment failed. Shutting down ...", __func__);
     }
-
-    ADAFS_DATA->spdlogger()->info("Shutting done signal encountered. Shutting down ...");
-
 
     destroy_enviroment();
 
