@@ -6,9 +6,6 @@
 #include <preload/ipc_types.hpp>
 #include <adafs_ops/metadentry.hpp>
 
-static const string daemon_aux_path = "/tmp/adafs"s;
-
-
 bool init_environment() {
     // Initialize rocksdb
     if (!init_rocksdb()) {
@@ -191,7 +188,7 @@ void register_server_rpcs(margo_instance_id mid) {
  * @return string
  */
 string daemon_register_path() {
-    return ("/tmp/adafs/daemon_"s + to_string(getpid()) + ".run"s);
+    return (DAEMON_AUX_PATH + "/daemon_"s + to_string(getpid()) + ".run"s);
 }
 
 /**
@@ -201,6 +198,7 @@ string daemon_register_path() {
  */
 bool register_daemon_proc() {
     auto ret = false;
+    auto daemon_aux_path = DAEMON_AUX_PATH;
     if (!bfs::exists(daemon_aux_path) && !bfs::create_directories(daemon_aux_path)) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to create adafs auxiliary directory in {}", __func__,
                                        daemon_aux_path);

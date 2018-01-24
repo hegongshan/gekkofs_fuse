@@ -3,6 +3,9 @@
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
+// Daemon path to auxiliary files
+#define DAEMON_AUX_PATH "/tmp/adafs"
+
 // If ACM time should be considered
 #define ACMtime //unused
 #define BLOCKSIZE 4 // in kilobytes

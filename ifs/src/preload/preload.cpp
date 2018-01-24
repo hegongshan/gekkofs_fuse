@@ -10,8 +10,10 @@ enum class Margo_mode {
     RPC, IPC
 };
 
-// atomic bool to check for margo initialization XXX This has to become more robus
-std::atomic<bool> is_env_initialized(false);
+// atomic bool to check if auxiliary files from daemon are loaded
+std::atomic<bool> is_aux_loaded_(false);
+// thread to initialize the whole margo shazaam only once per process
+static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
 // external variables that are initialized here
 // IPC IDs
@@ -191,43 +193,50 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
  * Returns atomic bool, if Margo is running
  * @return
  */
-bool ld_is_env_initialized() {
-    return is_env_initialized;
+bool ld_is_aux_loaded() {
+    return is_aux_loaded_;
 }
 
 /**
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
-bool init_environment() {
+void init_ld_environment_() {
     if (!init_ld_argobots()) {
         ld_logger->error("{}() Unable to initialize Argobots.", __func__);
-        return false;
+        exit(EXIT_FAILURE);
     }
     if (!init_margo_client(Margo_mode::IPC, "na+sm"s)) {
         ld_logger->error("{}() Unable to initialize Margo IPC client.", __func__);
-        return false;
+        exit(EXIT_FAILURE);
     }
     if (!ipc_send_get_fs_config()) {
         ld_logger->error("{}() Unable to fetch file system configurations from daemon process through IPC.", __func__);
-        return false;
+        exit(EXIT_FAILURE);
     }
     if (!init_margo_client(Margo_mode::RPC, RPC_PROTOCOL)) {
         ld_logger->error("{}() Unable to initialize Margo RPC client.", __func__);
-        return false;
+        exit(EXIT_FAILURE);
     }
-    is_env_initialized = true;
     ld_logger->info("{}() Environment initialization successful.", __func__);
-    return true;
 }
 
+void init_ld_env_if_needed() {
+    pthread_once(&init_env_thread, init_ld_environment_);
+}
+
+
 /**
- * Called initially when preload library is used with the LD_PRELOAD environment variable
+ * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
     init_passthrough_if_needed();
-    if (!init_environment()) {
-        ld_logger->error("{}() Failed to initialize client environment", __func__);
+    if (!get_daemon_auxiliaries() || fs_config->mountdir.empty()) {
+        perror("Error while getting daemon auxiliaries");
+        ld_logger->error("{}() while getting daemon auxiliaries", __func__);
         exit(EXIT_FAILURE);
+    } else {
+        ld_logger->info("{}() mountdir \"{}\" loaded from daemon auxiliaries", __func__, fs_config->mountdir);
+        is_aux_loaded_ = true;
     }
 }
 
@@ -270,4 +279,6 @@ void destroy_preload() {
     }
     if (services_used)
         ld_logger->info("All services shut down. Client shutdown complete.");
+    else
+        ld_logger->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
 }

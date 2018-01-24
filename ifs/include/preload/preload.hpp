@@ -13,7 +13,7 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include "configure.hpp"
+#include <configure.hpp>
 #include <global_defs.hpp>
 
 extern "C" {
@@ -26,7 +26,9 @@ extern "C" {
 
 #define EUNKNOWN (-1)
 
-bool ld_is_env_initialized();
+bool ld_is_aux_loaded();
+
+void init_ld_env_if_needed();
 
 void init_preload() __attribute__((constructor));
 
