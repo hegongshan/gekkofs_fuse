@@ -1,8 +1,19 @@
 cmake_minimum_required(VERSION 3.7)
+set(CMAKE_C_COMPILER "gcc")
+set(CMAKE_CXX_COMPILER "g++")
 project(ifs)
 
 set(CMAKE_CXX_STANDARD 14)
+if (NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Release
+            CACHE STRING "Choose the type of build: Debug Release Memcheck
+            FORCE")
+ENDIF (NOT CMAKE_BUILD_TYPE)
+message("* Current build type is : ${CMAKE_BUILD_TYPE}")
+
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
+# For debugging memory leaks.
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg")
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
@@ -10,6 +21,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 
 # required packages
 # Rocksdb dependencies
@@ -69,7 +81,7 @@ if(USE_BMI)
 endif()
 
 if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
-    message("No Mercury NA plugin selected. BMI automatically selected ... Use -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON for other plugins")
+    message("* No Mercury NA plugin selected. BMI automatically selected ... Use -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON for other plugins")
     find_package(BMI REQUIRED)
     set(NA_LIB
             ${NA_LIB}
@@ -77,7 +89,7 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
             )
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
-# boost dependencies, system is required for filesystem #TODO VERSION UNTESTED. I USE 1.62
+# boost dependencies, system is required for filesystem
 find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
 
 include_directories(include ${ROCKSDB_INCLUDE_DIR}
