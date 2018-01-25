@@ -34,7 +34,7 @@
 // Optimize Key-Value store. Eventually, different modes will be available for different workloads. TODO
 //#define KV_OPTIMIZE
 // Optimize Key-Value store for tmpfs/ramdisk usage
-#define KV_OPTIMIZE_RAMDISK
+//#define KV_OPTIMIZE_RAMDISK
 
 // RPC configuration
 #define RPCPORT 4433

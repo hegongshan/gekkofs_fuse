@@ -3,15 +3,17 @@
 #include "daemon/adafs_daemon.hpp"
 
 #include <csignal>
+#include <condition_variable>
 
 
 using namespace std;
 namespace po = boost::program_options;
 
-static bool shutdown_please = false;
+static condition_variable shutdown_please;
+static mutex mtx;
 
 void shutdown_handler(int dummy) {
-    shutdown_please = true;
+    shutdown_please.notify_all();
 }
 
 /**
@@ -165,9 +167,9 @@ int main(int argc, const char* argv[]) {
         signal(SIGTERM, shutdown_handler);
         signal(SIGKILL, shutdown_handler);
 
-        while (!shutdown_please) {
-            sleep(1);
-        }
+        unique_lock<mutex> lk(mtx);
+        // Wait for shutdown signal to initiate shutdown protocols
+        shutdown_please.wait(lk);
         ADAFS_DATA->spdlogger()->info("{}() Shutting done signal encountered. Shutting down ...", __func__);
     } else {
         ADAFS_DATA->spdlogger()->info("{}() Starting up daemon environment failed. Shutting down ...", __func__);
