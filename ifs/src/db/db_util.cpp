@@ -28,7 +28,7 @@ bool init_rocksdb() {
 //    rocksdb::OptimisticTransactionDB* txn_db;
 //    rocksdb::OptimisticTransactionOptions txn_options{};
 //    ADAFS_DATA->txn_rdb_options(txn_options);
-    ADAFS_DATA->spdlogger()->info("{}() RocksDB options set. About to connect...", __func__);
+    ADAFS_DATA->spdlogger()->debug("{}() RocksDB options set. About to connect...", __func__);
     // open DB
 //    auto s = rocksdb::OptimisticTransactionDB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &txn_db);
     auto s = rocksdb::DB::Open(ADAFS_DATA->rdb_options(), ADAFS_DATA->rdb_path(), &db);

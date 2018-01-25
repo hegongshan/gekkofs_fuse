@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import time
 
 import os
+import time
 
 from util import util
 
@@ -118,7 +118,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
             time.sleep(1)
 
     # Check adafs logs for errors
-    cmd_chk_str = '%s "head -6 /tmp/adafs_daemon.log"' % pssh
+    cmd_chk_str = '%s "head -5 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
         print 'Pretending: %s' % cmd_chk_str
     else:

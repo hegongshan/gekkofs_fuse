@@ -124,7 +124,7 @@ void init_passthrough_() {
     spdlog::set_level(spdlog::level::off);
 #endif
 
-    ld_logger->info("{}() Passthrough initialized.", __func__);
+    ld_logger->debug("{}() Passthrough initialized.", __func__);
 }
 
 void init_passthrough_if_needed() {

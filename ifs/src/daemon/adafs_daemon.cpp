@@ -54,11 +54,10 @@ void destroy_enviroment() {
     cout << "\n####################\n\nMargo RPC server stats: " << endl;
     margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
 #endif
-    ADAFS_DATA->spdlogger()->info("{}() Shutting down daemon ...", __func__);
     if (!deregister_daemon_proc())
         ADAFS_DATA->spdlogger()->warn("{}() Unable to clean up auxiliary files", __func__);
     else
-        ADAFS_DATA->spdlogger()->info("{}() Cleaning auxiliary files successful", __func__);
+        ADAFS_DATA->spdlogger()->debug("{}() Cleaning auxiliary files successful", __func__);
     // The shutdown order is important because the RPC server is started first, it has to be stopped last due to Argobots
     if (RPC_DATA->server_ipc_mid() != nullptr) {
         margo_finalize(RPC_DATA->server_ipc_mid());
@@ -78,7 +77,7 @@ bool init_ipc_server() {
     char addr_self_cstring[128];
 
 
-    ADAFS_DATA->spdlogger()->info("{}() Initializing Margo IPC server...", __func__);
+    ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
     auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, 16);
 
@@ -123,7 +122,7 @@ bool init_rpc_server() {
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
-    ADAFS_DATA->spdlogger()->info("{}() Initializing Margo RPC server...", __func__);
+    ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
     auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, 16);
     if (mid == MARGO_INSTANCE_NULL) {
