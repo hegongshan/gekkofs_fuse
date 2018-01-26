@@ -214,6 +214,43 @@ int getProcIdByName(string procName) {
 }
 
 /**
+ * Returns the path where daemon process writes information for the running clients
+ * @return string
+ */
+string daemon_register_path(int pid) {
+    return (DAEMON_AUX_PATH + "/daemon_"s + to_string(pid) + ".run"s);
+}
+
+bool get_daemon_auxiliaries() {
+    auto ret = false;
+    auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
+    if (adafs_daemon_pid == -1) {
+        ld_logger->error("{}() ADA-FS daemon not started. Exiting ...", __func__);
+        perror("ADA-FS daemon not started. Exiting ...");
+        return false;
+    }
+    ifstream ifs(daemon_register_path(adafs_daemon_pid).c_str(), ::ifstream::in);
+    string mountdir;
+    if (ifs) {
+        getline(ifs, mountdir);
+        if (!mountdir.empty()) {
+            ret = true;
+            fs_config->mountdir = mountdir;
+        } else {
+            ld_logger->error("{}() Error reading daemon auxiliary file", __func__);
+        }
+    }
+    if (ifs.bad()) {
+        perror("Error opening file to register daemon process");
+        ld_logger->error("{}() Error opening file to daemon auxiliary file", __func__);
+        return false;
+    }
+    ifs.close();
+
+    return ret;
+}
+
+/**
  * Creates an abstract rpc address for a given hostid and puts it into an address cache map
  * @param hostid
  * @param svr_addr

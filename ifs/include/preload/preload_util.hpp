@@ -110,6 +110,10 @@ int db_val_to_stat64(std::string path, std::string db_val, struct stat64& attr);
 
 int getProcIdByName(std::string procName);
 
+std::string daemon_register_path(int pid);
+
+bool get_daemon_auxiliaries();
+
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
 size_t get_rpc_node(const std::string& to_hash);

@@ -13,7 +13,7 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->info("Got config IPC");
+    ADAFS_DATA->spdlogger()->debug("{}() Got config IPC", __func__);
 
     // get fs config
     out.mountdir = ADAFS_DATA->mountdir().c_str();
@@ -31,10 +31,11 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
     out.hosts_raw = static_cast<hg_const_string_t>(ADAFS_DATA->hosts_raw().c_str());
     out.host_id = static_cast<hg_uint64_t>(ADAFS_DATA->host_id());
     out.host_size = static_cast<hg_uint64_t>(ADAFS_DATA->host_size());
-    ADAFS_DATA->spdlogger()->info("Sending output configs back to library");
+    ADAFS_DATA->spdlogger()->debug("{}() Sending output configs back to library", __func__);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to open ipc");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond to client to serve file system configurations",
+                                       __func__);
     }
 
     // Destroy handle when finished

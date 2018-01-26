@@ -3,15 +3,17 @@
 #include "daemon/adafs_daemon.hpp"
 
 #include <csignal>
+#include <condition_variable>
 
 
 using namespace std;
 namespace po = boost::program_options;
 
-static bool shutdown_please = false;
+static condition_variable shutdown_please;
+static mutex mtx;
 
 void shutdown_handler(int dummy) {
-    shutdown_please = true;
+    shutdown_please.notify_all();
 }
 
 /**
@@ -152,7 +154,7 @@ int main(int argc, const char* argv[]) {
     ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
-    ADAFS_DATA->spdlogger()->info("adafs_ll_init() enter"s);
+    ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
 
     // Make sure directory structure exists
     bfs::create_directories(ADAFS_DATA->dentry_path());
@@ -160,18 +162,18 @@ int main(int argc, const char* argv[]) {
     bfs::create_directories(ADAFS_DATA->chunk_path());
     bfs::create_directories(ADAFS_DATA->mgmt_path());
 
-    init_environment();
+    if (init_environment()) {
+        signal(SIGINT, shutdown_handler);
+        signal(SIGTERM, shutdown_handler);
+        signal(SIGKILL, shutdown_handler);
 
-    signal(SIGINT, shutdown_handler);
-    signal(SIGTERM, shutdown_handler);
-    signal(SIGKILL, shutdown_handler);
-
-    while (!shutdown_please) {
-        sleep(1);
+        unique_lock<mutex> lk(mtx);
+        // Wait for shutdown signal to initiate shutdown protocols
+        shutdown_please.wait(lk);
+        ADAFS_DATA->spdlogger()->info("{}() Shutting done signal encountered. Shutting down ...", __func__);
+    } else {
+        ADAFS_DATA->spdlogger()->info("{}() Starting up daemon environment failed. Shutting down ...", __func__);
     }
-
-    ADAFS_DATA->spdlogger()->info("Shutting done signal encountered. Shutting down ...");
-
 
     destroy_enviroment();
 

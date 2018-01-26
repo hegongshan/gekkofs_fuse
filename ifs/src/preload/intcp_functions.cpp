@@ -19,7 +19,7 @@ int open(const char* path, int flags, ...) {
         mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_open(path, mode, flags);
     }
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
@@ -71,7 +71,7 @@ int creat64(const char* path, mode_t mode) {
 int mkdir(const char* path, mode_t mode) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_mk_node(path, mode);
     }
     return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
@@ -80,7 +80,7 @@ int mkdir(const char* path, mode_t mode) {
 int mkdirat(int dirfd, const char* path, mode_t mode) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         // not implemented
         ld_logger->trace("{}() not implemented.", __func__);
         return -1;
@@ -92,7 +92,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) {
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_rm_node(path);
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
@@ -101,7 +101,7 @@ int unlink(const char* path) __THROW {
 int rmdir(const char* path) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
         return adafs_rm_node(path);
     }
@@ -110,7 +110,7 @@ int rmdir(const char* path) {
 
 int close(int fd) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         // Currently no call to the daemon is required
         file_map.remove(fd);
         return 0;
@@ -125,7 +125,7 @@ int __close(int fd) {
 int access(const char* path, int mask) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called path {} mask {}", __func__, path, mask);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_access(path, mask);
     }
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
@@ -134,7 +134,7 @@ int access(const char* path, int mask) {
 int faccessat(int dirfd, const char* path, int mode, int flags) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         // not implemented
         ld_logger->trace("{}() not implemented.", __func__);
         return -1;
@@ -146,7 +146,7 @@ int faccessat(int dirfd, const char* path, int mode, int flags) {
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
@@ -155,7 +155,7 @@ int stat(const char* path, struct stat* buf) __THROW {
 int fstat(int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path();
         return adafs_stat(path, buf);
     }
@@ -165,7 +165,7 @@ int fstat(int fd, struct stat* buf) __THROW {
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
@@ -174,7 +174,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
         return adafs_stat64(path, buf);
 //        // Not implemented
 //        return -1;
@@ -185,7 +185,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
 int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path();
         return adafs_stat(path, buf);
     }
@@ -195,7 +195,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         auto path = file_map.get(fd)->path();
         return adafs_stat64(path, buf);
     }
@@ -204,7 +204,7 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
 
 extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
 // Not implemented
         return -1;
     }
@@ -213,7 +213,7 @@ extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
 
 extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && is_fs_path(path)) {
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
 // Not implemented
         return -1;
     }
@@ -226,7 +226,7 @@ int puts(const char* str) {
 
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         // TODO if append flag has been given, set offset accordingly.
         // XXX handle lseek too
@@ -237,7 +237,7 @@ ssize_t write(int fd, const void* buf, size_t count) {
 
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         return adafs_pwrite_ws(fd, buf, count, offset);
     }
@@ -246,7 +246,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 
 ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         return adafs_pwrite_ws(fd, buf, count, offset);
     }
@@ -255,7 +255,7 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
 
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         return pread(fd, buf, count, 0);
     }
@@ -264,7 +264,7 @@ ssize_t read(int fd, void* buf, size_t count) {
 
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         return adafs_pread_ws(fd, buf, count, offset);
     }
@@ -273,7 +273,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
 
 ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         return adafs_pread_ws(fd, buf, count, offset);
     }
@@ -302,7 +302,7 @@ int ftruncate(int fd, off_t length) __THROW {
 
 int dup(int oldfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && file_map.exist(oldfd)) {
+    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
 // Not implemented
         return -1;
     }
@@ -311,7 +311,7 @@ int dup(int oldfd) __THROW {
 
 int dup2(int oldfd, int newfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_env_initialized() && (file_map.exist(oldfd) || file_map.exist(newfd))) {
+    if (ld_is_aux_loaded() && (file_map.exist(oldfd) || file_map.exist(newfd))) {
 // Not implemented
         return -1;
     }

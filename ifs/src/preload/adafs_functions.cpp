@@ -6,6 +6,7 @@ using namespace std;
 
 
 int adafs_open(const std::string& path, mode_t mode, int flags) {
+    init_ld_env_if_needed();
     auto err = 1;
     auto fd = file_map.add(path, (flags & O_APPEND) != 0);
     // TODO look up if file exists configurable
@@ -39,14 +40,17 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 }
 
 int adafs_mk_node(const std::string& path, const mode_t mode) {
+    init_ld_env_if_needed();
     return rpc_send_mk_node(path, mode);
 }
 
 int adafs_rm_node(const std::string& path) {
+    init_ld_env_if_needed();
     return rpc_send_rm_node(path);
 }
 
 int adafs_access(const std::string& path, const int mask) {
+    init_ld_env_if_needed();
 #if !defined(DO_LOOKUP)
     // object is assumed to be existing, even though it might not
     return 0;
@@ -60,6 +64,7 @@ int adafs_access(const std::string& path, const int mask) {
 
 // TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const std::string& path, struct stat* buf) {
+    init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
     if (err == 0)
@@ -68,6 +73,7 @@ int adafs_stat(const std::string& path, struct stat* buf) {
 }
 
 int adafs_stat64(const std::string& path, struct stat64* buf) {
+    init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
     if (err == 0)
@@ -76,6 +82,7 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
 }
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
+    init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
     auto read_size = static_cast<size_t>(0);
@@ -159,6 +166,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
 }
 
 ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
+    init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
     auto append_flag = adafs_fd->append_flag();

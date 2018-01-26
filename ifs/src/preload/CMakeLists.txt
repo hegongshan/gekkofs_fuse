@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.7)
 project(preload CXX C)
 
 set(CMAKE_CXX_STANDARD 14)
-#set(CMAKE_CXX_FLAGS "-g -fPIC")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg -fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG "-Wall --pedantic -g -pg -fPIC")
 
 
-set(SOURCE_FILES_PRELOAD preload.cpp open_file_map.cpp ../../include/preload/preload.hpp
+set(SOURCE_FILES_PRELOAD preload.cpp ../../include/configure.hpp ../../configure_public.hpp
+        open_file_map.cpp ../../include/preload/preload.hpp
         ../../include/preload/open_file_map.hpp preload_util.cpp ../../include/preload/preload_util.hpp
 
         ../../include/preload/ipc_types.hpp margo_ipc.cpp ../../include/preload/margo_ipc.hpp

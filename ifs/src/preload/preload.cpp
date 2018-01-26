@@ -10,8 +10,10 @@ enum class Margo_mode {
     RPC, IPC
 };
 
-// atomic bool to check for margo initialization XXX This has to become more robus
-std::atomic<bool> is_env_initialized(false);
+// atomic bool to check if auxiliary files from daemon are loaded
+std::atomic<bool> is_aux_loaded_(false);
+// thread to initialize the whole margo shazaam only once per process
+static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
 // external variables that are initialized here
 // IPC IDs
@@ -48,21 +50,21 @@ hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
  * @return
  */
 bool init_ld_argobots() {
-    ld_logger->info("Initializing Argobots ...");
+    ld_logger->debug("{}() Initializing Argobots ...", __func__);
 
     // We need no arguments to init
     auto argo_err = ABT_init(0, nullptr);
     if (argo_err != 0) {
-        ld_logger->info("ABT_init() Failed to init Argobots (client)");
+        ld_logger->error("{}() ABT_init() Failed to init Argobots (client)", __func__);
         return false;
     }
     // Set primary execution stream to idle without polling. Normally xstreams cannot sleep. This is what ABT_snoozer does
     argo_err = ABT_snoozer_xstream_self_set();
     if (argo_err != 0) {
-        ld_logger->info("ABT_snoozer_xstream_self_set()  (client)");
+        ld_logger->error("{}() ABT_snoozer_xstream_self_set()  (client)", __func__);
         return false;
     }
-    ld_logger->info("Success.");
+    ld_logger->debug("{}() Argobots initialization successful.", __func__);
     return true;
 }
 
@@ -132,39 +134,39 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
     ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
     if (ret != ABT_SUCCESS) return false;
     if (mode == Margo_mode::IPC)
-        ld_logger->info("Initializing Mercury IPC client ...");
+        ld_logger->debug("{}() Initializing Mercury IPC client ...", __func__);
     else
-        ld_logger->info("Initializing Mercury RPC client ...");
+        ld_logger->debug("{}() Initializing Mercury RPC client ...", __func__);
     /* MERCURY PART */
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
     hg_class = HG_Init(na_plugin.c_str(), HG_FALSE);
     if (hg_class == nullptr) {
-        ld_logger->info("HG_Init() Failed to init Mercury client layer");
+        ld_logger->error("{}() HG_Init() Failed to init Mercury client layer", __func__);
         return false;
     }
     // Create a new Mercury context (must be destroyed when finished)
     hg_context = HG_Context_create(hg_class);
     if (hg_context == nullptr) {
-        ld_logger->info("HG_Context_create() Failed to create Mercury client context");
+        ld_logger->error("{}() HG_Context_create() Failed to create Mercury client context", __func__);
         HG_Finalize(hg_class);
         return false;
     }
-    ld_logger->info("Success.");
+    ld_logger->debug("{}() Mercury initialized.", __func__);
 
     /* MARGO PART */
     if (mode == Margo_mode::IPC)
-        ld_logger->info("Initializing Margo IPC client ...");
+        ld_logger->debug("{}() Initializing Margo IPC client ...", __func__);
     else
-        ld_logger->info("Initializing Margo RPC client ...");
+        ld_logger->debug("{}() Initializing Margo RPC client ...", __func__);
     // margo will run in the context of thread
     auto mid = margo_init_pool(pool, pool, hg_context);
     if (mid == MARGO_INSTANCE_NULL) {
-        ld_logger->error("margo_init_pool failed to initialize the Margo client");
+        ld_logger->error("{}() margo_init_pool failed to initialize the Margo client", __func__);
         return false;
     }
-    ld_logger->info("Success.");
+    ld_logger->debug("{}() Margo initialized.", __func__);
 
     if (mode == Margo_mode::IPC) {
         ld_margo_ipc_id = mid;
@@ -173,7 +175,7 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
             ld_logger->error("{}() ADA-FS daemon not started. Exiting ...", __func__);
             return false;
         }
-        ld_logger->info("{}() ADA-FS daemon with PID {} found.", __func__, adafs_daemon_pid);
+        ld_logger->debug("{}() ADA-FS daemon with PID {} found.", __func__, adafs_daemon_pid);
 
         string sm_addr_str = "na+sm://"s + to_string(adafs_daemon_pid) + "/0";
         margo_addr_lookup(ld_margo_ipc_id, sm_addr_str.c_str(), &daemon_svr_addr);
@@ -184,11 +186,6 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
 #ifdef MARGODIAG
     margo_diag_start(mid);
 #endif
-//    for (int i = 0; i < 10; ++i) {
-//        printf("Running %d iteration\n", i);
-//        send_minimal_ipc(minimal_id);
-//    }
-
     return true;
 }
 
@@ -196,61 +193,92 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
  * Returns atomic bool, if Margo is running
  * @return
  */
-bool ld_is_env_initialized() {
-    return is_env_initialized;
+bool ld_is_aux_loaded() {
+    return is_aux_loaded_;
 }
 
 /**
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
-void init_environment() {
-    // init margo client for IPC
-    auto err = init_ld_argobots();
-    assert(err);
-    err = init_margo_client(Margo_mode::IPC, "na+sm"s);
-    assert(err);
-    err = ipc_send_get_fs_config(); // get fs configurations the daemon was started with.
-    assert(err);
-    err = init_margo_client(Margo_mode::RPC, RPC_PROTOCOL);
-    assert(err);
-    is_env_initialized = true;
-    ld_logger->info("Environment initialized.");
+void init_ld_environment_() {
+    if (!init_ld_argobots()) {
+        ld_logger->error("{}() Unable to initialize Argobots.", __func__);
+        exit(EXIT_FAILURE);
+    }
+    if (!init_margo_client(Margo_mode::IPC, "na+sm"s)) {
+        ld_logger->error("{}() Unable to initialize Margo IPC client.", __func__);
+        exit(EXIT_FAILURE);
+    }
+    if (!ipc_send_get_fs_config()) {
+        ld_logger->error("{}() Unable to fetch file system configurations from daemon process through IPC.", __func__);
+        exit(EXIT_FAILURE);
+    }
+    if (!init_margo_client(Margo_mode::RPC, RPC_PROTOCOL)) {
+        ld_logger->error("{}() Unable to initialize Margo RPC client.", __func__);
+        exit(EXIT_FAILURE);
+    }
+    ld_logger->info("{}() Environment initialization successful.", __func__);
 }
 
+void init_ld_env_if_needed() {
+    pthread_once(&init_env_thread, init_ld_environment_);
+}
+
+
 /**
- * Called initially when preload library is used with the LD_PRELOAD environment variable
+ * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
     init_passthrough_if_needed();
-    init_environment();
-    ld_logger->info("{}() successful.", __func__);
+    if (!get_daemon_auxiliaries() || fs_config->mountdir.empty()) {
+        perror("Error while getting daemon auxiliaries");
+        ld_logger->error("{}() while getting daemon auxiliaries", __func__);
+        exit(EXIT_FAILURE);
+    } else {
+        ld_logger->debug("{}() mountdir \"{}\" loaded from daemon auxiliaries", __func__, fs_config->mountdir);
+        is_aux_loaded_ = true;
+    }
 }
 
 /**
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    auto services_used = (ld_margo_ipc_id != nullptr || ld_margo_rpc_id != nullptr);
 #ifdef MARGODIAG
-    cout << "\n####################\n\nMargo IPC client stats: " << endl;
-    margo_diag_dump(ld_margo_ipc_id, "-", 0);
-    cout << "\n####################\n\nMargo RPC client stats: " << endl;
-    margo_diag_dump(ld_margo_rpc_id, "-", 0);
+    if (ld_margo_ipc_id != nullptr) {
+        cout << "\n####################\n\nMargo IPC client stats: " << endl;
+        margo_diag_dump(ld_margo_ipc_id, "-", 0);
+    }
+    if (ld_margo_rpc_id != nullptr) {
+        cout << "\n####################\n\nMargo RPC client stats: " << endl;
+        margo_diag_dump(ld_margo_rpc_id, "-", 0);
+    }
 #endif
-    ld_logger->info("{}() Freeing Margo daemon addr ...", __func__);
-    auto ret = margo_addr_free(ld_margo_ipc_id, daemon_svr_addr);
-    ld_logger->info("{}() ret {}", __func__, ret);
-
-    // free all rpc addresses in LRU map and finalize margo rpc
-    ld_logger->info("{}() Freeing Mercury RPC addresses ...", __func__);
-    auto free_all_addr = [&](const KVCache::node_type& n) {
-        ret = margo_addr_free(ld_margo_rpc_id, n.value);
-        ld_logger->info("{}() ret {}", __func__, ret);
-    };
-    rpc_address_cache.cwalk(free_all_addr);
-    ld_logger->info("{}() About to finalize the margo client", __func__);
-    margo_finalize(ld_margo_rpc_id);
-    ld_logger->info("{}() Shut down Margo RPC client successful", __func__);
-    margo_finalize(ld_margo_ipc_id);
-    ld_logger->info("{}() Shut down Margo IPC client successful", __func__);
-    ld_logger->info("{}() All services shut down. Client shutdown complete.", __func__);
+    // Shut down RPC client if used
+    if (ld_margo_rpc_id != nullptr) {
+        // free all rpc addresses in LRU map and finalize margo rpc
+        ld_logger->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
+        auto free_all_addr = [&](const KVCache::node_type& n) {
+            if (margo_addr_free(ld_margo_rpc_id, n.value) != HG_SUCCESS) {
+                ld_logger->warn("{}() Unable to free RPC client's svr address: {}.", __func__, n.key);
+            }
+        };
+        rpc_address_cache.cwalk(free_all_addr);
+        ld_logger->debug("{}() About to finalize the margo client", __func__);
+        margo_finalize(ld_margo_rpc_id);
+        ld_logger->debug("{}() Shut down Margo RPC client successful", __func__);
+    }
+    // Shut down IPC client if used
+    if (ld_margo_ipc_id != nullptr) {
+        ld_logger->debug("{}() Freeing Margo IPC daemon svr address ...", __func__);
+        if (margo_addr_free(ld_margo_ipc_id, daemon_svr_addr) != HG_SUCCESS)
+            ld_logger->warn("{}() Unable to free IPC client's daemon svr address.", __func__);
+        margo_finalize(ld_margo_ipc_id);
+        ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
+    }
+    if (services_used)
+        ld_logger->info("All services shut down. Client shutdown complete.");
+    else
+        ld_logger->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
 }
