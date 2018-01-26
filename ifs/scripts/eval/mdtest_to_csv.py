@@ -20,14 +20,17 @@ def parse_file(filepath):
     with open(filepath, 'r') as rf:
         for line in rf.readlines():
             if 'mdtest-1.9.3 was launched with' in line:
-                n = line.strip().split(' ')[-2]
+                n = int(line.strip().split(' ')[-2])
             if 'SUMMARY: (of' in line:
                 flag = True
             if '-- finished at ' in line or 'V-1: Entering timestamp...' in line:
                 flag = False
             if flag:
                 mdtest_out.append(line.strip())
-
+    if len(mdtest_out) == 0:
+        # something is wrong. discard this file
+        print 'File %s does not contain mdtest results' % filepath
+        return
     # Filter for relevant stuff
     mdtest_out = mdtest_out[3:-2]
     # put create stat and remove into dict index 0: avg, index 1 std
@@ -46,14 +49,22 @@ def parse_mdtest_out(inpath, outpath='', printshell=False, printonly=True):
         for file in files:
             filepath = '%s/%s' % (root, file)
             parse_file(filepath)
-    # create output
-    csv = 'n,creates/sec,create_std,stats/sec,stat_std,remove/sec,remove_std\n'
-    for i in range(len(node_n)):
-        csv += '%s,' % node_n[i]
-        csv += '%s,' % mdtest_d['create'][i]
-        csv += '%s,' % mdtest_d['stat'][i]
-        csv += '%s\n' % mdtest_d['remove'][i]
 
+    # create output
+    # first put node number and their mdtest numbers in list and sort them
+    csv_l = list()
+    for i in range(len(node_n)):
+        csv_line = ''
+        csv_line += '%s,' % mdtest_d['create'][i]
+        csv_line += '%s,' % mdtest_d['stat'][i]
+        csv_line += '%s\n' % mdtest_d['remove'][i]
+        csv_l.append([node_n[i], csv_line])
+    csv_l.sort(key=lambda x: x[0])
+    # convert sorted list into csv text file
+    csv = 'n,creates/sec,create_std,stats/sec,stat_std,remove/sec,remove_std\n'
+    for i in csv_l:
+        csv += '%d,%s' % (i[0], i[1])
+    # print output
     if printshell:
         print csv
     if not printonly and outpath != '':
