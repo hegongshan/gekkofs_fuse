@@ -162,6 +162,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
         }
     }
     // XXX check how much we need to deal with the read_size
+    // XXX check that we don't try to read past end of the file
     return err == 0 ? read_size : 0;
 }
 

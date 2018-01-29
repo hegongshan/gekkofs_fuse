@@ -227,10 +227,16 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        auto adafs_fd = file_map.get(fd);
+        auto pos = adafs_fd->pos(); // retrieve the current offset
         ld_logger->trace("{}() called with fd {}", __func__, fd);
         // TODO if append flag has been given, set offset accordingly.
         // XXX handle lseek too
-        return pwrite(fd, buf, count, 0);
+        auto ret = adafs_pwrite_ws(fd, buf, count, pos);
+        if(ret!=-1){
+            adafs_fd->pos(pos + (off_t) count);
+        }
+        return ret;
     }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
 }
@@ -256,8 +262,15 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        auto adafs_fd = file_map.get(fd);
+        auto pos = adafs_fd->pos(); //retrieve the current offset
         ld_logger->trace("{}() called with fd {}", __func__, fd);
-        return pread(fd, buf, count, 0);
+        auto ret= adafs_pread_ws(fd, buf, count, pos);
+        //Update offset
+        if(ret!=-1){
+           adafs_fd->pos(pos + (off_t) count);
+        }
+        return ret;
     }
     return (reinterpret_cast<decltype(&read)>(libc_read))(fd, buf, count);
 }
