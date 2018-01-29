@@ -12,7 +12,7 @@ OpenFile::OpenFile(const string& path, const bool append_flag) : path_(path), ap
         exit(1);
     }
     fd_ = fileno(tmp_file_); // get a valid file descriptor from the kernel
-    off_t pos_ = 0;
+    off_t pos_ = 0; // TODO set the pos according to the flag and delete the flag from fd map??
 }
 
 string OpenFile::path() const {

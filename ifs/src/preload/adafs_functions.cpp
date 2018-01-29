@@ -9,6 +9,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
     auto err = 1;
     auto fd = file_map.add(path, (flags & O_APPEND) != 0);
+    // TODO the open flags should not be in the map just set the pos accordingly
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
         // no access check required here. If one is using our FS they have the permissions.
