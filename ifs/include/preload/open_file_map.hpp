@@ -12,6 +12,7 @@ private:
     bool append_flag_;
 
     int fd_;
+    off_t pos_;
     FILE* tmp_file_;
 
 public:
@@ -29,6 +30,10 @@ public:
     int fd() const;
 
     void fd(int fd_);
+
+    off_t pos() const;
+
+    void pos(off_t pos_);
 
     bool append_flag() const;
 

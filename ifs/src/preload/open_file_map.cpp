@@ -12,6 +12,7 @@ OpenFile::OpenFile(const string& path, const bool append_flag) : path_(path), ap
         exit(1);
     }
     fd_ = fileno(tmp_file_); // get a valid file descriptor from the kernel
+    off_t pos_ = 0;
 }
 
 string OpenFile::path() const {
@@ -28,6 +29,14 @@ int OpenFile::fd() const {
 
 void OpenFile::fd(int fd_) {
     OpenFile::fd_ = fd_;
+}
+
+off_t OpenFile::pos() const {
+    return pos_;
+}
+
+void OpenFile::pos(off_t pos_) {
+    OpenFile::pos_=pos_;
 }
 
 OpenFileMap::OpenFileMap() {}
