@@ -68,7 +68,7 @@ int creat64(const char* path, mode_t mode) {
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
 
-int mkdir(const char* path, mode_t mode) {
+int mkdir(const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
@@ -77,7 +77,7 @@ int mkdir(const char* path, mode_t mode) {
     return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
 }
 
-int mkdirat(int dirfd, const char* path, mode_t mode) {
+int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
@@ -98,7 +98,7 @@ int unlink(const char* path) __THROW {
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
 
-int rmdir(const char* path) {
+int rmdir(const char* path) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
@@ -122,7 +122,7 @@ int __close(int fd) {
     return close(fd);
 }
 
-int access(const char* path, int mask) {
+int access(const char* path, int mask) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called path {} mask {}", __func__, path, mask);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
@@ -131,7 +131,7 @@ int access(const char* path, int mask) {
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
 }
 
-int faccessat(int dirfd, const char* path, int mode, int flags) {
+int faccessat(int dirfd, const char* path, int mode, int flags) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
