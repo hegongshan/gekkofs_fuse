@@ -36,8 +36,9 @@
 // Optimize Key-Value store for tmpfs/ramdisk usage
 //#define KV_OPTIMIZE_RAMDISK
 
-// Buffer size for Rocksdb
-#define KV_WRITE_BUFFER 16384
+// Buffer size for Rocksdb. A high number means that all entries are held in memory.
+// However, when full the application blocks until **all** entries are flushed to disk.
+//#define KV_WRITE_BUFFER 16384
 
 // Margo configuration
 
