@@ -45,7 +45,11 @@ def parse_mdtest_out(inpath, outpath='', printshell=False, printonly=True):
         print "Input path does not exist or is not a directory. Exiting."
         exit(1)
     # parse input
+    in_depth = inpath.count(os.path.sep)
     for root, dirs, files in os.walk(inpath):
+        curr_depth = root.count(os.path.sep)
+        if curr_depth > in_depth:
+            break
         for file in files:
             filepath = '%s/%s' % (root, file)
             parse_file(filepath)
