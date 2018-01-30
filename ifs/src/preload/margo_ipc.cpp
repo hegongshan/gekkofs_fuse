@@ -82,7 +82,7 @@ bool ipc_send_get_fs_config() {
             fs_config->gid = out.gid;
             fs_config->host_id = out.host_id;
             fs_config->host_size = out.host_size;
-            fs_config->rpc_port = to_string(RPCPORT);
+            fs_config->rpc_port = to_string(RPC_PORT);
 
             // split comma separated host string and create a hosts map
             string hosts_raw = out.hosts_raw;

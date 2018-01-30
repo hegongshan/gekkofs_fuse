@@ -79,7 +79,7 @@ bool init_ipc_server() {
 
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, 16);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, IPC_HANDLER_THREADS);
 
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init() failed to initialize the Margo IPC server", __func__);
@@ -118,13 +118,13 @@ bool init_ipc_server() {
 }
 
 bool init_rpc_server() {
-    auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPCPORT);
+    auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPC_PORT);
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, 16);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, RPC_HANDLER_THREADS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;

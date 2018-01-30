@@ -36,8 +36,15 @@
 // Optimize Key-Value store for tmpfs/ramdisk usage
 //#define KV_OPTIMIZE_RAMDISK
 
-// RPC configuration
-#define RPCPORT 4433
+// Buffer size for Rocksdb
+#define KV_WRITE_BUFFER 16384
+
+// Margo configuration
+
+// Number of threads used for RPC and IPC handlers at the daemon
+#define RPC_HANDLER_THREADS 16
+#define IPC_HANDLER_THREADS 16
+#define RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds
 #define RPC_TIMEOUT 180000

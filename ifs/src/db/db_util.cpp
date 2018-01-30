@@ -89,4 +89,12 @@ void optimize_rocksdb(rocksdb::Options& options) {
 //    options.arena_block_size = 1024 * 8;
 //    options.compression = rocksdb::kNoCompression; // doesnt do anything
 #endif
+#if defined(KV_WRITE_BUFFER)
+    // write_buffer_size is multiplied by the write_buffer_number to get the amount of data hold in memory.
+    // at min_write_buffer_number_to_merge rocksdb starts to flush entries out to disk
+    options.write_buffer_size = KV_WRITE_BUFFER << 20;
+    // XXX experimental values. We only want one buffer, which is held in memory
+    options.max_write_buffer_number = 1;
+    options.min_write_buffer_number_to_merge = 1;
+#endif
 }
