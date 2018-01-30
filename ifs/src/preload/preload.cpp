@@ -265,8 +265,8 @@ void destroy_preload() {
             }
         };
         rpc_address_cache.cwalk(free_all_addr);
-        ld_logger->debug("{}() About to finalize the margo client", __func__);
-        margo_finalize(ld_margo_rpc_id);
+        ld_logger->debug("{}() About to finalize the margo RPC client. Actually not doing it XXX", __func__);
+//        margo_finalize(ld_margo_rpc_id);
         ld_logger->debug("{}() Shut down Margo RPC client successful", __func__);
     }
     // Shut down IPC client if used
@@ -274,7 +274,8 @@ void destroy_preload() {
         ld_logger->debug("{}() Freeing Margo IPC daemon svr address ...", __func__);
         if (margo_addr_free(ld_margo_ipc_id, daemon_svr_addr) != HG_SUCCESS)
             ld_logger->warn("{}() Unable to free IPC client's daemon svr address.", __func__);
-        margo_finalize(ld_margo_ipc_id);
+        ld_logger->debug("{}() About to finalize the margo IPC client. Actually not doing it XXX", __func__);
+//        margo_finalize(ld_margo_ipc_id);
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used)
