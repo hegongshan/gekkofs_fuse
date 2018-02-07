@@ -9,6 +9,8 @@ if(NOT CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if (NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE Release
             CACHE STRING "Choose the type of build: Debug Release Memcheck
