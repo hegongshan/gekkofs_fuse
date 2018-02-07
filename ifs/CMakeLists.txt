@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.7)
-set(CMAKE_C_COMPILER "gcc")
-set(CMAKE_CXX_COMPILER "g++")
 project(ifs)
+
+if(NOT CMAKE_COMPILER_IS_GNUCC)
+	message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
+endif()
+if(NOT CMAKE_COMPILER_IS_GNUCXX)
+	message(FATAL_ERROR "The choosen C++ compiler is not g++ and is not supported")
+endif()
 
 set(CMAKE_CXX_STANDARD 14)
 if (NOT CMAKE_BUILD_TYPE)
