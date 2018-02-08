@@ -3,12 +3,12 @@ find_path(BMI_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 find_path(BMI_INCLUDE_DIR bmi.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${BMI_DIR}
         $ENV{HOME}/opt
         /usr
@@ -21,7 +21,7 @@ find_path(BMI_INCLUDE_DIR bmi.h
 
 find_library(BMI_LIBRARY bmi
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${BMI_DIR}
         $ENV{HOME}/opt
         /usr

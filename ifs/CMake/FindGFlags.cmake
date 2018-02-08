@@ -3,12 +3,12 @@ find_path(GFlags_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 find_path(GFlags_INCLUDE_DIR gflags.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${GFlags_DIR}
         $ENV{HOME}/opt
         /usr
@@ -21,7 +21,7 @@ find_path(GFlags_INCLUDE_DIR gflags.h
 
 find_library(GFlags_LIBRARY gflags
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${GFlags_DIR}
         $ENV{HOME}/opt
         /usr

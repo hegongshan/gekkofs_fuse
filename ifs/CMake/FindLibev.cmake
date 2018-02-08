@@ -13,7 +13,7 @@ else ()
             NAMES ev.h
             HINTS
             ${LIBEV_ROOT_DIR}
-            $ENV{HOME}/adafs/install
+            ${ADAFS_DEPS_INSTALL}
             $ENV{HOME}/opt
             /usr
             /usr/local
@@ -28,7 +28,7 @@ else ()
             NAME ev
             HINTS
             ${LIBEV_ROOT_DIR}
-            $ENV{HOME}/adafs/install
+            ${ADAFS_DEPS_INSTALL}
             $ENV{HOME}/opt
             /usr
             /usr/local

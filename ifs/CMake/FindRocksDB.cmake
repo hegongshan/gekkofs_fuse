@@ -27,7 +27,7 @@ find_path(ROCKSDB_DIR
 
 find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${ROCKSDB_DIR}
         /usr
         /usr/local
@@ -39,7 +39,7 @@ find_path(ROCKSDB_INCLUDE_DIR rocksdb/db.h
 
 find_library(ROCKSDB_LIBRARY rocksdb
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${ROCKSDB_DIR}
         $ENV{HOME}/opt
         /usr

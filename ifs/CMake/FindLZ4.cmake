@@ -8,7 +8,7 @@
 
 find_path(LZ4_INCLUDE_DIR lz4.h
 	HINTS
-	$ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
 	$ENV{HOME}/opt
 	/usr
 	/usr/local
@@ -19,7 +19,7 @@ find_path(LZ4_INCLUDE_DIR lz4.h
 	)
 find_library(LZ4_LIBRARY lz4
 	HINTS
-	$ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
 	$ENV{HOME}/opt
 	/usr
 	/usr/local

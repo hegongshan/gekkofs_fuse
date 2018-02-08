@@ -3,12 +3,12 @@ find_path(ABT_SNOOZER_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 find_path(ABT_SNOOZER_INCLUDE_DIR abt-snoozer.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${ABT_SNOOZER_DIR}
         /usr
         /usr/local
@@ -20,7 +20,7 @@ find_path(ABT_SNOOZER_INCLUDE_DIR abt-snoozer.h
 
 find_library(ABT_SNOOZER_LIBRARY abt-snoozer
         HINTS
-        $ENV{HOME}/adafs/install/lib
+        ${ADAFS_DEPS_INSTALL}
         ${ABT_SNOOZER_DIR}
         /usr
         /usr/local

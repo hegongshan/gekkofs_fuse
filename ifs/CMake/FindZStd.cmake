@@ -11,7 +11,7 @@ find_path(
         NAMES "zstd.h"
         HINTS
         $ENV{HOME}/opt
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         /usr
         /usr/local
         /opt/
@@ -22,7 +22,7 @@ find_library(
         ZSTD_LIBRARY
         NAMES zstd
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         $ENV{HOME}/opt
         /usr
         /usr/local
