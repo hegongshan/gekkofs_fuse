@@ -1,4 +1,8 @@
 
+/**
+ * Attention: This whole configfile is not in a final form! This will eventually be a plaintext config file.
+ */
+
 #ifndef FS_CONFIGURE_PUBLIC_H
 #define FS_CONFIGURE_PUBLIC_H
 
