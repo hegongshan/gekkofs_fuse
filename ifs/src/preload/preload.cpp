@@ -141,7 +141,7 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
-    hg_class = HG_Init(na_plugin.c_str(), HG_FALSE);
+    hg_class = HG_Init((na_plugin + "://localhost"s).c_str(), HG_FALSE);
     if (hg_class == nullptr) {
         ld_logger->error("{}() HG_Init() Failed to init Mercury client layer", __func__);
         return false;
@@ -215,6 +215,10 @@ void init_ld_environment_() {
     }
     if (!init_margo_client(Margo_mode::RPC, RPC_PROTOCOL)) {
         ld_logger->error("{}() Unable to initialize Margo RPC client.", __func__);
+        exit(EXIT_FAILURE);
+    }
+    if (!read_system_hostfile()) {
+        ld_logger->error("{}() Unable to read system hostfile /etc/hosts for address mapping.", __func__);
         exit(EXIT_FAILURE);
     }
     ld_logger->info("{}() Environment initialization successful.", __func__);
