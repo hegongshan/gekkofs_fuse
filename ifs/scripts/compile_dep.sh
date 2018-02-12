@@ -242,9 +242,11 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/mercury
 prepare_build_dir ${CURR}
 cd ${CURR}
-# patch cci verbs addr lookup error handling
-echo "########## Applying cci addr lookup error handling patch"
-git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch || exit 1
+if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
+    # patch cci verbs addr lookup error handling
+    echo "########## Applying cci addr lookup error handling patch"
+    git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch || exit 1
+fi
 cd ${CURR}/build
 # XXX Note: USE_EAGER_BULK is temporarily disabled due to bugs in Mercury with smaller amounts of data
 # Apparantly this is fixed in the new Mercury version. TODO check if it works now
