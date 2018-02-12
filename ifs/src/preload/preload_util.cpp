@@ -292,25 +292,24 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         //found
         return true;
     } else {
+        // not found, manual lookup and add address mapping to LRU cache
         ld_logger->trace("not found in lrucache");
         string remote_addr;
-        // not found, manual lookup and add address mapping to LRU cache
-        // ofi+psm2 requires an IP. An remote_addr, even if put in /etc/hosts, does not suffice
-        if (string(RPC_PROTOCOL) ==
-            "ofi+psm2") { // XXX dangerous. redo. The whole definition insanity needs to be const expr anyways
-            // first get the hostname with the hostid
-            auto hostname = fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX;
-            // then get the ip address from /etc/hosts which is mapped to the sys_hostfile map
-            if (fs_config->sys_hostfile.count(hostname) == 1) {
-                auto remote_ip = fs_config->sys_hostfile.at(hostname);
-                remote_addr = RPC_PROTOCOL + "://"s + remote_ip + ":"s + fs_config->rpc_port;
-            }
+        // Try to get the ip of remote addr. If it cannot be found, use hostname
+        // first get the hostname with the hostid
+        auto hostname = fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX;
+        // then get the ip address from /etc/hosts which is mapped to the sys_hostfile map
+        if (fs_config->sys_hostfile.count(hostname) == 1) {
+            auto remote_ip = fs_config->sys_hostfile.at(hostname);
+            remote_addr = RPC_PROTOCOL + "://"s + remote_ip + ":"s + fs_config->rpc_port;
         }
+        // fallback hostname to use for lookup
         if (remote_addr.empty()) {
-            remote_addr = RPC_PROTOCOL + "://"s + fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX + ":"s +
+            remote_addr = RPC_PROTOCOL + "://"s + hostname + ":"s +
                           fs_config->rpc_port; // convert hostid to remote_addr and port
         }
-        ld_logger->trace("generated remote_addr {} with rpc_port {}", remote_addr, fs_config->rpc_port);
+        ld_logger->trace("generated remote_addr {} for hostname {} with rpc_port {}",
+                         remote_addr, hostname, fs_config->rpc_port);
         // try to look up 3 times before erroring out
         hg_return_t ret;
         // TODO If this is solution is somewhat helpful, write a more versatile solution
