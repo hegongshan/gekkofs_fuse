@@ -3,13 +3,13 @@ find_path(ABT_IO_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 find_path(ABT_IO_INCLUDE_DIR abt-io.h
         HINTS
         ${ABT_IO_DIR}
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         $ENV{HOME}/opt
         /usr
         /usr/local
@@ -22,7 +22,7 @@ find_path(ABT_IO_INCLUDE_DIR abt-io.h
 find_library(ABT_IO_LIBRARY abt-io
         HINTS
         ${ABT_IO_DIR}
-        $ENV{HOME}/adafs/install/lib
+        ${ADAFS_DEPS_INSTALL}
         $ENV{HOME}/opt
         /usr
         /usr/local
