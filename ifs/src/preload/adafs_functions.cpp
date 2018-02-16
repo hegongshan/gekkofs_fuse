@@ -82,6 +82,42 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
     return err;
 }
 
+off_t adafs_lseek(int fd, off_t offset, int whence) {
+    init_ld_env_if_needed();
+    auto adafs_fd = file_map.get(fd);
+    switch (whence) {
+        case SEEK_SET:
+            adafs_fd->pos(offset);
+            break;
+        case SEEK_CUR:
+            adafs_fd->pos(adafs_fd->pos() + offset);
+            break;
+        case SEEK_END: {
+            off_t file_size;
+            auto err = rpc_send_get_metadentry_size(adafs_fd->path(), file_size);
+            if (err < 0) {
+                errno = err; // Negative numbers are explicitly for error codes
+                return -1;
+            }
+            adafs_fd->pos(file_size + offset);
+            break;
+        }
+        case SEEK_DATA:
+            // We do not support this whence yet
+            errno = EINVAL;
+            return -1;
+        case SEEK_HOLE:
+            // We do not support this whence yet
+            errno = EINVAL;
+            return -1;
+        default:
+            errno = EINVAL;
+            return -1;
+    }
+    return adafs_fd->pos();
+}
+
+
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);

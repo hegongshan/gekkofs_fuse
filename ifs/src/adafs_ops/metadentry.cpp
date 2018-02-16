@@ -92,6 +92,23 @@ int remove_node(const string& path) {
 }
 
 /**
+ * Gets the size of a metadentry
+ * @param path
+ * @param ret_size (return val)
+ * @return err
+ */
+int get_metadentry_size(const string& path, size_t& ret_size) {
+    string val;
+    auto err = db_get_metadentry(path, val);
+    if (!err || val.empty()) {
+        return ENOENT;
+    }
+    Metadata md{path, val};
+    ret_size = md.size();
+    return 0;
+}
+
+/**
  * Updates a metadentry's size atomically and returns the corresponding size after update
  * @param path
  * @param io_size
@@ -104,11 +121,11 @@ int update_metadentry_size(const string& path, size_t io_size, off_t offset, boo
 #endif
     string val;
     auto err = db_get_metadentry(path, val);
-    if (!err || val.size() == 0) {
+    if (!err || val.empty()) {
         return ENOENT;
     }
     Metadata md{path, val};
-    if (static_cast<unsigned long>(offset) > md.size()) // Writing beyond file dimensions is prohibited for now
+    if (static_cast<unsigned long>(offset) > md.size()) // Writing beyond file dimensions is prohibited for now XXX
         return EFAULT;
     // update io_size
     if (append)

@@ -25,4 +25,6 @@ int rpc_send_update_metadentry(const std::string& path, const Metadentry& md, co
 int rpc_send_update_metadentry_size(const std::string& path, size_t size, off_t offset, bool append_flag,
                                     off_t& ret_size);
 
+int rpc_send_get_metadentry_size(const std::string& path, off_t& ret_size);
+
 #endif //IFS_PRELOAD_C_METADENTRY_HPP

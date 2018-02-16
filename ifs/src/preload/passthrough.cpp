@@ -97,6 +97,7 @@ void init_passthrough_() {
     libc_pread64 = dlsym(libc, "pread64");
 
     libc_lseek = dlsym(libc, "lseek");
+//    libc_lseek64 = dlsym(libc, "lseek64");
 
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");

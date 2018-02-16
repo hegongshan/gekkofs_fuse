@@ -12,8 +12,30 @@ private:
     bool append_flag_;
 
     int fd_;
+    // XXX add mutex for pos. If dup is used excessively pos_ may be updated concurrently. The mutex is implemented in pos setter
     off_t pos_;
     FILE* tmp_file_;
+    /*
+XXX
+shared:
+- path
+- flags
+- pos
+
+unique:
+- sys fd (throw out. is already part as the key in the filemap)
+- tmp_file
+
+
+- int fd points to same shared ptr in file map
+- fd attribute is not used -> throw out
+- put tmp_file into another map<int(fd), FILE*>
+- Add mutex for pos_
+- Let's also properly add all flags from open in there into an enum or similar
+
+
+
+     */
 
 public:
     OpenFile(const std::string& path, bool append_flag);

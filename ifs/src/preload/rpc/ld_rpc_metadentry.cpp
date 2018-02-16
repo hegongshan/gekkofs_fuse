@@ -121,7 +121,7 @@ int rpc_send_access(const std::string& path, const int mask) {
 int rpc_send_stat(const std::string& path, string& attr) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_stat_in_t in{};
+    rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
     int err = EUNKNOWN;
     // fill in
@@ -144,8 +144,13 @@ int rpc_send_stat(const std::string& path, string& attr) {
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
             ld_logger->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-            attr = out.db_val;
+            if (out.err == 0) {
+                err = 0;
+                attr = out.db_val;
+            } else {
+                err = -1;
+                errno = out.err;
+            }
         } else {
             // something is wrong
             errno = EBUSY;
@@ -287,6 +292,52 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path, handle, svr_addr,
+                                 false);
+    if (ret != HG_SUCCESS) {
+        errno = EBUSY;
+        return -1;
+    }
+    // Send rpc
+#if defined(MARGO_FORWARD_TIMER)
+    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
+#else
+    ret = margo_forward_timed_wrap(handle, &in);
+#endif
+    // Get response
+    if (ret == HG_SUCCESS) {
+        ld_logger->trace("{}() Waiting for response", __func__);
+        ret = margo_get_output(handle, &out);
+        if (ret == HG_SUCCESS) {
+            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            err = out.err;
+            ret_size = out.ret_size;
+        } else {
+            // something is wrong
+            errno = EBUSY;
+            ret_size = 0;
+            ld_logger->error("{}() while getting rpc output", __func__);
+        }
+        /* clean up resources consumed by this rpc */
+        margo_free_output(handle, &out);
+    } else {
+        ld_logger->warn("{}() timed out");
+        errno = EBUSY;
+    }
+    margo_destroy(handle);
+    return err;
+}
+
+int rpc_send_get_metadentry_size(const std::string& path, off_t& ret_size) {
+    hg_handle_t handle;
+    hg_addr_t svr_addr = HG_ADDR_NULL;
+    rpc_path_only_in_t in{};
+    rpc_get_metadentry_size_out_t out{};
+    // add data
+    in.path = path.c_str();
+    int err = EUNKNOWN;
+
+    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    auto ret = margo_create_wrap(ipc_get_metadentry_size_id, rpc_get_metadentry_size_id, path, handle, svr_addr,
                                  false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
