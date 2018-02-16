@@ -3,12 +3,12 @@ find_path(CCI_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 find_path(CCI_INCLUDE_DIR cci.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${CCI_DIR}
         $ENV{HOME}/opt
         /usr
@@ -21,7 +21,7 @@ find_path(CCI_INCLUDE_DIR cci.h
 
 find_library(CCI_LIBRARY cci
         HINTS
-        $ENV{HOME}/adafs/install/lib
+        ${ADAFS_DEPS_INSTALL}
         ${CCI_DIR}
         $ENV{HOME}/opt
         /usr

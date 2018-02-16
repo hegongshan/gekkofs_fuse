@@ -3,13 +3,13 @@ find_path(LIBFABRIC_DIR
         /usr
         /usr/local
         /usr/local/adafs/
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         )
 
 
 find_path(LIBFABRIC_INCLUDE_DIR rdma/fabric.h
         HINTS
-        $ENV{HOME}/adafs/install
+        ${ADAFS_DEPS_INSTALL}
         ${LIBFABRIC_DIR}
         $ENV{HOME}/opt
         /usr
@@ -22,7 +22,7 @@ find_path(LIBFABRIC_INCLUDE_DIR rdma/fabric.h
 
 find_library(LIBFABRIC_LIBRARY NAMES fabric
         HINTS
-        $ENV{HOME}/adafs/install/lib
+        ${ADAFS_DEPS_INSTALL}
         ${LIBFABRIC_DIR}
         $ENV{HOME}/opt
         /usr
