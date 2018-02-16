@@ -171,22 +171,17 @@ if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.2"
+    clonedeps "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.3"
 fi
 # get Mercury
-clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "2a7369db11c7d9e962a8d59f1852a04c4ff57694"
+clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "6c82baf7819a553b6b8235fbe7c180989a1e17fe"
 # get Argobots
-clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "fd6ae0f4613187a2c73fceee8a2718d54719bcab"
+clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4"
 # get Argobots-snoozer
 clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
 # get Margo
-clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "30521c87a5d6b531b894877f40f0f34ef8ecd541"
+clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "3f9fe3a13392af1ba6df1b3d3bb16503da6b627d"
 # get rocksdb
-clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.8"
-
-# Commit values used before 17.01.2018
-# Mercury: afd70055d21a6df2faefe38d5f6ce1ae11f365a5
-# Argobots: a5a6b2036c75ad05804ccb72d2fe31cea1bfef88
-# Margo: 68ef7f14178e9066cf38846d90d451e00aaca61d
+clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.2"
 
 echo "Nothing left to do. Exiting."

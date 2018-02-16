@@ -29,6 +29,7 @@ struct FsConfig {
 
     // rpc infos
     std::map<uint64_t, std::string> hosts;
+    std::map<std::string, std::string> sys_hostfile;
     uint64_t host_id; // my host number
     size_t host_size;
     std::string rpc_port;
@@ -113,6 +114,8 @@ int getProcIdByName(std::string procName);
 std::string daemon_register_path(int pid);
 
 bool get_daemon_auxiliaries();
+
+bool read_system_hostfile();
 
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
