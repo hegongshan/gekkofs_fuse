@@ -25,7 +25,7 @@ optional arguments:
 				defaults to 'all'
 	-c <CLUSTER>, --cluster <CLUSTER>
 				additional configurations for specific compute clusters
-				supported clusters: {mogon1,fh2}
+				supported clusters: {mogon1,mogon2,fh2}
 	-j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
 				number of cores that are used to compile the depdencies
 				defaults to number of available cores
@@ -115,7 +115,7 @@ else
     exit
 fi
 if [[ "${CLUSTER}" != "" ]]; then
-	if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
+	if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
 		echo CLUSTER  = "${CLUSTER}"
     else
         echo "${CLUSTER} cluster configuration is invalid. Exiting ..."
@@ -138,7 +138,7 @@ echo "Install path = '$2'";
 mkdir -p ${SOURCE}
 
 # Set cluster dependencies first
-if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
+if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
     # get libtool
     echo "############################################################ Installing:  libtool"
     CURR=${SOURCE}/libtool
@@ -223,17 +223,20 @@ fi
 
 if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_OFI="-DNA_USE_OFI:BOOL=ON"
-    echo "############################################################ Installing:  LibFabric"
-    #libfabric
-    CURR=${SOURCE}/libfabric
-    prepare_build_dir ${CURR}
-    cd ${CURR}
-    ./autogen.sh || exit 1
-    cd ${CURR}/build
-    ../configure --prefix=${INSTALL}  || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
-    make check || exit 1
+    # Mogon2 already has libfabric installed in a version that Mercury supports.
+    if [[ ("${CLUSTER}" != "mogon2") ]]; then
+        echo "############################################################ Installing:  LibFabric"
+        #libfabric
+        CURR=${SOURCE}/libfabric
+        prepare_build_dir ${CURR}
+        cd ${CURR}
+        ./autogen.sh || exit 1
+        cd ${CURR}/build
+        ../configure --prefix=${INSTALL}  || exit 1
+        make -j${CORES} || exit 1
+        make install || exit 1
+        make check || exit 1
+    fi
 fi
 
 echo "############################################################ Installing:  Mercury"

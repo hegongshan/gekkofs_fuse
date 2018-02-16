@@ -141,6 +141,7 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
     // Init Mercury layer (must be finalized when finished)
     hg_class_t* hg_class;
     hg_context_t* hg_context;
+    // Note: localhost should not be required and actually doesn't do anything. But it is required for OFI for Mercury to start
     hg_class = HG_Init((na_plugin + "://localhost"s).c_str(), HG_FALSE);
     if (hg_class == nullptr) {
         ld_logger->error("{}() HG_Init() Failed to init Mercury client layer", __func__);
