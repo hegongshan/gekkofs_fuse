@@ -234,8 +234,9 @@ void init_ld_env_if_needed() {
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
-    ld_logger->info("{}() enter", __func__);
     init_passthrough_if_needed();
+    // The logger is initialized in init_passthrough. So we cannot log before that.
+    ld_logger->info("{}() enter", __func__); // XXX For client hang investigation
     if (!get_daemon_auxiliaries() || fs_config->mountdir.empty()) {
         perror("Error while getting daemon auxiliaries");
         ld_logger->error("{}() while getting daemon auxiliaries", __func__);
@@ -244,7 +245,7 @@ void init_preload() {
         ld_logger->info("{}() mountdir \"{}\" loaded from daemon auxiliaries", __func__, fs_config->mountdir);
         is_aux_loaded_ = true;
     }
-    ld_logger->info("{}() exit", __func__);
+    ld_logger->info("{}() exit", __func__); // XXX For client hang investigation
 }
 
 /**
