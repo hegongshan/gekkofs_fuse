@@ -16,7 +16,7 @@ clonedeps() {
         cd ${SOURCE} && ${CLONE} &>> ${LOG}
     fi
     # fix the version
-    cd ${SOURCE}/${FOLDER} && git checkout ${COMMIT} &>> ${LOG}
+    cd ${SOURCE}/${FOLDER} && git checkout -f ${COMMIT} &>> ${LOG}
     echo "Done"
 }
 
