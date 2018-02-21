@@ -14,21 +14,21 @@ help_msg() {
 This script compiles all ADA-FS dependencies (excluding the fs itself)
 
 positional arguments:
-	source_path		path to the cloned dependencies path from clone_dep.sh
-	install_path		path to the install path of the compiled dependencies
+    source_path 	path to the cloned dependencies path from clone_dep.sh
+    install_path    path to the install path of the compiled dependencies
 
 
 optional arguments:
-	-h, --help		shows this help message and exits
-	-n <NAPLUGIN>, --na <NAPLUGIN>
-				network layer that is used for communication. Valid: {bmi,cci,ofi,all}
-				defaults to 'all'
-	-c <CLUSTER>, --cluster <CLUSTER>
-				additional configurations for specific compute clusters
-				supported clusters: {mogon1,mogon2,fh2}
-	-j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
-				number of cores that are used to compile the depdencies
-				defaults to number of available cores
+    -h, --help      shows this help message and exits
+    -n <NAPLUGIN>, --na <NAPLUGIN>
+                network layer that is used for communication. Valid: {bmi,cci,ofi,all}
+                defaults to 'all'
+    -c <CLUSTER>, --cluster <CLUSTER>
+                additional configurations for specific compute clusters
+                supported clusters: {mogon1,mogon2,fh2}
+    -j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
+                number of cores that are used to compile the depdencies
+                defaults to number of available cores
 	"
 }
 
