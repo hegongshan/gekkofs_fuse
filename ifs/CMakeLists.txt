@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.6)
 project(ifs)
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
@@ -104,7 +104,7 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 # boost dependencies, system is required for filesystem
-find_package(Boost 1.58 REQUIRED COMPONENTS system filesystem serialization)
+find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem serialization)
 
 include_directories(include ${ROCKSDB_INCLUDE_DIR}
         # margo paths
