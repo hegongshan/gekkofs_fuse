@@ -64,6 +64,14 @@ bool init_ld_argobots() {
         ld_logger->error("{}() ABT_snoozer_xstream_self_set()  (client)", __func__);
         return false;
     }
+    /*
+     * Single producer (progress function) and multiple consumers are causing an excess memory consumption
+     * in some Argobots version. It does only show if an ES with a pool is created.
+     * Although this is probably not an issue on the consumer process, we set reduce the Argobots stack size here,
+     * just in case we change the client process in the future.
+     * See for reference: https://xgitlab.cels.anl.gov/sds/margo/issues/40
+     */
+    putenv(const_cast<char*>("ABT_MEM_MAX_NUM_STACKS=8"));
     ld_logger->debug("{}() Argobots initialization successful.", __func__);
     return true;
 }

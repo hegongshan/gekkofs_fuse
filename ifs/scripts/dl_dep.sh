@@ -180,7 +180,7 @@ clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/ar
 # get Argobots-snoozer
 clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
 # get Margo
-clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "3f9fe3a13392af1ba6df1b3d3bb16503da6b627d"
+clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce"
 # get rocksdb
 clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.2"
 
