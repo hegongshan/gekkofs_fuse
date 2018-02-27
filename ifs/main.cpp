@@ -63,15 +63,21 @@ int main(int argc, const char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
-            ("mountdir,m", po::value<string>(), "User Fuse mountdir.")
-            ("rootdir,r", po::value<string>(), "ADA-FS data directory")
+            ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir.")
+            ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
 
-    if (vm.count("help") || argc < 3) {
+    try{
+        po::notify(vm);
+    }catch(po::required_option& e){
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+    }
+
+    if (vm.count("help")) {
         cout << desc << "\n";
         return 1;
     }
