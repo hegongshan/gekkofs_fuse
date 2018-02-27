@@ -296,7 +296,7 @@ prepare_build_dir ${CURR}
 cd ${CURR}
 ./prepare.sh || exit 1
 cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-g -Wall" || exit 1
+../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3" || exit 1
 make -j${CORES} || exit 1
 make install || exit 1
 make check || exit 1
