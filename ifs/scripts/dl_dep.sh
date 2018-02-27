@@ -182,6 +182,6 @@ clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.
 # get Margo
 clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce"
 # get rocksdb
-clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.2"
+clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.3"
 
 echo "Nothing left to do. Exiting."
