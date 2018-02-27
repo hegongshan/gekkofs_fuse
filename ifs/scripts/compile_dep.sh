@@ -207,8 +207,10 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     prepare_build_dir ${CURR}
     cd ${CURR}
     # patch hanging issue
-    echo "########## Applying cci hanging patch"
+    echo "########## ADA-FS injection: Applying cci hanging patch"
     git apply ${PATCH_DIR}/cci_hang_final.patch || exit 1
+    echo "########## ADA-FS injection: Disabling cci debug mode/devel mode entirely"
+    git apply ${PATCH_DIR}/cci_remove_devel_mode.patch || exit 1
     ./autogen.pl || exit 1
     cd ${CURR}/build
 if [[ ("${CLUSTER}" == "mogon1") || ("${CLUSTER}" == "fh2") ]]; then
@@ -216,6 +218,9 @@ if [[ ("${CLUSTER}" == "mogon1") || ("${CLUSTER}" == "fh2") ]]; then
 else
     ../configure --prefix=${INSTALL} LIBS="-lpthread"  || exit 1
 fi
+
+    echo "########## ADA-FS injection: Replacing any remaining CFLAGS with '-g -O2' that are added by cci although debug mode is disabled with '-O3'"
+    find . -type f -exec sed -i 's/-g -O2/-O3/g' {} \;
     make -j${CORES} || exit 1
     make install || exit 1
     make check || exit 1
