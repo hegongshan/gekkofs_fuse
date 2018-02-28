@@ -6,11 +6,6 @@
 
 using namespace std;
 
-template<typename E>
-constexpr typename std::underlying_type<E>::type to_underlying(E e) {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
 // mapping of enum to string to get the db_keys for metadata
 enum class Md_fields {
     atime, mtime, ctime, uid, gid, mode, inode_no, link_count, size, blocks
@@ -26,17 +21,5 @@ void optimize_rocksdb(rocksdb::Options& options);
 
 std::string
 db_build_metadentry_value(); // TODO this would build a value based on the number of metadata fields that are used in the fs configuration
-
-//std::string db_build_dentry_key(const fuse_ino_t inode, const std::string& name);
-//
-//std::string db_build_dentry_prefix(const fuse_ino_t inode);
-//
-//std::string db_build_dentry_value(const fuse_ino_t inode, const mode_t mode);
-//
-//std::string db_build_mdata_key(const fuse_ino_t inode, const std::string& field);
-//
-//string db_build_mdata_key(const string& inode, const string& field);
-//
-//std::vector<std::string> db_build_all_mdata_keys(const fuse_ino_t inode);
 
 #endif //LFS_DB_UTIL_HPP

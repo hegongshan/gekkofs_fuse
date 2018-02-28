@@ -6,60 +6,43 @@
 #include <mutex>
 #include <memory>
 
+enum class OpenFile_flags {
+    append = 0,
+    creat,
+    trunc,
+    rdonly,
+    wronly,
+    rdwr,
+    flag_count // this is purely used as a size variable of this enum class
+};
+
 class OpenFile {
 private:
     std::string path_;
-    bool append_flag_;
-
-    int fd_;
-    // XXX add mutex for pos. If dup is used excessively pos_ may be updated concurrently. The mutex is implemented in pos setter
+    std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
     off_t pos_;
-    FILE* tmp_file_;
-    /*
-XXX
-shared:
-- path
-- flags
-- pos
-
-unique:
-- sys fd (throw out. is already part as the key in the filemap)
-- tmp_file
-
-
-- int fd points to same shared ptr in file map
-- fd attribute is not used -> throw out
-- put tmp_file into another map<int(fd), FILE*>
-- Add mutex for pos_
-- Let's also properly add all flags from open in there into an enum or similar
-
-
-
-     */
+    std::mutex pos_mutex_;
+    std::mutex flag_mutex_;
 
 public:
-    OpenFile(const std::string& path, bool append_flag);
+    // multiple threads may want to update the file position if fd has been duplicated by dup()
+
+    OpenFile(const std::string& path, int flags);
 
     ~OpenFile();
-
-    void annul_fd();
 
     // getter/setter
     std::string path() const;
 
     void path(const std::string& path_);
 
-    int fd() const;
-
-    void fd(int fd_);
-
-    off_t pos() const;
+    off_t pos();
 
     void pos(off_t pos_);
 
-    bool append_flag() const;
+    const bool get_flag(OpenFile_flags flag);
 
-    void append_flag(bool append_flag);
+    void set_flag(OpenFile_flags flag, bool value);
 
 };
 
@@ -78,7 +61,7 @@ public:
 
     bool exist(int fd);
 
-    int add(std::string path, bool append);
+    int add(std::string path, int flags);
 
     bool remove(int fd);
 

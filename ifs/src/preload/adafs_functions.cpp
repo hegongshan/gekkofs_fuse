@@ -8,7 +8,7 @@ using namespace std;
 int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
     auto err = 1;
-    auto fd = file_map.add(path, (flags & O_APPEND) != 0);
+    auto fd = file_map.add(path, flags);
     // TODO the open flags should not be in the map just set the pos accordingly
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
@@ -84,7 +84,11 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
 
 off_t adafs_lseek(int fd, off_t offset, int whence) {
     init_ld_env_if_needed();
-    auto adafs_fd = file_map.get(fd);
+    return adafs_lseek(file_map.get(fd), offset, whence);
+}
+
+off_t adafs_lseek(OpenFile* adafs_fd, off_t offset, int whence) {
+    init_ld_env_if_needed();
     switch (whence) {
         case SEEK_SET:
             adafs_fd->pos(offset);
@@ -207,7 +211,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
-    auto append_flag = adafs_fd->append_flag();
+    auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
     int err = 0;
     long updated_size = 0;
     auto write_size = static_cast<size_t>(0);

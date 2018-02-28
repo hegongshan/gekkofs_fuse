@@ -10,6 +10,30 @@ using namespace std;
 
 static const std::string dentry_val_delim = ","s;
 
+int fd_idx = 3;
+mutex fd_idx_mutex;
+std::atomic<bool> fd_validation_needed(false);
+
+/**
+ * Generate new file descriptor index to be used as an fd within one process in ADA-FS
+ * @return fd_idx
+ */
+int generate_fd_idx() {
+    // We need a mutex here for thread safety
+    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
+    if (fd_idx == std::numeric_limits<int>::max()) {
+        ld_logger->info("{}() File descriptor index exceeded ints max value. Setting it back to 3", __func__);
+        /*
+         * Setting fd_idx back to 3 could have the effect that fd are given twice for different path.
+         * This must not happen. Instead a flag is set which tells can tell the OpenFileMap that it should check
+         * if this fd is really safe to use.
+         */
+        fd_idx = 3;
+        fd_validation_needed = true;
+    }
+    return fd_idx++;
+}
+
 bool is_fs_path(const char* path) {
     return strstr(path, fs_config->mountdir.c_str()) == path;
 }

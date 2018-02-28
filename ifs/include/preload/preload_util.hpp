@@ -10,6 +10,7 @@
 #include <string>
 
 // TODO singleton this stuff away
+// The contents of FsConfig or only set once when set up
 struct FsConfig {
     // configurable metadata
     bool atime_state;
@@ -100,9 +101,18 @@ extern std::shared_ptr<spdlog::logger> ld_logger;
 // rpc address cache
 typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
 extern KVCache rpc_address_cache;
+// file descriptor indices
+extern int fd_idx;
+extern std::mutex fd_idx_mutex;
+extern std::atomic<bool> fd_validation_needed;
 
 // typedefs
 typedef unsigned long rpc_chnk_id_t;
+
+
+// function definitions
+
+int generate_fd_idx();
 
 bool is_fs_path(const char* path);
 

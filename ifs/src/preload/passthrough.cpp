@@ -51,7 +51,7 @@ void* libc_pread;
 void* libc_pread64;
 
 void* libc_lseek;
-//void* libc_lseek64; //unused
+void* libc_lseek64;
 
 void* libc_truncate;
 void* libc_ftruncate;
@@ -97,7 +97,7 @@ void init_passthrough_() {
     libc_pread64 = dlsym(libc, "pread64");
 
     libc_lseek = dlsym(libc, "lseek");
-//    libc_lseek64 = dlsym(libc, "lseek64");
+    libc_lseek64 = dlsym(libc, "lseek64");
 
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");

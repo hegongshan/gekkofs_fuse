@@ -227,10 +227,11 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         auto adafs_fd = file_map.get(fd);
         auto pos = adafs_fd->pos(); // retrieve the current offset
-        ld_logger->trace("{}() called with fd {}", __func__, fd);
-        // TODO if append flag has been given, set offset accordingly.
+        if (adafs_fd->get_flag(OpenFile_flags::append))
+            adafs_lseek(adafs_fd, 0, SEEK_END);
         auto ret = adafs_pwrite_ws(fd, buf, count, pos);
         // Update offset in file descriptor in the file map
         if (ret > 0) {
@@ -302,15 +303,14 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
     return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
 }
 
-//off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
-//    init_passthrough_if_needed();
-//    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-//        // not implemented
-//        ld_logger->trace("{}() not implemented.", __func__);
-//        return -1;
-//    }
-//    return (reinterpret_cast<decltype(&lseek64)>(libc_lseek64))(fd, offset, whence);
-//}
+off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
+    init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
+        return adafs_lseek(fd, offset, whence);
+    }
+    return (reinterpret_cast<decltype(&lseek64)>(libc_lseek64))(fd, offset, whence);
+}
 
 int truncate(const char* path, off_t length) __THROW {
     init_passthrough_if_needed();
