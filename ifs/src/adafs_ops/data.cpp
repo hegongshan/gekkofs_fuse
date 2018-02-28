@@ -71,7 +71,7 @@ int destroy_chunk_space(const std::string& path) {
  * @param [out] write_size
  * @return
  */
-int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id, const size_t size, const off_t off,
+int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id, const size_t size, const off64_t off,
                size_t& write_size) {
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
@@ -82,7 +82,7 @@ int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id,
     int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0777);
     if (fd < 0)
         return EIO;
-    auto err = static_cast<size_t>(pwrite(fd, buf, size, off));
+    auto err = static_cast<size_t>(pwrite64(fd, buf, size, off));
     if (err < 0) {
         ADAFS_DATA->spdlogger()->error("{}() Error {} while pwriting file {} chunk_id {} size {} off {}", __func__,
                                        strerror(errno), chnk_path.c_str(), chnk_id, size, off);
@@ -94,7 +94,8 @@ int write_file(const string& path, const char* buf, const rpc_chnk_id_t chnk_id,
 }
 
 int
-write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes, const off_t offset,
+write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
+             const off64_t offset,
              size_t& write_size) {
     write_size = 0;
     int err;
@@ -132,7 +133,7 @@ write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_
  * @param [out] read_size
  * @return
  */
-int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size, const off_t off, char* buf,
+int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size, const off64_t off, char* buf,
               size_t& read_size) {
     auto fs_path = path_to_fspath(path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
@@ -142,7 +143,7 @@ int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size
     int fd = open(chnk_path.c_str(), R_OK);
     if (fd < 0)
         return EIO;
-    auto err = pread(fd, buf, size, off);
+    auto err = pread64(fd, buf, size, off);
     if (err < 0) {
         ADAFS_DATA->spdlogger()->error("{}() Error {} while preading file {} chunk_id {} size {} off {}", __func__,
                                        strerror(errno), chnk_path.c_str(), chnk_id, size, off);
@@ -153,7 +154,7 @@ int read_file(const string& path, const rpc_chnk_id_t chnk_id, const size_t size
     return 0;
 }
 
-int read_chunks(const string& path, const off_t offset, const vector<void*>& buf_ptrs,
+int read_chunks(const string& path, const off64_t offset, const vector<void*>& buf_ptrs,
                 const vector<hg_size_t>& buf_sizes,
                 size_t& read_size) {
     read_size = 0;

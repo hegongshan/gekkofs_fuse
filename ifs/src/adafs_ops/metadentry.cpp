@@ -114,7 +114,7 @@ int get_metadentry_size(const string& path, size_t& ret_size) {
  * @param io_size
  * @return the updated size
  */
-int update_metadentry_size(const string& path, size_t io_size, off_t offset, bool append, size_t& read_size) {
+int update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append, size_t& read_size) {
     // XXX This function has to be completely atomic. Do we need transactions here? or a separate locking db?
 #ifdef LOG_TRACE
     db_iterate_all_entries();

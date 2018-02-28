@@ -36,12 +36,12 @@ void OpenFile::path(const string& path_) {
     OpenFile::path_ = path_;
 }
 
-off_t OpenFile::pos() {
+off64_t OpenFile::pos() {
     lock_guard<mutex> lock(pos_mutex_);
     return pos_;
 }
 
-void OpenFile::pos(off_t pos_) {
+void OpenFile::pos(off64_t pos_) {
     lock_guard<mutex> lock(pos_mutex_);
     OpenFile::pos_ = pos_;
 }

@@ -298,7 +298,17 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
-        return adafs_lseek(fd, offset, whence);
+auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
+if (off_ret >
+
+std::numeric_limits<off_t>::max()
+
+) {
+errno = EOVERFLOW;
+return -1;
+} else
+return
+off_ret;
     }
     return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
 }

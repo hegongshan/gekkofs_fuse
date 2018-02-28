@@ -82,12 +82,12 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
     return err;
 }
 
-off_t adafs_lseek(int fd, off_t offset, int whence) {
+off64_t adafs_lseek(int fd, off64_t offset, int whence) {
     init_ld_env_if_needed();
     return adafs_lseek(file_map.get(fd), offset, whence);
 }
 
-off_t adafs_lseek(OpenFile* adafs_fd, off_t offset, int whence) {
+off64_t adafs_lseek(OpenFile* adafs_fd, off64_t offset, int whence) {
     init_ld_env_if_needed();
     switch (whence) {
         case SEEK_SET:
@@ -97,7 +97,7 @@ off_t adafs_lseek(OpenFile* adafs_fd, off_t offset, int whence) {
             adafs_fd->pos(adafs_fd->pos() + offset);
             break;
         case SEEK_END: {
-            off_t file_size;
+            off64_t file_size;
             auto err = rpc_send_get_metadentry_size(adafs_fd->path(), file_size);
             if (err < 0) {
                 errno = err; // Negative numbers are explicitly for error codes
@@ -122,7 +122,7 @@ off_t adafs_lseek(OpenFile* adafs_fd, off_t offset, int whence) {
 }
 
 
-ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
+ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
@@ -207,7 +207,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
     return err == 0 ? read_size : 0;
 }
 
-ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
+ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());

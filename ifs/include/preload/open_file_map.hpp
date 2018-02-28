@@ -20,7 +20,7 @@ class OpenFile {
 private:
     std::string path_;
     std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
-    off_t pos_;
+    off64_t pos_;
     std::mutex pos_mutex_;
     std::mutex flag_mutex_;
 
@@ -36,9 +36,9 @@ public:
 
     void path(const std::string& path_);
 
-    off_t pos();
+    off64_t pos();
 
-    void pos(off_t pos_);
+    void pos(off64_t pos_);
 
     const bool get_flag(OpenFile_flags flag);
 

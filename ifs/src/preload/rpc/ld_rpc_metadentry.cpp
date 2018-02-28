@@ -274,8 +274,8 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     return err;
 }
 
-int rpc_send_update_metadentry_size(const string& path, const size_t size, const off_t offset, const bool append_flag,
-                                    off_t& ret_size) {
+int rpc_send_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
+                                    off64_t& ret_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_update_metadentry_size_in_t in{};
@@ -327,7 +327,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
     return err;
 }
 
-int rpc_send_get_metadentry_size(const std::string& path, off_t& ret_size) {
+int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_path_only_in_t in{};
