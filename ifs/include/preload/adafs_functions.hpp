@@ -17,7 +17,11 @@ int adafs_stat64(const std::string& path, struct stat64* buf);
 
 off64_t adafs_lseek(int fd, off64_t offset, int whence);
 
-off64_t adafs_lseek(OpenFile* adafs_fd, off64_t offset, int whence);
+off64_t adafs_lseek(std::shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence);
+
+int adafs_dup(int oldfd);
+
+int adafs_dup2(int oldfd, int newfd);
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset);
 

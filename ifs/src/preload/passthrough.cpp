@@ -58,6 +58,7 @@ void* libc_ftruncate;
 
 void* libc_dup;
 void* libc_dup2;
+void* libc_dup3;
 
 
 void init_passthrough_() {
@@ -104,6 +105,7 @@ void init_passthrough_() {
 
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
+    libc_dup3 = dlsym(libc, "dup3");
 
     fs_config = std::make_shared<struct FsConfig>();
     //set the spdlogger and initialize it with spdlog

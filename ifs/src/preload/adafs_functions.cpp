@@ -87,7 +87,7 @@ off64_t adafs_lseek(int fd, off64_t offset, int whence) {
     return adafs_lseek(file_map.get(fd), offset, whence);
 }
 
-off64_t adafs_lseek(OpenFile* adafs_fd, off64_t offset, int whence) {
+off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
     init_ld_env_if_needed();
     switch (whence) {
         case SEEK_SET:
@@ -121,6 +121,13 @@ off64_t adafs_lseek(OpenFile* adafs_fd, off64_t offset, int whence) {
     return adafs_fd->pos();
 }
 
+int adafs_dup(const int oldfd) {
+    return file_map.dup(oldfd);
+}
+
+int adafs_dup2(const int oldfd, const int newfd) {
+    return file_map.dup2(oldfd, newfd);
+}
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();

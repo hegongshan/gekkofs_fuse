@@ -54,6 +54,7 @@ extern void* libc_ftruncate;
 
 extern void* libc_dup;
 extern void* libc_dup2;
+extern void* libc_dup3;
 
 void init_passthrough_if_needed();
 

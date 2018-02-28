@@ -10,8 +10,8 @@ using namespace std;
 
 static const std::string dentry_val_delim = ","s;
 
-int fd_idx = 3;
-mutex fd_idx_mutex;
+static int fd_idx = 3;
+static mutex fd_idx_mutex;
 std::atomic<bool> fd_validation_needed(false);
 
 /**
@@ -32,6 +32,11 @@ int generate_fd_idx() {
         fd_validation_needed = true;
     }
     return fd_idx++;
+}
+
+int get_fd_idx() {
+    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
+    return fd_idx;
 }
 
 bool is_fs_path(const char* path) {

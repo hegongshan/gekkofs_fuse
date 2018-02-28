@@ -83,6 +83,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     if (ld_is_aux_loaded() && is_fs_path(path)) {
         // not implemented
         ld_logger->trace("{}() not implemented.", __func__);
+        errno = EBUSY;
         return -1;
     }
     return (reinterpret_cast<decltype(&mkdirat)>(libc_mkdirat))(dirfd, path, mode);
@@ -111,7 +112,7 @@ int rmdir(const char* path) __THROW {
 int close(int fd) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        // Currently no call to the daemon is required
+        // No call to the daemon is required
         file_map.remove(fd);
         return 0;
     }
@@ -298,17 +299,13 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
         ld_logger->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
-auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
-if (off_ret >
-
-std::numeric_limits<off_t>::max()
-
-) {
-errno = EOVERFLOW;
-return -1;
-} else
-return
-off_ret;
+        auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
+        if (off_ret > std::numeric_limits<off_t>::max()) {
+            errno = EOVERFLOW;
+            return -1;
+        } else {
+            return off_ret;
+        }
     }
     return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
 }
@@ -335,17 +332,27 @@ int ftruncate(int fd, off_t length) __THROW {
 int dup(int oldfd) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
-        // TODO
-        return -1;
+        return adafs_dup(oldfd);
     }
     return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
 }
 
 int dup2(int oldfd, int newfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && (file_map.exist(oldfd) || file_map.exist(newfd))) {
-        // TODO
-        return -1;
+    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        return adafs_dup2(oldfd, newfd);
     }
     return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
+}
+
+int dup3(int oldfd, int newfd, int flags) __THROW {
+    init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        // TODO implement O_CLOEXEC flag first which is used with fcntl(2)
+        // It is in glibc since kernel 2.9. So maybe not that important :)
+        ld_logger->error("{}() Not implemented.", __func__);
+        errno = EBUSY;
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&dup3)>(libc_dup3))(oldfd, newfd, flags);
 }

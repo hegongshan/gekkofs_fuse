@@ -58,23 +58,24 @@ void OpenFile::set_flag(OpenFile_flags flag, bool value) {
 
 // OpenFileMap starts here
 
-OpenFile* OpenFileMap::get(int fd) {
-    lock_guard<mutex> lock(files_mutex_);
+shared_ptr<OpenFile> OpenFileMap::get(int fd) {
+    lock_guard<recursive_mutex> lock(files_mutex_);
     auto f = files_.find(fd);
     if (f == files_.end()) {
         return nullptr;
     } else {
-        return f->second.get();
+        return f->second;
     }
 }
 
+
 bool OpenFileMap::exist(const int fd) {
-    lock_guard<mutex> lock(files_mutex_);
+    lock_guard<recursive_mutex> lock(files_mutex_);
     auto f = files_.find(fd);
     return !(f == files_.end());
 }
 
-int OpenFileMap::add(string path, const int flags) {
+int OpenFileMap::safe_generate_fd_idx_() {
     auto fd = generate_fd_idx();
     /*
      * Check if fd is still in use and generate another if yes
@@ -90,14 +91,19 @@ int OpenFileMap::add(string path, const int flags) {
             fd = generate_fd_idx();
         }
     }
+    return fd;
+}
+
+int OpenFileMap::add(string path, const int flags) {
+    auto fd = safe_generate_fd_idx_();
     auto open_file = make_shared<OpenFile>(path, flags);
-    lock_guard<mutex> lock(files_mutex_);
+    lock_guard<recursive_mutex> lock(files_mutex_);
     files_.insert(make_pair(fd, open_file));
     return fd;
 }
 
 bool OpenFileMap::remove(const int fd) {
-    lock_guard<mutex> lock(files_mutex_);
+    lock_guard<recursive_mutex> lock(files_mutex_);
     auto f = files_.find(fd);
     if (f == files_.end()) {
         return false;
@@ -110,3 +116,34 @@ bool OpenFileMap::remove(const int fd) {
     return true;
 }
 
+int OpenFileMap::dup(const int oldfd) {
+    lock_guard<recursive_mutex> lock(files_mutex_);
+    auto open_file = get(oldfd);
+    if (open_file == nullptr) {
+        errno = EBADF;
+        return -1;
+    }
+    auto newfd = safe_generate_fd_idx_();
+    files_.insert(make_pair(newfd, open_file));
+    return newfd;
+}
+
+int OpenFileMap::dup2(const int oldfd, const int newfd) {
+    lock_guard<recursive_mutex> lock(files_mutex_);
+    auto open_file = get(oldfd);
+    if (open_file == nullptr) {
+        errno = EBADF;
+        return -1;
+    }
+    if (oldfd == newfd)
+        return newfd;
+    // remove newfd if exists in filemap silently
+    if (exist(newfd)) {
+        remove(newfd);
+    }
+    // to prevent duplicate fd idx in the future. First three fd are reservered by os streams that we do not overwrite
+    if (get_fd_idx() < newfd && newfd != 0 && newfd != 1 && newfd != 2)
+        fd_validation_needed = true;
+    files_.insert(make_pair(newfd, open_file));
+    return newfd;
+}

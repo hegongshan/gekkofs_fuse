@@ -51,19 +51,24 @@ class OpenFileMap {
 
 private:
     std::map<int, std::shared_ptr<OpenFile>> files_;
-    std::mutex files_mutex_;
+    std::recursive_mutex files_mutex_;
 
+    int safe_generate_fd_idx_();
 
 public:
     OpenFileMap();
 
-    OpenFile* get(int fd);
+    std::shared_ptr<OpenFile> get(int fd);
 
     bool exist(int fd);
 
     int add(std::string path, int flags);
 
     bool remove(int fd);
+
+    int dup(int oldfd);
+
+    int dup2(int oldfd, int newfd);
 
 };
 
