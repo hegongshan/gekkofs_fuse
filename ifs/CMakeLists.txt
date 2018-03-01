@@ -18,10 +18,12 @@ if (NOT CMAKE_BUILD_TYPE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
 message("* Current daemon build type is : ${CMAKE_BUILD_TYPE}")
 
+# Compiler flags for various cmake build types
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -O3")
-# For debugging memory leaks.
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -pg -no-pie -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -O0")
+set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie")
+mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
@@ -133,7 +135,7 @@ set(SOURCE_FILES main.cpp main.hpp include/configure.hpp configure_public.hpp ut
         include/rpc/rpc_utils.hpp src/rpc/rpc_utils.cpp include/global_defs.hpp)
 add_executable(adafs_daemon ${SOURCE_FILES})
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
     target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
             # rocksdb libs
             ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
@@ -147,5 +149,4 @@ else ()
             # margo libs
             ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
             -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options)
-
 endif ()

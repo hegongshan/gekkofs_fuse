@@ -2,10 +2,13 @@ cmake_minimum_required(VERSION 3.6)
 project(preload CXX C)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -fPIC -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "-Wall --pedantic -g -pg -fPIC -no-pie -O0")
-message("* Current library build type is : ${CMAKE_BUILD_TYPE}")
 
+# Compiler flags for various cmake build types
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -fPIC")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIC")
+set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer -fPIC")
+set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie -fPIC") # -no-pie to be tested with gprof
+message("* Current library build type is : ${CMAKE_BUILD_TYPE}")
 
 set(SOURCE_FILES_PRELOAD preload.cpp ../../include/configure.hpp ../../configure_public.hpp
         open_file_map.cpp ../../include/preload/preload.hpp
@@ -16,7 +19,7 @@ set(SOURCE_FILES_PRELOAD preload.cpp ../../include/configure.hpp ../../configure
         rpc/ld_rpc_data_ws.cpp rpc/ld_rpc_metadentry.cpp ../../include/preload/rpc/ld_rpc_data_ws.hpp ../../include/preload/rpc/ld_rpc_metadentry.hpp
         ../../include/rpc/rpc_utils.hpp ../rpc/rpc_utils.cpp intcp_functions.cpp passthrough.cpp ../../include/preload/passthrough.hpp ../../include/global_defs.hpp adafs_functions.cpp adafs_functions.cpp ../../include/preload/adafs_functions.hpp)
 add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
     target_link_libraries(iointer dl ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
             ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
             -lpthread -lboost_system -pg)
