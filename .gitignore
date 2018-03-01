@@ -75,8 +75,7 @@ ehthumbs.db
 Thumbs.db
 
 # fuse files
-cmake-build-debug
-cmake-build-release
+cmake-build-*
 playground
 .fuse_hidden*
 
