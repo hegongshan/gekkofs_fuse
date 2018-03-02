@@ -7,18 +7,27 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    auto path = "/tmp/mountdir/testdir";
-    auto err = mkdir(path, S_IRUSR | S_IROTH);
-    cout << err << endl;
-    auto perm = S_IWUSR;
-    cout << "perm: " << perm << endl;
-    err = access(path, perm);
-    cout << err << endl;
-    err = rmdir(path);
-    cout << err << endl;
+    auto path = "/tmp/mountdir/test";
+//    auto path = "/tmp/testing/test";
+    char buf[] = "lefthyblubber";
+    char buf1[] = "rebbulbyhtfellefthyblubber";
+
+    auto fd = creat(path, 0677);
+    auto fd_dup = dup2(fd,33);
+    struct stat mystat{};
+    fstat(fd, &mystat);
+    auto nw = write(fd, &buf, strlen(buf));
+    fstat(fd_dup, &mystat);
+    close(fd);
+    auto nw_dup = pwrite(fd_dup, &buf1, strlen(buf1), 0);
+    fstat(fd_dup, &mystat);
+    close(fd_dup);
+    nw_dup = pwrite(fd_dup, &buf1, strlen(buf1), 0);
+
     return 0;
 }
