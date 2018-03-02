@@ -51,13 +51,14 @@ void* libc_pread;
 void* libc_pread64;
 
 void* libc_lseek;
-//void* libc_lseek64; //unused
+void* libc_lseek64;
 
 void* libc_truncate;
 void* libc_ftruncate;
 
 void* libc_dup;
 void* libc_dup2;
+void* libc_dup3;
 
 
 void init_passthrough_() {
@@ -97,12 +98,14 @@ void init_passthrough_() {
     libc_pread64 = dlsym(libc, "pread64");
 
     libc_lseek = dlsym(libc, "lseek");
+    libc_lseek64 = dlsym(libc, "lseek64");
 
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");
 
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
+    libc_dup3 = dlsym(libc, "dup3");
 
     fs_config = std::make_shared<struct FsConfig>();
     //set the spdlogger and initialize it with spdlog

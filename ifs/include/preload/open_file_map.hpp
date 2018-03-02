@@ -6,38 +6,43 @@
 #include <mutex>
 #include <memory>
 
+enum class OpenFile_flags {
+    append = 0,
+    creat,
+    trunc,
+    rdonly,
+    wronly,
+    rdwr,
+    flag_count // this is purely used as a size variable of this enum class
+};
+
 class OpenFile {
 private:
     std::string path_;
-    bool append_flag_;
-
-    int fd_;
-    off_t pos_;
-    FILE* tmp_file_;
+    std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
+    off64_t pos_;
+    std::mutex pos_mutex_;
+    std::mutex flag_mutex_;
 
 public:
-    OpenFile(const std::string& path, bool append_flag);
+    // multiple threads may want to update the file position if fd has been duplicated by dup()
+
+    OpenFile(const std::string& path, int flags);
 
     ~OpenFile();
-
-    void annul_fd();
 
     // getter/setter
     std::string path() const;
 
     void path(const std::string& path_);
 
-    int fd() const;
+    off64_t pos();
 
-    void fd(int fd_);
+    void pos(off64_t pos_);
 
-    off_t pos() const;
+    const bool get_flag(OpenFile_flags flag);
 
-    void pos(off_t pos_);
-
-    bool append_flag() const;
-
-    void append_flag(bool append_flag);
+    void set_flag(OpenFile_flags flag, bool value);
 
 };
 
@@ -46,19 +51,24 @@ class OpenFileMap {
 
 private:
     std::map<int, std::shared_ptr<OpenFile>> files_;
-    std::mutex files_mutex_;
+    std::recursive_mutex files_mutex_;
 
+    int safe_generate_fd_idx_();
 
 public:
     OpenFileMap();
 
-    OpenFile* get(int fd);
+    std::shared_ptr<OpenFile> get(int fd);
 
     bool exist(int fd);
 
-    int add(std::string path, bool append);
+    int add(std::string path, int flags);
 
     bool remove(int fd);
+
+    int dup(int oldfd);
+
+    int dup2(int oldfd, int newfd);
 
 };
 

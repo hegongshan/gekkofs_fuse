@@ -49,7 +49,7 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
     }
 
     // Destroy handle when finished
@@ -76,7 +76,7 @@ static hg_return_t rpc_srv_access(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
     }
 
     // Destroy handle when finished
@@ -88,13 +88,13 @@ static hg_return_t rpc_srv_access(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_access)
 
 static hg_return_t rpc_srv_stat(hg_handle_t handle) {
-    rpc_stat_in_t in{};
+    rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
     auto ret = margo_get_input(handle, &in);
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got get attr RPC for path {}", in.path);
+    ADAFS_DATA->spdlogger()->debug("Got srv stat RPC for path {}", in.path);
     // get the metadata
     string val;
     auto err = db_get_metadentry(in.path, val);
@@ -103,12 +103,15 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
         out.err = 0;
         out.db_val = val.c_str();
     } else {
-        out.err = 1;
+        // if db_get_metadentry didn't return anything we set the errno to ENOENT
+        out.err = ENOENT;
     }
 
     ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
     auto hret = margo_respond(handle, &out);
-    assert(hret == HG_SUCCESS);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
+    }
 
     // Destroy handle when finished
     margo_free_input(handle, &in);
@@ -134,7 +137,7 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to remove node rpc");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
     }
     // Destroy handle when finished
     margo_free_input(handle, &in);
@@ -186,7 +189,7 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry RPC");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
     }
 
     // Destroy handle when finished
@@ -221,7 +224,7 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("Failed to respond to update metadentry size RPC");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
     }
 
     // Destroy handle when finished
@@ -231,3 +234,38 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
+
+static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
+    rpc_path_only_in_t in{};
+    rpc_get_metadentry_size_out_t out{};
+
+
+    auto ret = margo_get_input(handle, &in);
+    if (ret != HG_SUCCESS)
+        ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
+    assert(ret == HG_SUCCESS);
+    ADAFS_DATA->spdlogger()->debug("Got update metadentry size RPC with path {}", in.path);
+
+    // do update
+    size_t ret_size;
+    auto err = get_metadentry_size(in.path, ret_size);
+    if (err == 0) {
+        out.err = 0;
+        out.ret_size = ret_size;
+    } else {
+        out.err = err;
+        out.ret_size = 0;
+    }
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    auto hret = margo_respond(handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
+    }
+
+    // Destroy handle when finished
+    margo_free_input(handle, &in);
+    margo_destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)

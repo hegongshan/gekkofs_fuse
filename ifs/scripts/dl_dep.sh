@@ -174,7 +174,7 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     clonedeps "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.3"
 fi
 # get Mercury
-clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "6c82baf7819a553b6b8235fbe7c180989a1e17fe"
+clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"
 # get Argobots
 clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4"
 # get Argobots-snoozer

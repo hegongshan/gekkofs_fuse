@@ -24,7 +24,7 @@ MERCURY_GEN_PROC(rpc_access_in_t,
                  ((hg_const_string_t) (path))\
 ((int32_t) (mask)))
 
-MERCURY_GEN_PROC(rpc_stat_in_t, ((hg_const_string_t) (path)))
+MERCURY_GEN_PROC(rpc_path_only_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))
         ((hg_const_string_t) (db_val)))
@@ -60,6 +60,9 @@ MERCURY_GEN_PROC(rpc_update_metadentry_size_in_t, ((hg_const_string_t) (path))
         ((hg_bool_t) (append)))
 
 MERCURY_GEN_PROC(rpc_update_metadentry_size_out_t, ((hg_int32_t) (err))
+        ((hg_int64_t) (ret_size)))
+
+MERCURY_GEN_PROC(rpc_get_metadentry_size_out_t, ((hg_int32_t) (err))
         ((hg_int64_t) (ret_size)))
 
 // data

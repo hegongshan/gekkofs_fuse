@@ -227,8 +227,8 @@ void rpc_send_read_abt(void* _arg) {
  * @param updated_size
  * @return
  */
-int rpc_send_write(const string& path, const size_t in_size, const off_t in_offset, void* buf, size_t& write_size,
-                   const bool append, const off_t updated_size) {
+int rpc_send_write(const string& path, const size_t in_size, const off64_t in_offset, void* buf, size_t& write_size,
+                   const bool append, const off64_t updated_size) {
 
     hg_handle_t handle;
     hg_addr_t svr_addr = HG_ADDR_NULL;

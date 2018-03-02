@@ -83,6 +83,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     if (ld_is_aux_loaded() && is_fs_path(path)) {
         // not implemented
         ld_logger->trace("{}() not implemented.", __func__);
+        errno = EBUSY;
         return -1;
     }
     return (reinterpret_cast<decltype(&mkdirat)>(libc_mkdirat))(dirfd, path, mode);
@@ -111,7 +112,7 @@ int rmdir(const char* path) __THROW {
 int close(int fd) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        // Currently no call to the daemon is required
+        // No call to the daemon is required
         file_map.remove(fd);
         return 0;
     }
@@ -227,14 +228,15 @@ int puts(const char* str) {
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {}", __func__, fd);
         auto adafs_fd = file_map.get(fd);
         auto pos = adafs_fd->pos(); // retrieve the current offset
-        ld_logger->trace("{}() called with fd {}", __func__, fd);
-        // TODO if append flag has been given, set offset accordingly.
-        // XXX handle lseek too
+        if (adafs_fd->get_flag(OpenFile_flags::append))
+            adafs_lseek(adafs_fd, 0, SEEK_END);
         auto ret = adafs_pwrite_ws(fd, buf, count, pos);
-        if(ret!=-1){
-            adafs_fd->pos(pos + (off_t) count);
+        // Update offset in file descriptor in the file map
+        if (ret > 0) {
+            adafs_fd->pos(pos + count);
         }
         return ret;
     }
@@ -265,10 +267,10 @@ ssize_t read(int fd, void* buf, size_t count) {
         auto adafs_fd = file_map.get(fd);
         auto pos = adafs_fd->pos(); //retrieve the current offset
         ld_logger->trace("{}() called with fd {}", __func__, fd);
-        auto ret= adafs_pread_ws(fd, buf, count, pos);
-        //Update offset
-        if(ret!=-1){
-           adafs_fd->pos(pos + (off_t) count);
+        auto ret = adafs_pread_ws(fd, buf, count, pos);
+        // Update offset in file descriptor in the file map
+        if (ret > 0) {
+            adafs_fd->pos(pos + count);
         }
         return ret;
     }
@@ -295,12 +297,26 @@ ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
 
 off_t lseek(int fd, off_t offset, int whence) __THROW {
     init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
+        auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
+        if (off_ret > std::numeric_limits<off_t>::max()) {
+            errno = EOVERFLOW;
+            return -1;
+        } else {
+            return off_ret;
+        }
+    }
     return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
 }
 
-off_t lseek64(int fd, off_t offset, int whence) __THROW {
+off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
     init_passthrough_if_needed();
-    return lseek(fd, offset, whence);
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
+        return adafs_lseek(fd, offset, whence);
+    }
+    return (reinterpret_cast<decltype(&lseek64)>(libc_lseek64))(fd, offset, whence);
 }
 
 int truncate(const char* path, off_t length) __THROW {
@@ -316,17 +332,27 @@ int ftruncate(int fd, off_t length) __THROW {
 int dup(int oldfd) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
-// Not implemented
-        return -1;
+        return adafs_dup(oldfd);
     }
     return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
 }
 
 int dup2(int oldfd, int newfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && (file_map.exist(oldfd) || file_map.exist(newfd))) {
-// Not implemented
-        return -1;
+    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        return adafs_dup2(oldfd, newfd);
     }
     return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
+}
+
+int dup3(int oldfd, int newfd, int flags) __THROW {
+    init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        // TODO implement O_CLOEXEC flag first which is used with fcntl(2)
+        // It is in glibc since kernel 2.9. So maybe not that important :)
+        ld_logger->error("{}() Not implemented.", __func__);
+        errno = EBUSY;
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&dup3)>(libc_dup3))(oldfd, newfd, flags);
 }

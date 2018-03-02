@@ -8,7 +8,7 @@ using namespace std;
 int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
     auto err = 1;
-    auto fd = file_map.add(path, (flags & O_APPEND) != 0);
+    auto fd = file_map.add(path, flags);
     // TODO the open flags should not be in the map just set the pos accordingly
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
@@ -82,7 +82,54 @@ int adafs_stat64(const std::string& path, struct stat64* buf) {
     return err;
 }
 
-ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
+off64_t adafs_lseek(int fd, off64_t offset, int whence) {
+    init_ld_env_if_needed();
+    return adafs_lseek(file_map.get(fd), offset, whence);
+}
+
+off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
+    init_ld_env_if_needed();
+    switch (whence) {
+        case SEEK_SET:
+            adafs_fd->pos(offset);
+            break;
+        case SEEK_CUR:
+            adafs_fd->pos(adafs_fd->pos() + offset);
+            break;
+        case SEEK_END: {
+            off64_t file_size;
+            auto err = rpc_send_get_metadentry_size(adafs_fd->path(), file_size);
+            if (err < 0) {
+                errno = err; // Negative numbers are explicitly for error codes
+                return -1;
+            }
+            adafs_fd->pos(file_size + offset);
+            break;
+        }
+        case SEEK_DATA:
+            // We do not support this whence yet
+            errno = EINVAL;
+            return -1;
+        case SEEK_HOLE:
+            // We do not support this whence yet
+            errno = EINVAL;
+            return -1;
+        default:
+            errno = EINVAL;
+            return -1;
+    }
+    return adafs_fd->pos();
+}
+
+int adafs_dup(const int oldfd) {
+    return file_map.dup(oldfd);
+}
+
+int adafs_dup2(const int oldfd, const int newfd) {
+    return file_map.dup2(oldfd, newfd);
+}
+
+ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
@@ -105,20 +152,25 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
             dest_ids[recipient].push_back(i);
     }
 
-    // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-    ABT_xstream xstream;
-    ABT_pool pool;
-    auto ret = ABT_xstream_self(&xstream);
-    if (ret != 0) {
-        ld_logger->error("{}() Unable to get self xstream. Is Argobots initialized?", __func__);
-        return -1;
-    }
-    ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
-    if (ret != 0) {
-        ld_logger->error("{}() Unable to get main pools from ABT xstream", __func__);
-        return -1;
-    }
     auto dest_n = dest_idx.size();
+    // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
+    vector<ABT_xstream> xstreams(dest_n);
+    vector<ABT_pool> pools(dest_n);
+    int ret;
+    for(unsigned long i = 0; i < dest_n; i++) {
+        ret = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to create xstreams, for parallel read", __func__);
+            errno = EAGAIN;
+            return -1;
+        }
+        ret = ABT_xstream_get_main_pools(xstreams[i], 1, &pools[i]);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get main pool from xstream", __func__);
+            errno = EAGAIN;
+            return -1;
+        }
+    }
     vector<ABT_thread> threads(dest_n);
     vector<ABT_eventual> eventuals(dest_n);
     vector<unique_ptr<struct read_args>> thread_args(dest_n);
@@ -139,7 +191,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
         args->recipient = dest_idx[i];// recipient
         args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
         thread_args[i] = std::move(args);
-        ABT_thread_create(pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        ABT_thread_create(pools[i], rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
     }
 
     for (unsigned long i = 0; i < dest_n; i++) {
@@ -158,8 +210,11 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
         }
         ret = ABT_thread_free(&threads[i]);
         if (ret != 0) {
-            ld_logger->error("{}() Unable to ABT_thread_free()", __func__);
-            err = -1;
+            ld_logger->warn("{}() Unable to ABT_thread_free()", __func__);
+        }
+        ret = ABT_xstream_free(&xstreams[i]);
+        if (ret != 0) {
+            ld_logger->warn("{}() Unable to free xstreams", __func__);
         }
     }
     // XXX check how much we need to deal with the read_size
@@ -167,11 +222,11 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off_t offset) {
     return err == 0 ? read_size : 0;
 }
 
-ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
+ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
-    auto append_flag = adafs_fd->append_flag();
+    auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
     int err = 0;
     long updated_size = 0;
     auto write_size = static_cast<size_t>(0);
@@ -202,19 +257,24 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
             dest_ids[recipient].push_back(i);
     }
     // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-    ABT_xstream xstream;
-    ABT_pool pool;
-    auto ret = ABT_xstream_self(&xstream);
-    if (ret != 0) {
-        ld_logger->error("{}() Unable to get self xstream. Is Argobots initialized?", __func__);
-        return -1;
-    }
-    ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
-    if (ret != 0) {
-        ld_logger->error("{}() Unable to get main pools from ABT xstream", __func__);
-        return -1;
-    }
     auto dest_n = dest_idx.size();
+    vector<ABT_xstream> xstreams(dest_n);
+    vector<ABT_pool> pools(dest_n);
+    int ret;
+    for(unsigned long i = 0; i < dest_n; i++) {
+        ret = ABT_xstream_create(ABT_SCHED_NULL, &xstreams[i]);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to create xstreams, for parallel read", __func__);
+            errno = EAGAIN;
+            return -1;
+        }
+        ret = ABT_xstream_get_main_pools(xstreams[i], 1, &pools[i]);
+        if (ret != 0) {
+            ld_logger->error("{}() Unable to get main pool from xstream", __func__);
+            errno = EAGAIN;
+            return -1;
+        }
+    }
     vector<ABT_thread> threads(dest_n);
     vector<ABT_eventual> eventuals(dest_n);
     vector<unique_ptr<struct write_args>> thread_args(dest_n);
@@ -237,7 +297,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
         thread_args[i] = std::move(args);
         ld_logger->info("{}() Starting thread with recipient {} and chnk_ids_n {}", __func__, dest_idx[i],
                         dest_ids[dest_idx[i]].size());
-        ABT_thread_create(pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        ABT_thread_create(pools[i], rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
     }
 
     for (unsigned long i = 0; i < dest_n; i++) {
@@ -256,8 +316,11 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off_t offset) {
         }
         ret = ABT_thread_free(&threads[i]);
         if (ret != 0) {
-            ld_logger->error("{}() Unable to ABT_thread_free()", __func__);
-            return -1;
+            ld_logger->warn("{}() Unable to ABT_thread_free()", __func__);
+        }
+        ret = ABT_xstream_free(&xstreams[i]);
+        if (ret != 0) {
+            ld_logger->warn("{}() Unable to free xstreams", __func__);
         }
     }
     return write_size;

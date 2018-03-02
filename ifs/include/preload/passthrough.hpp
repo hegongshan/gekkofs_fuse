@@ -47,13 +47,14 @@ extern void* libc_pread;
 extern void* libc_pread64;
 
 extern void* libc_lseek;
-//extern void* libc_lseek64; //unused
+extern void* libc_lseek64;
 
 extern void* libc_truncate;
 extern void* libc_ftruncate;
 
 extern void* libc_dup;
 extern void* libc_dup2;
+extern void* libc_dup3;
 
 void init_passthrough_if_needed();
 

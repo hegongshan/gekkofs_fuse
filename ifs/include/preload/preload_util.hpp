@@ -10,6 +10,7 @@
 #include <string>
 
 // TODO singleton this stuff away
+// The contents of FsConfig or only set once when set up
 struct FsConfig {
     // configurable metadata
     bool atime_state;
@@ -78,6 +79,7 @@ extern hg_id_t ipc_access_id;
 extern hg_id_t ipc_stat_id;
 extern hg_id_t ipc_rm_node_id;
 extern hg_id_t ipc_update_metadentry_id;
+extern hg_id_t ipc_get_metadentry_size_id;
 extern hg_id_t ipc_update_metadentry_size_id;
 extern hg_id_t ipc_write_data_id;
 extern hg_id_t ipc_read_data_id;
@@ -88,6 +90,7 @@ extern hg_id_t rpc_stat_id;
 extern hg_id_t rpc_access_id;
 extern hg_id_t rpc_rm_node_id;
 extern hg_id_t rpc_update_metadentry_id;
+extern hg_id_t rpc_get_metadentry_size_id;
 extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
@@ -98,9 +101,18 @@ extern std::shared_ptr<spdlog::logger> ld_logger;
 // rpc address cache
 typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
 extern KVCache rpc_address_cache;
+// file descriptor index validation flag
+extern std::atomic<bool> fd_validation_needed;
 
 // typedefs
 typedef unsigned long rpc_chnk_id_t;
+
+
+// function definitions
+
+int generate_fd_idx();
+
+int get_fd_idx();
 
 bool is_fs_path(const char* path);
 
