@@ -248,6 +248,13 @@ echo "############################################################ Installing:  
 
 # Mercury
 CURR=${SOURCE}/mercury
+# check for specific Mercury version which has to be newer than from 25-02-2018
+MERCURY_VERSION=$(cd ${CURR} && git log --since 02-25-2018 | wc -l)
+echo $MERCURY_VERSION
+if [ ${MERCURY_VERSION} -eq 0 ]; then
+    echo "########## Mercury version is too old. Pulling new version ..."
+    cd $CURR && git checkout c4faa382fd228c0b629c9164a984df1779089d3f || exit 1
+fi
 prepare_build_dir ${CURR}
 cd ${CURR}
 if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
@@ -256,11 +263,9 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch || exit 1
 fi
 cd ${CURR}/build
-# XXX Note: USE_EAGER_BULK is temporarily disabled due to bugs in Mercury with smaller amounts of data
-# Apparantly this is fixed in the new Mercury version. TODO check if it works now. It doesn't... investigate further.
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=OFF ${USE_BMI} ${USE_CCI} ${USE_OFI} ../  || exit 1
+-DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../  || exit 1
 make -j${CORES}  || exit 1
 make install  || exit 1
 
