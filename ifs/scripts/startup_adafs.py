@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import time
 
 import os
-import time
 
 from util import util
 
@@ -32,7 +32,7 @@ def check_dependencies():
     exit(1)
 
 
-def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
+def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     """Initializes ADAFS on specified nodes.
 
     Args:
@@ -88,11 +88,21 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot):
 
     # Start deamons
     if nodefile:
-        cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                  % (pssh, daemon_path, rootdir, mountdir, nodelist)
+        if len(numactl) == 0:
+            cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+        else:
+            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+
     else:
-        cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                  % (pssh, daemon_path, rootdir, mountdir, nodelist)
+        if len(numactl) == 0:
+            cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+        else:
+            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -172,6 +182,8 @@ or a path to a nodefile (one node per line)''')
                         help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
     parser.add_argument('-c', '--cleanroot', action='store_true',
                         help='Removes contents of root directory before starting ADA-FS Daemon. Be careful!')
+    parser.add_argument('-n', '--numactl', metavar='<numactl_args>', type=str, default='',
+                        help='If adafs daemon should be pinned to certain cores, set numactl arguments here.')
     args = parser.parse_args()
     if args.pretend:
         PRETEND = True
@@ -183,6 +195,6 @@ or a path to a nodefile (one node per line)''')
         PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
     PSSH_PATH = args.pssh
     WAITTIME = 5
-    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot)
+    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)
 
     print '\nNothing left to do; exiting. :)'
