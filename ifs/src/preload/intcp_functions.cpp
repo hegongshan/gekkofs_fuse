@@ -332,6 +332,7 @@ int ftruncate(int fd, off_t length) __THROW {
 int dup(int oldfd) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        ld_logger->trace("{}() called with oldfd {}", __func__, oldfd);
         return adafs_dup(oldfd);
     }
     return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
@@ -340,6 +341,7 @@ int dup(int oldfd) __THROW {
 int dup2(int oldfd, int newfd) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+        ld_logger->trace("{}() called with oldfd {} newfd {}", __func__, oldfd, newfd);
         return adafs_dup2(oldfd, newfd);
     }
     return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
