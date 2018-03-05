@@ -167,6 +167,8 @@ int main(int argc, const char* argv[]) {
     bfs::create_directories(ADAFS_DATA->inode_path());
     bfs::create_directories(ADAFS_DATA->chunk_path());
     bfs::create_directories(ADAFS_DATA->mgmt_path());
+    // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
+    bfs::create_directories(ADAFS_DATA->mountdir());
 
     if (init_environment()) {
         signal(SIGINT, shutdown_handler);

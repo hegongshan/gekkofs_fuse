@@ -221,6 +221,37 @@ extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }
 
+int statfs(const char* path, struct statfs* buf) __THROW {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with path {}", __func__, path);
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
+        // get information of the underlying fs.
+        // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
+        struct statfs realfs{};
+        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(fs_config->mountdir.c_str(), &realfs);
+        if (ret != 0)
+            return ret;
+        return adafs_statfs(path, buf, realfs);
+    }
+    return (reinterpret_cast<decltype(&statfs)>(libc_statfs))(path, buf);
+}
+
+int fstatfs(int fd, struct statfs* buf) {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with fd {}", __func__, fd);
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        auto adafs_fd = file_map.get(fd);
+        // get information of the underlying fs
+        // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
+        struct statfs realfs{};
+        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(fs_config->mountdir.c_str(), &realfs);
+        if (ret != 0)
+            return ret;
+        return adafs_statfs(adafs_fd->path(), buf, realfs);
+    }
+    return (reinterpret_cast<decltype(&fstatfs)>(libc_fstatfs))(fd, buf);
+}
+
 int puts(const char* str) {
     return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
 }

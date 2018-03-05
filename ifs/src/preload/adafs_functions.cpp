@@ -64,7 +64,7 @@ int adafs_access(const std::string& path, const int mask) {
 }
 
 // TODO combine adafs_stat and adafs_stat64
-int adafs_stat(const std::string& path, struct stat* buf) {
+int adafs_stat(const string& path, struct stat* buf) {
     init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
@@ -73,13 +73,47 @@ int adafs_stat(const std::string& path, struct stat* buf) {
     return err;
 }
 
-int adafs_stat64(const std::string& path, struct stat64* buf) {
+int adafs_stat64(const string& path, struct stat64* buf) {
     init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
     if (err == 0)
         db_val_to_stat64(path, attr, *buf);
     return err;
+}
+
+int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& realfs_buf) {
+    // Check that file path exists
+    auto ret = rpc_send_access(path, F_OK);
+    // Valid fs error
+    if (ret > 0) {
+        errno = ret;
+        return -1;
+    }
+    // RPC error (errno has been set)
+    if (ret < 0)
+        return -1;
+
+    // fs object exists. Let's make up some fs values
+    adafs_buf->f_type = 0; // fs is not know to VFS. Therefore, no valid specifier possible
+    adafs_buf->f_bsize = static_cast<int>(CHUNKSIZE);
+    // some rough estimations
+    adafs_buf->f_blocks = realfs_buf.f_blocks * fs_config->host_size;
+    adafs_buf->f_bfree = realfs_buf.f_bfree * fs_config->host_size;
+    adafs_buf->f_bavail = realfs_buf.f_bavail * fs_config->host_size;
+    adafs_buf->f_files = realfs_buf.f_files * fs_config->host_size;
+    adafs_buf->f_ffree = realfs_buf.f_ffree * fs_config->host_size;
+    adafs_buf->f_fsid = realfs_buf.f_fsid; // "Nobody knows what f_fsid is supposed to contain"
+    adafs_buf->f_namelen = realfs_buf.f_namelen;
+    adafs_buf->f_frsize = realfs_buf.f_frsize;
+    adafs_buf->f_spare[0] = 0;
+    adafs_buf->f_spare[1] = 0;
+    adafs_buf->f_spare[2] = 0;
+    adafs_buf->f_spare[3] = 0;
+    adafs_buf->f_flags = ST_NOATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
+    if (!fs_config->atime_state)
+        adafs_buf->f_flags = adafs_buf->f_flags | ST_NOATIME | ST_NODIRATIME;
+    return 0;
 }
 
 off64_t adafs_lseek(int fd, off64_t offset, int whence) {

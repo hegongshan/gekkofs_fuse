@@ -54,6 +54,7 @@ void destroy_enviroment() {
     cout << "\n####################\n\nMargo RPC server stats: " << endl;
     margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
 #endif
+    bfs::remove_all(ADAFS_DATA->mountdir());
     if (!deregister_daemon_proc())
         ADAFS_DATA->spdlogger()->warn("{}() Unable to clean up auxiliary files", __func__);
     else
