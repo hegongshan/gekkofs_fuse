@@ -47,6 +47,7 @@ target_link_libraries(adafs_daemon
     # margo libs
     ${ABT_LIBRARIES}
     ${ABT_SNOOZER_LIBRARIES}
+    ${ABT_IO_LIBRARIES}
     ${NA_LIB}
     ${MERCURY_LIBRARIES}
     ${MERCURY_UTIL_LIBRARIES}

@@ -11,25 +11,22 @@
 extern void* libc;
 
 extern void* libc_open;
-//extern void* libc_open64; //unused
 extern void* libc_fopen; // XXX Does not work with streaming pointers. If used will block forever
 extern void* libc_fopen64; // XXX Does not work with streaming pointers. If used will block forever
 
-//extern void* libc_creat; //unused
-//extern void* libc_creat64; //unused
 extern void* libc_mkdir;
 extern void* libc_mkdirat;
 extern void* libc_unlink;
 extern void* libc_rmdir;
 
 extern void* libc_close;
-//extern void* libc___close; //unused
 
 extern void* libc_access;
 extern void* libc_faccessat;
 
 extern void* libc_stat;
 extern void* libc_fstat;
+extern void* libc_lstat;
 extern void* libc___xstat;
 extern void* libc___xstat64;
 extern void* libc___fxstat;

@@ -53,6 +53,7 @@ find_package(Mercury REQUIRED)
 find_package(MercuryUtil REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
+find_package(Abt-IO REQUIRED)
 find_package(Margo REQUIRED)
 
 option(USE_OFI_VERBS "Use libfabric plugin with verbs." OFF)

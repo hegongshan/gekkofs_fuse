@@ -25,7 +25,9 @@ int open(const char* path, int flags, ...) {
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
 
-int open64(__const char* path, int flags, ...) {
+#undef open64
+
+int open64(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {}", __func__, path);
     mode_t mode = 0;
@@ -161,6 +163,16 @@ int fstat(int fd, struct stat* buf) __THROW {
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
+}
+
+int lstat(const char* path, struct stat* buf) __THROW {
+    init_passthrough_if_needed();
+    ld_logger->trace("{}() called with path {}", __func__, path);
+    if (ld_is_aux_loaded() && is_fs_path(path)) {
+        ld_logger->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
+        return adafs_stat(path, buf);
+    }
+    return (reinterpret_cast<decltype(&lstat)>(libc_lstat))(path, buf);
 }
 
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
@@ -341,6 +353,7 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
     return (reinterpret_cast<decltype(&lseek)>(libc_lseek))(fd, offset, whence);
 }
 
+#undef lseek64
 off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
     init_passthrough_if_needed();
     if (ld_is_aux_loaded() && file_map.exist(fd)) {

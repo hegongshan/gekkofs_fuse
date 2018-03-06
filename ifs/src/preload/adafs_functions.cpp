@@ -329,8 +329,6 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
         args->recipient = dest_idx[i];// recipient
         args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
         thread_args[i] = std::move(args);
-        ld_logger->info("{}() Starting thread with recipient {} and chnk_ids_n {}", __func__, dest_idx[i],
-                        dest_ids[dest_idx[i]].size());
         ABT_thread_create(pools[i], rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
     }
 
@@ -357,5 +355,8 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
             ld_logger->warn("{}() Unable to free xstreams", __func__);
         }
     }
+//    ld_logger->info("{}() destn {} count {} offset {} updated size {} written size {} XXX", __func__, dest_n, count,
+//                     offset, updated_size, write_size);
+
     return write_size;
 }

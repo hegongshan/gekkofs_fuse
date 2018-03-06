@@ -179,6 +179,8 @@ clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-h
 clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4"
 # get Argobots-snoozer
 clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
+# get Argobots-IO
+clonedeps "abt-io" "git clone https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c"
 # get Margo
 clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce"
 # get rocksdb

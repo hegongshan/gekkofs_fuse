@@ -15,25 +15,22 @@ std::shared_ptr<FsConfig> fs_config;
 void* libc;
 
 void* libc_open;
-//void* libc_open64; //unused
 void* libc_fopen; // XXX Does not work with streaming pointers. If used will block forever
 void* libc_fopen64; // XXX Does not work with streaming pointers. If used will block forever
 
-//void* libc_creat; //unused
-//void* libc_creat64; //unused
 void* libc_mkdir;
 void* libc_mkdirat;
 void* libc_unlink;
 void* libc_rmdir;
 
 void* libc_close;
-//void* libc___close; //unused
 
 void* libc_access;
 void* libc_faccessat;
 
 void* libc_stat;
 void* libc_fstat;
+void* libc_lstat;
 void* libc___xstat;
 void* libc___xstat64;
 void* libc___fxstat;
@@ -76,13 +73,13 @@ void init_passthrough_() {
     libc_rmdir = dlsym(libc, "rmdir");
 
     libc_close = dlsym(libc, "close");
-//    libc___close = dlsym(libc, "__close");
 
     libc_access = dlsym(libc, "access");
     libc_faccessat = dlsym(libc, "faccessat");
 
     libc_stat = dlsym(libc, "stat");
     libc_fstat = dlsym(libc, "fstat");
+    libc_lstat = dlsym(libc, "lstat");
     libc___xstat = dlsym(libc, "__xstat");
     libc___xstat64 = dlsym(libc, "__xstat64");
     libc___fxstat = dlsym(libc, "__fxstat");
