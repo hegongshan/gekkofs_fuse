@@ -13,15 +13,20 @@ set(PRELOAD_SOURCES
 
 add_library(iointer SHARED ${PRELOAD_SOURCES})
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
-    target_link_libraries(iointer dl ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
-            ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system -pg)
-else ()
-    target_link_libraries(iointer dl ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
-            ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system)
-endif ()
+target_link_libraries(iointer
+    dl
+    ${NA_LIB}
+    ${MERCURY_LIBRARIES}
+    ${MERCURY_UTIL_LIBRARIES}
+    ${ABT_LIBRARIES}
+    ${ABT_SNOOZER_LIBRARIES}
+    ${MARGO_LIBRARIES}
+)
+
+set_target_properties(iointer PROPERTIES LINK_FLAGS "-lpthread -lboost_system")
+
+# generate profile information (gprof) on maintainer build
+set_target_properties(iointer PROPERTIES LINK_FLAGS_MAINTAINER "-pg")
 
 
 

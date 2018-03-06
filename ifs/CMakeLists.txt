@@ -139,19 +139,25 @@ target_include_directories(adafs_daemon PUBLIC
     ${ABT_IO_INCLUDE_DIRS}
 )
 
+target_link_libraries(adafs_daemon
+    ${ROCKSDB_LIBRARIES}
+    # rocksdb libs
+    ${snappy_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${ZSTD_LIBRARIES}
+    ${LZ4_LIBRARY}
+    ${gflags_LIBRARIES}
+    # margo libs
+    ${NA_LIB}
+    ${MERCURY_LIBRARIES}
+    ${MERCURY_UTIL_LIBRARIES}
+    ${ABT_LIBRARIES}
+    ${ABT_SNOOZER_LIBRARIES}
+    ${MARGO_LIBRARIES}
+)
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
-    target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
-            # rocksdb libs
-            ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
-            # margo libs
-            ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)
-else ()
-    target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
-            # rocksdb libs
-            ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
-            # margo libs
-            ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options)
-endif ()
+set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS
+    "-lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options")
+
+set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS_MAINTAINER "-pg")
