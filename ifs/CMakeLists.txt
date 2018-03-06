@@ -108,11 +108,6 @@ endif()
 # boost dependencies, system is required for filesystem
 find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem serialization)
 
-include_directories(include ${ROCKSDB_INCLUDE_DIR}
-        # margo paths
-        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
-        )
-
 include_directories(include)
 add_subdirectory(src/preload)
 
@@ -134,6 +129,16 @@ set(DAEMON_SRC
 )
 
 add_executable(adafs_daemon ${DAEMON_SRC})
+target_include_directories(adafs_daemon PUBLIC
+    ${ROCKSDB_INCLUDE_DIRS}
+    ${MARGO_INCLUDE_DIRS}
+    ${ABT_INCLUDE_DIRS}
+    ${ABT_SNOOZER_INCLUDE_DIRS}
+    ${MERCURY_INCLUDE_DIRS}
+    ${LIBEV_INCLUDE_DIRS}
+    ${ABT_IO_INCLUDE_DIRS}
+)
+
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
     target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}

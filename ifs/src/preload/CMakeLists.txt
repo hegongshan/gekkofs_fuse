@@ -22,3 +22,9 @@ else ()
             ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
             -lpthread -lboost_system)
 endif ()
+
+
+
+target_include_directories(iointer PUBLIC
+    ${ABT_INCLUDE_DIRS}
+)
