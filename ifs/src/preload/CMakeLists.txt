@@ -1,8 +1,3 @@
-cmake_minimum_required(VERSION 3.6)
-project(preload CXX C)
-
-set(CMAKE_CXX_STANDARD 14)
-
 # Compiler flags for various cmake build types
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -fPIC")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIC")
