@@ -25,11 +25,6 @@ target_link_libraries(iointer
 
 set_target_properties(iointer PROPERTIES LINK_FLAGS "-lpthread -lboost_system")
 
-# generate profile information (gprof) on maintainer build
-set_target_properties(iointer PROPERTIES LINK_FLAGS_MAINTAINER "-pg")
-
-
-
 target_include_directories(iointer PUBLIC
     ${ABT_INCLUDE_DIRS}
 )

@@ -22,7 +22,7 @@ message("* Current daemon build type is : ${CMAKE_BUILD_TYPE}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -O0")
 set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie")
+set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie -pg")
 mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
@@ -160,4 +160,3 @@ target_link_libraries(adafs_daemon
 set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS
     "-lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options")
 
-set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS_MAINTAINER "-pg")
