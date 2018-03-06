@@ -16,7 +16,7 @@ if (NOT CMAKE_BUILD_TYPE)
             CACHE STRING "Choose the type of build: Debug Release Memcheck
             FORCE")
 ENDIF (NOT CMAKE_BUILD_TYPE)
-message("* Current daemon build type is : ${CMAKE_BUILD_TYPE}")
+message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 
 # Compiler flags for various cmake build types
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
