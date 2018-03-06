@@ -1,10 +1,3 @@
-# Compiler flags for various cmake build types
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -fPIC")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fPIC")
-set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer -fPIC")
-set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie -fPIC") # -no-pie to be tested with gprof
-message("* Current library build type is : ${CMAKE_BUILD_TYPE}")
-
 set(PRELOAD_SOURCES
     preload.cpp
     open_file_map.cpp
