@@ -115,25 +115,25 @@ include_directories(include ${ROCKSDB_INCLUDE_DIR}
 
 include_directories(include)
 add_subdirectory(src/preload)
-#add_subdirectory(src/fuse3)
 
-set(SOURCE_FILES main.cpp main.hpp include/configure.hpp configure_public.hpp util.cpp
-        src/db/db_util.cpp src/classes/fs_data.cpp src/classes/rpc_data.cpp
+set(DAEMON_SRC
+    main.cpp
+    util.cpp
+    src/daemon/adafs_daemon.cpp
+    src/db/db_util.cpp
+    src/db/db_ops.cpp
+    src/classes/fs_data.cpp
+    src/classes/rpc_data.cpp
+    src/classes/metadata.cpp
+    src/adafs_ops/data.cpp
+    src/adafs_ops/metadentry.cpp
+    src/rpc/handler/h_metadentry.cpp
+    src/rpc/handler/h_data.cpp
+    src/rpc/handler/h_preload.cpp
+    src/rpc/rpc_utils.cpp
+)
 
-        include/db/db_util.hpp include/classes/fs_data.hpp include/classes/rpc_data.hpp
-        include/classes/metadata.hpp src/classes/metadata.cpp
-        src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp
-
-        include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
-
-        #src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp
-        src/adafs_ops/metadentry.cpp
-        include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp
-        src/rpc/handler/h_metadentry.cpp
-        src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp
-        src/rpc/handler/h_preload.cpp
-        include/rpc/rpc_utils.hpp src/rpc/rpc_utils.cpp include/global_defs.hpp)
-add_executable(adafs_daemon ${SOURCE_FILES})
+add_executable(adafs_daemon ${DAEMON_SRC})
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
     target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}

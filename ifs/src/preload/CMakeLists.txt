@@ -10,15 +10,21 @@ set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-om
 set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie -fPIC") # -no-pie to be tested with gprof
 message("* Current library build type is : ${CMAKE_BUILD_TYPE}")
 
-set(SOURCE_FILES_PRELOAD preload.cpp ../../include/configure.hpp ../../configure_public.hpp
-        open_file_map.cpp ../../include/preload/preload.hpp
-        ../../include/preload/open_file_map.hpp preload_util.cpp ../../include/preload/preload_util.hpp
+set(PRELOAD_SOURCES
+    preload.cpp
+    open_file_map.cpp
+    preload_util.cpp
+    margo_ipc.cpp
+    intcp_functions.cpp
+    passthrough.cpp
+    adafs_functions.cpp
+    rpc/ld_rpc_data_ws.cpp
+    rpc/ld_rpc_metadentry.cpp
+    ../rpc/rpc_utils.cpp
+)
 
-        ../../include/preload/ipc_types.hpp margo_ipc.cpp ../../include/preload/margo_ipc.hpp
+add_library(iointer SHARED ${PRELOAD_SOURCES})
 
-        rpc/ld_rpc_data_ws.cpp rpc/ld_rpc_metadentry.cpp ../../include/preload/rpc/ld_rpc_data_ws.hpp ../../include/preload/rpc/ld_rpc_metadentry.hpp
-        ../../include/rpc/rpc_utils.hpp ../rpc/rpc_utils.cpp intcp_functions.cpp passthrough.cpp ../../include/preload/passthrough.hpp ../../include/global_defs.hpp adafs_functions.cpp adafs_functions.cpp ../../include/preload/adafs_functions.hpp)
-add_library(iointer SHARED ${SOURCE_FILES_PRELOAD})
 if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
     target_link_libraries(iointer dl ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES}
             ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
