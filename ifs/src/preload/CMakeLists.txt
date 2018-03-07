@@ -26,9 +26,9 @@ set(PRELOAD_HEADERS
     ../../include/preload/rpc/ld_rpc_metadentry.hpp
     )
 
-add_library(iointer SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
+add_library(adafs_preload_client SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
-target_link_libraries(iointer
+target_link_libraries(adafs_preload_client
     dl
     ${ABT_LIBRARIES}
     ${ABT_SNOOZER_LIBRARIES}
@@ -38,4 +38,4 @@ target_link_libraries(iointer
     ${MARGO_LIBRARIES}
 )
 
-set_target_properties(iointer PROPERTIES LINK_FLAGS "-lpthread -lboost_system")
+set_target_properties(adafs_preload_client PROPERTIES LINK_FLAGS "-lpthread -lboost_system")

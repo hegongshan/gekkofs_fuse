@@ -121,7 +121,6 @@ add_subdirectory(src/preload)
 
 set(DAEMON_SRC
     main.cpp
-    util.cpp
     src/daemon/adafs_daemon.cpp
     src/daemon/db/db_util.cpp
     src/daemon/db/db_ops.cpp
