@@ -1,8 +1,8 @@
 
-#include <rpc/rpc_types.hpp>
-#include <rpc/rpc_defs.hpp>
-#include <adafs_ops/data.hpp>
-#include <rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_defs.hpp>
+#include <daemon/adafs_ops/data.hpp>
+#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 

@@ -10,7 +10,7 @@ extern "C" {
 #include <margo.h>
 }
 
-#include <rpc/rpc_types.hpp>
+#include <global/rpc/rpc_types.hpp>
 #include <preload/preload.hpp>
 
 #include <iostream>

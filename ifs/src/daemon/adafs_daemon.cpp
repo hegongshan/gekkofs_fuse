@@ -1,10 +1,10 @@
 
 #include <daemon/adafs_daemon.hpp>
-#include <db/db_util.hpp>
-#include <rpc/rpc_types.hpp>
-#include <rpc/rpc_defs.hpp>
+#include <daemon/db/db_util.hpp>
+#include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_defs.hpp>
 #include <preload/ipc_types.hpp>
-#include <adafs_ops/metadentry.hpp>
+#include <daemon/adafs_ops/metadentry.hpp>
 
 bool init_environment() {
     // Initialize rocksdb

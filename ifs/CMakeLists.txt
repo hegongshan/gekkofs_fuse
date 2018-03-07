@@ -21,7 +21,7 @@ message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -O0")
 set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie -pg")
+set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie")
 mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
@@ -107,37 +107,57 @@ endif()
 # boost dependencies, system is required for filesystem
 find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem serialization)
 
-include_directories(include)
+# define include directories that are relevant for all targets
+include_directories(
+    include
+    ${ABT_INCLUDE_DIRS}
+    ${ABT_SNOOZER_INCLUDE_DIRS}
+    ${LIBEV_INCLUDE_DIRS}
+    ${MERCURY_INCLUDE_DIRS}
+    ${MARGO_INCLUDE_DIRS}
+)
+# Add client library
 add_subdirectory(src/preload)
 
 set(DAEMON_SRC
     main.cpp
     util.cpp
     src/daemon/adafs_daemon.cpp
-    src/db/db_util.cpp
-    src/db/db_ops.cpp
-    src/classes/fs_data.cpp
-    src/classes/rpc_data.cpp
-    src/classes/metadata.cpp
-    src/adafs_ops/data.cpp
-    src/adafs_ops/metadentry.cpp
-    src/rpc/handler/h_metadentry.cpp
-    src/rpc/handler/h_data.cpp
-    src/rpc/handler/h_preload.cpp
-    src/rpc/rpc_utils.cpp
-)
-
-add_executable(adafs_daemon ${DAEMON_SRC})
+    src/daemon/db/db_util.cpp
+    src/daemon/db/db_ops.cpp
+    src/daemon/classes/fs_data.cpp
+    src/daemon/classes/rpc_data.cpp
+    src/daemon/classes/metadata.cpp
+    src/daemon/adafs_ops/data.cpp
+    src/daemon/adafs_ops/metadentry.cpp
+    src/daemon/handler/h_metadentry.cpp
+    src/daemon/handler/h_data.cpp
+    src/daemon/handler/h_preload.cpp
+    src/global/rpc/rpc_utils.cpp
+    )
+set(DAEMON_HEADERS
+    main.hpp
+    configure_public.hpp
+    include/global/configure.hpp
+    include/global/global_defs.hpp
+    include/global/rpc/rpc_defs.hpp
+    include/global/rpc/rpc_types.hpp
+    include/global/rpc/rpc_utils.hpp
+    include/daemon/adafs_daemon.hpp
+    include/daemon/adafs_ops/data.hpp
+    include/daemon/adafs_ops/metadentry.hpp
+    include/daemon/classes/fs_data.hpp
+    include/daemon/classes/metadata.hpp
+    include/daemon/classes/rpc_data.hpp
+    include/daemon/db/db_ops.hpp
+    include/daemon/db/db_util.hpp
+    )
+add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
+# define target specific directory includes
 target_include_directories(adafs_daemon PUBLIC
-    ${ROCKSDB_INCLUDE_DIRS}
-    ${MARGO_INCLUDE_DIRS}
-    ${ABT_INCLUDE_DIRS}
-    ${ABT_SNOOZER_INCLUDE_DIRS}
-    ${MERCURY_INCLUDE_DIRS}
-    ${LIBEV_INCLUDE_DIRS}
     ${ABT_IO_INCLUDE_DIRS}
+    ${ROCKSDB_INCLUDE_DIRS}
 )
-
 target_link_libraries(adafs_daemon
     ${ROCKSDB_LIBRARIES}
     # rocksdb libs
@@ -148,14 +168,13 @@ target_link_libraries(adafs_daemon
     ${LZ4_LIBRARY}
     ${gflags_LIBRARIES}
     # margo libs
+    ${ABT_LIBRARIES}
+    ${ABT_SNOOZER_LIBRARIES}
     ${NA_LIB}
     ${MERCURY_LIBRARIES}
     ${MERCURY_UTIL_LIBRARIES}
-    ${ABT_LIBRARIES}
-    ${ABT_SNOOZER_LIBRARIES}
     ${MARGO_LIBRARIES}
 )
 
 set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS
     "-lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options")
-

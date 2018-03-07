@@ -3,7 +3,7 @@
 #define IFS_PRELOAD_C_METADENTRY_HPP
 
 #include <preload/preload.hpp>
-#include <rpc/rpc_types.hpp>
+#include <global/rpc/rpc_types.hpp>
 #include <iostream>
 
 inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_struct, const char* func);

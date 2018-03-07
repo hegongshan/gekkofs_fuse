@@ -11,8 +11,8 @@
 #include <thread>
 
 // adafs config
-#include <configure.hpp>
-#include <global_defs.hpp>
+#include <global/configure.hpp>
+#include <global/global_defs.hpp>
 // boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -35,8 +35,8 @@ extern "C" {
 #include <margo.h>
 }
 // adafs
-#include <classes/fs_data.hpp>
-#include <classes/rpc_data.hpp>
+#include <daemon/classes/fs_data.hpp>
+#include <daemon/classes/rpc_data.hpp>
 
 namespace bfs = boost::filesystem;
 

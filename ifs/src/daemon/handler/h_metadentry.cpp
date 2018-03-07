@@ -1,10 +1,10 @@
 
-#include <rpc/rpc_types.hpp>
-#include <rpc/rpc_defs.hpp>
+#include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_defs.hpp>
 
-#include <adafs_ops/metadentry.hpp>
+#include <daemon/adafs_ops/metadentry.hpp>
 
-#include <db/db_ops.hpp>
+#include <daemon/db/db_ops.hpp>
 
 using namespace std;
 

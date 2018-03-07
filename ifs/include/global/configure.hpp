@@ -1,4 +1,4 @@
-#include "../configure_public.hpp"
+#include "../../configure_public.hpp"
 
 /**
  * Attention: This whole configfile is not in a final form! This will eventually be a plaintext config file.

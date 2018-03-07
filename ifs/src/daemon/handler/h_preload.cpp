@@ -1,9 +1,9 @@
 
-#include <rpc/rpc_defs.hpp>
-#include <rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_defs.hpp>
+#include <global/rpc/rpc_utils.hpp>
 #include <preload/ipc_types.hpp>
 
-#include <daemon/fs_operations.hpp>
+#include "../../../main.hpp"
 
 using namespace std;
 

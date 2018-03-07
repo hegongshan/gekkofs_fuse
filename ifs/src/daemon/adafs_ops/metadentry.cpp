@@ -1,7 +1,7 @@
 
-#include <adafs_ops/metadentry.hpp>
-#include <adafs_ops/data.hpp>
-#include <db/db_ops.hpp>
+#include <daemon/adafs_ops/metadentry.hpp>
+#include <daemon/adafs_ops/data.hpp>
+#include <daemon/db/db_ops.hpp>
 
 using namespace std;
 
