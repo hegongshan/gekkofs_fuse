@@ -13,8 +13,8 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include <configure.hpp>
-#include <global_defs.hpp>
+#include <global/configure.hpp>
+#include <global/global_defs.hpp>
 
 extern "C" {
 #include <abt.h>

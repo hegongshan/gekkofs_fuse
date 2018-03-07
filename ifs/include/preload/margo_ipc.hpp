@@ -3,8 +3,8 @@
 #define IFS_MARGO_IPC_HPP
 
 #include <preload/preload.hpp>
-#include <preload/ipc_types.hpp>
-#include <rpc/rpc_types.hpp>
+#include <global/rpc/ipc_types.hpp>
+#include <global/rpc/rpc_types.hpp>
 
 using namespace std;
 

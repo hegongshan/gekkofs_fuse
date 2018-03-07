@@ -2,24 +2,23 @@ cmake_minimum_required(VERSION 3.6)
 project(ifs)
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
-	message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
+    message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
 endif()
 if(NOT CMAKE_COMPILER_IS_GNUCXX)
-	message(FATAL_ERROR "The choosen C++ compiler is not g++ and is not supported")
+    message(FATAL_ERROR "The choosen C++ compiler is not g++ and is not supported")
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release
-            CACHE STRING "Choose the type of build: Debug Release Memcheck
-            FORCE")
+    set(CMAKE_BUILD_TYPE Release
+            CACHE STRING "Choose the type of build: Debug Release Memcheck" FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
-message("* Current daemon build type is : ${CMAKE_BUILD_TYPE}")
+message("* Current build type is : ${CMAKE_BUILD_TYPE}")
 
 # Compiler flags for various cmake build types
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64 -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall --pedantic -g -O0")
 set(CMAKE_CXX_FLAGS_MEMCHECK "-Wall --pedantic -g -O0 -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_MAINTAINER "-Wall --pedantic -g -O0 -pg -no-pie")
@@ -44,7 +43,7 @@ endif (NOT ADAFS_DEPS_INSTALL)
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
-find_package(GFlags REQUIRED) 
+find_package(GFlags REQUIRED)
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(RocksDB REQUIRED)
@@ -106,47 +105,20 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 # boost dependencies, system is required for filesystem
-find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem serialization)
+find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem)
 
-include_directories(include ${ROCKSDB_INCLUDE_DIR}
-        # margo paths
-        ${MARGO_INCLUDE_DIR} ${ABT_INCLUDE_DIR} ${ABT_SNOOZER_INCLUDE_DIR} ${MERCURY_INCLUDE_DIR} ${LIBEV_INCLUDE_DIRS} ${ABT_IO_INCLUDE_DIRS}
-        )
+# define include directories that are relevant for all targets
+include_directories(
+    include
+    ${ABT_INCLUDE_DIRS}
+    ${ABT_SNOOZER_INCLUDE_DIRS}
+    ${LIBEV_INCLUDE_DIRS}
+    ${MERCURY_INCLUDE_DIRS}
+    ${MARGO_INCLUDE_DIRS}
+)
 
-include_directories(include)
+# Daemon
+add_subdirectory(src/daemon)
+
+# Client library
 add_subdirectory(src/preload)
-#add_subdirectory(src/fuse3)
-
-set(SOURCE_FILES main.cpp main.hpp include/configure.hpp configure_public.hpp util.cpp
-        src/db/db_util.cpp src/classes/fs_data.cpp src/classes/rpc_data.cpp
-
-        include/db/db_util.hpp include/classes/fs_data.hpp include/classes/rpc_data.hpp
-        include/classes/metadata.hpp src/classes/metadata.cpp
-        src/daemon/adafs_daemon.cpp include/daemon/adafs_daemon.hpp
-
-        include/rpc/rpc_defs.hpp include/rpc/rpc_types.hpp
-
-        #src/daemon/fs_operations.cpp include/daemon/fs_operations.hpp
-        src/adafs_ops/metadentry.cpp
-        include/adafs_ops/metadentry.hpp src/db/db_ops.cpp src/db/db_ops.cpp include/db/db_ops.hpp
-        src/rpc/handler/h_metadentry.cpp
-        src/adafs_ops/data.cpp include/adafs_ops/data.hpp src/rpc/handler/h_data.cpp
-        src/rpc/handler/h_preload.cpp
-        include/rpc/rpc_utils.hpp src/rpc/rpc_utils.cpp include/global_defs.hpp)
-add_executable(adafs_daemon ${SOURCE_FILES})
-
-if (${CMAKE_BUILD_TYPE} STREQUAL "Maintainer")
-    target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
-            # rocksdb libs
-            ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
-            # margo libs
-            ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options -pg)
-else ()
-    target_link_libraries(adafs_daemon ${ROCKSDB_LIBRARIES}
-            # rocksdb libs
-            ${snappy_LIBRARIES} ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES} ${ZSTD_LIBRARIES} ${LZ4_LIBRARY} ${gflags_LIBRARIES}
-            # margo libs
-            ${NA_LIB} ${MERCURY_LIBRARIES} ${MERCURY_UTIL_LIBRARIES} ${ABT_LIBRARIES} ${ABT_SNOOZER_LIBRARIES} ${MARGO_LIBRARIES}
-            -lpthread -lboost_system -lboost_filesystem -lboost_serialization -lboost_program_options)
-endif ()

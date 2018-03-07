@@ -16,7 +16,7 @@ extern "C" {
 //#include <fcntl.h>
 
 // adafs config
-#include "configure.hpp"
+#include "global/configure.hpp"
 // boost libs
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
