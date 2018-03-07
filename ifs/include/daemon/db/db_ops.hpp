@@ -2,7 +2,7 @@
 #ifndef IFS_DB_OPS_HPP
 #define IFS_DB_OPS_HPP
 
-#include "../../../main.hpp"
+#include <daemon/adafs_daemon.hpp>
 
 bool db_get_metadentry(const std::string& key, std::string& val);
 

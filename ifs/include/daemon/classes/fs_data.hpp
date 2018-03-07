@@ -2,8 +2,7 @@
 #ifndef LFS_FS_DATA_H
 #define LFS_FS_DATA_H
 
-#include "../../../main.hpp"
-#include <map>
+#include <daemon/adafs_daemon.hpp>
 
 
 class FsData {

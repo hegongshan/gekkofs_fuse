@@ -2,7 +2,7 @@
 #ifndef FS_METADATA_H
 #define FS_METADATA_H
 
-#include "../../../main.hpp"
+#include <daemon/adafs_daemon.hpp>
 
 class Metadata {
 

@@ -2,7 +2,7 @@
 #ifndef LFS_DB_UTIL_HPP
 #define LFS_DB_UTIL_HPP
 
-#include "../../../main.hpp"
+#include <daemon/adafs_daemon.hpp>
 
 using namespace std;
 

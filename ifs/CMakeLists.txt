@@ -120,26 +120,24 @@ include_directories(
 add_subdirectory(src/preload)
 
 set(DAEMON_SRC
-    main.cpp
+    src/global/rpc/rpc_utils.cpp
     src/daemon/adafs_daemon.cpp
-    src/daemon/db/db_util.cpp
-    src/daemon/db/db_ops.cpp
+    src/daemon/adafs_ops/data.cpp
+    src/daemon/adafs_ops/metadentry.cpp
     src/daemon/classes/fs_data.cpp
     src/daemon/classes/rpc_data.cpp
     src/daemon/classes/metadata.cpp
-    src/daemon/adafs_ops/data.cpp
-    src/daemon/adafs_ops/metadentry.cpp
+    src/daemon/db/db_util.cpp
+    src/daemon/db/db_ops.cpp
     src/daemon/handler/h_metadentry.cpp
     src/daemon/handler/h_data.cpp
     src/daemon/handler/h_preload.cpp
-    src/global/rpc/rpc_utils.cpp
     )
 set(DAEMON_HEADERS
-    main.hpp
     configure_public.hpp
     include/global/configure.hpp
     include/global/global_defs.hpp
-    include/global/rpc/rpc_defs.hpp
+    include/global/rpc/ipc_types.hpp
     include/global/rpc/rpc_types.hpp
     include/global/rpc/rpc_utils.hpp
     include/daemon/adafs_daemon.hpp
@@ -150,6 +148,7 @@ set(DAEMON_HEADERS
     include/daemon/classes/rpc_data.hpp
     include/daemon/db/db_ops.hpp
     include/daemon/db/db_util.hpp
+    include/daemon/handler/rpc_defs.hpp
     )
 add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
 # define target specific directory includes

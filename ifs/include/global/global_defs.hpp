@@ -16,6 +16,9 @@ namespace hg_tag {
     constexpr auto read_data = "rpc_srv_read_data";
 }
 
+// typedefs
+typedef unsigned long rpc_chnk_id_t;
+
 template<typename E>
 constexpr typename std::underlying_type<E>::type to_underlying(E e) {
     return static_cast<typename std::underlying_type<E>::type>(e);

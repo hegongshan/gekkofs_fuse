@@ -1,6 +1,6 @@
 
 #include <global/rpc/rpc_types.hpp>
-#include <global/rpc/rpc_defs.hpp>
+#include <daemon/handler/rpc_defs.hpp>
 
 #include <daemon/adafs_ops/metadentry.hpp>
 

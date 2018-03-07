@@ -2,8 +2,7 @@
 #ifndef IFS_DATA_HPP
 #define IFS_DATA_HPP
 
-#include "../../../main.hpp"
-#include <preload/preload_util.hpp>
+#include <daemon/adafs_daemon.hpp>
 
 std::string path_to_fspath(const std::string& path);
 

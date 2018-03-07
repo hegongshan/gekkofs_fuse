@@ -104,10 +104,6 @@ extern KVCache rpc_address_cache;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
 
-// typedefs
-typedef unsigned long rpc_chnk_id_t;
-
-
 // function definitions
 
 int generate_fd_idx();

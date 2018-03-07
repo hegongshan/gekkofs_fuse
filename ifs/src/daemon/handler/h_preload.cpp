@@ -1,9 +1,9 @@
 
-#include <global/rpc/rpc_defs.hpp>
+#include <daemon/adafs_daemon.hpp>
+#include <daemon/handler/rpc_defs.hpp>
 #include <global/rpc/rpc_utils.hpp>
-#include <preload/ipc_types.hpp>
+#include <global/rpc/ipc_types.hpp>
 
-#include "../../../main.hpp"
 
 using namespace std;
 
