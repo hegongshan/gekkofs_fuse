@@ -46,6 +46,9 @@ margo_instance_id ld_margo_rpc_id;
 KVCache rpc_address_cache{32768, 4096}; // XXX Set values are not based on anything...
 // local daemon IPC address
 hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
+// IO RPC driver
+ABT_pool io_pool;
+std::vector<ABT_xstream> io_streams;
 
 /**
  * Initializes the Argobots environment
@@ -74,6 +77,14 @@ bool init_ld_argobots() {
      * See for reference: https://xgitlab.cels.anl.gov/sds/margo/issues/40
      */
     putenv(const_cast<char*>("ABT_MEM_MAX_NUM_STACKS=8"));
+    // Creating pool for driving IO RPCs
+    vector<ABT_xstream> io_streams_tmp(IO_LIBRARY_THREADS);
+    argo_err = ABT_snoozer_xstream_create(IO_LIBRARY_THREADS, &io_pool, io_streams_tmp.data());
+    if (argo_err != ABT_SUCCESS) {
+        ld_logger->error("{}() ABT_snoozer_xstream_create()  (client)", __func__);
+        return false;
+    }
+    io_streams = io_streams_tmp;
     ld_logger->debug("{}() Argobots initialization successful.", __func__);
     return true;
 }
@@ -277,6 +288,11 @@ void destroy_preload() {
         margo_diag_dump(ld_margo_rpc_id, "-", 0);
     }
 #endif
+    for (auto& io_stream : io_streams) {
+        ABT_xstream_join(io_stream);
+        ABT_xstream_free(&io_stream);
+    }
+    ld_logger->debug("{}() Freeing IO execution streams successful", __func__);
     // Shut down RPC client if used
     if (ld_margo_rpc_id != nullptr) {
         // free all rpc addresses in LRU map and finalize margo rpc

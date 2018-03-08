@@ -47,8 +47,9 @@
 
 // Margo configuration
 
-// Number of threads used for concurrent I/O
+// Number of threads used for concurrent I/O in the daemon and preload library per process
 #define IO_THREADS 8
+#define IO_LIBRARY_THREADS 8
 // Number of threads used for RPC and IPC handlers at the daemon
 #define RPC_HANDLER_THREADS 8
 #define IPC_HANDLER_THREADS 8
