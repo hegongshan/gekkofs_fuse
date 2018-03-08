@@ -12,6 +12,14 @@ struct write_chunk_args {
     off64_t off;
     ABT_eventual* eventual;
 };
+struct read_chunk_args {
+    const std::string* path;
+    char* buf;
+    const rpc_chnk_id_t* chnk_id;
+    size_t size;
+    off64_t off;
+    ABT_eventual* eventual;
+};
 
 std::string path_to_fspath(const std::string& path);
 
@@ -19,7 +27,7 @@ int init_chunk_space(const std::string& path);
 
 int destroy_chunk_space(const std::string& path);
 
-int read_file(const std::string& path, rpc_chnk_id_t chnk_id, size_t size, off_t off, char* buf, size_t& read_size);
+void read_file_abt(void* _arg);
 
 void write_file_abt(void* _arg);
 

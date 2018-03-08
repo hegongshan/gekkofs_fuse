@@ -21,15 +21,17 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize RocksDB.", __func__);
         return false;
     }
-    // init margo
+    // Init margo for RPC
     if (!init_rpc_server()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo RPC server.", __func__);
         return false;
     }
+    // Init margo for RPC
     if (!init_ipc_server()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo IPC server.", __func__);
         return false;
     }
+    // Init Argobots ESs to drive IO
     if (!init_io_tasklet_pool()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
         return false;
@@ -92,7 +94,6 @@ void destroy_enviroment() {
 bool init_io_tasklet_pool() {
     vector<ABT_xstream> io_streams_tmp(IO_THREADS);
     ABT_pool io_pools_tmp;
-//    auto ret = ABT_snoozer_xstream_create(IO_THREADS, &RPC_DATA->io_pools_, RPC_DATA->io_streams_.data());
     auto ret = ABT_snoozer_xstream_create(IO_THREADS, &io_pools_tmp, io_streams_tmp.data());
     if (ret != ABT_SUCCESS) {
         ADAFS_DATA->spdlogger()->error(
@@ -101,7 +102,6 @@ bool init_io_tasklet_pool() {
     }
     RPC_DATA->io_streams(io_streams_tmp);
     RPC_DATA->io_pool(io_pools_tmp);
-
     return true;
 }
 
