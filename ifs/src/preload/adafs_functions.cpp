@@ -185,11 +185,12 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
             dest_ids[recipient].push_back(i);
     }
 
-    auto dest_n = dest_idx.size();
-    vector<ABT_thread> threads(dest_n);
+    auto dest_n = static_cast<unsigned int>(dest_idx.size());
     vector<ABT_eventual> eventuals(dest_n);
     vector<unique_ptr<struct read_args>> thread_args(dest_n);
-    for (unsigned long i = 0; i < dest_n; i++) {
+    ABT_barrier barrier;
+    ABT_barrier_create(dest_n, &barrier);
+    for (unsigned int i = 0; i < dest_n; i++) {
         ABT_eventual_create(sizeof(size_t), &eventuals[i]);
         auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
         if (i == 0) // receiver of first chunk must subtract the offset from first chunk
@@ -204,12 +205,14 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
         args->chnk_ids = &dest_ids[dest_idx[i]]; // pointer to list of chunk ids that all go to the same destination
         args->chnk_start = chnk_start;
         args->recipient = dest_idx[i];// recipient
-        args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
+        args->eventual = eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
+        args->barrier = barrier;
         thread_args[i] = std::move(args);
-        ABT_thread_create(io_pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        // Threads are implicitly released once calling function finishes
+        ABT_thread_create(io_pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, nullptr);
     }
 
-    for (unsigned long i = 0; i < dest_n; i++) {
+    for (unsigned int i = 0; i < dest_n; i++) {
         size_t* thread_ret_size;
         ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
         if (thread_ret_size == nullptr || *thread_ret_size == 0) {
@@ -218,16 +221,8 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
         } else
             read_size += *thread_ret_size;
         ABT_eventual_free(&eventuals[i]);
-        auto ret = ABT_thread_join(threads[i]);
-        if (ret != 0) {
-            ld_logger->error("{}() Unable to ABT_thread_join()", __func__);
-            err = -1;
-        }
-        ret = ABT_thread_free(&threads[i]);
-        if (ret != 0) {
-            ld_logger->warn("{}() Unable to ABT_thread_free()", __func__);
-        }
     }
+    ABT_barrier_free(&barrier);
     // XXX check how much we need to deal with the read_size
     // XXX check that we don't try to read past end of the file
     return err == 0 ? read_size : 0;
@@ -268,11 +263,12 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
             dest_ids[recipient].push_back(i);
     }
     // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-    auto dest_n = dest_idx.size();
-    vector<ABT_thread> threads(dest_n);
+    auto dest_n = static_cast<unsigned int>(dest_idx.size());
     vector<ABT_eventual> eventuals(dest_n);
     vector<unique_ptr<struct write_args>> thread_args(dest_n);
-    for (unsigned long i = 0; i < dest_n; i++) {
+    ABT_barrier barrier;
+    ABT_barrier_create(dest_n, &barrier);
+    for (unsigned int i = 0; i < dest_n; i++) {
         ABT_eventual_create(sizeof(size_t), &eventuals[i]);
         auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
         if (i == 0) // receiver of first chunk must subtract the offset from first chunk
@@ -287,12 +283,13 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
         args->chnk_start = chnk_start;// append flag when file was opened
         args->chnk_ids = &dest_ids[dest_idx[i]];// pointer to list of chunk ids that all go to the same destination
         args->recipient = dest_idx[i];// recipient
-        args->eventual = &eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
+        args->eventual = eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
+        args->barrier = barrier;
         thread_args[i] = std::move(args);
-        ABT_thread_create(io_pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        ABT_thread_create(io_pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, nullptr);
     }
     // Sum written sizes
-    for (unsigned long i = 0; i < dest_n; i++) {
+    for (unsigned int i = 0; i < dest_n; i++) {
         size_t* thread_ret_size;
         ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
         if (thread_ret_size == nullptr || *thread_ret_size == 0) {
@@ -301,15 +298,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
         } else
             write_size += *thread_ret_size;
         ABT_eventual_free(&eventuals[i]);
-        auto ret = ABT_thread_join(threads[i]);
-        if (ret != 0) {
-            ld_logger->error("{}() Unable to ABT_thread_join()", __func__);
-            return -1;
-        }
-        ret = ABT_thread_free(&threads[i]);
-        if (ret != 0) {
-            ld_logger->warn("{}() Unable to ABT_thread_free()", __func__);
-        }
     }
+    ABT_barrier_free(&barrier);
     return write_size;
 }

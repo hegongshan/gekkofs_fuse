@@ -7,18 +7,18 @@
 struct write_chunk_args {
     const std::string* path;
     const char* buf;
-    const rpc_chnk_id_t* chnk_id;
+    rpc_chnk_id_t chnk_id;
     size_t size;
     off64_t off;
-    ABT_eventual* eventual;
+    ABT_eventual eventual;
 };
 struct read_chunk_args {
     const std::string* path;
     char* buf;
-    const rpc_chnk_id_t* chnk_id;
+    rpc_chnk_id_t chnk_id;
     size_t size;
     off64_t off;
-    ABT_eventual* eventual;
+    ABT_eventual eventual;
 };
 
 std::string path_to_fspath(const std::string& path);

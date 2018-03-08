@@ -67,8 +67,8 @@ int destroy_chunk_space(const std::string& path) {
    size_t size;
    off64_t off;
    ABT_eventual* eventual;
- * Because abt-io uses tasklets, calling threads are suspended for the time of the I/O, allowing other threads to do
- * work in the same ES. This can mean multiple write_file_abt() calls or other RPC calls
+ * This function is driven by the IO pool. so there is a maximum allowed number of concurrent IO operations per daemon.
+ * This function is called by tasklets, as this function cannot be allowed to block.
  * @return written_size<size_t> is put into eventual and returned that way
  */
 void write_file_abt(void* _arg) {
@@ -79,25 +79,25 @@ void write_file_abt(void* _arg) {
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
     bfs::create_directories(chnk_path);
-    chnk_path /= fmt::FormatInt(*arg->chnk_id).c_str();
+    chnk_path /= fmt::FormatInt(arg->chnk_id).c_str();
     // open file
     int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0640);
     if (fd < 0) {
         write_size = static_cast<size_t>(EIO);
-        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t));
+        ABT_eventual_set(arg->eventual, &write_size, sizeof(size_t));
         return;
     }
     // write file
     auto err = pwrite64(fd, arg->buf, arg->size, arg->off);
     if (err < 0) {
         ADAFS_DATA->spdlogger()->error("{}() Error {} while pwriting file {} chunk_id {} size {} off {}", __func__,
-                                       strerror(errno), chnk_path.c_str(), *arg->chnk_id, arg->size, arg->off);
+                                       strerror(errno), chnk_path.c_str(), arg->chnk_id, arg->size, arg->off);
     } else {
         write_size = static_cast<size_t>(err); // This is cast safe
     }
+    ABT_eventual_set(arg->eventual, &write_size, sizeof(size_t));
     // file is closed
     close(fd);
-    ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t));
 }
 
 int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
@@ -107,9 +107,8 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
     auto chnk_n = static_cast<unsigned int>(buf_sizes.size() / 2); // Case-safe: There never are so many chunks at once
     vector<ABT_eventual> eventuals(chnk_n);
     vector<unique_ptr<struct write_chunk_args>> thread_args(chnk_n);
-
     for (unsigned int i = 0; i < chnk_n; i++) {
-        auto chnk_id = static_cast<size_t*>(buf_ptrs[i]);
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
         auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
         auto chnk_size = buf_sizes[i + chnk_n];
         // Starting tasklets for parallel I/O
@@ -121,7 +120,7 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
         args->size = chnk_size;
         // only the first chunk gets the offset. the chunks are sorted on the client side
         args->off = (i == 0 ? offset : 0);
-        args->eventual = &eventuals[i];
+        args->eventual = eventuals[i];
         thread_args[i] = std::move(args);
         auto ret = ABT_task_create(RPC_DATA->io_pool(), write_file_abt, &(*thread_args[i]), nullptr);
         if (ret != ABT_SUCCESS) {
@@ -130,6 +129,7 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
     }
     for (unsigned int i = 0; i < chnk_n; i++) {
         size_t* task_written_size;
+        // wait causes the calling ult to go into BLOCKED state, implicitly yielding to the pool scheduler
         ABT_eventual_wait(eventuals[i], (void**) &task_written_size);
         if (task_written_size == nullptr || *task_written_size == 0) {
             ADAFS_DATA->spdlogger()->error("{}() Writing file task {} did return nothing. NO ACTION WAS DONE",
@@ -155,8 +155,8 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
    size_t size;
    off64_t off;
    ABT_eventual* eventual;
- * Because abt-io uses tasklets, calling threads are suspended for the time of the I/O, allowing other tasks to do
- * work in the same ES. This can mean multiple read_file_abt() calls or other RPC calls
+ * This function is driven by the IO pool. so there is a maximum allowed number of concurrent IO operations per daemon.
+ * This function is called by tasklets, as this function cannot be allowed to block.
  * @return read_size<size_t> is put into eventual and returned that way
  */
 void read_file_abt(void* _arg) {
@@ -166,23 +166,23 @@ void read_file_abt(void* _arg) {
     auto fs_path = path_to_fspath(*arg->path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
-    chnk_path /= fmt::FormatInt(*arg->chnk_id).c_str();;
+    chnk_path /= fmt::FormatInt(arg->chnk_id).c_str();;
 
     int fd = open(chnk_path.c_str(), R_OK);
     if (fd < 0) {
         read_size = static_cast<size_t>(EIO);
-        ABT_eventual_set(*(arg->eventual), &read_size, sizeof(size_t));
+        ABT_eventual_set(arg->eventual, &read_size, sizeof(size_t));
         return;
     }
     auto err = pread64(fd, arg->buf, arg->size, arg->off);
     if (err < 0) {
         ADAFS_DATA->spdlogger()->error("{}() Error {} while preading file {} chunk_id {} size {} off {}", __func__,
-                                       strerror(errno), chnk_path.c_str(), *arg->chnk_id, arg->size, arg->off);
+                                       strerror(errno), chnk_path.c_str(), arg->chnk_id, arg->size, arg->off);
     } else {
         read_size = static_cast<size_t>(err); // This is cast safe
     }
     close(fd);
-    ABT_eventual_set(*(arg->eventual), &read_size, sizeof(size_t));
+    ABT_eventual_set(arg->eventual, &read_size, sizeof(size_t));
 }
 
 int read_chunks(const string& path, const off64_t offset, const vector<void*>& buf_ptrs,
@@ -194,7 +194,7 @@ int read_chunks(const string& path, const off64_t offset, const vector<void*>& b
     vector<ABT_eventual> eventuals(chnk_n);
     vector<unique_ptr<struct read_chunk_args>> thread_args(chnk_n);
     for (size_t i = 0; i < chnk_n; i++) {
-        auto chnk_id = static_cast<size_t*>(buf_ptrs[i]);
+        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
         auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
         auto chnk_size = buf_sizes[i + chnk_n];
         // Starting tasklets for parallel I/O
@@ -206,7 +206,7 @@ int read_chunks(const string& path, const off64_t offset, const vector<void*>& b
         args->size = chnk_size;
         // only the first chunk gets the offset. the chunks are sorted on the client side
         args->off = (i == 0 ? offset : 0);
-        args->eventual = &eventuals[i];
+        args->eventual = eventuals[i];
         thread_args[i] = std::move(args);
         auto ret = ABT_task_create(RPC_DATA->io_pool(), read_file_abt, &(*thread_args[i]), nullptr);
         if (ret != ABT_SUCCESS) {
