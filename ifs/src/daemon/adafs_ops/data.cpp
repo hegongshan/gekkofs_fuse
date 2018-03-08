@@ -66,7 +66,6 @@ int destroy_chunk_space(const std::string& path) {
    const rpc_chnk_id_t* chnk_id;
    size_t size;
    off64_t off;
-   abt_io_instance_id aid;
    ABT_eventual* eventual;
  * Because abt-io uses tasklets, calling threads are suspended for the time of the I/O, allowing other threads to do
  * work in the same ES. This can mean multiple write_file_abt() calls or other RPC calls
@@ -76,31 +75,29 @@ void write_file_abt(void* _arg) {
     size_t write_size = 0;
     // Unpack args
     auto* arg = static_cast<struct write_chunk_args*>(_arg);
-
     auto fs_path = path_to_fspath(*arg->path);
     auto chnk_path = bfs::path(ADAFS_DATA->chunk_path());
     chnk_path /= fs_path;
     bfs::create_directories(chnk_path);
     chnk_path /= fmt::FormatInt(*arg->chnk_id).c_str();
     // open file
-    int fd = abt_io_open(arg->aid, chnk_path.c_str(), O_WRONLY | O_CREAT, 0640);
+    int fd = open(chnk_path.c_str(), O_WRONLY | O_CREAT, 0640);
     if (fd < 0) {
         write_size = static_cast<size_t>(EIO);
         ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t));
         return;
     }
     // write file
-    auto err = static_cast<size_t>(abt_io_pwrite(arg->aid, fd, arg->buf, arg->size, arg->off));
+    auto err = static_cast<size_t>(pwrite(fd, arg->buf, arg->size, arg->off));
     if (err < 0) {
         ADAFS_DATA->spdlogger()->error("{}() Error {} while pwriting file {} chunk_id {} size {} off {}", __func__,
                                        strerror(errno), chnk_path.c_str(), *arg->chnk_id, arg->size, arg->off);
-        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t)); // write_size = 0
     } else {
         write_size = static_cast<size_t>(err); // This is cast safe
-        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t));
     }
-    // file is closed after eventual has returned. Threads in write_chunks still have to wait for thread to finish
-    abt_io_close(arg->aid, fd);
+    // file is closed
+    close(fd);
+    ABT_eventual_set(*(arg->eventual), &write_size, sizeof(size_t));
 }
 
 int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
@@ -108,31 +105,8 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
     write_size = 0;
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
     auto chnk_n = static_cast<unsigned int>(buf_sizes.size() / 2); // Case-safe: There never are so many chunks at once
-    // create abt threads in the context of the progress pool that is handling this call
-    ABT_xstream xstream;
-    ABT_pool pool;
-    vector<ABT_thread> threads(chnk_n);
     vector<ABT_eventual> eventuals(chnk_n);
     vector<unique_ptr<struct write_chunk_args>> thread_args(chnk_n);
-    auto ret = ABT_xstream_self(&xstream);
-    if (ret != ABT_SUCCESS) {
-        ADAFS_DATA->spdlogger()->warn("{}() Could not get xstream, aborting writing operation.", __func__);
-        write_size = 0;
-        return -1;
-    }
-    ret = ABT_xstream_get_main_pools(xstream, 1, &pool);
-    if (ret != ABT_SUCCESS) {
-        ADAFS_DATA->spdlogger()->warn("{}() Could not get xstream pool, aborting writing operation.", __func__);
-        write_size = 0;
-        return -1;
-    }
-    // Create abt-io instance with chunk n execution streams for I/O to work in parallel. Abt-io works in tasklets
-    auto aid = abt_io_init(chnk_n);
-    if (aid == ABT_IO_INSTANCE_NULL) {
-        ADAFS_DATA->spdlogger()->warn("{}() Could not get create abt_io, aborting writing operation.", __func__);
-        write_size = 0;
-        return -1;
-    }
 
     for (unsigned int i = 0; i < chnk_n; i++) {
         auto chnk_id = static_cast<size_t*>(buf_ptrs[i]);
@@ -148,10 +122,12 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
         args->size = chnk_size;
         // only the first chunk gets the offset. the chunks are sorted on the client side
         args->off = (i == 0 ? offset : 0);
-        args->aid = aid;
         args->eventual = &eventuals[i];
         thread_args[i] = std::move(args);
-        ABT_thread_create(pool, write_file_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, &threads[i]);
+        auto ret = ABT_task_create(RPC_DATA->io_pool(), write_file_abt, &(*thread_args[i]), nullptr);
+        if (ret != ABT_SUCCESS) {
+            ADAFS_DATA->spdlogger()->error("{}() task create failed", __func__);
+        }
     }
     for (unsigned int i = 0; i < chnk_n; i++) {
         size_t* thread_written_size;
@@ -164,18 +140,11 @@ int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector
 //                                           path, chnk_id);
             write_size = 0;
             return -1;
-        } else
+        } else {
             write_size += *thread_written_size;
+        }
         ABT_eventual_free(&eventuals[i]);
-        ret = ABT_thread_join(threads[i]);
-        if (ret != ABT_SUCCESS)
-            ADAFS_DATA->spdlogger()->warn("{}() Unable to join write file thread", __func__);
-        ret = ABT_thread_free(&threads[i]);
-        if (ret != ABT_SUCCESS)
-            ADAFS_DATA->spdlogger()->warn("{}() Unable to free write file thread", __func__);
     }
-    // frees the abt-io-instance-id struct and free used xstreams
-    abt_io_finalize(aid);
     return 0;
 }
 

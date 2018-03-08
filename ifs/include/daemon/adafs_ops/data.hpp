@@ -10,7 +10,6 @@ struct write_chunk_args {
     const rpc_chnk_id_t* chnk_id;
     size_t size;
     off64_t off;
-    abt_io_instance_id aid;
     ABT_eventual* eventual;
 };
 

@@ -47,9 +47,11 @@
 
 // Margo configuration
 
+// Number of threads used for concurrent I/O
+#define IO_THREADS 8
 // Number of threads used for RPC and IPC handlers at the daemon
-#define RPC_HANDLER_THREADS 16
-#define IPC_HANDLER_THREADS 16
+#define RPC_HANDLER_THREADS 8
+#define IPC_HANDLER_THREADS 8
 #define RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds

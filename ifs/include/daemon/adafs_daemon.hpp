@@ -33,7 +33,6 @@
 extern "C" {
 #include <abt.h>
 #include <abt-snoozer.h>
-#include <abt-io.h>
 #include <mercury.h>
 #include <margo.h>
 }
@@ -50,6 +49,7 @@ namespace bfs = boost::filesystem;
 bool init_environment();
 void destroy_enviroment();
 
+bool init_io_tasklet_pool();
 bool init_ipc_server();
 bool init_rpc_server();
 
