@@ -92,9 +92,9 @@ void destroy_enviroment() {
 }
 
 bool init_io_tasklet_pool() {
-    vector<ABT_xstream> io_streams_tmp(IO_THREADS);
+    vector<ABT_xstream> io_streams_tmp(DAEMON_IO_XSTREAMS);
     ABT_pool io_pools_tmp;
-    auto ret = ABT_snoozer_xstream_create(IO_THREADS, &io_pools_tmp, io_streams_tmp.data());
+    auto ret = ABT_snoozer_xstream_create(DAEMON_IO_XSTREAMS, &io_pools_tmp, io_streams_tmp.data());
     if (ret != ABT_SUCCESS) {
         ADAFS_DATA->spdlogger()->error(
                 "{}() ABT_snoozer_xstream_create() failed to initialize ABT_pool for I/O operations", __func__);
@@ -114,7 +114,7 @@ bool init_ipc_server() {
 
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, IPC_HANDLER_THREADS);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_IPC_HANDLER_XSTREAMS);
 
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init() failed to initialize the Margo IPC server", __func__);
@@ -158,7 +158,7 @@ bool init_rpc_server() {
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, RPC_HANDLER_THREADS);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;

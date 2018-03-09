@@ -45,14 +45,21 @@
 // However, when full the application blocks until **all** entries are flushed to disk.
 //#define KV_WRITE_BUFFER 16384
 
-// Margo configuration
+// Margo and Argobots configuration
 
-// Number of threads used for concurrent I/O in the daemon and preload library per process
-#define IO_THREADS 8
-#define IO_LIBRARY_THREADS 8
+/*
+ * Indicates the number of concurrent progress to drive I/O operations of chunk files to and from local file systems
+ * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
+ */
+#define DAEMON_IO_XSTREAMS 8
+/*
+ * Sets the number of concurrent progress for sending I/O related RPCs to daemons
+ * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
+ */
+#define PRELOAD_IORPC_XSTREAMS 8
 // Number of threads used for RPC and IPC handlers at the daemon
-#define RPC_HANDLER_THREADS 8
-#define IPC_HANDLER_THREADS 8
+#define DAEMON_RPC_HANDLER_XSTREAMS 8
+#define DAEMON_IPC_HANDLER_XSTREAMS 8
 #define RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds

@@ -78,8 +78,8 @@ bool init_ld_argobots() {
      */
     putenv(const_cast<char*>("ABT_MEM_MAX_NUM_STACKS=8"));
     // Creating pool for driving IO RPCs
-    vector<ABT_xstream> io_streams_tmp(IO_LIBRARY_THREADS);
-    argo_err = ABT_snoozer_xstream_create(IO_LIBRARY_THREADS, &io_pool, io_streams_tmp.data());
+    vector<ABT_xstream> io_streams_tmp(PRELOAD_IORPC_XSTREAMS);
+    argo_err = ABT_snoozer_xstream_create(PRELOAD_IORPC_XSTREAMS, &io_pool, io_streams_tmp.data());
     if (argo_err != ABT_SUCCESS) {
         ld_logger->error("{}() ABT_snoozer_xstream_create()  (client)", __func__);
         return false;
