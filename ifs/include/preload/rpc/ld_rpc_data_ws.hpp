@@ -25,7 +25,6 @@ struct write_args {
     std::vector<unsigned long>* chnk_ids;
     size_t recipient;
     ABT_eventual eventual;
-    ABT_barrier barrier;
 };
 
 struct read_args {
@@ -37,7 +36,6 @@ struct read_args {
     std::vector<unsigned long>* chnk_ids;
     size_t recipient;
     ABT_eventual eventual;
-    ABT_barrier barrier;
 };
 
 void rpc_send_write_abt(void* _arg);

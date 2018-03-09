@@ -78,16 +78,17 @@ void rpc_send_write_abt(void* _arg) {
         return;
     }
 
-    int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+        margo_request req;
+        ret = margo_iforward(handle, &in, &req);
+        if (ret == HG_SUCCESS) {
+            // Wait for the RPC response.
+            // This will call eventual_wait internally causing the calling ULT to be BLOCKED and implicitly yields
+            margo_wait(req);
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
-        // Make sure all ULTs from a write()'s chunk destination send their request, This yields to the scheduler
-        ABT_barrier_wait(arg->barrier);
+    if (ret == HG_SUCCESS) {
         /* decode response */
         ret = margo_get_output(handle, &out);
         if (ret != HG_SUCCESS) {
@@ -101,6 +102,8 @@ void rpc_send_write_abt(void* _arg) {
         else
             write_size = static_cast<size_t>(out.io_size);
         ld_logger->debug("{}() Got response {}", __func__, out.res);
+        // Signal calling process that RPC is finished and put written size into return value
+        ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
@@ -109,8 +112,6 @@ void rpc_send_write_abt(void* _arg) {
         ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
         return;
     }
-    // Signal calling process that RPC is finished and put written size into return value
-    ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
     margo_destroy(handle);
 }
 
@@ -163,7 +164,6 @@ void rpc_send_read_abt(void* _arg) {
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_read_data_in_t in{};
     rpc_data_out_t out{};
-//    int err; // XXX
     hg_return_t ret;
     auto read_size = static_cast<size_t>(0);
     // fill in
@@ -182,17 +182,18 @@ void rpc_send_read_abt(void* _arg) {
         ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         return;
     }
-
-    int send_ret = HG_FALSE;
+    // Send RPC and wait for response
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+        margo_request req;
+        ret = margo_iforward(handle, &in, &req);
+        if (ret == HG_SUCCESS) {
+            // Wait for the RPC response.
+            // This will call eventual_wait internally causing the calling ULT to be BLOCKED and implicitly yields
+            ret = margo_wait(req);
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
-        // Make sure all ULTs from a write()'s chunk destination send their request, This yields to the scheduler
-        ABT_barrier_wait(arg->barrier);
+    if (ret == HG_SUCCESS) {
         /* decode response */
         ret = margo_get_output(handle, &out);
         if (ret != HG_SUCCESS) {
@@ -201,8 +202,9 @@ void rpc_send_read_abt(void* _arg) {
             return;
         }
         read_size = static_cast<size_t>(out.io_size);
-//        err = out.res;
         ld_logger->debug("{}() Got response {}", __func__, out.res);
+        // Signal calling process that RPC is finished and put read size into return value
+        ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
@@ -210,10 +212,6 @@ void rpc_send_read_abt(void* _arg) {
         ld_logger->warn("{}() timed out", __func__);
         ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         return;
-//        err = EAGAIN;
     }
-    // Signal calling process that RPC is finished and put read size into return value
-    ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
-
     margo_destroy(handle);
 }
