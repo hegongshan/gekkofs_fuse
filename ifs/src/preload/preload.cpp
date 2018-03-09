@@ -288,15 +288,18 @@ void destroy_preload() {
         margo_diag_dump(ld_margo_rpc_id, "-", 0);
     }
 #endif
-    for (auto& io_stream : io_streams) {
-        ABT_xstream_join(io_stream);
-        ABT_xstream_free(&io_stream);
+    if (ld_margo_ipc_id != nullptr || ld_margo_rpc_id != nullptr) {
+        for (auto& io_stream : io_streams) {
+            ABT_xstream_join(io_stream);
+            ABT_xstream_free(&io_stream);
+        }
     }
     ld_logger->debug("{}() Freeing IO execution streams successful", __func__);
     // Shut down RPC client if used
     if (ld_margo_rpc_id != nullptr) {
         // free all rpc addresses in LRU map and finalize margo rpc
         ld_logger->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
+        // TODO freeing freezes sometimes. Put a timeout on there and skip it if it doesnt work ...
         auto free_all_addr = [&](const KVCache::node_type& n) {
             if (margo_addr_free(ld_margo_rpc_id, n.value) != HG_SUCCESS) {
                 ld_logger->warn("{}() Unable to free RPC client's svr address: {}.", __func__, n.key);
