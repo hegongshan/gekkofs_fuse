@@ -21,13 +21,19 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize RocksDB.", __func__);
         return false;
     }
-    // init margo
+    // Init margo for RPC
     if (!init_rpc_server()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo RPC server.", __func__);
         return false;
     }
+    // Init margo for RPC
     if (!init_ipc_server()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo IPC server.", __func__);
+        return false;
+    }
+    // Init Argobots ESs to drive IO
+    if (!init_io_tasklet_pool()) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
         return false;
     }
     // Register daemon to system
@@ -64,6 +70,11 @@ void destroy_enviroment() {
     margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
 #endif
     bfs::remove_all(ADAFS_DATA->mountdir());
+    for (unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
+        ABT_xstream_join(RPC_DATA->io_streams().at(i));
+        ABT_xstream_free(&RPC_DATA->io_streams().at(i));
+    }
+    ADAFS_DATA->spdlogger()->info("{}() Freeing I/O executions streams successful", __func__);
     if (!deregister_daemon_proc())
         ADAFS_DATA->spdlogger()->warn("{}() Unable to clean up auxiliary files", __func__);
     else
@@ -80,6 +91,20 @@ void destroy_enviroment() {
     ADAFS_DATA->spdlogger()->info("All services shut down. ADA-FS shutdown complete.");
 }
 
+bool init_io_tasklet_pool() {
+    vector<ABT_xstream> io_streams_tmp(DAEMON_IO_XSTREAMS);
+    ABT_pool io_pools_tmp;
+    auto ret = ABT_snoozer_xstream_create(DAEMON_IO_XSTREAMS, &io_pools_tmp, io_streams_tmp.data());
+    if (ret != ABT_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error(
+                "{}() ABT_snoozer_xstream_create() failed to initialize ABT_pool for I/O operations", __func__);
+        return false;
+    }
+    RPC_DATA->io_streams(io_streams_tmp);
+    RPC_DATA->io_pool(io_pools_tmp);
+    return true;
+}
+
 bool init_ipc_server() {
     auto protocol_port = "na+sm://"s;
     hg_addr_t addr_self;
@@ -89,7 +114,7 @@ bool init_ipc_server() {
 
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, IPC_HANDLER_THREADS);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_IPC_HANDLER_XSTREAMS);
 
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init() failed to initialize the Margo IPC server", __func__);
@@ -117,7 +142,6 @@ bool init_ipc_server() {
 
     ADAFS_DATA->spdlogger()->info("{}() Margo IPC server initialized. Accepting IPCs on PID {}", __func__,
                                   addr_self_cstring);
-
     // Put context and class into RPC_data object
     RPC_DATA->server_ipc_mid(mid);
 
@@ -134,7 +158,7 @@ bool init_rpc_server() {
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, RPC_HANDLER_THREADS);
+    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;

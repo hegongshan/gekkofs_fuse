@@ -294,6 +294,20 @@ make -j${CORES} || exit 1
 make install || exit 1
 make check || exit 1
 
+#echo "############################################################ Installing:  Abt-IO"
+## Abt IO
+#CURR=${SOURCE}/abt-io
+#prepare_build_dir ${CURR}
+#cd ${CURR}
+#echo "########## ADA-FS injection: Applying abt-io c++ template clash patch"
+#git apply ${PATCH_DIR}/abt_io_cplusplus_template_clash.patch || exit 1
+#./prepare.sh || exit 1
+#cd ${CURR}/build
+#../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig || exit 1
+#make -j${CORES} || exit 1
+#make install || exit 1
+# make check || exit 1 # The tests create so huge files that breaks memory :D
+
 echo "############################################################ Installing:  Margo"
 # Margo
 CURR=${SOURCE}/margo

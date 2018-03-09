@@ -74,24 +74,26 @@ void rpc_send_write_abt(void* _arg) {
 
     if (ret != HG_SUCCESS) {
         ld_logger->error("{}() failed to create bulk on client", __func__);
-        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(write_size));
+        ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
         return;
     }
 
-    int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+        margo_request req;
+        ret = margo_iforward(handle, &in, &req);
+        if (ret == HG_SUCCESS) {
+            // Wait for the RPC response.
+            // This will call eventual_wait internally causing the calling ULT to be BLOCKED and implicitly yields
+            margo_wait(req);
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
-
+    if (ret == HG_SUCCESS) {
         /* decode response */
         ret = margo_get_output(handle, &out);
         if (ret != HG_SUCCESS) {
             ld_logger->error("{}() failed to get rpc output", __func__);
-            ABT_eventual_set(*(arg->eventual), &write_size, sizeof(write_size));
+            ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
             return;
         }
         err = out.res;
@@ -100,18 +102,17 @@ void rpc_send_write_abt(void* _arg) {
         else
             write_size = static_cast<size_t>(out.io_size);
         ld_logger->debug("{}() Got response {}", __func__, out.res);
+        // Signal calling process that RPC is finished and put written size into return value
+        ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
     } else {
         ld_logger->warn("{}() timed out", __func__);
-        ABT_eventual_set(*(arg->eventual), &write_size, sizeof(write_size));
+        ABT_eventual_set(arg->eventual, &write_size, sizeof(write_size));
         return;
     }
-    // Signal calling process that RPC is finished and put written size into return value
-    ABT_eventual_set(*(arg->eventual), &write_size, sizeof(write_size));
     margo_destroy(handle);
-
 }
 
 void rpc_send_read_abt(void* _arg) {
@@ -163,7 +164,6 @@ void rpc_send_read_abt(void* _arg) {
     hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_read_data_in_t in{};
     rpc_data_out_t out{};
-//    int err; // XXX
     hg_return_t ret;
     auto read_size = static_cast<size_t>(0);
     // fill in
@@ -179,99 +179,39 @@ void rpc_send_read_abt(void* _arg) {
                             HG_BULK_READWRITE, &in.bulk_handle);
     if (ret != HG_SUCCESS) {
         ld_logger->error("{}() failed to create bulk on client", __func__);
-        ABT_eventual_set(*(arg->eventual), &read_size, sizeof(read_size));
+        ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         return;
     }
-
-    int send_ret = HG_FALSE;
+    // Send RPC and wait for response
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+        margo_request req;
+        ret = margo_iforward(handle, &in, &req);
+        if (ret == HG_SUCCESS) {
+            // Wait for the RPC response.
+            // This will call eventual_wait internally causing the calling ULT to be BLOCKED and implicitly yields
+            ret = margo_wait(req);
             break;
         }
     }
-    if (send_ret == HG_SUCCESS) {
+    if (ret == HG_SUCCESS) {
         /* decode response */
         ret = margo_get_output(handle, &out);
         if (ret != HG_SUCCESS) {
             ld_logger->error("{}() failed to get rpc output", __func__);
-            ABT_eventual_set(*(arg->eventual), &read_size, sizeof(read_size));
+            ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
             return;
         }
         read_size = static_cast<size_t>(out.io_size);
-//        err = out.res;
         ld_logger->debug("{}() Got response {}", __func__, out.res);
+        // Signal calling process that RPC is finished and put read size into return value
+        ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         /* clean up resources consumed by this rpc */
         margo_bulk_free(in.bulk_handle);
         margo_free_output(handle, &out);
     } else {
         ld_logger->warn("{}() timed out", __func__);
-        ABT_eventual_set(*(arg->eventual), &read_size, sizeof(read_size));
+        ABT_eventual_set(arg->eventual, &read_size, sizeof(read_size));
         return;
-//        err = EAGAIN;
     }
-    // Signal calling process that RPC is finished and put read size into return value
-    ABT_eventual_set(*(arg->eventual), &read_size, sizeof(read_size));
-
     margo_destroy(handle);
-}
-
-/**
- * XXX Currently unused.
- * @param path
- * @param in_size
- * @param in_offset
- * @param buf
- * @param write_size
- * @param append
- * @param updated_size
- * @return
- */
-int rpc_send_write(const string& path, const size_t in_size, const off64_t in_offset, void* buf, size_t& write_size,
-                   const bool append, const off64_t updated_size) {
-
-    hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
-    rpc_write_data_in_t in{};
-    rpc_data_out_t out{};
-    int err;
-    hg_return_t ret;
-    // fill in
-    in.path = path.c_str();
-    in.offset = in_offset;
-
-    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, path, handle, svr_addr, false);
-
-    auto used_mid = margo_hg_handle_get_instance(handle);
-
-    /* register local target buffer for bulk access */
-    ret = margo_bulk_create(used_mid, 1, &buf, &in_size, HG_BULK_READ_ONLY, &in.bulk_handle);
-    if (ret != 0)
-        ld_logger->error("{}() failed to create bulk on client", __func__);
-
-    int send_ret = HG_FALSE;
-    for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
-            break;
-        }
-    }
-    if (send_ret == HG_SUCCESS) {
-
-        /* decode response */
-        ret = margo_get_output(handle, &out);
-        err = out.res;
-        write_size = static_cast<size_t>(out.io_size);
-        ld_logger->debug("{}() Got response {}", __func__, out.res);
-        /* clean up resources consumed by this rpc */
-        margo_bulk_free(in.bulk_handle);
-        margo_free_output(handle, &out);
-    } else {
-        ld_logger->warn("{}() timed out", __func__);
-        err = EAGAIN;
-    }
-
-    margo_destroy(handle);
-
-    return err;
 }

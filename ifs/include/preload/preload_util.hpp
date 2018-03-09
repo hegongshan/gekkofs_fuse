@@ -103,6 +103,9 @@ typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
 extern KVCache rpc_address_cache;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
+// thread pool
+extern ABT_pool io_pool;
+extern std::vector<ABT_xstream> io_streams;
 
 // function definitions
 

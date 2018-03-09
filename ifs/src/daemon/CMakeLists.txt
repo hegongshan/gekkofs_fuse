@@ -32,7 +32,6 @@ set(DAEMON_HEADERS
 add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
 # define target specific directory includes
 target_include_directories(adafs_daemon PUBLIC
-    ${ABT_IO_INCLUDE_DIRS}
     ${ROCKSDB_INCLUDE_DIRS}
 )
 target_link_libraries(adafs_daemon
