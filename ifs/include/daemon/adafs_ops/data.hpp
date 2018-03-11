@@ -31,11 +31,4 @@ void read_file_abt(void* _arg);
 
 void write_file_abt(void* _arg);
 
-int
-write_chunks(const std::string& path, const std::vector<char*>& bulk_buf_ptrs, const std::vector<hg_size_t>& chnk_ids,
-             const std::vector<hg_size_t>& chnk_sizes, const off64_t offset, size_t& write_size);
-
-int read_chunks(const std::string& path, const std::vector<char*>& bulk_buf_ptrs, const std::vector<uint64_t>& chnk_ids,
-                const std::vector<uint64_t>& chnk_sizes, const off64_t offset, size_t& read_size);
-
 #endif //IFS_DATA_HPP
