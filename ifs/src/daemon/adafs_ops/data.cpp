@@ -100,29 +100,26 @@ void write_file_abt(void* _arg) {
     close(fd);
 }
 
-int write_chunks(const string& path, const vector<void*>& buf_ptrs, const vector<hg_size_t>& buf_sizes,
-                 const off64_t offset, size_t& write_size) {
+int write_chunks(const string& path, const vector<char*>& bulk_buf_ptrs, const vector<uint64_t>& chnk_ids,
+                 const vector<uint64_t>& chnk_sizes, const off64_t offset, size_t& write_size) {
     write_size = 0;
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
-    auto chnk_n = static_cast<unsigned int>(buf_sizes.size() / 2); // Case-safe: There never are so many chunks at once
+    auto chnk_n = static_cast<unsigned int>(chnk_ids.size()); // Case-safe: There never are so many chunks at once
     vector<ABT_eventual> eventuals(chnk_n);
-    vector<unique_ptr<struct write_chunk_args>> thread_args(chnk_n);
-    for (unsigned int i = 0; i < chnk_n; i++) {
-        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
-        auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
-        auto chnk_size = buf_sizes[i + chnk_n];
+    vector<unique_ptr<struct write_chunk_args>> task_args(chnk_n);
+    for (size_t i = 0; i < chnk_n; i++) {
         // Starting tasklets for parallel I/O
         ABT_eventual_create(sizeof(size_t), &eventuals[i]); // written file return value
         auto args = make_unique<write_chunk_args>();
         args->path = &path;
-        args->buf = chnk_ptr;
-        args->chnk_id = chnk_id;
-        args->size = chnk_size;
+        args->buf = bulk_buf_ptrs[i];
+        args->chnk_id = chnk_ids[i];
+        args->size = chnk_sizes[i];
         // only the first chunk gets the offset. the chunks are sorted on the client side
         args->off = (i == 0 ? offset : 0);
         args->eventual = eventuals[i];
-        thread_args[i] = std::move(args);
-        auto ret = ABT_task_create(RPC_DATA->io_pool(), write_file_abt, &(*thread_args[i]), nullptr);
+        task_args[i] = std::move(args);
+        auto ret = ABT_task_create(RPC_DATA->io_pool(), write_file_abt, &(*task_args[i]), nullptr);
         if (ret != ABT_SUCCESS) {
             ADAFS_DATA->spdlogger()->error("{}() task create failed", __func__);
         }
@@ -185,30 +182,26 @@ void read_file_abt(void* _arg) {
     ABT_eventual_set(arg->eventual, &read_size, sizeof(size_t));
 }
 
-int read_chunks(const string& path, const off64_t offset, const vector<void*>& buf_ptrs,
-                const vector<hg_size_t>& buf_sizes,
-                size_t& read_size) {
+int read_chunks(const string& path, const vector<char*>& bulk_buf_ptrs, const vector<uint64_t>& chnk_ids,
+                const vector<uint64_t>& chnk_sizes, const off64_t offset, size_t& read_size) {
     read_size = 0;
     // buf sizes also hold chnk ids. we only want to keep calculate the actual chunks
-    auto chnk_n = static_cast<unsigned int>(buf_sizes.size() / 2); // Case-safe: There never are so many chunks at once
+    auto chnk_n = static_cast<unsigned int>(chnk_ids.size()); // Case-safe: There never are so many chunks at once
     vector<ABT_eventual> eventuals(chnk_n);
-    vector<unique_ptr<struct read_chunk_args>> thread_args(chnk_n);
+    vector<unique_ptr<struct read_chunk_args>> task_args(chnk_n);
     for (size_t i = 0; i < chnk_n; i++) {
-        auto chnk_id = *(static_cast<size_t*>(buf_ptrs[i]));
-        auto chnk_ptr = static_cast<char*>(buf_ptrs[i + chnk_n]);
-        auto chnk_size = buf_sizes[i + chnk_n];
         // Starting tasklets for parallel I/O
         ABT_eventual_create(sizeof(size_t), &eventuals[i]); // written file return value
         auto args = make_unique<read_chunk_args>();
         args->path = &path;
-        args->buf = chnk_ptr;
-        args->chnk_id = chnk_id;
-        args->size = chnk_size;
+        args->buf = bulk_buf_ptrs[i];
+        args->chnk_id = chnk_ids[i];
+        args->size = chnk_sizes[i];
         // only the first chunk gets the offset. the chunks are sorted on the client side
         args->off = (i == 0 ? offset : 0);
         args->eventual = eventuals[i];
-        thread_args[i] = std::move(args);
-        auto ret = ABT_task_create(RPC_DATA->io_pool(), read_file_abt, &(*thread_args[i]), nullptr);
+        task_args[i] = std::move(args);
+        auto ret = ABT_task_create(RPC_DATA->io_pool(), read_file_abt, &(*task_args[i]), nullptr);
         if (ret != ABT_SUCCESS) {
             ADAFS_DATA->spdlogger()->error("{}() task create failed", __func__);
         }
