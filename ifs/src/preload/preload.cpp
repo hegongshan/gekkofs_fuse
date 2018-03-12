@@ -288,7 +288,7 @@ void destroy_preload() {
         margo_diag_dump(ld_margo_rpc_id, "-", 0);
     }
 #endif
-    if (ld_margo_ipc_id != nullptr || ld_margo_rpc_id != nullptr) {
+    if (services_used) {
         for (auto& io_stream : io_streams) {
             ABT_xstream_join(io_stream);
             ABT_xstream_free(&io_stream);
@@ -319,8 +319,10 @@ void destroy_preload() {
 //        margo_finalize(ld_margo_ipc_id);
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
-    if (services_used)
+    if (services_used) {
+        rpc_address_cache.clear();
         ld_logger->info("All services shut down. Client shutdown complete.");
+    }
     else
         ld_logger->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
 }

@@ -345,8 +345,8 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
             remote_addr = RPC_PROTOCOL + "://"s + hostname + ":"s +
                           fs_config->rpc_port; // convert hostid to remote_addr and port
         }
-        ld_logger->trace("generated remote_addr {} for hostname {} with rpc_port {}",
-                         remote_addr, hostname, fs_config->rpc_port);
+        ld_logger->info("generated remote_addr {} for hostname {} with rpc_port {}",
+                        remote_addr, hostname, fs_config->rpc_port);
         // try to look up 3 times before erroring out
         hg_return_t ret;
         // TODO If this is solution is somewhat helpful, write a more versatile solution
