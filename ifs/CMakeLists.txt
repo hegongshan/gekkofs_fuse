@@ -55,6 +55,11 @@ find_package(Abt REQUIRED)
 find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 
+# boost dependencies, system is required for filesystem
+find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem program_options)
+
+find_package(Threads REQUIRED)
+
 option(USE_OFI_VERBS "Use libfabric plugin with verbs." OFF)
 if (USE_OFI_VERBS)
     find_package(LibFabric REQUIRED)
@@ -104,8 +109,6 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
             )
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
-# boost dependencies, system is required for filesystem
-find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem)
 
 # define include directories that are relevant for all targets
 include_directories(

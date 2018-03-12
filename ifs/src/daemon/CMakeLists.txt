@@ -50,7 +50,6 @@ target_link_libraries(adafs_daemon
     ${MERCURY_LIBRARIES}
     ${MERCURY_UTIL_LIBRARIES}
     ${MARGO_LIBRARIES}
+    ${Boost_LIBRARIES}
+    Threads::Threads
 )
-
-set_target_properties(adafs_daemon PROPERTIES LINK_FLAGS
-    "-lpthread -lboost_system -lboost_filesystem -lboost_program_options")
