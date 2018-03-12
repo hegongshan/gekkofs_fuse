@@ -310,6 +310,7 @@ int main(int argc, const char* argv[]) {
             ("help,h", "Help message")
             ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir.")
             ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
+            ("metadir,d", po::value<string>(), "ADA-FS meta-data directory, if not provided rootdir will be automatically selected ")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
     po::variables_map vm;
@@ -332,6 +333,12 @@ int main(int argc, const char* argv[]) {
     if (vm.count("rootdir")) {
         ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
     }
+    if (vm.count("metadir")) {
+        ADAFS_DATA->metadir(vm["metadir"].as<string>());
+    } else if (vm.count("rootdir")) {
+        ADAFS_DATA->metadir(vm["rootdir"].as<string>());
+    }
+
     // parse host parameters
     vector<string> hosts{};
     if (vm.count("hostfile")) {
@@ -400,8 +407,8 @@ int main(int argc, const char* argv[]) {
 
 
     //set all paths
-    ADAFS_DATA->inode_path(ADAFS_DATA->rootdir() + "/meta/inodes"s); // XXX prob not needed anymore
-    ADAFS_DATA->dentry_path(ADAFS_DATA->rootdir() + "/meta/dentries"s); // XXX prob not needed anymore
+    ADAFS_DATA->inode_path(ADAFS_DATA->metadir() + "/meta/inodes"s); // XXX prob not needed anymore
+    ADAFS_DATA->dentry_path(ADAFS_DATA->metadir() + "/meta/dentries"s); // XXX prob not needed anymore
     ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
     ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 

@@ -62,6 +62,14 @@ void FsData::mountdir(const std::string& mountdir) {
     FsData::mountdir_ = mountdir;
 }
 
+const std::string& FsData::metadir() const {
+    return metadir_;
+}
+
+void FsData::metadir(const std::string& metadir) {
+    FsData::metadir_ = metadir;
+}
+
 const std::string& FsData::inode_path() const {
     return inode_path_;
 }

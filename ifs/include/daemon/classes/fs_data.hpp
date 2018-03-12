@@ -26,6 +26,7 @@ private:
     // paths
     std::string rootdir_;
     std::string mountdir_;
+    std::string metadir_;
     std::string inode_path_;
     std::string dentry_path_;
     std::string chunk_path_;
@@ -108,7 +109,11 @@ public:
 
     const std::string& mountdir() const;
 
-    void mountdir(const std::string& mountdir);
+    void mountdir(const std::string& mountdir_);
+
+    const std::string& metadir() const;
+
+    void metadir(const std::string& metadir_);
 
     const std::string& inode_path() const;
 

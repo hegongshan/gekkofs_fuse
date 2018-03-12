@@ -32,12 +32,13 @@ def check_dependencies():
     exit(1)
 
 
-def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
+def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, numactl):
     """Initializes ADAFS on specified nodes.
 
     Args:
         daemon_path (str): Path to daemon executable
         rootdir (str): Path to root directory for fs data
+        metadir (str): Path to metadata directory where metadata is stored
         mountdir (str): Path to mount directory where adafs is used in
         nodelist (str): Comma-separated list of nodes where adafs is launched on
     """
@@ -47,6 +48,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     # get absolute paths
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
+    metadir = os.path.realpath(os.path.expanduser(metadir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
     pssh_nodelist = ''
     nodefile = False
@@ -62,23 +64,23 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     else:
         pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
 
-    # clean root dir if needed
+    # clean root and metadata dir if needed
     if cleanroot:
-        cmd_rm_str = '%s "rm -rf %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir)
+        cmd_rm_str = '%s "rm -rf %s/* %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir, metadir)
         if PRETEND:
             print 'Pretending: %s' % cmd_rm_str
         else:
             print 'Running: %s' % cmd_rm_str
             pssh_ret = util.exec_shell(cmd_rm_str, True)
             err = False
-            for line in pssh_ret:
+            for line in pssh_ret:  pi
                 if 'FAILURE' in line.strip()[:30]:
                     err = True
                     print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
                           (line[line.find('FAILURE'):].strip().split(' ')[1])
                     print line
             if not err:
-                print 'pssh daemon launch successfully executed. Root dir is cleaned.\n'
+                print 'pssh daemon launch successfully executed. Root and Metadata dir are cleaned.\n'
             else:
                 print '[ERR] with pssh. Aborting!'
                 exit(1)
@@ -87,18 +89,18 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     if nodefile:
         if len(numactl) == 0:
             cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+                      % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
             cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+                      % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     else:
         if len(numactl) == 0:
             cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+                      % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
             cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+                      % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     if PRETEND:
         print 'Pretending: %s' % cmd_str
@@ -164,6 +166,8 @@ if __name__ == "__main__":
                         help='path to the daemon executable')
     parser.add_argument('rootdir', type=str,
                         help='path to the root directory where all data will be stored')
+    parser.add_argument('metadir', type=str,
+                        help='Path to metadata directory where metadata is stored')
     parser.add_argument('mountdir', type=str,
                         help='path to the mount directory of the file system')
     parser.add_argument('nodelist', type=str,
@@ -178,7 +182,7 @@ or a path to a nodefile (one node per line)''')
     parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',
                         help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
     parser.add_argument('-c', '--cleanroot', action='store_true',
-                        help='Removes contents of root directory before starting ADA-FS Daemon. Be careful!')
+                        help='Removes contents of root and metadata directory before starting ADA-FS Daemon. Be careful!')
     parser.add_argument('-n', '--numactl', metavar='<numactl_args>', type=str, default='',
                         help='If adafs daemon should be pinned to certain cores, set numactl arguments here.')
     args = parser.parse_args()
@@ -192,6 +196,6 @@ or a path to a nodefile (one node per line)''')
         PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
     PSSH_PATH = args.pssh
     WAITTIME = 5
-    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)
+    init_system(args.daemonpath, args.rootdir, args.metadir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)
 
     print '\nNothing left to do; exiting. :)'

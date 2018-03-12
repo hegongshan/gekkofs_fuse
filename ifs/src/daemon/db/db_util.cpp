@@ -7,7 +7,7 @@ using namespace std;
 
 bool init_rocksdb() {
     rocksdb::DB* db;
-    ADAFS_DATA->rdb_path(ADAFS_DATA->rootdir() + "/meta/rocksdb"s);
+    ADAFS_DATA->rdb_path(ADAFS_DATA->metadir() + "/meta/rocksdb"s);
     rocksdb::Options options;
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
     options.IncreaseParallelism();
