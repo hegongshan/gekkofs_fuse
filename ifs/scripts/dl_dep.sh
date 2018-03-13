@@ -1,45 +1,47 @@
 #!/bin/bash
 
+#set -x
+
+COMMON_WGET_FLAGS="--no-verbose"
+COMMON_GIT_FLAGS="--quiet --single-branch"
+
 clonedeps() {
-    FOLDER=$1
-    CLONE=$2
-    COMMIT=$3
+    local FOLDER=$1
+    local REPO=$2
+    local COMMIT=$3
+    local GIT_FLAGS=$4
 
-    echo "#########################################################"
-    echo "Cloning into ${SOURCE}/${FOLDER} ..."
+    local ACTION
 
-
-    if [ -d "${SOURCE}/${FOLDER}" ]; then
-        echo "${FOLDER} directory exists. Pulling instead."
-        cd ${SOURCE}/${FOLDER} && git pull origin master &>> ${LOG}
+    if [ -d "${SOURCE}/${FOLDER}/.git" ]; then
+        cd ${SOURCE}/${FOLDER} && git fetch -q || exit 1
+        ACTION="Pulled"
     else
-        cd ${SOURCE} && ${CLONE} &>> ${LOG}
+        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE}/${FOLDER}" > /dev/null || exit 1
+        ACTION="Cloned"
     fi
     # fix the version
-    cd ${SOURCE}/${FOLDER} && git checkout -f ${COMMIT} &>> ${LOG}
-    echo "Done"
+    cd "${SOURCE}/${FOLDER}" && git checkout -qf ${COMMIT} || exit 1
+    echo "${ACTION} ${FOLDER} [$COMMIT]"
 }
 
 wgetdeps() {
     FOLDER=$1
     URL=$2
-    echo "#########################################################"
-    echo "Wgetting into ${SOURCE}/${FOLDER} ..."
     if [ -d "${SOURCE}/${FOLDER}" ]; then
-        echo "${FOLDER} directory exists. Removing its content first."
-        rm -rf ${SOURCE}/${FOLDER}/* &>> ${LOG}
+        rm -rf "${SOURCE}/${FOLDER}"
     else
-        mkdir ${SOURCE}/${FOLDER}
+        mkdir -p "${SOURCE}/${FOLDER}"
     fi
     cd ${SOURCE}
     FILENAME=$(basename $URL)
     if [ -f "${SOURCE}/$FILENAME" ]; then
-        rm ${SOURCE}/$FILENAME
+        rm -f "${SOURCE}/$FILENAME"
     fi
-    wget $URL &>> ${LOG} || exit 1
-    tar -xf $FILENAME --directory ${SOURCE}/${FOLDER} --strip-components=1 &>> ${LOG}
-    rm $FILENAME
-    echo "Done"
+    wget -q "$URL" || exit 1
+    tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1 || exit 1 
+    rm -f "$FILENAME"
+    echo "Downloaded ${FOLDER}"
 }
 
 usage_short() {
@@ -107,10 +109,8 @@ if [[ -z ${1+x} ]]; then
     usage_short
     exit
 fi
-SOURCE=$1
+SOURCE="$( readlink -f "${1}" )"
 
-LOG="/tmp/adafs_download_deps.log"
-echo "" &> ${LOG}
 # optional arguments
 if [ "${NA_LAYER}" == "" ]; then
         echo "Defaulting NAPLUGIN to 'all'"
@@ -137,25 +137,24 @@ else
     echo "No cluster configuration set."
 fi
 
-echo "Source path is set to '$1'"
-echo "Download progress is logged at /tmp/adafs_download_deps.log"
+echo "Source path is set to  \"${SOURCE}\""
 
 mkdir -p ${SOURCE}
 
 # get cluster dependencies
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     # get libtool for cci
-    wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz"
+    wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz" &
     # get libev for mercury
-    wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz"
+    wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz" &
     # get gflags for rocksdb
-    wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz"
+    wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz" &
     # get zstd for fast compression in rocksdb
-    wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz"
+    wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz" &
     # get zlib for rocksdb
-    wgetdeps "lz4" "https://github.com/lz4/lz4/archive/v1.8.0.tar.gz"
+    wgetdeps "lz4" "https://github.com/lz4/lz4/archive/v1.8.0.tar.gz" &
 	# get snappy for rocksdb
-    wgetdeps "snappy" "https://github.com/google/snappy/archive/1.1.7.tar.gz"
+    wgetdeps "snappy" "https://github.com/google/snappy/archive/1.1.7.tar.gz" &
 fi
 #if [ "${CLUSTER}" == "fh2" ]; then
 	# no distinct 3rd party software needed as of now.
@@ -163,27 +162,28 @@ fi
 
 # get BMI
 if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "bmi" "git clone git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b"
+    clonedeps "bmi" "git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
 fi
 # get CCI
 if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "cci" "git clone https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2"
+    clonedeps "cci" "https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2" &
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.3"
+    wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
 fi
 # get Mercury
-clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"  "--recurse-submodules" &
 # get Argobots
-clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4"
+clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
 # get Argobots-snoozer
-clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7"
+clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7" &
 # get Argobots-IO
-#clonedeps "abt-io" "git clone https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c"
+#clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
 # get Margo
-clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce"
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
 # get rocksdb
-clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.3"
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.10.3.tar.gz" &
 
-echo "Nothing left to do. Exiting."
+# Wait for all download to be completed 
+wait
