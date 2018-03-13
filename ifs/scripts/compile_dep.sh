@@ -29,7 +29,8 @@ optional arguments:
     -j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
                 number of cores that are used to compile the depdencies
                 defaults to number of available cores
-	"
+    -t, --test  Perform libraries tests.
+"
 }
 
 prepare_build_dir() {
@@ -66,6 +67,10 @@ case ${key} in
     CORES="$2"
     shift # past argument
     shift # past value
+    ;;
+    -t|--test)
+    PERFORM_TEST=true
+    shift
     ;;
     -h|--help)
     help_msg
@@ -223,7 +228,7 @@ fi
     find . -type f -exec sed -i 's/-g -O2/-O3/g' {} \;
     make -j${CORES} || exit 1
     make install || exit 1
-    make check || exit 1
+    [ "${PERFORM_TEST}" ] && ( make check || exit 1 )
 fi
 
 if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
@@ -240,7 +245,7 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         ../configure --prefix=${INSTALL}  || exit 1
         make -j${CORES} || exit 1
         make install || exit 1
-        make check || exit 1
+        [ "${PERFORM_TEST}" ] && ( make check || exit 1 )
     fi
 fi
 
@@ -280,7 +285,7 @@ cd ${CURR}/build
 ../configure --prefix=${INSTALL} || exit 1
 make -j${CORES} || exit 1
 make install || exit 1
-make check || exit 1
+[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
 
 echo "############################################################ Installing:  Abt-snoozer"
 # Abt snoozer
@@ -292,7 +297,7 @@ cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig || exit 1
 make -j${CORES} || exit 1
 make install || exit 1
-make check || exit 1
+[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
 
 #echo "############################################################ Installing:  Abt-IO"
 ## Abt IO
@@ -306,7 +311,7 @@ make check || exit 1
 #../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig || exit 1
 #make -j${CORES} || exit 1
 #make install || exit 1
-# make check || exit 1 # The tests create so huge files that breaks memory :D
+#[ "${PERFORM_TEST}" ] && ( make check || exit 1 ) # The tests create so huge files that breaks memory :D
 
 echo "############################################################ Installing:  Margo"
 # Margo
@@ -318,7 +323,7 @@ cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3" || exit 1
 make -j${CORES} || exit 1
 make install || exit 1
-make check || exit 1
+[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
 
 echo "############################################################ Installing:  Rocksdb"
 # Rocksdb
