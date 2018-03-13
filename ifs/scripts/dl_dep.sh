@@ -109,7 +109,7 @@ if [[ -z ${1+x} ]]; then
     usage_short
     exit
 fi
-SOURCE=$1
+SOURCE="$( readlink -f "${1}" )"
 
 # optional arguments
 if [ "${NA_LAYER}" == "" ]; then

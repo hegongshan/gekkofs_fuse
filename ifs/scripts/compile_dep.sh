@@ -91,8 +91,8 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
     usage_short
     exit
 fi
-SOURCE=$1
-INSTALL=$2
+SOURCE="$( readlink -f "${1}" )"
+INSTALL="$( readlink -f "${2}" )"
 
 # deal with optional arguments
 if [ "${NA_LAYER}" == "" ]; then
