@@ -1,21 +1,27 @@
 #!/bin/bash
 
+#set -x
+
+COMMON_WGET_FLAGS="--no-verbose"
+COMMON_GIT_FLAGS="--quiet --single-branch"
+
 clonedeps() {
     local FOLDER=$1
-    local CLONE=$2
+    local REPO=$2
     local COMMIT=$3
+    local GIT_FLAGS=$4
+
     local ACTION
 
-    if [ -d "${SOURCE}/${FOLDER}" ]; then
-        echo "${FOLDER} directory exists. Pulling instead."
-        cd ${SOURCE}/${FOLDER} && git pull origin master &>> ${LOG}
+    if [ -d "${SOURCE}/${FOLDER}/.git" ]; then
+        cd ${SOURCE}/${FOLDER} && git fetch -q || exit 1
         ACTION="Pulled"
     else
-        cd ${SOURCE} && ${CLONE} &>> ${LOG}
+        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE}/${FOLDER}" > /dev/null || exit 1
         ACTION="Cloned"
     fi
     # fix the version
-    cd ${SOURCE}/${FOLDER} && git checkout -f ${COMMIT} &>> ${LOG}
+    cd "${SOURCE}/${FOLDER}" && git checkout -qf ${COMMIT} || exit 1
     echo "${ACTION} ${FOLDER} [$COMMIT]"
 }
 
@@ -23,19 +29,18 @@ wgetdeps() {
     FOLDER=$1
     URL=$2
     if [ -d "${SOURCE}/${FOLDER}" ]; then
-        echo "${FOLDER} directory exists. Removing its content first." &>> ${LOG}
-        rm -rf ${SOURCE}/${FOLDER}/* &>> ${LOG}
+        rm -rf "${SOURCE}/${FOLDER}"
     else
-        mkdir ${SOURCE}/${FOLDER}
+        mkdir -p "${SOURCE}/${FOLDER}"
     fi
     cd ${SOURCE}
     FILENAME=$(basename $URL)
     if [ -f "${SOURCE}/$FILENAME" ]; then
-        rm ${SOURCE}/$FILENAME
+        rm -f "${SOURCE}/$FILENAME"
     fi
-    wget $URL &>> ${LOG} || exit 1
-    tar -xf $FILENAME --directory ${SOURCE}/${FOLDER} --strip-components=1 &>> ${LOG}
-    rm $FILENAME
+    wget -q "$URL" || exit 1
+    tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1 || exit 1 
+    rm -f "$FILENAME"
     echo "Downloaded ${FOLDER}"
 }
 
@@ -106,8 +111,6 @@ if [[ -z ${1+x} ]]; then
 fi
 SOURCE=$1
 
-LOG="/tmp/adafs_download_deps.log"
-echo "" &> ${LOG}
 # optional arguments
 if [ "${NA_LAYER}" == "" ]; then
         echo "Defaulting NAPLUGIN to 'all'"
@@ -135,7 +138,6 @@ else
 fi
 
 echo "Source path is set to  \"${SOURCE}\""
-echo "Download progress is logged at \"${LOG}\""
 
 mkdir -p ${SOURCE}
 
@@ -160,26 +162,26 @@ fi
 
 # get BMI
 if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "bmi" "git clone git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
+    clonedeps "bmi" "git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
 fi
 # get CCI
 if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "cci" "git clone https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2" &
+    clonedeps "cci" "https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2" &
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
 fi
 # get Mercury
-clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"  "--recurse-submodules" &
 # get Argobots
-clonedeps "argobots" "git clone -b dev-get-dev-basic https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" &
+clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
 # get Argobots-snoozer
-clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7" &
+clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7" &
 # get Argobots-IO
-#clonedeps "abt-io" "git clone https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
+#clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
 # get Margo
-clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.10.3.tar.gz" &
 
