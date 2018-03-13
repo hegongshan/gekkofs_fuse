@@ -168,7 +168,7 @@ if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "libfabric" "git clone https://github.com/ofiwg/libfabric" "tags/v1.5.3" &
+    wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
 fi
 # get Mercury
 clonedeps "mercury" "git clone --recurse-submodules https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f" &
@@ -181,7 +181,7 @@ clonedeps "abt-snoozer" "git clone https://xgitlab.cels.anl.gov/sds/abt-snoozer.
 # get Margo
 clonedeps "margo" "git clone https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
 # get rocksdb
-clonedeps "rocksdb" "git clone https://github.com/facebook/rocksdb" "tags/v5.10.3" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.10.3.tar.gz" &
 
 # Wait for all download to be completed 
 wait
