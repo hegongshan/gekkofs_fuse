@@ -35,9 +35,8 @@ wgetdeps() {
     URL=$2
     if [ -d "${SOURCE}/${FOLDER}" ]; then
         rm -rf "${SOURCE}/${FOLDER}"
-    else
-        mkdir -p "${SOURCE}/${FOLDER}"
     fi
+    mkdir -p "${SOURCE}/${FOLDER}"
     cd ${SOURCE}
     FILENAME=$(basename $URL)
     if [ -f "${SOURCE}/$FILENAME" ]; then
