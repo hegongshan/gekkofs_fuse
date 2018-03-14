@@ -1,6 +1,7 @@
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
+#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -189,8 +190,8 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     map<uint64_t, vector<uint64_t>> dest_ids{};
     // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
     vector<uint64_t> dest_idx{};
-    for (auto i = chnk_start; i < chnk_end; i++) {
-        auto recipient = get_rpc_node(*path + fmt::FormatInt(i).str());
+    for (uint64_t i = chnk_start; i < chnk_end; i++) {
+        auto recipient = adafs_hash_path_chunk(*path, i, fs_config->host_size);
         if (dest_ids.count(recipient) == 0) {
             dest_ids.insert(make_pair(recipient, vector<uint64_t>{i}));
             dest_idx.push_back(recipient);
@@ -259,11 +260,11 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     if ((offset + count) % CHUNKSIZE == 0)
         chnk_end--;
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-    vector<uint64_t> dest_idx{};
-    // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
     map<uint64_t, vector<uint64_t>> dest_ids{};
+    // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
+    vector<uint64_t> dest_idx{};
     for (uint64_t i = chnk_start; i < chnk_end; i++) {
-        auto recipient = get_rpc_node(*path + fmt::FormatInt(i).str());
+        auto recipient = adafs_hash_path_chunk(*path, i, fs_config->host_size);
         if (dest_ids.count(recipient) == 0) {
             dest_ids.insert(make_pair(recipient, vector<uint64_t>{i}));
             dest_idx.push_back(recipient);

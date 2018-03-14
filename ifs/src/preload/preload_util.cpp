@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -376,15 +377,6 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
 }
 
 /**
- * Determines the node id for a given path
- * @param to_hash
- * @return
- */
-size_t get_rpc_node(const string& to_hash) {
-    return std::hash<string>{}(to_hash) % fs_config->host_size;
-}
-
-/**
  * Determines if the recipient id in an RPC is refering to the local or an remote node
  * @param recipient
  * @return
@@ -428,7 +420,8 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
 template<>
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
                             hg_addr_t& svr_addr, bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id, get_rpc_node(path), handle, svr_addr, force_rpc);
+    return margo_create_wrap_helper(ipc_id, rpc_id, adafs_hash_path(path, fs_config->host_size), handle, svr_addr,
+                                    force_rpc);
 }
 
 /**

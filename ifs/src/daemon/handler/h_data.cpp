@@ -7,16 +7,6 @@
 using namespace std;
 
 /**
- * Determines the node id for a given path
- * @param to_hash
- * @return
- */
-size_t get_rpc_node(const string& to_hash) {
-    //TODO can this be a shared function?
-    return std::hash<string>{}(to_hash) % ADAFS_DATA->host_size();
-}
-
-/**
  * Free Argobots tasks and eventual constructs in a given vector until max_idx.
  * Nothing is done for a vector if nullptr is given
  * @param abt_tasks
@@ -115,7 +105,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (get_rpc_node(in.path + fmt::FormatInt(chnk_id_file).str()) != ADAFS_DATA->host_id())
+        if (adafs_hash_path_chunk(in.path, chnk_id_file, ADAFS_DATA->host_size()) != ADAFS_DATA->host_id())
             continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
@@ -305,7 +295,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (get_rpc_node(in.path + fmt::FormatInt(chnk_id_file).str()) != ADAFS_DATA->host_id())
+        if (adafs_hash_path_chunk(in.path, chnk_id_file, ADAFS_DATA->host_size()) != ADAFS_DATA->host_id())
             continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host
