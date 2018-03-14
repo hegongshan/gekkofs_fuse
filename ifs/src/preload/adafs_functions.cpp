@@ -210,16 +210,6 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
         if (i == dest_n - 1 && ((offset + count) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
             total_chunk_size -= (CHUNKSIZE - ((offset + count) % CHUNKSIZE));
         auto args = make_unique<write_args>();
-        // DEL BEGIN
-        string ids = ""s;
-        for (auto&& id : dest_ids[dest_idx[i]]) {
-            ids += fmt::FormatInt(id).str() + "  "s;
-        }
-        ld_logger->info(
-                "{}() destination {} chnk_offset {} size {} total_chnksize {} div {} mod {} chnkids\n{}",
-                __func__, dest_idx[i], offset % CHUNKSIZE, count, total_chunk_size, total_chunk_size / CHUNKSIZE,
-                total_chunk_size % CHUNKSIZE, ids);
-        // DEL END
         args->path = path; // path
         args->total_chunk_size = total_chunk_size; // total size to write
         args->in_size = count;

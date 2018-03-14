@@ -49,9 +49,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
-    ADAFS_DATA->spdlogger()->info("{}() Got write RPC (local {}) with path {} size {} offset {}", __func__,
-                                  (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
-                                  in.offset);
+    ADAFS_DATA->spdlogger()->debug("{}() Got write RPC (local {}) with path {} size {} offset {}", __func__,
+                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
+                                   in.offset);
     /*
      * 2. Set up buffers for pull bulk transfers
      */
@@ -110,9 +110,6 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
-            // DEL BEGIN
-            ADAFS_DATA->spdlogger()->info("{}() XXX offset case!", __func__);
-            // DEL END
             // if only 1 destination and 1 chunk (small write) the transfer_size == bulk_size
             auto offset_transfer_size = (in.offset + bulk_size <= CHUNKSIZE) ? bulk_size : static_cast<size_t>(
                     CHUNKSIZE - in.offset);
@@ -139,12 +136,10 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
             // last chunk might have different transfer_size
             if (chnk_id_curr == in.chunk_n - 1)
                 transfer_size = chnk_size_left_host;
-            // DEL BEGIN
-            ADAFS_DATA->spdlogger()->info(
+            ADAFS_DATA->spdlogger()->trace(
                     "{}() BULK_TRANSFER hostid {} file {} chnkid {} total_Csize {} Csize_left {} origin offset {} local offset {} transfersize {}",
                     __func__, ADAFS_DATA->host_id(), in.path, chnk_id_file, in.total_chunk_size, chnk_size_left_host,
                     origin_offset, local_offset, transfer_size);
-            // DEL END
             // RDMA the data to here
             ret = margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, origin_offset,
                                       bulk_handle, local_offset, transfer_size);

@@ -1,4 +1,4 @@
-#include <dlfcn.h>
+
 
 #include <preload/preload.hpp>
 #include <global/rpc/ipc_types.hpp>
@@ -43,7 +43,8 @@ hg_id_t rpc_read_data_id;
 margo_instance_id ld_margo_ipc_id;
 margo_instance_id ld_margo_rpc_id;
 // rpc address cache
-KVCache rpc_address_cache{32768, 4096}; // XXX Set values are not based on anything...
+std::map<uint64_t, hg_addr_t> rpc_address_cache;
+ABT_mutex rpc_address_cache_mutex;
 // local daemon IPC address
 hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
 // IO RPC driver
@@ -247,6 +248,10 @@ void init_ld_environment_() {
         ld_logger->error("{}() Unable to read system hostfile /etc/hosts for address mapping.", __func__);
         exit(EXIT_FAILURE);
     }
+    if (ABT_mutex_create(&rpc_address_cache_mutex) != ABT_SUCCESS) {
+        ld_logger->error("{}() Unable to create RPC address cache mutex.", __func__);
+        exit(EXIT_FAILURE);
+    }
     ld_logger->info("{}() Environment initialization successful.", __func__);
 }
 
@@ -289,25 +294,26 @@ void destroy_preload() {
     }
 #endif
     if (services_used) {
+        ld_logger->debug("{}() Freeing ABT constructs ...", __func__);
         for (auto& io_stream : io_streams) {
             ABT_xstream_join(io_stream);
             ABT_xstream_free(&io_stream);
         }
+        ABT_mutex_free(&rpc_address_cache_mutex);
+        ld_logger->debug("{}() Freeing ABT constructs successful", __func__);
     }
-    ld_logger->debug("{}() Freeing IO execution streams successful", __func__);
     // Shut down RPC client if used
     if (ld_margo_rpc_id != nullptr) {
         // free all rpc addresses in LRU map and finalize margo rpc
         ld_logger->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
-        // TODO freeing freezes sometimes. Put a timeout on there and skip it if it doesnt work ...
-        auto free_all_addr = [&](const KVCache::node_type& n) {
-            if (margo_addr_free(ld_margo_rpc_id, n.value) != HG_SUCCESS) {
-                ld_logger->warn("{}() Unable to free RPC client's svr address: {}.", __func__, n.key);
+        for (auto& e : rpc_address_cache) {
+            ld_logger->info("{}() Trying to free hostid {}", __func__, e.first);
+            if (margo_addr_free(ld_margo_rpc_id, e.second) != HG_SUCCESS) {
+                ld_logger->warn("{}() Unable to free RPC client's svr address: {}.", __func__, e.first);
             }
-        };
-        rpc_address_cache.cwalk(free_all_addr);
+        }
         ld_logger->debug("{}() About to finalize the margo RPC client. Actually not doing it XXX", __func__);
-//        margo_finalize(ld_margo_rpc_id);
+        margo_finalize(ld_margo_rpc_id);
         ld_logger->debug("{}() Shut down Margo RPC client successful", __func__);
     }
     // Shut down IPC client if used
@@ -316,7 +322,7 @@ void destroy_preload() {
         if (margo_addr_free(ld_margo_ipc_id, daemon_svr_addr) != HG_SUCCESS)
             ld_logger->warn("{}() Unable to free IPC client's daemon svr address.", __func__);
         ld_logger->debug("{}() About to finalize the margo IPC client. Actually not doing it XXX", __func__);
-//        margo_finalize(ld_margo_ipc_id);
+        margo_finalize(ld_margo_ipc_id);
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used) {
