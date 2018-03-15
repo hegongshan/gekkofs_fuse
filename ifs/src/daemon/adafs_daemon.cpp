@@ -308,9 +308,9 @@ int main(int argc, const char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
-            ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir.")
+            ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
             ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
-            ("metadir,d", po::value<string>(), "ADA-FS meta-data directory, if not provided rootdir will be automatically selected ")
+            ("metadir,i", po::value<string>(), "ADA-FS metadata directory, if not set rootdir is used for metadata ")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
     po::variables_map vm;
@@ -403,22 +403,13 @@ int main(int argc, const char* argv[]) {
     ADAFS_DATA->host_size(hostmap.size());
     ADAFS_DATA->rpc_port(fmt::FormatInt(RPC_PORT).str());
     ADAFS_DATA->hosts_raw(hosts_raw);
-
-
-
-    //set all paths
-    ADAFS_DATA->inode_path(ADAFS_DATA->metadir() + "/meta/inodes"s); // XXX prob not needed anymore
-    ADAFS_DATA->dentry_path(ADAFS_DATA->metadir() + "/meta/dentries"s); // XXX prob not needed anymore
     ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
-    ADAFS_DATA->mgmt_path(ADAFS_DATA->rootdir() + "/mgmt"s);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
 
     // Make sure directory structure exists
-    bfs::create_directories(ADAFS_DATA->dentry_path());
-    bfs::create_directories(ADAFS_DATA->inode_path());
     bfs::create_directories(ADAFS_DATA->chunk_path());
-    bfs::create_directories(ADAFS_DATA->mgmt_path());
+    bfs::create_directories(ADAFS_DATA->metadir());
     // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
     bfs::create_directories(ADAFS_DATA->mountdir());
 

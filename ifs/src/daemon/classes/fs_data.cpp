@@ -70,36 +70,12 @@ void FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
 }
 
-const std::string& FsData::inode_path() const {
-    return inode_path_;
-}
-
-void FsData::inode_path(const std::string& inode_path_) {
-    FsData::inode_path_ = inode_path_;
-}
-
-const std::string& FsData::dentry_path() const {
-    return dentry_path_;
-}
-
-void FsData::dentry_path(const std::string& dentry_path_) {
-    FsData::dentry_path_ = dentry_path_;
-}
-
 const std::string& FsData::chunk_path() const {
     return chunk_path_;
 }
 
 void FsData::chunk_path(const std::string& chunk_path_) {
     FsData::chunk_path_ = chunk_path_;
-}
-
-const std::string& FsData::mgmt_path() const {
-    return mgmt_path_;
-}
-
-void FsData::mgmt_path(const std::string& mgmt_path_) {
-    FsData::mgmt_path_ = mgmt_path_;
 }
 
 const rocksdb::Options& FsData::rdb_options() const {

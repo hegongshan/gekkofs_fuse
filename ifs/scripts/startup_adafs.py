@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import time
-
 import os
+import time
 
 from util import util
 
@@ -41,6 +40,8 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
         metadir (str): Path to metadata directory where metadata is stored
         mountdir (str): Path to mount directory where adafs is used in
         nodelist (str): Comma-separated list of nodes where adafs is launched on
+        cleanroot (bool): if True, root and metadir is cleaned before daemon init
+        numactl (str): numactl arguments for daemon init
     """
     global PSSH_PATH
     global PRETEND
@@ -48,8 +49,12 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
     # get absolute paths
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
-    metadir = os.path.realpath(os.path.expanduser(metadir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
+    # Replace metadir with rootdir if only rootdir is given
+    if len(metadir) == 0:
+        metadir = rootdir
+    else:
+        metadir = os.path.realpath(os.path.expanduser(metadir))
     pssh_nodelist = ''
     nodefile = False
     if os.path.exists(nodelist):
@@ -73,7 +78,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
             print 'Running: %s' % cmd_rm_str
             pssh_ret = util.exec_shell(cmd_rm_str, True)
             err = False
-            for line in pssh_ret:  pi
+            for line in pssh_ret:
                 if 'FAILURE' in line.strip()[:30]:
                     err = True
                     print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
@@ -88,18 +93,18 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
     # Start deamons
     if nodefile:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     else:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     if PRETEND:
@@ -166,8 +171,6 @@ if __name__ == "__main__":
                         help='path to the daemon executable')
     parser.add_argument('rootdir', type=str,
                         help='path to the root directory where all data will be stored')
-    parser.add_argument('metadir', type=str,
-                        help='Path to metadata directory where metadata is stored')
     parser.add_argument('mountdir', type=str,
                         help='path to the mount directory of the file system')
     parser.add_argument('nodelist', type=str,
@@ -175,6 +178,9 @@ if __name__ == "__main__":
 or a path to a nodefile (one node per line)''')
 
     # optional arguments
+    parser.add_argument('-i', '--metadir', metavar='<METADIR_PATH>', type=str, default='',
+                        help='''Path to separate metadir directory where metadata is stored. 
+If not set, rootdir will be used instead.''')
     parser.add_argument('-p', '--pretend', action='store_true',
                         help='Output adafs launch command and do not actually execute it')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
