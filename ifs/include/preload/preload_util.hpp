@@ -6,7 +6,6 @@
 #include <preload/open_file_map.hpp>
 // third party libs
 #include <extern/spdlog/spdlog.h>
-#include <extern/lrucache/LRUCache11.hpp>
 #include <string>
 
 // TODO singleton this stuff away
@@ -99,8 +98,8 @@ extern std::shared_ptr<struct FsConfig> fs_config;
 // global logger instance
 extern std::shared_ptr<spdlog::logger> ld_logger;
 // rpc address cache
-typedef lru11::Cache<uint64_t, hg_addr_t> KVCache;
-extern KVCache rpc_address_cache;
+extern std::map<uint64_t, hg_addr_t> rpc_address_cache;
+extern ABT_mutex rpc_address_cache_mutex;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
 // thread pool
@@ -129,8 +128,6 @@ bool get_daemon_auxiliaries();
 bool read_system_hostfile();
 
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
-
-size_t get_rpc_node(const std::string& to_hash);
 
 bool is_local_op(size_t recipient);
 

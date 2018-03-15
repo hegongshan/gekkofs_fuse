@@ -3,7 +3,6 @@
 #define LFS_RPC_DATA_HPP
 
 #include <daemon/adafs_daemon.hpp>
-#include <extern/lrucache/LRUCache11.hpp>
 
 class RPCData {
 

@@ -51,4 +51,8 @@ hg_bool_t bool_to_merc_bool(bool state);
 
 bool is_handle_sm(margo_instance_id mid, const hg_addr_t& addr);
 
+size_t adafs_hash_path(const std::string& to_hash, const size_t host_size);
+
+size_t adafs_hash_path_chunk(const std::string& path, const size_t chunk_id, const size_t host_size);
+
 #endif //IFS_RPC_UTILS_HPP

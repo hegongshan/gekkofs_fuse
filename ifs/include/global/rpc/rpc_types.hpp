@@ -68,8 +68,11 @@ MERCURY_GEN_PROC(rpc_get_metadentry_size_out_t, ((hg_int32_t) (err))
 // data
 MERCURY_GEN_PROC(rpc_read_data_in_t,
                  ((hg_const_string_t) (path))\
-((hg_size_t) (size))\
 ((int64_t) (offset))\
+((hg_uint64_t) (chunk_n))\
+((hg_uint64_t) (chunk_start))\
+((hg_uint64_t) (chunk_end))\
+((hg_uint64_t) (total_chunk_size))\
 ((hg_bulk_t) (bulk_handle)))
 
 MERCURY_GEN_PROC(rpc_data_out_t,
@@ -79,6 +82,10 @@ MERCURY_GEN_PROC(rpc_data_out_t,
 MERCURY_GEN_PROC(rpc_write_data_in_t,
                  ((hg_const_string_t) (path))\
 ((int64_t) (offset))\
+((hg_uint64_t) (chunk_n))\
+((hg_uint64_t) (chunk_start))\
+((hg_uint64_t) (chunk_end))\
+((hg_uint64_t) (total_chunk_size))\
 ((hg_bulk_t) (bulk_handle)))
 
 #endif //LFS_RPC_TYPES_HPP

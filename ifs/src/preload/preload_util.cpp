@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -323,10 +324,17 @@ bool read_system_hostfile() {
  * @return
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-
-    if (rpc_address_cache.tryGet(hostid, svr_addr)) {
-        ld_logger->trace("tryGet successful and put in svr_addr");
+    /*
+     * This function might get called from within an Argobots thread.
+     * A std::mutex would lead to a deadlock as it does not yield the thread by sending it to BLOCKING state
+     */
+    ABT_mutex_lock(rpc_address_cache_mutex);
+    auto address_lookup = rpc_address_cache.find(hostid);
+    if (address_lookup != rpc_address_cache.end()) {
+        svr_addr = address_lookup->second;
+        ld_logger->trace("RPC address lookup success with hostid {}", address_lookup->first);
         //found
+        ABT_mutex_unlock(rpc_address_cache_mutex);
         return true;
     } else {
         // not found, manual lookup and add address mapping to LRU cache
@@ -357,9 +365,11 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
                 if (i == 4) {
                     ld_logger->error("{}() Unable to lookup address {} from host {}", __func__,
                                      remote_addr, fs_config->hosts.at(fs_config->host_id));
+                    ABT_mutex_unlock(rpc_address_cache_mutex);
                     return false;
                 }
                 // Wait a second then try again
+                // TODO fix that terrible solution
                 sleep(1 * (i + 1));
             } else {
                 break;
@@ -368,20 +378,13 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         if (svr_addr == HG_ADDR_NULL) {
             ld_logger->error("{}() looked up address is NULL for address {} from host {}", __func__,
                              remote_addr, fs_config->hosts.at(fs_config->host_id));
+            ABT_mutex_unlock(rpc_address_cache_mutex);
             return false;
         }
-        rpc_address_cache.insert(hostid, svr_addr);
+        rpc_address_cache.insert(make_pair(hostid, svr_addr));
+        ABT_mutex_unlock(rpc_address_cache_mutex);
         return true;
     }
-}
-
-/**
- * Determines the node id for a given path
- * @param to_hash
- * @return
- */
-size_t get_rpc_node(const string& to_hash) {
-    return std::hash<string>{}(to_hash) % fs_config->host_size;
 }
 
 /**
@@ -428,7 +431,8 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
 template<>
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
                             hg_addr_t& svr_addr, bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id, get_rpc_node(path), handle, svr_addr, force_rpc);
+    return margo_create_wrap_helper(ipc_id, rpc_id, adafs_hash_path(path, fs_config->host_size), handle, svr_addr,
+                                    force_rpc);
 }
 
 /**
