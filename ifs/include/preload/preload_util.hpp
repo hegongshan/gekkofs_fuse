@@ -102,9 +102,6 @@ extern std::map<uint64_t, hg_addr_t> rpc_address_cache;
 extern ABT_mutex rpc_address_cache_mutex;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
-// thread pool
-extern ABT_pool io_pool;
-extern std::vector<ABT_xstream> io_streams;
 
 // function definitions
 

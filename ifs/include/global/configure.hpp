@@ -52,11 +52,6 @@
  * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
  */
 #define DAEMON_IO_XSTREAMS 8
-/*
- * Sets the number of concurrent progress for sending I/O related RPCs to daemons
- * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
- */
-#define PRELOAD_IORPC_XSTREAMS 8
 // Number of threads used for RPC and IPC handlers at the daemon
 #define DAEMON_RPC_HANDLER_XSTREAMS 8
 #define DAEMON_IPC_HANDLER_XSTREAMS 8
