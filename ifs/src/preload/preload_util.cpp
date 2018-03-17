@@ -398,13 +398,13 @@ bool is_local_op(const size_t recipient) {
 
 inline hg_return
 margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t recipient, hg_handle_t& handle,
-                         hg_addr_t& svr_addr, bool force_rpc) {
+                         bool force_rpc) {
     hg_return_t ret;
     if (is_local_op(recipient) && !force_rpc) { // local
         ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_id, &handle);
         ld_logger->debug("{}() to local daemon (IPC)", __func__);
     } else { // remote
-        // TODO HG_ADDR_T is never freed atm. Need to change LRUCache
+        hg_addr_t svr_addr = HG_ADDR_NULL;
         if (!get_addr_by_hostid(recipient, svr_addr)) {
             ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return HG_OTHER_ERROR;
@@ -425,14 +425,12 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
  * @param rpc_id
  * @param path
  * @param handle
- * @param svr_addr
  * @return
  */
 template<>
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
-                            hg_addr_t& svr_addr, bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id, adafs_hash_path(path, fs_config->host_size), handle, svr_addr,
-                                    force_rpc);
+                            bool force_rpc) {
+    return margo_create_wrap_helper(ipc_id, rpc_id, adafs_hash_path(path, fs_config->host_size), handle, force_rpc);
 }
 
 /**
@@ -446,6 +444,6 @@ hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const st
  */
 template<>
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t& recipient, hg_handle_t& handle,
-                            hg_addr_t& svr_addr, bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id, recipient, handle, svr_addr, force_rpc);
+                            bool force_rpc) {
+    return margo_create_wrap_helper(ipc_id, rpc_id, recipient, handle, force_rpc);
 }

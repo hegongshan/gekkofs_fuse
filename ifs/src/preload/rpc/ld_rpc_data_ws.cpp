@@ -78,7 +78,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         in.total_chunk_size = total_chunk_size; // total size to write
         in.bulk_handle = (dest_idx[i] == fs_config->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
         // TODO remove svr_addr from this call
-        margo_create_wrap(ipc_write_data_id, rpc_write_data_id, dest_idx[i], rpc_handles[i], svr_addr, false);
+        margo_create_wrap(ipc_write_data_id, rpc_write_data_id, dest_idx[i], rpc_handles[i], false);
 
         ret = margo_iforward(rpc_handles[i], &in, &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
@@ -193,7 +193,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         in.total_chunk_size = total_chunk_size; // total size to write
         in.bulk_handle = (dest_idx[i] == fs_config->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
         // TODO remove svr_addr from this call
-        margo_create_wrap(ipc_read_data_id, rpc_read_data_id, dest_idx[i], rpc_handles[i], svr_addr, false);
+        margo_create_wrap(ipc_read_data_id, rpc_read_data_id, dest_idx[i], rpc_handles[i], false);
 
         ret = margo_iforward(rpc_handles[i], &in, &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
@@ -266,7 +266,7 @@ void rpc_send_write_abt(void* _arg) {
     in.chunk_end = arg->chnk_end;
     in.total_chunk_size = arg->total_chunk_size;
 
-    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->recipient, handle, svr_addr, false);
+    margo_create_wrap(ipc_write_data_id, rpc_write_data_id, arg->recipient, handle, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
 
@@ -332,7 +332,7 @@ void rpc_send_read_abt(void* _arg) {
     in.chunk_end = arg->chnk_end;
     in.total_chunk_size = arg->total_chunk_size;
 
-    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, arg->recipient, handle, svr_addr, false);
+    margo_create_wrap(ipc_read_data_id, rpc_read_data_id, arg->recipient, handle, false);
 
     auto used_mid = margo_hg_handle_get_instance(handle);
 
