@@ -15,7 +15,6 @@ extern "C" {
 
 #include <iostream>
 
-// XXX these two structs can be merged. How to deal with const void* then?
 struct write_args {
     std::shared_ptr<std::string> path;
     size_t total_chunk_size;
@@ -41,6 +40,11 @@ struct read_args {
     size_t recipient;
     ABT_eventual eventual;
 };
+
+ssize_t rpc_send_write(const std::string& path, const void* buf, const bool append_flag, const off64_t in_offset,
+                       const size_t write_size, const int64_t updated_metadentry_size);
+
+ssize_t rpc_send_read(const std::string& path, void* buf, const off64_t offset, const size_t read_size);
 
 void rpc_send_write_abt(void* _arg);
 
