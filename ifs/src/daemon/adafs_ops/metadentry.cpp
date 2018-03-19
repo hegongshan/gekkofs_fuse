@@ -5,29 +5,10 @@
 
 using namespace std;
 
-static const std::string dentry_val_delim = ","s; // XXX this needs to be global.
-
 ino_t generate_inode_no() {
     std::lock_guard<std::mutex> inode_lock(ADAFS_DATA->inode_mutex);
     // TODO check that our inode counter is within boundaries of inode numbers in the given node
     return ADAFS_DATA->raise_inode_count(1);
-}
-
-/**
- * Creates a file system node of any type (such as file or directory)
- * @param path
- * @param uid
- * @param gid
- * @param mode
- * @return
- */
-int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_t mode) {
-    auto err = create_metadentry(path, mode); // XXX errorhandling
-
-    // XXX Only do that for files and not for directories
-    init_chunk_space(path);
-
-    return err;
 }
 
 /**
@@ -78,16 +59,28 @@ int get_metadentry(const std::string& path, Metadata& md) {
     return 0;
 }
 
+/**
+ * Wrapper to remove a KV store entry with the path as key
+ * @param path
+ * @return
+ */
 int remove_metadentry(const string& path) {
     return db_delete_metadentry(path) ? 0 : -1;
 }
 
+/**
+ * Remove metadentry if exists and try to remove all chunks for path
+ * @param path
+ * @return
+ */
 int remove_node(const string& path) {
-    auto err = remove_metadentry(path);
-    // XXX Only do that with a file. Directory needs to be handled differently
-    if (err == 0)
-        destroy_chunk_space(
-                path); // XXX This removes only the data on that node. Leaving everything in inconsistent state
+    int err = 0; // assume we succeed
+    Metadata md{};
+    // If metadentry exists, try to remove it
+    if (get_metadentry(path, md) == 0) {
+        err = remove_metadentry(path);
+    }
+    destroy_chunk_space(path); // destroys all chunks for the path on this node
     return err;
 }
 

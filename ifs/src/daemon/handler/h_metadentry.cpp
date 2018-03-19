@@ -131,7 +131,7 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got remove node RPC with path {}", in.path);
 
-    // do remove
+    // Remove metadentry if exists on the node but also remove all chunks for that path
     out.err = remove_node(in.path);
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
