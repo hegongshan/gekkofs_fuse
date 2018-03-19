@@ -44,6 +44,11 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
     return rpc_send_mk_node(path, mode);
 }
 
+/**
+ * This sends internally a broadcast (i.e. n RPCs) to clean their chunk folders for that path
+ * @param path
+ * @return
+ */
 int adafs_rm_node(const std::string& path) {
     init_ld_env_if_needed();
     return rpc_send_rm_node(path);

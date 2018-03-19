@@ -164,44 +164,62 @@ int rpc_send_stat(const std::string& path, string& attr) {
 }
 
 int rpc_send_rm_node(const std::string& path) {
-    rpc_rm_node_in_t in{};
-    rpc_err_out_t out{};
-    hg_handle_t handle;
-    int err = EUNKNOWN;
-    // fill in
-    in.path = path.c_str();
+    hg_return_t ret;
+    int err = 0; // assume we succeed
 
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, handle, false);
-    if (ret != HG_SUCCESS) {
-        errno = EBUSY;
-        return -1;
+    ld_logger->debug("{}() Creating Mercury handles for all nodes ...", __func__);
+    vector<hg_handle_t> rpc_handles(fs_config->host_size);
+    vector<margo_request> rpc_waiters(fs_config->host_size);
+    vector<rpc_rm_node_in_t> rpc_in(fs_config->host_size);
+    // Send rpc to all nodes as all of them can have chunks for this path
+    for (size_t i = 0; i < fs_config->host_size; i++) {
+        // fill in
+        rpc_in[i].path = path.c_str();
+        // create handle
+        ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, i, rpc_handles[i], false);
+        if (ret != HG_SUCCESS) {
+            ld_logger->warn("{}() Unable to create Mercury handle", __func__);
+            // We use continue here to remove at least some data
+            // XXX In the future we can discuss RPC retrying. This should be a function to be used in general
+            errno = EBUSY;
+            err = -1;
+        }
+        // send async rpc
+        ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
+        if (ret != HG_SUCCESS) {
+            ld_logger->warn("{}() Unable to create Mercury handle", __func__);
+            errno = EBUSY;
+            err = -1;
+        }
     }
-    // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
-    ret = margo_forward_timed_wrap(handle, &in);
-#endif
-    // Get response
-    if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
+
+    // Wait for RPC responses and then get response
+    for (size_t i = 0; i < fs_config->host_size; i++) {
+        // XXX We might need a timeout here to not wait forever for an output that never comes?
+        ret = margo_wait(rpc_waiters[i]);
+        if (ret != HG_SUCCESS) {
+            ld_logger->warn("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path, i);
+            errno = EBUSY;
+            err = -1;
+        }
+        rpc_err_out_t out{};
+        ret = margo_get_output(rpc_handles[i], &out);
         if (ret == HG_SUCCESS) {
             ld_logger->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
+            if (err != 0) {
+                errno = out.err;
+                err = -1;
+            }
         } else {
             // something is wrong
             errno = EBUSY;
+            err = -1;
             ld_logger->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        ld_logger->warn("{}() timed out");
-        errno = EBUSY;
+        margo_free_output(rpc_handles[i], &out);
+        margo_destroy(rpc_handles[i]);
     }
-    margo_destroy(handle);
     return err;
 }
 
