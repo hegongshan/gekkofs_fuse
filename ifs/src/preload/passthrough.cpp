@@ -53,6 +53,9 @@ void* libc_pread64;
 void* libc_lseek;
 void* libc_lseek64;
 
+void* libc_fsync;
+void* libc_fdatasync;
+
 void* libc_truncate;
 void* libc_ftruncate;
 
@@ -101,6 +104,8 @@ void init_passthrough_() {
 
     libc_lseek = dlsym(libc, "lseek");
     libc_lseek64 = dlsym(libc, "lseek64");
+    libc_fsync = dlsym(libc, "fsync");
+    libc_fdatasync = dlsym(libc, "fdatasync");
 
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");

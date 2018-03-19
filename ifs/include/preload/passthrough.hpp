@@ -48,6 +48,8 @@ extern void* libc_pread64;
 
 extern void* libc_lseek;
 extern void* libc_lseek64;
+extern void* libc_fsync;
+extern void* libc_fdatasync;
 
 extern void* libc_truncate;
 extern void* libc_ftruncate;

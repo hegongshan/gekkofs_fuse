@@ -363,6 +363,24 @@ off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
     return (reinterpret_cast<decltype(&lseek64)>(libc_lseek64))(fd, offset, whence);
 }
 
+int fsync(int fd) {
+    init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {} path {}", __func__, fd, file_map.get(fd)->path());
+        return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
+    }
+    return (reinterpret_cast<decltype(&fsync)>(libc_fsync))(fd);
+}
+
+int fdatasync(int fd) {
+    init_passthrough_if_needed();
+    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+        ld_logger->trace("{}() called with fd {} path {}", __func__, fd, file_map.get(fd)->path());
+        return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
+    }
+    return (reinterpret_cast<decltype(&fdatasync)>(libc_fdatasync))(fd);
+}
+
 int truncate(const char* path, off_t length) __THROW {
     init_passthrough_if_needed();
     return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
