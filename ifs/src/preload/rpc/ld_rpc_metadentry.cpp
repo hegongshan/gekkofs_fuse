@@ -30,7 +30,6 @@ inline hg_return_t margo_forward_timed_wrap(hg_handle_t& handle, void* in_struct
 
 int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_mk_node_in_t in{};
     rpc_err_out_t out{};
     int err = EUNKNOWN;
@@ -39,7 +38,7 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     in.mode = mode;
     // Create handle
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_mk_node_id, rpc_mk_node_id, path, handle, svr_addr, false);
+    auto ret = margo_create_wrap(ipc_mk_node_id, rpc_mk_node_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -75,7 +74,6 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
 
 int rpc_send_access(const std::string& path, const int mask) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_access_in_t in{};
     rpc_err_out_t out{};
     int err = EUNKNOWN;
@@ -83,7 +81,7 @@ int rpc_send_access(const std::string& path, const int mask) {
     in.path = path.c_str();
     in.mask = mask;
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, svr_addr, false);
+    auto ret = margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -120,14 +118,13 @@ int rpc_send_access(const std::string& path, const int mask) {
 
 int rpc_send_stat(const std::string& path, string& attr) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
     int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, svr_addr, false);
+    auto ret = margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -170,13 +167,12 @@ int rpc_send_rm_node(const std::string& path) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, handle, svr_addr, false);
+    auto ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -212,7 +208,6 @@ int rpc_send_rm_node(const std::string& path) {
 
 int rpc_send_update_metadentry(const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
     int err = EUNKNOWN;
@@ -240,7 +235,7 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_update_metadentry_id, rpc_update_metadentry_id, path, handle, svr_addr, false);
+    auto ret = margo_create_wrap(ipc_update_metadentry_id, rpc_update_metadentry_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -277,7 +272,6 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
 int rpc_send_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
                                     off64_t& ret_size) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_update_metadentry_size_in_t in{};
     rpc_update_metadentry_size_out_t out{};
     // add data
@@ -291,8 +285,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
     int err = EUNKNOWN;
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path, handle, svr_addr,
-                                 false);
+    auto ret = margo_create_wrap(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -329,7 +322,6 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
 
 int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     hg_handle_t handle;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
     rpc_path_only_in_t in{};
     rpc_get_metadentry_size_out_t out{};
     // add data
@@ -337,8 +329,7 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     int err = EUNKNOWN;
 
     ld_logger->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_get_metadentry_size_id, rpc_get_metadentry_size_id, path, handle, svr_addr,
-                                 false);
+    auto ret = margo_create_wrap(ipc_get_metadentry_size_id, rpc_get_metadentry_size_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;

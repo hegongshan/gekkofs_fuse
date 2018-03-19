@@ -1,7 +1,6 @@
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
-#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -169,136 +168,30 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
     auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
-    int err = 0;
+    ssize_t ret = 0;
     long updated_size = 0;
-    auto write_size = static_cast<size_t>(0);
 
-    err = rpc_send_update_metadentry_size(*path, count, offset, append_flag, updated_size);
-    if (err != 0) {
-        ld_logger->error("{}() update_metadentry_size failed with err {}", __func__, err);
+    ret = rpc_send_update_metadentry_size(*path, count, offset, append_flag, updated_size);
+    if (ret != 0) {
+        ld_logger->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
         return 0; // ERR
     }
-    if (append_flag)
-        offset = updated_size - count;
-
-    auto chnk_start = static_cast<uint64_t>(offset) / CHUNKSIZE; // first chunk number
-    auto chnk_end = (offset + count) / CHUNKSIZE + 1; // last chunk number (right-open) [chnk_start,chnk_end)
-    if ((offset + count) % CHUNKSIZE == 0)
-        chnk_end--;
-
-    // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-    map<uint64_t, vector<uint64_t>> dest_ids{};
-    // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
-    vector<uint64_t> dest_idx{};
-    for (uint64_t i = chnk_start; i < chnk_end; i++) {
-        auto recipient = adafs_hash_path_chunk(*path, i, fs_config->host_size);
-        if (dest_ids.count(recipient) == 0) {
-            dest_ids.insert(make_pair(recipient, vector<uint64_t>{i}));
-            dest_idx.push_back(recipient);
-        } else
-            dest_ids[recipient].push_back(i);
+    ret = rpc_send_write(*path, buf, append_flag, offset, count, updated_size);
+    if (ret < 0) {
+        ld_logger->warn("{}() rpc_send_write failed with ret {}", __func__, ret);
     }
-    // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-    auto dest_n = dest_idx.size();
-    vector<ABT_eventual> eventuals(dest_n);
-    vector<unique_ptr<struct write_args>> thread_args(dest_n);
-    for (uint64_t i = 0; i < dest_n; i++) {
-        ABT_eventual_create(sizeof(size_t), &eventuals[i]);
-        auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
-        if (i == 0) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= (offset % CHUNKSIZE);
-        if (i == dest_n - 1 && ((offset + count) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
-            total_chunk_size -= (CHUNKSIZE - ((offset + count) % CHUNKSIZE));
-        auto args = make_unique<write_args>();
-        args->path = path; // path
-        args->total_chunk_size = total_chunk_size; // total size to write
-        args->in_size = count;
-        args->in_offset = offset % CHUNKSIZE;// first offset in dest_idx is the chunk with a potential offset
-        args->buf = buf;// pointer to write buffer
-        args->chnk_start = chnk_start;// append flag when file was opened
-        args->chnk_end = chnk_end;// append flag when file was opened
-        args->chnk_ids = &dest_ids[dest_idx[i]];// pointer to list of chunk ids that all go to the same destination
-        args->recipient = dest_idx[i];// recipient
-        args->eventual = eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
-        thread_args[i] = std::move(args);
-        ABT_thread_create(io_pool, rpc_send_write_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, nullptr);
-    }
-    // Sum written sizes
-    for (uint64_t i = 0; i < dest_n; i++) {
-        size_t* thread_ret_size;
-        ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
-        if (thread_ret_size == nullptr || *thread_ret_size == 0) {
-            // TODO error handling if write of a thread failed. all data needs to be deleted and size update reverted
-            ld_logger->error("{}() Writing thread {} did not write anything. NO ACTION WAS DONE", __func__, i);
-        } else
-            write_size += *thread_ret_size;
-        ABT_eventual_free(&eventuals[i]);
-    }
-    return write_size;
+    return ret; // return written size or -1 as error
 }
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
-    auto read_size = static_cast<size_t>(0);
-    auto err = 0;
 
-    // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-    auto chnk_start = static_cast<uint64_t>(offset) / CHUNKSIZE; // first chunk number
-    auto chnk_end = (offset + count) / CHUNKSIZE + 1; // last chunk number (right-open) [chnk_start,chnk_end)
-    if ((offset + count) % CHUNKSIZE == 0)
-        chnk_end--;
-    // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
-    map<uint64_t, vector<uint64_t>> dest_ids{};
-    // contains the recipient ids, used to access the dest_ids map. First idx is chunk with potential offset
-    vector<uint64_t> dest_idx{};
-    for (uint64_t i = chnk_start; i < chnk_end; i++) {
-        auto recipient = adafs_hash_path_chunk(*path, i, fs_config->host_size);
-        if (dest_ids.count(recipient) == 0) {
-            dest_ids.insert(make_pair(recipient, vector<uint64_t>{i}));
-            dest_idx.push_back(recipient);
-        } else
-            dest_ids[recipient].push_back(i);
+    auto ret = rpc_send_read(*path, buf, offset, count);
+    if (ret < 0) {
+        ld_logger->warn("{}() rpc_send_read failed with ret {}", __func__, ret);
     }
-    // Create an Argobots thread per destination, fill an appropriate struct with its destination chunk ids
-    auto dest_n = dest_idx.size();
-    vector<ABT_eventual> eventuals(dest_n);
-    vector<unique_ptr<struct read_args>> thread_args(dest_n);
-    for (uint64_t i = 0; i < dest_n; i++) {
-        ABT_eventual_create(sizeof(size_t), &eventuals[i]);
-        auto total_chunk_size = dest_ids[dest_idx[i]].size() * CHUNKSIZE;
-        if (i == 0) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= (offset % CHUNKSIZE);
-        if (i == dest_n - 1 && ((offset + count) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
-            total_chunk_size -= (CHUNKSIZE - ((offset + count) % CHUNKSIZE));
-        auto args = make_unique<read_args>();
-        args->path = path;
-        args->total_chunk_size = total_chunk_size;
-        args->in_size = count;// total size to read
-        args->in_offset = offset % CHUNKSIZE;// reading offset only for the first chunk
-        args->buf = buf;
-        args->chnk_start = chnk_start;
-        args->chnk_end = chnk_end;
-        args->chnk_ids = &dest_ids[dest_idx[i]]; // pointer to list of chunk ids that all go to the same destination
-        args->recipient = dest_idx[i];// recipient
-        args->eventual = eventuals[i];// pointer to an eventual which has allocated memory for storing the written size
-        thread_args[i] = std::move(args);
-        // Threads are implicitly released once calling function finishes
-        ABT_thread_create(io_pool, rpc_send_read_abt, &(*thread_args[i]), ABT_THREAD_ATTR_NULL, nullptr);
-    }
-    // Sum read sizes
-    for (uint64_t i = 0; i < dest_n; i++) {
-        size_t* thread_ret_size;
-        ABT_eventual_wait(eventuals[i], (void**) &thread_ret_size);
-        if (thread_ret_size == nullptr || *thread_ret_size == 0) {
-            err = -1;
-            ld_logger->error("{}() Reading thread {} did not read anything. NO ACTION WAS DONE", __func__, i);
-        } else
-            read_size += *thread_ret_size;
-        ABT_eventual_free(&eventuals[i]);
-    }
-    // XXX check how much we need to deal with the read_size
     // XXX check that we don't try to read past end of the file
-    return err == 0 ? read_size : 0;
+    return ret; // return read size or -1 as error
 }

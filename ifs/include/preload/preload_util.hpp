@@ -102,9 +102,6 @@ extern std::map<uint64_t, hg_addr_t> rpc_address_cache;
 extern ABT_mutex rpc_address_cache_mutex;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
-// thread pool
-extern ABT_pool io_pool;
-extern std::vector<ABT_xstream> io_streams;
 
 // function definitions
 
@@ -132,8 +129,7 @@ bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 bool is_local_op(size_t recipient);
 
 template<typename T>
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const T&, hg_handle_t& handle,
-                            hg_addr_t& svr_addr, bool force_rpc);
+hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const T&, hg_handle_t& handle, bool force_rpc);
 
 
 #endif //IFS_PRELOAD_UTIL_HPP

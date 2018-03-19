@@ -47,9 +47,6 @@ std::map<uint64_t, hg_addr_t> rpc_address_cache;
 ABT_mutex rpc_address_cache_mutex;
 // local daemon IPC address
 hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
-// IO RPC driver
-ABT_pool io_pool;
-std::vector<ABT_xstream> io_streams;
 
 /**
  * Initializes the Argobots environment
@@ -78,14 +75,6 @@ bool init_ld_argobots() {
      * See for reference: https://xgitlab.cels.anl.gov/sds/margo/issues/40
      */
     putenv(const_cast<char*>("ABT_MEM_MAX_NUM_STACKS=8"));
-    // Creating pool for driving IO RPCs
-    vector<ABT_xstream> io_streams_tmp(PRELOAD_IORPC_XSTREAMS);
-    argo_err = ABT_snoozer_xstream_create(PRELOAD_IORPC_XSTREAMS, &io_pool, io_streams_tmp.data());
-    if (argo_err != ABT_SUCCESS) {
-        ld_logger->error("{}() ABT_snoozer_xstream_create()  (client)", __func__);
-        return false;
-    }
-    io_streams = io_streams_tmp;
     ld_logger->debug("{}() Argobots initialization successful.", __func__);
     return true;
 }
@@ -295,10 +284,6 @@ void destroy_preload() {
 #endif
     if (services_used) {
         ld_logger->debug("{}() Freeing ABT constructs ...", __func__);
-        for (auto& io_stream : io_streams) {
-            ABT_xstream_join(io_stream);
-            ABT_xstream_free(&io_stream);
-        }
         ABT_mutex_free(&rpc_address_cache_mutex);
         ld_logger->debug("{}() Freeing ABT constructs successful", __func__);
     }
@@ -313,7 +298,7 @@ void destroy_preload() {
             }
         }
         ld_logger->debug("{}() About to finalize the margo RPC client. Actually not doing it XXX", __func__);
-        margo_finalize(ld_margo_rpc_id);
+//        margo_finalize(ld_margo_rpc_id); // XXX Sometimes this hangs on the cluster. Investigate
         ld_logger->debug("{}() Shut down Margo RPC client successful", __func__);
     }
     // Shut down IPC client if used
@@ -322,7 +307,7 @@ void destroy_preload() {
         if (margo_addr_free(ld_margo_ipc_id, daemon_svr_addr) != HG_SUCCESS)
             ld_logger->warn("{}() Unable to free IPC client's daemon svr address.", __func__);
         ld_logger->debug("{}() About to finalize the margo IPC client. Actually not doing it XXX", __func__);
-        margo_finalize(ld_margo_ipc_id);
+//        margo_finalize(ld_margo_ipc_id);
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used) {
