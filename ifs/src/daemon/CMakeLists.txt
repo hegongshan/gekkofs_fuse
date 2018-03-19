@@ -30,10 +30,6 @@ set(DAEMON_HEADERS
     ../../include/daemon/handler/rpc_defs.hpp
     )
 add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
-# define target specific directory includes
-target_include_directories(adafs_daemon PUBLIC
-    ${ROCKSDB_INCLUDE_DIRS}
-)
 target_link_libraries(adafs_daemon
     ${ROCKSDB_LIBRARIES}
     # rocksdb libs
@@ -52,4 +48,7 @@ target_link_libraries(adafs_daemon
     ${MARGO_LIBRARIES}
     ${Boost_LIBRARIES}
     Threads::Threads
-)
+    )
+if (${JEMALLOC_FOUND})
+    target_link_libraries(adafs_daemon ${JEMALLOC_LIBRARIES})
+endif ()
