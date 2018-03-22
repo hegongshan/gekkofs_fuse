@@ -1,7 +1,7 @@
 
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <global/rpc/rpc_utils.hpp>
-
+#include <global/blocks_calc_util.hpp>
 
 using namespace std;
 
@@ -18,11 +18,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     if (append_flag)
         offset = updated_metadentry_size - write_size;
 
-    auto chnk_start = static_cast<uint64_t>(offset) / CHUNKSIZE; // first chunk number
-    // last chunk number (right-open) [chnk_start,chnk_end)
-    auto chnk_end = static_cast<uint64_t>((offset + write_size) / CHUNKSIZE + 1);
-    if ((offset + write_size) % CHUNKSIZE == 0)
-        chnk_end--;
+    auto chnk_start = block_num(offset, CHUNKSIZE);
+    auto chnk_end = block_num((offset + write_size) - 1, CHUNKSIZE);
 
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
     map<uint64_t, vector<uint64_t>> target_chnks{};
@@ -71,9 +68,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         auto total_chunk_size = target_chnks[targets[target]].size() * CHUNKSIZE; // total chunk_size for target
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
             total_chunk_size -= (offset % CHUNKSIZE);
-        if (target == chnk_end_target &&
-            ((offset + write_size) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
-            total_chunk_size -= (CHUNKSIZE - ((offset + write_size) % CHUNKSIZE));
+        if (target == chnk_end_target) // receiver of last chunk must subtract
+            total_chunk_size -= ((-(offset + write_size)) % CHUNKSIZE);
         // Fill RPC input
         rpc_in[target].path = path.c_str();
         rpc_in[target].offset = offset % CHUNKSIZE;// first offset in targets is the chunk with a potential offset
@@ -137,11 +133,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
  */
 ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
     // Calculate chunkid boundaries and numbers so that daemons know in which interval to look for chunks
-    auto chnk_start = static_cast<uint64_t>(offset) / CHUNKSIZE; // first chunk number
-    // last chunk number (right-open) [chnk_start,chnk_end)
-    auto chnk_end = static_cast<uint64_t>((offset + read_size) / CHUNKSIZE + 1);
-    if ((offset + read_size) % CHUNKSIZE == 0)
-        chnk_end--;
+    auto chnk_start = block_num(offset, CHUNKSIZE); // first chunk number
+    auto chnk_end = block_num((offset + read_size - 1), CHUNKSIZE);
 
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
     map<uint64_t, vector<uint64_t>> target_chnks{};
@@ -190,9 +183,9 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         auto total_chunk_size = target_chnks[targets[target]].size() * CHUNKSIZE;
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
             total_chunk_size -= (offset % CHUNKSIZE);
-        if (target == chnk_end_target &&
-            ((offset + read_size) % CHUNKSIZE) != 0) // receiver of last chunk must subtract
-            total_chunk_size -= (CHUNKSIZE - ((offset + read_size) % CHUNKSIZE));
+        if (target == chnk_end_target) // receiver of last chunk must subtract
+            total_chunk_size -= ((-(offset + read_size)) % CHUNKSIZE);
+
         // Fill RPC input
         rpc_in[target].path = path.c_str();
         rpc_in[target].offset = offset % CHUNKSIZE;// first offset in targets is the chunk with a potential offset

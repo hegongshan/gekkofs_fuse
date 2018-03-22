@@ -17,6 +17,7 @@ set(PRELOAD_HEADERS
     ../../include/global/rpc/ipc_types.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
+    ../../include/global/blocks_calc_util.hpp
     ../../include/preload/adafs_functions.hpp
     ../../include/preload/margo_ipc.hpp
     ../../include/preload/open_file_map.hpp
