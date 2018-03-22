@@ -40,6 +40,28 @@ inline off64_t ralign(const off64_t offset, const size_t block_size) {
 
 
 /**
+ * Return the padding (bytes) that separates the @offset from the closest
+ * left side block boundary
+ *
+ * If @offset is a boundary the resulting padding will be 0
+ */
+inline size_t lpad(const off64_t offset, const size_t block_size) {
+    return offset % block_size;
+}
+
+
+/**
+ * Return the padding (bytes) that separates the @offset from the closest
+ * right side block boundary
+ *
+ * If @offset is a boundary the resulting padding will be 0
+ */
+inline size_t rpad(const off64_t offset, const size_t block_size) {
+    return (-offset) % block_size;
+}
+
+
+/**
  * Given an @offset calculates the block number to which the @offset belongs
  *
  * block_num(8,4) = 2;
