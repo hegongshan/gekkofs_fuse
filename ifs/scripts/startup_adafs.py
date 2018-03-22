@@ -49,9 +49,6 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
     pssh_nodelist = ''
-    if not os.path.exists(daemon_path) or not os.path.isfile(daemon_path):
-        print '[ERR] Daemon executable not found or not a file'
-        exit(1)
     nodefile = False
     if os.path.exists(nodelist):
         nodefile = True
