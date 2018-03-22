@@ -68,12 +68,12 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         auto target = targets[i];
         auto total_chunk_size = target_chnks[target].size() * CHUNKSIZE; // total chunk_size for target
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= (offset % CHUNKSIZE);
+            total_chunk_size -= lpad(offset, CHUNKSIZE);
         if (target == chnk_end_target) // receiver of last chunk must subtract
-            total_chunk_size -= ((-(offset + write_size)) % CHUNKSIZE);
+            total_chunk_size -= rpad(offset + write_size, CHUNKSIZE);
         // Fill RPC input
         rpc_in[i].path = path.c_str();
-        rpc_in[i].offset = offset % CHUNKSIZE;// first offset in targets is the chunk with a potential offset
+        rpc_in[i].offset = lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
@@ -184,13 +184,13 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         auto target = targets[i];
         auto total_chunk_size = target_chnks[target].size() * CHUNKSIZE;
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= (offset % CHUNKSIZE);
+            total_chunk_size -= lpad(offset, CHUNKSIZE);
         if (target == chnk_end_target) // receiver of last chunk must subtract
-            total_chunk_size -= ((-(offset + read_size)) % CHUNKSIZE);
+            total_chunk_size -= rpad(offset + read_size, CHUNKSIZE);
 
         // Fill RPC input
         rpc_in[i].path = path.c_str();
-        rpc_in[i].offset = offset % CHUNKSIZE;// first offset in targets is the chunk with a potential offset
+        rpc_in[i].offset = lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
