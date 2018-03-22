@@ -42,7 +42,7 @@ bool init_rocksdb() {
         ADAFS_DATA->spdlogger()->info("{}() RocksDB connection established.", __func__);
         return true;
     } else {
-        ADAFS_DATA->spdlogger()->error("{}() RocksDB connection FAILURE. Exiting...", __func__);
+        ADAFS_DATA->spdlogger()->error("{}() Error opening RocksDB: {}", __func__, s.ToString());
         return false;
     }
 }
