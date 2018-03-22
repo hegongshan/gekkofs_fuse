@@ -28,7 +28,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     // targets for the first and last chunk as they need special treatment
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
-    for (uint64_t chnk_id = chnk_start; chnk_id < chnk_end; chnk_id++) {
+    for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
         auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
@@ -38,7 +38,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         // set first and last chnk targets
         if (chnk_id == chnk_start)
             chnk_start_target = target;
-        if (chnk_id == chnk_end - 1)
+        if (chnk_id == chnk_end)
             chnk_end_target = target;
     }
     // some helper variables for async RPC
@@ -143,7 +143,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     // targets for the first and last chunk as they need special treatment
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
-    for (uint64_t chnk_id = chnk_start; chnk_id < chnk_end; chnk_id++) {
+    for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
         auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
@@ -153,7 +153,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         // set first and last chnk targets
         if (chnk_id == chnk_start)
             chnk_start_target = target;
-        if (chnk_id == chnk_end - 1)
+        if (chnk_id == chnk_end)
             chnk_end_target = target;
     }
     // some helper variables for async RPC
