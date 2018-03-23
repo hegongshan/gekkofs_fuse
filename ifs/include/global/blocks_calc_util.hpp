@@ -10,7 +10,7 @@ inline int log2(uint64_t n){
         57, 46, 52, 38, 26, 32, 41, 50, 36, 17, 19, 29, 10, 13, 21, 56,
         45, 25, 31, 35, 16, 9, 12, 44, 24, 15, 8, 23, 7, 6, 5, 63 };
 
-    assert(n > 0);
+    assert(n > 0); // TODO This needs to be removed and a check for CHUNKSIZE has to be put somewhere
 
     n |= n >> 1;
     n |= n >> 2;
