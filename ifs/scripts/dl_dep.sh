@@ -187,7 +187,7 @@ clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d92
 # get Margo
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.10.3.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.11.3.tar.gz" &
 
 # Wait for all download to be completed 
 wait

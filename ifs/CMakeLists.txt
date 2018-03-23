@@ -46,6 +46,7 @@ find_package(BZip2 REQUIRED)
 find_package(GFlags REQUIRED)
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
+find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
 # margo dependencies
 find_package(Libev REQUIRED)
