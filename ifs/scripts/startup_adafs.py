@@ -93,18 +93,18 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
     # Start deamons
     if nodefile:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     else:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     if PRETEND:
