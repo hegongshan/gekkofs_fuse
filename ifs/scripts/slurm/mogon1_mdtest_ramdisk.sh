@@ -1,7 +1,7 @@
 #!/bin/bash
 # Slurm stuff
 
-#SBATCH -J adafs_mdtest
+#SBATCH -J adafs_ior
 #SBATCH -p nodeshort
 #SBATCH -t 300
 #SBATCH -A zdvresearch
@@ -9,8 +9,8 @@
 
 usage_short() {
         echo "
-usage: adafs_mdtest.sh [-h] [-n <PROC_PER_NODE>] [-b <BLOCKSIZE>] [-i <ITER>] [-Y]
-                    benchmark_dir+file_prefix
+usage: adafs_ior.sh [-h] [-n <MD_PROC_N>] [-i <MD_ITER>] [-I <NUM_ITEMS>] [-u]
+                    benchmark_dir
         "
 }
 
@@ -18,34 +18,33 @@ help_msg() {
 
         usage_short
     echo "
-This slurm batch script is for IOR testing adafs
+This slurm batch script is for mdtesting adafs
 
 positional arguments:
-        benchmark_dir           benchmark workdir
+        benchmark_dir           path where the dependency downloads are put
 
 
 optional arguments:
         -h, --help
                                 shows this help message and exits
-
-        -n <PROC_PER_NODE>
-                                number of processes per node
-                                defaults to '16'
-        -b <BLOCKSIZE>
-                                total number of data written and read (use 1k, 1m, 1g, etc...)
-                                defaults to '1m'
-        -i <ITER>
-                                number of iterations done around IOR
+        -n <MD_PROC_N>
+                                number of processes used in mdtest
                                 defaults to '1'
-        -Y, --fsync             use fsync after writes
-                                defaults to 'false'
+        -i <MD_ITER>
+                                number of iterations done in mdtest
+                                defaults to '1'
+        -I <NUM_ITEMS>
+                                number of files per process in mdtest
+                                defaults to '500000'
+        -u, --unique
+                                use if files should be placed in a unique directory per-process in mdtest
         "
 }
 
-PROC_PER_NODE=16
-ITER=1
-BLOCKSIZE="1m"
-FSYNC=false
+MD_PROC_N=16
+MD_ITER=1
+MD_ITEMS="500000"
+MD_UNIQUE=""
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -54,22 +53,22 @@ key="$1"
 
 case ${key} in
     -n)
-    PROC_PER_NODE="$2"
-    shift # past argument
-    shift # past value
-    ;;
-    -b)
-    BLOCKSIZE="$2"
+    MD_PROC_N="$2"
     shift # past argument
     shift # past value
     ;;
     -i)
-    ITER="$2"
+    MD_ITER="$2"
     shift # past argument
     shift # past value
     ;;
-    -Y|--fsync)
-    FSYNC=true
+    -I)
+    MD_ITEMS="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -u|--unique)
+    MD_UNIQUE="-u"
     shift # past argument
     ;;
     -h|--help)
@@ -94,7 +93,7 @@ fi
 
 VEF_HOME="/home/vef"
 HOSTFILE="${VEF_HOME}/jobdir/hostfile_${SLURM_JOB_ID}"
-WORKDIR=$1
+MD_DIR=$1
 ROOTDIR="/localscratch/${SLURM_JOB_ID}/ramdisk"
 
 # Load modules and set environment variables
@@ -118,8 +117,11 @@ module load devel/Boost/1.63.0-foss-2017a
 export CC=$(which gcc)
 export CXX=$(which g++)
 
+# printing stuff
+echo "files per process: ${MD_ITEMS}"
+
 # create a proper hostfile to run
-srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=64/' -i ${HOSTFILE}
+srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=32/' -i ${HOSTFILE}
 
 echo "Generated hostfile no of nodes:"
 cat ${HOSTFILE} | wc -l
@@ -132,8 +134,10 @@ echo "
 ############################### DAEMON START ############################### ############################################################################
 "
 # start adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${VEF_HOME}/ifs/build/bin/adafs_daemon ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
+python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${VEF_HOME}/ifs/build/bin/adafs_daemon ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
 
+#echo "logfiles:"
+#cat /tmp/adafs_daemon.log
 # pssh to get logfiles. hostfile is created by startup script
 ${VEF_HOME}/.local/bin/pssh -O StrictHostKeyChecking=no -i -h /tmp/hostfile_pssh_${SLURM_JOB_ID} "tail /tmp/adafs_daemon.log"
 
@@ -143,48 +147,9 @@ echo "
 ############################################################################
 "
 # Run benchmark
+echo "Executing: mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ${VEF_HOME}/benchmarks/mogon1/mdtest-1.9.3-modified/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
-BENCH_TMPL="mpiexec -np ${PROC_PER_NODE} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} -F -w -r -W"
-
-echo "#############"
-echo "# 1. SEQUEL #"
-echo "#############"
-for TRANSFER in 4k 256k 512k 1m 2m 4m 8m 16m
-do
-    for i in {1..${ITER}}
-    do
-        CMD="${BENCH_TMPL} -t ${TRANSFER}"
-        echo "## iteration $i"
-        echo "## transfer size ${TRANSFER}"
-        if [ "${FSYNC}" = true ] ; then
-            CMD="${CMD} -Y"
-            echo "## FSYNC on"
-        fi
-        echo "## Command ${CMD}"
-        eval ${CMD}
-    done
-done
-
-echo "#############"
-echo "# 2. RANDOM #"
-echo "#############"
-for TRANSFER in 4k 256k 512k 1m 2m 4m 8m 16m
-do
-    for i in {1..${ITER}}
-    do
-        CMD="${BENCH_TMPL} -t ${TRANSFER} -z"
-        echo "## iteration $i"
-        echo "## transfer size ${TRANSFER}"
-        if [ "${FSYNC}" = true ] ; then
-            CMD="${CMD} -Y"
-            echo "## FSYNC on"
-        fi
-        echo "## Command ${CMD}"
-        eval ${CMD}
-    done
-done
-
-# TODO 3. Striped later
+mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ${VEF_HOME}/benchmarks/mogon1/mdtest-1.9.3-modified/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}
 
 echo "
 ############################################################################
