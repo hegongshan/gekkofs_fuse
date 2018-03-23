@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import time
-
 import os
+import time
 
 from util import util
 
@@ -32,14 +31,17 @@ def check_dependencies():
     exit(1)
 
 
-def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
+def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, numactl):
     """Initializes ADAFS on specified nodes.
 
     Args:
         daemon_path (str): Path to daemon executable
         rootdir (str): Path to root directory for fs data
+        metadir (str): Path to metadata directory where metadata is stored
         mountdir (str): Path to mount directory where adafs is used in
         nodelist (str): Comma-separated list of nodes where adafs is launched on
+        cleanroot (bool): if True, root and metadir is cleaned before daemon init
+        numactl (str): numactl arguments for daemon init
     """
     global PSSH_PATH
     global PRETEND
@@ -48,6 +50,11 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
     mountdir = os.path.realpath(os.path.expanduser(mountdir))
     rootdir = os.path.realpath(os.path.expanduser(rootdir))
+    # Replace metadir with rootdir if only rootdir is given
+    if len(metadir) == 0:
+        metadir = rootdir
+    else:
+        metadir = os.path.realpath(os.path.expanduser(metadir))
     pssh_nodelist = ''
     nodefile = False
     if os.path.exists(nodelist):
@@ -62,9 +69,9 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     else:
         pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
 
-    # clean root dir if needed
+    # clean root and metadata dir if needed
     if cleanroot:
-        cmd_rm_str = '%s "rm -rf %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir)
+        cmd_rm_str = '%s "rm -rf %s/* %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir, metadir)
         if PRETEND:
             print 'Pretending: %s' % cmd_rm_str
         else:
@@ -78,7 +85,7 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
                           (line[line.find('FAILURE'):].strip().split(' ')[1])
                     print line
             if not err:
-                print 'pssh daemon launch successfully executed. Root dir is cleaned.\n'
+                print 'pssh daemon launch successfully executed. Root and Metadata dir are cleaned.\n'
             else:
                 print '[ERR] with pssh. Aborting!'
                 exit(1)
@@ -86,19 +93,19 @@ def init_system(daemon_path, rootdir, mountdir, nodelist, cleanroot, numactl):
     # Start deamons
     if nodefile:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     else:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, daemon_path, rootdir, mountdir, nodelist)
+            cmd_str = '%s "nohup %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
-                      % (pssh, numactl, daemon_path, rootdir, mountdir, nodelist)
+            cmd_str = '%s "nohup numactl %s %s -r %s -d %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+                      % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     if PRETEND:
         print 'Pretending: %s' % cmd_str
@@ -171,6 +178,9 @@ if __name__ == "__main__":
 or a path to a nodefile (one node per line)''')
 
     # optional arguments
+    parser.add_argument('-i', '--metadir', metavar='<METADIR_PATH>', type=str, default='',
+                        help='''Path to separate metadir directory where metadata is stored. 
+If not set, rootdir will be used instead.''')
     parser.add_argument('-p', '--pretend', action='store_true',
                         help='Output adafs launch command and do not actually execute it')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
@@ -178,7 +188,7 @@ or a path to a nodefile (one node per line)''')
     parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',
                         help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
     parser.add_argument('-c', '--cleanroot', action='store_true',
-                        help='Removes contents of root directory before starting ADA-FS Daemon. Be careful!')
+                        help='Removes contents of root and metadata directory before starting ADA-FS Daemon. Be careful!')
     parser.add_argument('-n', '--numactl', metavar='<numactl_args>', type=str, default='',
                         help='If adafs daemon should be pinned to certain cores, set numactl arguments here.')
     args = parser.parse_args()
@@ -192,6 +202,6 @@ or a path to a nodefile (one node per line)''')
         PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
     PSSH_PATH = args.pssh
     WAITTIME = 5
-    init_system(args.daemonpath, args.rootdir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)
+    init_system(args.daemonpath, args.rootdir, args.metadir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)
 
     print '\nNothing left to do; exiting. :)'

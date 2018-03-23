@@ -26,10 +26,8 @@ private:
     // paths
     std::string rootdir_;
     std::string mountdir_;
-    std::string inode_path_;
-    std::string dentry_path_;
+    std::string metadir_;
     std::string chunk_path_;
-    std::string mgmt_path_;
 
     // hosts_
     std::string hosts_raw_; // raw hosts string, given when daemon is started. Used to give it to fs client
@@ -78,8 +76,6 @@ public:
 
     bool is_local_op(size_t recipient);
 
-    size_t hash_path(const std::string& path);
-
     // getter/setter
 
     const std::unordered_map<std::string, std::string>& hashmap() const;
@@ -108,23 +104,15 @@ public:
 
     const std::string& mountdir() const;
 
-    void mountdir(const std::string& mountdir);
+    void mountdir(const std::string& mountdir_);
 
-    const std::string& inode_path() const;
+    const std::string& metadir() const;
 
-    void inode_path(const std::string& inode_path_);
-
-    const std::string& dentry_path() const;
-
-    void dentry_path(const std::string& dentry_path_);
+    void metadir(const std::string& metadir_);
 
     const std::string& chunk_path() const;
 
     void chunk_path(const std::string& chunk_path_);
-
-    const std::string& mgmt_path() const;
-
-    void mgmt_path(const std::string& mgmt_path_);
 
     const std::shared_ptr<rocksdb::DB>& rdb() const;
 
