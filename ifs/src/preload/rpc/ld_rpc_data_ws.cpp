@@ -1,7 +1,7 @@
 
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <global/rpc/rpc_utils.hpp>
-#include <global/blocks_calc_util.hpp>
+#include <global/chunk_calc_util.hpp>
 
 using namespace std;
 
@@ -18,8 +18,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     if (append_flag)
         offset = updated_metadentry_size - write_size;
 
-    auto chnk_start = block_num(offset, CHUNKSIZE);
-    auto chnk_end = block_num((offset + write_size) - 1, CHUNKSIZE);
+    auto chnk_start = chnk_id_for_offset(offset, CHUNKSIZE);
+    auto chnk_end = chnk_id_for_offset((offset + write_size) - 1, CHUNKSIZE);
 
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
     map<uint64_t, vector<uint64_t>> target_chnks{};
@@ -68,12 +68,12 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         auto target = targets[i];
         auto total_chunk_size = target_chnks[target].size() * CHUNKSIZE; // total chunk_size for target
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= lpad(offset, CHUNKSIZE);
+            total_chunk_size -= chnk_lpad(offset, CHUNKSIZE);
         if (target == chnk_end_target) // receiver of last chunk must subtract
-            total_chunk_size -= rpad(offset + write_size, CHUNKSIZE);
+            total_chunk_size -= chnk_rpad(offset + write_size, CHUNKSIZE);
         // Fill RPC input
         rpc_in[i].path = path.c_str();
-        rpc_in[i].offset = lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
+        rpc_in[i].offset = chnk_lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
@@ -134,8 +134,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
  */
 ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
     // Calculate chunkid boundaries and numbers so that daemons know in which interval to look for chunks
-    auto chnk_start = block_num(offset, CHUNKSIZE); // first chunk number
-    auto chnk_end = block_num((offset + read_size - 1), CHUNKSIZE);
+    auto chnk_start = chnk_id_for_offset(offset, CHUNKSIZE); // first chunk number
+    auto chnk_end = chnk_id_for_offset((offset + read_size - 1), CHUNKSIZE);
 
     // Collect all chunk ids within count that have the same destination so that those are send in one rpc bulk transfer
     map<uint64_t, vector<uint64_t>> target_chnks{};
@@ -184,13 +184,13 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         auto target = targets[i];
         auto total_chunk_size = target_chnks[target].size() * CHUNKSIZE;
         if (target == chnk_start_target) // receiver of first chunk must subtract the offset from first chunk
-            total_chunk_size -= lpad(offset, CHUNKSIZE);
+            total_chunk_size -= chnk_lpad(offset, CHUNKSIZE);
         if (target == chnk_end_target) // receiver of last chunk must subtract
-            total_chunk_size -= rpad(offset + read_size, CHUNKSIZE);
+            total_chunk_size -= chnk_rpad(offset + read_size, CHUNKSIZE);
 
         // Fill RPC input
         rpc_in[i].path = path.c_str();
-        rpc_in[i].offset = lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
+        rpc_in[i].offset = chnk_lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
