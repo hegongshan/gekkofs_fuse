@@ -1,11 +1,10 @@
 #!/bin/bash
 # Slurm stuff
 
-#SBATCH -J adafs_ior
-#SBATCH -p nodeshort
+#SBATCH -J adafs_mdtest
+#SBATCH -p parallel
 #SBATCH -t 300
-#SBATCH -A zdvresearch
-##SBATCH --gres=ramdisk:16G
+#SBATCH -A m2_zdvresearch
 
 usage_short() {
         echo "
@@ -95,7 +94,7 @@ fi
 VEF_HOME="/home/vef"
 HOSTFILE="${VEF_HOME}/jobdir/hostfile_${SLURM_JOB_ID}"
 MD_DIR=$1
-ROOTDIR="/localscratch/${SLURM_JOB_ID}/ramdisk"
+ROOTDIR="/localscratch/${SLURM_JOB_ID}"
 
 # Load modules and set environment variables
 PATH=$PATH:/home/vef/adafs_m2/install/bin:/home/vef/.local/bin
@@ -112,9 +111,8 @@ export LD_LIBRARY_PATH
 export LIBRARY_PATH
 export LDFLAGS='-L/home/vef/adafs_m2/install/lib/'
 export CPPFLAGS='-I/home/vef/adafs_m2/install/include/'
-module load devel/CMake/3.8.0
-module load mpi/OpenMPI/2.0.2-GCC-6.3.0
-module load devel/Boost/1.63.0-foss-2017a
+module load devel/CMake/3.7.2
+module load devel/Boost/1.65.1-foss-2017a
 export CC=$(which gcc)
 export CXX=$(which g++)
 
@@ -129,6 +127,10 @@ cat ${HOSTFILE} | wc -l
 
 NONODES=$(cat ${HOSTFILE} | wc -l)
 let MD_PROC_N=${NONODES}*16
+
+
+echo "Shutting down adafs_daemons that might be running"
+python2 ${VEF_HOME}/ifs_m2/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
 
 echo "
 ############################################################################
@@ -148,7 +150,7 @@ echo "
 ############################################################################
 "
 # Run benchmark
-BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/lustre/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
+BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=/lustre/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
 eval ${BENCHCMD}
 
@@ -161,7 +163,7 @@ ELAPSED="$((${END_TIME}-${START_TIME}))"
 MINUTES=$((${ELAPSED} / 60))
 echo "##Elapsed time: ${MINUTES} minutes or ${ELAPSED} seconds elapsed for test set."
 # shut down adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs/build/bin/adafs_daemon ${HOSTFILE}
+python2 ${VEF_HOME}/ifs_m2/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
 
 # cleanup
 rm ${HOSTFILE}
