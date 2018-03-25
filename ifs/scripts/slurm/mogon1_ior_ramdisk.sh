@@ -11,7 +11,7 @@ usage_short() {
         echo "
 usage: mogon1_ior_ramdisk.sh [-h] [-n <PROC_PER_NODE>] [-b <BLOCKSIZE>] [-i <ITER>] [-Y] [-p]
                              [-t <TRANSFERSIZES>] [-s] [-r] [-v]
-                             benchmark_dir+file_prefix
+                             benchmark_dir+file_prefix adafs_daemon_path ld_preload_path
         "
 }
 
@@ -22,7 +22,13 @@ help_msg() {
 This slurm batch script is for IOR testing adafs
 
 positional arguments:
-        benchmark_dir           benchmark workdir
+        benchmark_dir
+                                benchmark workdir
+        adafs_daemon_path
+                                adafs_daemon path
+        ld_preload_path
+                                ld_preload path
+
 
 
 optional arguments:
@@ -129,7 +135,7 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # positional arguments
-if [[ -z ${1+x} ]]; then
+if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
     echo "Positional arguments missing."
     usage_short
     exit
@@ -138,6 +144,8 @@ fi
 VEF_HOME="/home/vef"
 HOSTFILE="${VEF_HOME}/jobdir/hostfile_${SLURM_JOB_ID}"
 WORKDIR=$1
+DAEMONPATH=$2
+LIBPATH=$3
 ROOTDIR="/localscratch/${SLURM_JOB_ID}/ramdisk"
 
 # Load modules and set environment variables
@@ -175,7 +183,7 @@ echo "
 ############################### DAEMON START ############################### ############################################################################
 "
 # start adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${VEF_HOME}/ifs/build/bin/adafs_daemon ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
+python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${DAEMONPATH} ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
 
 # pssh to get logfiles. hostfile is created by startup script
 ${VEF_HOME}/.local/bin/pssh -O StrictHostKeyChecking=no -i -h /tmp/hostfile_pssh_${SLURM_JOB_ID} "tail /tmp/adafs_daemon.log"
@@ -187,7 +195,7 @@ echo "
 "
 # Run benchmark
 
-BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so numactl --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
+BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
 
 echo "##########################"
 echo "< 1. WARMUP              >"
