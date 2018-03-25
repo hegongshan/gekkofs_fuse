@@ -5,7 +5,7 @@
 #SBATCH -p nodeshort
 #SBATCH -t 300
 #SBATCH -A zdvresearch
-#SBATCH --gres=ramdisk:20G
+#SBATCH --gres=ramdisk:16G
 
 usage_short() {
         echo "
@@ -45,6 +45,7 @@ MD_PROC_N=16
 MD_ITER=1
 MD_ITEMS="500000"
 MD_UNIQUE=""
+START_TIME="$(date -u +%s)"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -121,7 +122,7 @@ export CXX=$(which g++)
 echo "files per process: ${MD_ITEMS}"
 
 # create a proper hostfile to run
-srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=32/' -i ${HOSTFILE}
+srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=64/' -i ${HOSTFILE}
 
 echo "Generated hostfile no of nodes:"
 cat ${HOSTFILE} | wc -l
@@ -147,14 +148,18 @@ echo "
 ############################################################################
 "
 # Run benchmark
-echo "Executing: mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ${VEF_HOME}/benchmarks/mogon1/mdtest-1.9.3-modified/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
+BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
-mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ${VEF_HOME}/benchmarks/mogon1/mdtest-1.9.3-modified/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}
+eval ${BENCHCMD}
 
 echo "
 ############################################################################
 ############################### DAEMON STOP ############################### ############################################################################
 "
+END_TIME="$(date -u +%s)"
+ELAPSED="$((${END_TIME}-${START_TIME}))"
+MINUTES=$((${ELAPSED} / 60))
+echo "##Elapsed time: ${MINUTES} minutes or ${ELAPSED} seconds elapsed for test set."
 # shut down adafs daemon on the nodes
 python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs/build/bin/adafs_daemon ${HOSTFILE}
 

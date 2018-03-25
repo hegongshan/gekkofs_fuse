@@ -5,11 +5,12 @@
 #SBATCH -p nodeshort
 #SBATCH -t 300
 #SBATCH -A zdvresearch
-#SBATCH --gres=ramdisk:20G
+#SBATCH --gres=ramdisk:16G
 
 usage_short() {
         echo "
 usage: mogon1_ior_ramdisk.sh [-h] [-n <PROC_PER_NODE>] [-b <BLOCKSIZE>] [-i <ITER>] [-Y] [-p]
+                             [-t <TRANSFERSIZES>] [-s] [-r] [-v]
                              benchmark_dir+file_prefix
         "
 }
@@ -28,29 +29,45 @@ optional arguments:
         -h, --help
                                 shows this help message and exits
 
-        -n <PROC_PER_NODE>
+        -n <PROC_PER_NODE>, --nodes <PROC_PER_NODE>
                                 number of processes per node
                                 defaults to '16'
-        -b <BLOCKSIZE>
-                                total number of data written and read (use 1k, 1m, 1g, etc...)
-                                defaults to '1m'
-        -i <ITER>
+        -i <ITER>, --iterations <ITER>
                                 number of iterations done around IOR
                                 defaults to '1'
+        -b <BLOCKSIZE>, --blocksize <BLOCKSIZE>
+                                total number of data written and read (use 1k, 1m, 1g, etc...)
+                                defaults to '16m'
+        -t <TRANSFERSIZES>, --transfersizes <TRANSFERSIZES>
+                                Sets the transfer sizes for the block sizes. Set a space separated list.
+                                Each transfer size must be a multiple of the block size
+                                Example: \"64m 32m 16m 8m 4m 2m 1m 512k 256k 128k 4k 1k\"
+                                Defaults to example
+        -s, --striping
+                                Enable random striping for readback. A random seed of 42 is used.
+        -r, --random
+                                Enable random offsets for I/O
         -Y, --fsync
-                                use fsync after writes
+                                enable fsync after writes
                                 defaults to 'false'
+        -v, --verbose
+                                enable ior verbosity
         -p, --pretend
                                 Pretend operation. Does not execute commands benchmark commands
                                 This does start and stop the adafs daemon
         "
 }
-
+# Set default values
 PROC_PER_NODE=16
 ITER=1
-BLOCKSIZE="1m"
+BLOCKSIZE="64m"
 FSYNC=false
 PRETEND=false
+STRIPING=false
+RANDOM=false
+VERBOSE=""
+TRANSFERSIZES="64m 32m 16m 8m 4m 2m 1m 512k 256k 128k 4k 1k"
+START_TIME="$(date -u +%s)"
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]
@@ -58,18 +75,23 @@ do
 key="$1"
 
 case ${key} in
-    -n)
+    -n|--nodes)
     PROC_PER_NODE="$2"
     shift # past argument
     shift # past value
     ;;
-    -b)
+    -b|--blocksize)
     BLOCKSIZE="$2"
     shift # past argument
     shift # past value
     ;;
-    -i)
+    -i|--iterations)
     ITER="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -t|--transfersizes)
+    TRANSFERSIZES="$2"
     shift # past argument
     shift # past value
     ;;
@@ -77,8 +99,20 @@ case ${key} in
     FSYNC=true
     shift # past argument
     ;;
+    -r|--random)
+    RANDOM=true
+    shift # past argument
+    ;;
+    -s|--striping)
+    STRIPING=true
+    shift # past argument
+    ;;
     -p|--pretend)
     PRETEND=true
+    shift # past argument
+    ;;
+    -v|--verbose)
+    VERBOSE="-vv"
     shift # past argument
     ;;
     -h|--help)
@@ -134,7 +168,7 @@ echo "Generated hostfile no of nodes:"
 cat ${HOSTFILE} | wc -l
 
 NONODES=$(cat ${HOSTFILE} | wc -l)
-let MD_PROC_N=${NONODES}*16
+let IOR_PROC_N=${NONODES}*${PROC_PER_NODE}
 
 echo "
 ############################################################################
@@ -153,56 +187,70 @@ echo "
 "
 # Run benchmark
 
-BENCH_TMPL="mpiexec -np ${PROC_PER_NODE} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} -F -w -r -W"
+BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so numactl --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
 
-echo "#############"
-echo "# 1. SEQUEL #"
-echo "#############"
-for TRANSFER in 4k 256k 512k 1m 2m 4m 8m 16m
+echo "##########################"
+echo "< 1. WARMUP              >"
+echo "##########################"
+for ((i=1;i<=3;i+=1))
 do
-    for i in {1..${ITER}}
+    CMD="${BENCH_TMPL} -t 16m"
+    echo "## Command ${CMD}"
+    if [ "${PRETEND}" = false ] ; then
+        eval ${CMD}
+    fi
+done
+# Run experiments
+echo "##########################"
+echo "< 2. RUNNING EXPERIMENTS >"
+echo "##########################"
+# Some info output
+if [ "${RANDOM}" = true ] ; then
+    echo "## RANDOM I/O on"
+fi
+if [ "${STRIPING}" = true ] ; then
+    echo "## STRIPING on"
+fi
+if [ "${FSYNC}" = true ] ; then
+    echo "## FSYNC on"
+fi
+for TRANSFER in ${TRANSFERSIZES}
+do
+    echo "<new_transfer_size>;${TRANSFER}"
+    for ((i=1;i<=${ITER};i+=1))
     do
+        echo "<new_iteration>;$i"
+        # build command from template and then execute it
         CMD="${BENCH_TMPL} -t ${TRANSFER}"
-        echo "## iteration $i"
-        echo "## transfer size ${TRANSFER}"
+        echo "## iteration $i/${ITER} transfer size ${TRANSFER}"
+        if [ "${RANDOM}" = true ] ; then
+            CMD="${CMD} -z"
+        fi
+        if [ "${STRIPING}" = true ] ; then
+            CMD="${CMD} -Z -X 42"
+        fi
         if [ "${FSYNC}" = true ] ; then
             CMD="${CMD} -Y"
-            echo "## FSYNC on"
         fi
         echo "## Command ${CMD}"
-        if [ "${PRETEND}" = true ] ; then
+        if [ "${PRETEND}" = false ] ; then
             eval ${CMD}
         fi
+        echo "<finish_iteration>;$i"
+        echo "### iteration $i/${ITER} done"
     done
+    echo "<finish_transfer_size>;${TRANSFER}"
+    echo "## new transfer size #################################"
 done
-
-echo "#############"
-echo "# 2. RANDOM #"
-echo "#############"
-for TRANSFER in 4k 256k 512k 1m 2m 4m 8m 16m
-do
-    for i in {1..${ITER}}
-    do
-        CMD="${BENCH_TMPL} -t ${TRANSFER} -z"
-        echo "## iteration $i"
-        echo "## transfer size ${TRANSFER}"
-        if [ "${FSYNC}" = true ] ; then
-            CMD="${CMD} -Y"
-            echo "## FSYNC on"
-        fi
-        echo "## Command ${CMD}"
-        if [ "${PRETEND}" = true ] ; then
-            eval ${CMD}
-        fi
-    done
-done
-
-# TODO 3. Striped later
 
 echo "
 ############################################################################
 ############################### DAEMON STOP ############################### ############################################################################
 "
+END_TIME="$(date -u +%s)"
+ELAPSED="$((${END_TIME}-${START_TIME}))"
+MINUTES=$((${ELAPSED} / 60))
+echo "##Elapsed time: ${MINUTES} minutes or ${ELAPSED} seconds elapsed for test set."
 # shut down adafs daemon on the nodes
 python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs/build/bin/adafs_daemon ${HOSTFILE}
 
