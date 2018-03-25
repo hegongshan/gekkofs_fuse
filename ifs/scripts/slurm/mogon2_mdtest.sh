@@ -5,7 +5,7 @@
 #SBATCH -p nodeshort
 #SBATCH -t 300
 #SBATCH -A zdvresearch
-#SBATCH --gres=ramdisk:16G
+##SBATCH --gres=ramdisk:16G
 
 usage_short() {
         echo "
@@ -98,20 +98,20 @@ MD_DIR=$1
 ROOTDIR="/localscratch/${SLURM_JOB_ID}/ramdisk"
 
 # Load modules and set environment variables
-PATH=$PATH:/home/vef/adafs/install/bin:/home/vef/.local/bin
-C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/vef/adafs/install/include
-CPATH=$CPATH:/home/vef/adafs/install/include
-CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/vef/adafs/install/include
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vef/adafs/install/lib
-LIBRARY_PATH=$LIBRARY_PATH:/home/vef/adafs/install/lib
+PATH=$PATH:/home/vef/adafs_m2/install/bin:/home/vef/.local/bin
+C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/vef/adafs_m2/install/include
+CPATH=$CPATH:/home/vef/adafs_m2/install/include
+CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/vef/adafs_m2/install/include
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vef/adafs_m2/install/lib
+LIBRARY_PATH=$LIBRARY_PATH:/home/vef/adafs_m2/install/lib
 export PATH
 export CPATH
 export C_INCLUDE_PATH
 export CPLUS_INCLUDE_PATH
 export LD_LIBRARY_PATH
 export LIBRARY_PATH
-export LDFLAGS='-L/home/vef/adafs/install/lib/'
-export CPPFLAGS='-I/home/vef/adafs/install/include/'
+export LDFLAGS='-L/home/vef/adafs_m2/install/lib/'
+export CPPFLAGS='-I/home/vef/adafs_m2/install/include/'
 module load devel/CMake/3.8.0
 module load mpi/OpenMPI/2.0.2-GCC-6.3.0
 module load devel/Boost/1.63.0-foss-2017a
@@ -135,7 +135,7 @@ echo "
 ############################### DAEMON START ############################### ############################################################################
 "
 # start adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${VEF_HOME}/ifs/build/bin/adafs_daemon ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
+python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
 
 #echo "logfiles:"
 #cat /tmp/adafs_daemon.log
@@ -148,7 +148,7 @@ echo "
 ############################################################################
 "
 # Run benchmark
-BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/gpfs/fs2/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
+BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=/lustre/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
 eval ${BENCHCMD}
 
