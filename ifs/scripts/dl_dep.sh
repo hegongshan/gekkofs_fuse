@@ -72,7 +72,7 @@ optional arguments:
                                 defaults to 'all'
         -c <CLUSTER>, --cluster <CLUSTER>
                                 additional configurations for specific compute clusters
-                                supported clusters: {mogon1,fh2}
+                                supported clusters: {mogon1,mogon2,fh2}
         "
 }
 CLUSTER=""
@@ -130,7 +130,7 @@ else
     exit
 fi
 if [[ "${CLUSTER}" != "" ]]; then
-	if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
+	if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "mogon2" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
 		echo CLUSTER  = "${CLUSTER}"
     else
         echo "${CLUSTER} cluster configuration is invalid. Exiting ..."
@@ -146,7 +146,7 @@ echo "Source path is set to  \"${SOURCE}\""
 mkdir -p ${SOURCE}
 
 # get cluster dependencies
-if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
+if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "mogon2" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     # get libtool for cci
     wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz" &
     # get libev for mercury
@@ -174,7 +174,10 @@ if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
-    wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
+    # No need to get libfabric for mogon2 as it is already installed
+    if [[ ("${CLUSTER}" != "mogon2") ]]; then
+        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
+    fi
 fi
 # get Mercury
 clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"  "--recurse-submodules" &
