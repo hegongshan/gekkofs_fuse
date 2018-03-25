@@ -87,6 +87,7 @@ int adafs_stat64(const string& path, struct stat64* buf) {
 }
 
 int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& realfs_buf) {
+    init_ld_env_if_needed();
     // Check that file path exists
     auto ret = rpc_send_access(path, F_OK);
     // Valid fs error
