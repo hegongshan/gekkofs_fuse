@@ -42,6 +42,8 @@ def parse_file(filepath):
                 write_tmp.append(float(line.split(' ')[2]))
             if 'Max Read' in line:
                 read_tmp.append(float(line.split(' ')[3]))
+            if 'DAEMON STOP' in line:
+                break
     if len(write_avg) == 0 or len(read_avg) == 0:
         # something is wrong. discard this file
         print 'File %s does not contain results' % filepath
