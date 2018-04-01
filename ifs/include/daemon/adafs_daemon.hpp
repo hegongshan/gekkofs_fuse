@@ -55,8 +55,6 @@ bool init_rpc_server();
 
 void register_server_rpcs(margo_instance_id mid);
 
-std::string daemon_register_path();
-
 bool register_daemon_proc();
 
 bool deregister_daemon_proc();

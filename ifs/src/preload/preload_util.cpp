@@ -1,11 +1,12 @@
 
 #include <preload/preload_util.hpp>
 
-#include <dirent.h>
 #include <fstream>
 #include <iterator>
 #include <sstream>
 #include <global/rpc/rpc_utils.hpp>
+#include <global/global_func.hpp>
+#include <csignal>
 
 using namespace std;
 
@@ -210,84 +211,49 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
 }
 
 /**
- * Returns the process id for a process name
- * @param procName
- * @return
+ * @return daemon pid. If not running @return -1.
+ * Loads set deamon mountdir set in daemon.pid file
  */
-int getProcIdByName(string procName) {
-    int pid = -1;
-
-    // Open the /proc directory
-    DIR* dp = opendir("/proc");
-    if (dp != nullptr) {
-        // Enumerate all entries in directory until process found
-        struct dirent* dirp;
-        while (pid < 0 && (dirp = readdir(dp))) {
-            // Skip non-numeric entries
-            int id = atoi(dirp->d_name);
-            if (id > 0) {
-                // Read contents of virtual /proc/{pid}/cmdline file
-                string cmdPath = string("/proc/") + dirp->d_name + "/cmdline";
-                ifstream cmdFile(cmdPath.c_str());
-                string cmdLine;
-                getline(cmdFile, cmdLine);
-                if (!cmdLine.empty()) {
-                    // Keep first cmdline item which contains the program path
-                    size_t pos = cmdLine.find('\0');
-                    if (pos != string::npos)
-                        cmdLine = cmdLine.substr(0, pos);
-                    // Keep program name only, removing the path
-                    pos = cmdLine.rfind('/');
-                    if (pos != string::npos)
-                        cmdLine = cmdLine.substr(pos + 1);
-                    // Compare against requested process name
-                    if (procName == cmdLine)
-                        pid = id;
-                }
-            }
-        }
-    }
-
-    closedir(dp);
-
-    return pid;
-}
-
-/**
- * Returns the path where daemon process writes information for the running clients
- * @return string
- */
-string daemon_register_path(int pid) {
-    return (DAEMON_AUX_PATH + "/daemon_"s + to_string(pid) + ".run"s);
-}
-
-bool get_daemon_auxiliaries() {
-    auto ret = false;
-    auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
-    if (adafs_daemon_pid == -1) {
-        ld_logger->error("{}() ADA-FS daemon not started. Exiting ...", __func__);
-        perror("ADA-FS daemon not started. Exiting ...");
-        return false;
-    }
-    ifstream ifs(daemon_register_path(adafs_daemon_pid).c_str(), ::ifstream::in);
+int get_daemon_pid() {
+    ifstream ifs(daemon_pid_path(), ::ifstream::in);
+    int adafs_daemon_pid = -1;
     string mountdir;
     if (ifs) {
-        getline(ifs, mountdir);
-        if (!mountdir.empty()) {
-            ret = true;
+        string adafs_daemon_pid_s;
+        // first line is pid
+        if (getline(ifs, adafs_daemon_pid_s) && !adafs_daemon_pid_s.empty())
+            adafs_daemon_pid = ::stoi(adafs_daemon_pid_s);
+        else {
+            cerr << "ADA-FS daemon pid not found. Daemon not running?" << endl;
+            ld_logger->error("{}() Unable to read daemon pid from pid file", __func__);
+            ifs.close();
+            return -1;
+        }
+        // check that daemon is running
+        if (kill(adafs_daemon_pid, 0) != 0) {
+            cerr << "ADA-FS daemon process with pid " << adafs_daemon_pid << " not found. Daemon not running?" << endl;
+            ld_logger->error("{}() ADA-FS daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
+            ifs.close();
+            return -1;
+        }
+        // second line is mountdir
+        if (getline(ifs, mountdir) && !mountdir.empty()) {
             fs_config->mountdir = mountdir;
         } else {
-            ld_logger->error("{}() Error reading daemon auxiliary file", __func__);
+            ld_logger->error("{}() ADA-FS daemon pid file contains no mountdir path. Exiting ...", __func__);
+            ifs.close();
+            return -1;
         }
-    }
-    if (ifs.bad()) {
-        perror("Error opening file to register daemon process");
-        ld_logger->error("{}() Error opening file to daemon auxiliary file", __func__);
-        return false;
+    } else {
+        cerr << "No permission to open pid file at " << daemon_pid_path()
+             << " or ADA-FS daemon pid file not found. Daemon not running?" << endl;
+        ld_logger->error(
+                "{}() No permission to open pid file at {} or ADA-FS daemon pid file not found. Daemon not running?",
+                __func__, daemon_pid_path());
     }
     ifs.close();
 
-    return ret;
+    return adafs_daemon_pid;
 }
 
 /**

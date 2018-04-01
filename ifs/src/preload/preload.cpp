@@ -186,9 +186,9 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
 
     if (mode == Margo_mode::IPC) {
         ld_margo_ipc_id = mid;
-        auto adafs_daemon_pid = getProcIdByName("adafs_daemon"s);
+        auto adafs_daemon_pid = get_daemon_pid();
         if (adafs_daemon_pid == -1) {
-            ld_logger->error("{}() ADA-FS daemon not started. Exiting ...", __func__);
+            ld_logger->error("{}() ADA-FS daemon not running. Exiting ...", __func__);
             return false;
         }
         ld_logger->debug("{}() ADA-FS daemon with PID {} found.", __func__, adafs_daemon_pid);
@@ -255,16 +255,16 @@ void init_ld_env_if_needed() {
 void init_preload() {
     init_passthrough_if_needed();
     // The logger is initialized in init_passthrough. So we cannot log before that.
-    ld_logger->info("{}() enter", __func__); // XXX For client hang investigation
-    if (!get_daemon_auxiliaries() || fs_config->mountdir.empty()) {
-        perror("Error while getting daemon auxiliaries");
-        ld_logger->error("{}() while getting daemon auxiliaries", __func__);
+    ld_logger->info("{}() enter", __func__);
+    if (get_daemon_pid() == -1 || fs_config->mountdir.empty()) {
+        cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
+        ld_logger->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {
-        ld_logger->info("{}() mountdir \"{}\" loaded from daemon auxiliaries", __func__, fs_config->mountdir);
+        ld_logger->info("{}() mountdir \"{}\" loaded", __func__, fs_config->mountdir);
         is_aux_loaded_ = true;
     }
-    ld_logger->info("{}() exit", __func__); // XXX For client hang investigation
+    ld_logger->debug("{}() exit", __func__);
 }
 
 /**

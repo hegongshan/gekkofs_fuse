@@ -116,11 +116,7 @@ int db_val_to_stat(std::string path, std::string db_val, struct stat& attr);
 
 int db_val_to_stat64(std::string path, std::string db_val, struct stat64& attr);
 
-int getProcIdByName(std::string procName);
-
-std::string daemon_register_path(int pid);
-
-bool get_daemon_auxiliaries();
+int get_daemon_pid();
 
 bool read_system_hostfile();
 

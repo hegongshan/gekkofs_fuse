@@ -1,14 +1,13 @@
-#include "../../configure_public.hpp"
-
 /**
  * Attention: This whole configfile is not in a final form! This will eventually be a plaintext config file.
  */
-
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
+#include "../../configure_public.hpp"
+
 // Daemon path to auxiliary files
-#define DAEMON_AUX_PATH "/tmp/adafs"
+#define DAEMON_AUX_PATH "/tmp"
 
 // If ACM time should be considered
 #define ACMtime //unused

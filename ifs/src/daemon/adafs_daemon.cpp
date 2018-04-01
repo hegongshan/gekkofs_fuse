@@ -8,6 +8,7 @@
 
 #include <csignal>
 #include <condition_variable>
+#include <global/global_func.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
@@ -16,6 +17,11 @@ static condition_variable shutdown_please;
 static mutex mtx;
 
 bool init_environment() {
+    // Register daemon to system
+    if (!register_daemon_proc()) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
+        return false;
+    }
     // Initialize rocksdb
     if (!init_rocksdb()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize RocksDB.", __func__);
@@ -34,11 +40,6 @@ bool init_environment() {
     // Init Argobots ESs to drive IO
     if (!init_io_tasklet_pool()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
-        return false;
-    }
-    // Register daemon to system
-    if (!register_daemon_proc()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
         return false;
     }
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
@@ -219,42 +220,66 @@ void register_server_rpcs(margo_instance_id mid) {
 }
 
 /**
- * Returns the path where daemon process writes information for the running clients
- * @return string
- */
-string daemon_register_path() {
-    return (DAEMON_AUX_PATH + "/daemon_"s + to_string(getpid()) + ".run"s);
-}
-
-/**
  * Registers the daemon process to the system.
  * This will create a file with additional information for clients started on the same node.
  * @return
  */
 bool register_daemon_proc() {
-    auto ret = false;
     auto daemon_aux_path = DAEMON_AUX_PATH;
     if (!bfs::exists(daemon_aux_path) && !bfs::create_directories(daemon_aux_path)) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to create adafs auxiliary directory in {}", __func__,
                                        daemon_aux_path);
         return false;
     }
-    ofstream ofs(daemon_register_path().c_str(), ::ofstream::trunc);
-    if (ofs) {
-        ofs << ADAFS_DATA->mountdir();
-        ret = true;
+    auto pid_file = daemon_pid_path();
+    // check if a pid file exists from another adafs_daemon
+    if (bfs::exists(pid_file)) {
+        // check if another daemon is still running
+        ifstream ifs(pid_file, ::ifstream::in);
+        if (ifs) {
+            string running_pid;
+            // first line is pid of daemon
+            if (getline(ifs, running_pid) && !running_pid.empty()) {
+                // check if pid is running and kill it
+                if (kill(::stoi(running_pid), 0) == 0) {
+                    ADAFS_DATA->spdlogger()->warn("{}() Daemon with pid {} is already running. Proceed to force kill",
+                                                  __func__, running_pid);
+                    kill(::stoi(running_pid), SIGKILL);
+                    sleep(1);
+                    if (kill(::stoi(running_pid), 0) == 0) {
+                        ADAFS_DATA->spdlogger()->error("{}() Running daemon with pid {} cannot be killed. Exiting ...",
+                                                       __func__, running_pid);
+                        ifs.close();
+                        return false;
+                    } else
+                        ADAFS_DATA->spdlogger()->info("{}() Kill successful", __func__);
+                }
+            }
+        }
+        ifs.close();
     }
-    if (ofs.bad()) {
-        perror("Error opening file to register daemon process");
-        ADAFS_DATA->spdlogger()->error("{}() Error opening file to register daemon process", __func__);
+    auto my_pid = getpid();
+    if (my_pid == -1) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to get pid", __func__);
+        return false;
+    }
+    ofstream ofs(pid_file, ::ofstream::trunc);
+    if (ofs) {
+        ofs << to_string(my_pid);
+        ofs << "\n";
+        ofs << ADAFS_DATA->mountdir();
+    } else {
+        cerr << "Unable to create daemon pid file at " << pid_file << endl;
+        ADAFS_DATA->spdlogger()->error("{}() Unable to create daemon pid file at {}. No permissions?", __func__,
+                                       pid_file);
         return false;
     }
     ofs.close();
-    return ret;
+    return true;
 }
 
 bool deregister_daemon_proc() {
-    return bfs::remove(daemon_register_path());
+    return bfs::remove(daemon_pid_path());
 }
 
 /**

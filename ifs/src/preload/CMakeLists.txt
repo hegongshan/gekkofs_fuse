@@ -9,11 +9,13 @@ set(PRELOAD_SRC
     rpc/ld_rpc_data_ws.cpp
     rpc/ld_rpc_metadentry.cpp
     ../global/rpc/rpc_utils.cpp
+    ../global/global_func.cpp
     )
 set(PRELOAD_HEADERS
     ../../configure_public.hpp
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
+    ../../include/global/global_func.hpp
     ../../include/global/rpc/ipc_types.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
