@@ -97,9 +97,8 @@ extern hg_id_t rpc_read_data_id;
 extern std::shared_ptr<struct FsConfig> fs_config;
 // global logger instance
 extern std::shared_ptr<spdlog::logger> ld_logger;
-// rpc address cache
-extern std::map<uint64_t, hg_addr_t> rpc_address_cache;
-extern ABT_mutex rpc_address_cache_mutex;
+// rpc addresses. Populated when environment is initialized. After that it is read-only accessed
+extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 // file descriptor index validation flag
 extern std::atomic<bool> fd_validation_needed;
 
@@ -119,6 +118,8 @@ int db_val_to_stat64(std::string path, std::string db_val, struct stat64& attr);
 int get_daemon_pid();
 
 bool read_system_hostfile();
+
+bool lookup_all_hosts();
 
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 

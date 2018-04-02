@@ -1,12 +1,13 @@
 
 #include <preload/preload_util.hpp>
+#include <global/rpc/rpc_utils.hpp>
+#include <global/global_func.hpp>
 
 #include <fstream>
 #include <iterator>
 #include <sstream>
-#include <global/rpc/rpc_utils.hpp>
-#include <global/global_func.hpp>
 #include <csignal>
+#include <random>
 
 using namespace std;
 
@@ -283,33 +284,23 @@ bool read_system_hostfile() {
     return true;
 }
 
-/**
- * Creates an abstract rpc address for a given hostid and puts it into an address cache map
- * @param hostid
- * @param svr_addr
- * @return
- */
-bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+bool lookup_all_hosts() {
+    vector<uint64_t> hosts(fs_config->host_size);
+    // populate vector with [0, ..., host_size - 1]
+    ::iota(::begin(hosts), ::end(hosts), 0);
     /*
-     * This function might get called from within an Argobots thread.
-     * A std::mutex would lead to a deadlock as it does not yield the thread by sending it to BLOCKING state
+     * Shuffle hosts to balance addr lookups to all hosts
+     * Too many concurrent lookups send to same host could overwhelm the server, returning error when addr lookup
      */
-    ABT_mutex_lock(rpc_address_cache_mutex);
-    auto address_lookup = rpc_address_cache.find(hostid);
-    if (address_lookup != rpc_address_cache.end()) {
-        svr_addr = address_lookup->second;
-        ld_logger->trace("RPC address lookup success with hostid {}", address_lookup->first);
-        //found
-        ABT_mutex_unlock(rpc_address_cache_mutex);
-        return true;
-    } else {
-        // not found, manual lookup and add address mapping to LRU cache
-        ld_logger->trace("not found in lrucache");
+    ::random_device rd; // obtain a random number from hardware
+    ::mt19937 g(rd()); // seed the random generator
+    ::shuffle(hosts.begin(), hosts.end(), g); // Shuffle hosts vector
+    // lookup addresses and put abstract server addresses into rpc_addresses
+    for (auto& host : hosts) {
         string remote_addr;
-        // Try to get the ip of remote addr. If it cannot be found, use hostname
-        // first get the hostname with the hostid
-        auto hostname = fs_config->hosts.at(hostid) + HOSTNAME_SUFFIX;
-        // then get the ip address from /etc/hosts which is mapped to the sys_hostfile map
+        hg_addr_t svr_addr = HG_ADDR_NULL;
+        auto hostname = fs_config->hosts.at(host) + HOSTNAME_SUFFIX;
+        // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
         if (fs_config->sys_hostfile.count(hostname) == 1) {
             auto remote_ip = fs_config->sys_hostfile.at(hostname);
             remote_addr = RPC_PROTOCOL + "://"s + remote_ip + ":"s + fs_config->rpc_port;
@@ -323,20 +314,19 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
                          remote_addr, hostname, fs_config->rpc_port);
         // try to look up 3 times before erroring out
         hg_return_t ret;
-        // TODO If this is solution is somewhat helpful, write a more versatile solution
-        for (unsigned int i = 0; i < 3; i++) {
+        for (uint32_t i = 0; i < 4; i++) {
             ret = margo_addr_lookup(ld_margo_rpc_id, remote_addr.c_str(), &svr_addr);
             if (ret != HG_SUCCESS) {
                 // still not working after 5 tries.
                 if (i == 4) {
                     ld_logger->error("{}() Unable to lookup address {} from host {}", __func__,
                                      remote_addr, fs_config->hosts.at(fs_config->host_id));
-                    ABT_mutex_unlock(rpc_address_cache_mutex);
                     return false;
                 }
-                // Wait a second then try again
-                // TODO fix that terrible solution
-                sleep(1 * (i + 1));
+                // Wait a random amount of time and try again
+                ::mt19937 eng(rd()); // seed the random generator
+                ::uniform_int_distribution<> distr(50, 50 * (i + 2)); // define the range
+                ::this_thread::sleep_for(std::chrono::milliseconds(distr(eng)));
             } else {
                 break;
             }
@@ -344,13 +334,30 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
         if (svr_addr == HG_ADDR_NULL) {
             ld_logger->error("{}() looked up address is NULL for address {} from host {}", __func__,
                              remote_addr, fs_config->hosts.at(fs_config->host_id));
-            ABT_mutex_unlock(rpc_address_cache_mutex);
             return false;
         }
-        rpc_address_cache.insert(make_pair(hostid, svr_addr));
-        ABT_mutex_unlock(rpc_address_cache_mutex);
-        return true;
+        rpc_addresses.insert(make_pair(host, svr_addr));
     }
+    return true;
+}
+
+/**
+ * Retrieve abstract svr address handle for hostid
+ * @param hostid
+ * @param svr_addr
+ * @return
+ */
+bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
+    auto address_lookup = rpc_addresses.find(hostid);
+    if (address_lookup != rpc_addresses.end()) {
+        svr_addr = address_lookup->second;
+        ld_logger->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
+        return true;
+    } else {
+        // not found, unexpected host
+        ld_logger->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__);
+    }
+    return false;
 }
 
 /**
