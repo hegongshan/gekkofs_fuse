@@ -18,6 +18,8 @@ add_executable(ifs_test_temp ${SOURCE_FILES_TEMP})
 
 add_executable(ifs_test_wr wr_test.cpp)
 
+add_executable(ifs_test_dir dir_test.cpp)
+
 find_package(MPI)
 if(${MPI_FOUND})
     set(SOURCE_FILES_MPI main_MPI.cpp)
