@@ -74,7 +74,7 @@ int mkdir(const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called with path {} with mode {}", __func__, path, mode);
     if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_mk_node(path, mode);
+        return adafs_mk_node(path, mode | S_IFDIR);
     }
     return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
 }

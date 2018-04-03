@@ -12,7 +12,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     // TODO look up if file exists configurable
     if (flags & O_CREAT)
         // no access check required here. If one is using our FS they have the permissions.
-        err = rpc_send_mk_node(path, mode);
+        err = adafs_mk_node(path, mode | S_IFREG);
     else {
         auto mask = F_OK; // F_OK == 0
 #if defined(CHECK_ACCESS_DURING_OPEN)
@@ -41,6 +41,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 
 int adafs_mk_node(const std::string& path, const mode_t mode) {
     init_ld_env_if_needed();
+
+    //file type must be set
+    assert((mode & S_IFMT) != 0);
+    //file type must be either regular file or directory
+    assert(S_ISREG(mode) || S_ISDIR(mode));
+
     return rpc_send_mk_node(path, mode);
 }
 
