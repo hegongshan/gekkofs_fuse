@@ -13,6 +13,13 @@ int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     mode_t mode = 0;
+
+    if(flags & O_DIRECTORY){
+        CTX->log()->error("{}() called with `O_DIRECTORY` flag on {}", __func__, path);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     if (flags & O_CREAT) {
         va_list vl;
         va_start(vl, flags);
