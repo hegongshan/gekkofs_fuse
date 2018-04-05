@@ -349,13 +349,16 @@ bool lookup_all_hosts() {
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
     auto address_lookup = rpc_addresses.find(hostid);
-    if (address_lookup != rpc_addresses.end()) {
+    auto found = address_lookup != rpc_addresses.end();
+    if (found) {
         svr_addr = address_lookup->second;
         ld_logger->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
         return true;
     } else {
-        // not found, unexpected host
-        ld_logger->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__);
+        // not found, unexpected host.
+        // This should not happen because all addresses are looked when the environment is initialized.
+        ld_logger->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__, hostid);
+        assert(found && "Unexpected host id for rpc address lookup. ID was not found in RPC address cache.");
     }
     return false;
 }
