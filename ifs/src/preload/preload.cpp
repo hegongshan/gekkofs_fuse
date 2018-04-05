@@ -43,8 +43,7 @@ hg_id_t rpc_read_data_id;
 margo_instance_id ld_margo_ipc_id;
 margo_instance_id ld_margo_rpc_id;
 // rpc address cache
-std::map<uint64_t, hg_addr_t> rpc_address_cache;
-ABT_mutex rpc_address_cache_mutex;
+std::map<uint64_t, hg_addr_t> rpc_addresses;
 // local daemon IPC address
 hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
 
@@ -237,8 +236,8 @@ void init_ld_environment_() {
         ld_logger->error("{}() Unable to read system hostfile /etc/hosts for address mapping.", __func__);
         exit(EXIT_FAILURE);
     }
-    if (ABT_mutex_create(&rpc_address_cache_mutex) != ABT_SUCCESS) {
-        ld_logger->error("{}() Unable to create RPC address cache mutex.", __func__);
+    if (!lookup_all_hosts()) {
+        ld_logger->error("{}() Unable to lookup all host RPC addresses.", __func__);
         exit(EXIT_FAILURE);
     }
     ld_logger->info("{}() Environment initialization successful.", __func__);
@@ -282,16 +281,11 @@ void destroy_preload() {
         margo_diag_dump(ld_margo_rpc_id, "-", 0);
     }
 #endif
-    if (services_used) {
-        ld_logger->debug("{}() Freeing ABT constructs ...", __func__);
-        ABT_mutex_free(&rpc_address_cache_mutex);
-        ld_logger->debug("{}() Freeing ABT constructs successful", __func__);
-    }
     // Shut down RPC client if used
     if (ld_margo_rpc_id != nullptr) {
         // free all rpc addresses in LRU map and finalize margo rpc
         ld_logger->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
-        for (auto& e : rpc_address_cache) {
+        for (auto& e : rpc_addresses) {
             ld_logger->info("{}() Trying to free hostid {}", __func__, e.first);
             if (margo_addr_free(ld_margo_rpc_id, e.second) != HG_SUCCESS) {
                 ld_logger->warn("{}() Unable to free RPC client's svr address: {}.", __func__, e.first);
@@ -311,7 +305,7 @@ void destroy_preload() {
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used) {
-        rpc_address_cache.clear();
+        rpc_addresses.clear();
         ld_logger->info("All services shut down. Client shutdown complete.");
     }
     else
