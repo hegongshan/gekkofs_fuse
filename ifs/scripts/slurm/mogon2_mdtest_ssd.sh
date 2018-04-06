@@ -9,7 +9,7 @@
 usage_short() {
         echo "
 usage: adafs_mdtest.sh [-h] [-n <MD_PROC_N>] [-i <MD_ITER>] [-I <NUM_ITEMS>] [-u]
-                    benchmark_dir
+                    benchmark_dir adafs_daemon_path ld_preload_path
         "
 }
 
@@ -85,15 +85,17 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # positional arguments
-if [[ -z ${1+x} ]]; then
+if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
     echo "Positional arguments missing."
     usage_short
     exit
 fi
 
 VEF_HOME="/home/vef"
-HOSTFILE="${VEF_HOME}/jobdir/hostfile_${SLURM_JOB_ID}"
+HOSTFILE="${VEF_HOME}/jobdir_m2/hostfile_${SLURM_JOB_ID}"
 MD_DIR=$1
+DAEMONPATH=$2
+LIBPATH=$3
 ROOTDIR="/localscratch/${SLURM_JOB_ID}"
 
 # Load modules and set environment variables
@@ -120,7 +122,7 @@ export CXX=$(which g++)
 echo "files per process: ${MD_ITEMS}"
 
 # create a proper hostfile to run
-srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=64/' -i ${HOSTFILE}
+srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=40/' -i ${HOSTFILE}
 
 echo "Generated hostfile no of nodes:"
 cat ${HOSTFILE} | wc -l
@@ -137,7 +139,7 @@ echo "
 ############################### DAEMON START ############################### ############################################################################
 "
 # start adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
+python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${DAEMONPATH} ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
 
 #echo "logfiles:"
 #cat /tmp/adafs_daemon.log
@@ -150,7 +152,7 @@ echo "
 ############################################################################
 "
 # Run benchmark
-BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=/lustre/project/zdvresearch/vef/fs/ifs/build/lib/libadafs_preload_client.so numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
+BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
 eval ${BENCHCMD}
 

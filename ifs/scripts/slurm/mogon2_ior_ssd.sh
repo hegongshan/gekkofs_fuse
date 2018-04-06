@@ -2,14 +2,13 @@
 # Slurm stuff
 
 #SBATCH -J adafs_ior
-#SBATCH -p nodeshort
+#SBATCH -p parallel
 #SBATCH -t 300
-#SBATCH -A zdvresearch
-#SBATCH --gres=ramdisk:16G
+#SBATCH -A m2_zdvresearch
 
 usage_short() {
         echo "
-usage: mogon1_ior_ramdisk.sh [-h] [-n <PROC_PER_NODE>] [-b <BLOCKSIZE>] [-i <ITER>] [-Y] [-p]
+usage: mogon2_ior_ssd.sh [-h] [-n <PROC_PER_NODE>] [-b <BLOCKSIZE>] [-i <ITER>] [-Y] [-p]
                              [-t <TRANSFERSIZES>] [-s] [-r] [-v]
                              benchmark_dir+file_prefix adafs_daemon_path ld_preload_path
         "
@@ -142,35 +141,34 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) || ( -z ${3+x} ) ]]; then
 fi
 
 VEF_HOME="/home/vef"
-HOSTFILE="${VEF_HOME}/jobdir/hostfile_${SLURM_JOB_ID}"
+HOSTFILE="${VEF_HOME}/jobdir_m2/hostfile_${SLURM_JOB_ID}"
 WORKDIR=$1
 DAEMONPATH=$2
 LIBPATH=$3
-ROOTDIR="/localscratch/${SLURM_JOB_ID}/ramdisk"
+ROOTDIR="/localscratch/${SLURM_JOB_ID}"
 
 # Load modules and set environment variables
-PATH=$PATH:/home/vef/adafs/install/bin:/home/vef/.local/bin
-C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/vef/adafs/install/include
-CPATH=$CPATH:/home/vef/adafs/install/include
-CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/vef/adafs/install/include
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vef/adafs/install/lib
-LIBRARY_PATH=$LIBRARY_PATH:/home/vef/adafs/install/lib
+PATH=$PATH:/home/vef/adafs_m2/install/bin:/home/vef/.local/bin
+C_INCLUDE_PATH=$C_INCLUDE_PATH:/home/vef/adafs_m2/install/include
+CPATH=$CPATH:/home/vef/adafs_m2/install/include
+CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:/home/vef/adafs_m2/install/include
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/vef/adafs_m2/install/lib
+LIBRARY_PATH=$LIBRARY_PATH:/home/vef/adafs_m2/install/lib
 export PATH
 export CPATH
 export C_INCLUDE_PATH
 export CPLUS_INCLUDE_PATH
 export LD_LIBRARY_PATH
 export LIBRARY_PATH
-export LDFLAGS='-L/home/vef/adafs/install/lib/'
-export CPPFLAGS='-I/home/vef/adafs/install/include/'
-module load devel/CMake/3.8.0
-module load mpi/OpenMPI/2.0.2-GCC-6.3.0
-module load devel/Boost/1.63.0-foss-2017a
+export LDFLAGS='-L/home/vef/adafs_m2/install/lib/'
+export CPPFLAGS='-I/home/vef/adafs_m2/install/include/'
+module load devel/CMake/3.7.2
+module load devel/Boost/1.65.1-foss-2017a
 export CC=$(which gcc)
 export CXX=$(which g++)
 
 # create a proper hostfile to run
-srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=64/' -i ${HOSTFILE}
+srun -n ${SLURM_NNODES} hostname -s | sort -u > ${HOSTFILE} && sed -e 's/$/ max_slots=40/' -i ${HOSTFILE}
 
 echo "Generated hostfile no of nodes:"
 cat ${HOSTFILE} | wc -l
@@ -182,11 +180,15 @@ echo "
 ############################################################################
 ############################### DAEMON START ############################### ############################################################################
 "
+# This is just to get some info and if all of them would start up right
 # start adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0,1 --membind=0,1" ${DAEMONPATH} ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
+python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${DAEMONPATH} ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
 
 # pssh to get logfiles. hostfile is created by startup script
 ${VEF_HOME}/.local/bin/pssh -O StrictHostKeyChecking=no -i -h /tmp/hostfile_pssh_${SLURM_JOB_ID} "tail /tmp/adafs_daemon.log"
+
+# hardkill adafs daemon on the nodes
+python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
 
 echo "
 ############################################################################
@@ -195,19 +197,8 @@ echo "
 "
 # Run benchmark
 
-BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=2,3,4,5,6,7 --membind=2,3,4,5,6,7 /gpfs/fs1/home/vef/benchmarks/mogon1/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
+BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
 
-echo "##########################"
-echo "< 1. WARMUP              >"
-echo "##########################"
-for ((i=1;i<=3;i+=1))
-do
-    CMD="${BENCH_TMPL} -t 16m"
-    echo "## Command ${CMD}"
-    if [ "${PRETEND}" = false ] ; then
-        eval ${CMD}
-    fi
-done
 # Run experiments
 echo "##########################"
 echo "< 2. RUNNING EXPERIMENTS >"
@@ -227,6 +218,10 @@ do
     echo "<new_transfer_size>;${TRANSFER}"
     for ((i=1;i<=${ITER};i+=1))
     do
+        # Start daemon and clean rootdir
+        echo "Starting ADA-FS Daemon ..."
+        python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${DAEMONPATH} ${ROOTDIR} ${WORKDIR} ${HOSTFILE}
+        echo "Startup done."
         echo "<new_iteration>;$i"
         # build command from template and then execute it
         CMD="${BENCH_TMPL} -t ${TRANSFER}"
@@ -246,6 +241,10 @@ do
         fi
         echo "<finish_iteration>;$i"
         echo "### iteration $i/${ITER} done"
+        # Stop daemon
+        echo "Stopping ADA-FS Daemon ..."
+        python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
+        echo "Done."
     done
     echo "<finish_transfer_size>;${TRANSFER}"
     echo "## new transfer size #################################"
@@ -259,8 +258,6 @@ END_TIME="$(date -u +%s)"
 ELAPSED="$((${END_TIME}-${START_TIME}))"
 MINUTES=$((${ELAPSED} / 60))
 echo "##Elapsed time: ${MINUTES} minutes or ${ELAPSED} seconds elapsed for test set."
-# shut down adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs/build/bin/adafs_daemon ${HOSTFILE}
 
 # cleanup
 rm ${HOSTFILE}
