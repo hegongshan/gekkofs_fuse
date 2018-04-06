@@ -108,7 +108,7 @@ int get_metadentry_size(const string& path, size_t& ret_size) {
  * @return the updated size
  */
 int update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append, size_t& read_size) {
-    // XXX This function has to be completely atomic. Do we need transactions here? or a separate locking db?
+    // XXX This function will be replaced soon by the rocksdb function - just to test for the random IO
 #ifdef LOG_TRACE
     db_iterate_all_entries();
 #endif
@@ -118,15 +118,13 @@ int update_metadentry_size(const string& path, size_t io_size, off64_t offset, b
         return ENOENT;
     }
     Metadata md{path, val};
-    if (static_cast<unsigned long>(offset) > md.size()) // Writing beyond file dimensions is prohibited for now XXX
-        return EFAULT;
     // update io_size
     if (append)
         md.size(md.size() + io_size);
     else { // if no append but io_size exceeds the file's size, update the size correspondingly
         if (io_size + static_cast<unsigned long>(offset) > md.size())
             md.size(io_size + offset);
-        else {
+        else { // if not keep the current size
             read_size = md.size();
             return 0;
         }
