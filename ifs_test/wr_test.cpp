@@ -21,11 +21,21 @@ int main(int argc, char* argv[]) {
     string p = "/tmp/mountdir/file"s;
     char buffIn[] = "oops.";
     char *buffOut = new char[strlen(buffIn)];
+    int fd;
 
+    fd = open(p.c_str(), O_RDONLY);
+    if(fd >= 0 ){
+        cerr << "ERROR: Succeeded on opening non-existing file" << endl;
+        return -1;
+    }
+    if(errno != ENOENT){
+        cerr << "ERROR: wrong error number while opening non-existing file: " << errno << endl;
+        return -1;
+    }
     
     /* Write the file */
 
-    auto fd = open(p.c_str(), O_WRONLY | O_CREAT, 0777);
+    fd = open(p.c_str(), O_WRONLY | O_CREAT, 0777);
     if(fd < 0){
         cerr << "Error opening file (write)" << endl;
         return -1;
