@@ -76,7 +76,7 @@ int rpc_send_access(const std::string& path, const int mask) {
     hg_handle_t handle;
     rpc_access_in_t in{};
     rpc_err_out_t out{};
-    int err = EUNKNOWN;
+    int err = 0;
     // fill in
     in.path = path.c_str();
     in.mask = mask;
@@ -94,24 +94,31 @@ int rpc_send_access(const std::string& path, const int mask) {
     ret = margo_forward_timed_wrap(handle, &in);
 #endif
     // Get response
-    if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-        if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            ld_logger->error("{}() while getting rpc output", __func__);
-        }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        ld_logger->warn("{}() timed out");
+    if (ret != HG_SUCCESS) {
+        ld_logger->error("{}() timed out");
         errno = EBUSY;
+        margo_destroy(handle);
+        return -1;
     }
 
+    ret = margo_get_output(handle, &out);
+    if (ret != HG_SUCCESS) {
+        ld_logger->error("{}() while getting rpc output", __func__);
+        errno = EBUSY;
+        margo_destroy(handle);
+        return -1;
+    }
+    
+    ld_logger->debug("{}() Got response with error: {}", __func__, out.err);
+    
+    if(out.err != 0){
+        //In case of error out.err contains the
+        //corresponding value of errno
+        errno = out.err;
+        err = -1;
+    }
+    
+    margo_free_output(handle, &out);
     margo_destroy(handle);
     return err;
 }
