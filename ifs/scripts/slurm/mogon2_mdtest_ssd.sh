@@ -28,7 +28,7 @@ optional arguments:
                                 shows this help message and exits
         -n <MD_PROC_N>
                                 number of processes used in mdtest
-                                defaults to '1'
+                                defaults to '16'
         -i <MD_ITER>
                                 number of iterations done in mdtest
                                 defaults to '1'

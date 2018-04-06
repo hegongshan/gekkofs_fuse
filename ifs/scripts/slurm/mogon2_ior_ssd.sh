@@ -197,7 +197,7 @@ echo "
 "
 # Run benchmark
 
-BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
+BENCH_TMPL="mpiexec -np ${IOR_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/ior -a POSIX -i 1 -o ${WORKDIR} -b ${BLOCKSIZE} ${VERBOSE} -x -F -w -r -W"
 
 # Run experiments
 echo "##########################"
