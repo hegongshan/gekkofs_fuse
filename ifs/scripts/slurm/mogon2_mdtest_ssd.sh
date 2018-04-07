@@ -8,7 +8,7 @@
 
 usage_short() {
         echo "
-usage: adafs_mdtest.sh [-h] [-n <MD_PROC_N>] [-i <MD_ITER>] [-I <NUM_ITEMS>] [-u]
+usage: adafs_mdtest.sh [-h] [-n <MD_PROC_N>] [-i <ITER>] [-I <NUM_ITEMS>] [-u]
                     benchmark_dir adafs_daemon_path ld_preload_path
         "
 }
@@ -29,8 +29,8 @@ optional arguments:
         -n <MD_PROC_N>
                                 number of processes used in mdtest
                                 defaults to '16'
-        -i <MD_ITER>
-                                number of iterations done in mdtest
+        -i <ITER>
+                                number of iterations done
                                 defaults to '1'
         -I <NUM_ITEMS>
                                 number of files per process in mdtest
@@ -41,7 +41,7 @@ optional arguments:
 }
 
 MD_PROC_N=16
-MD_ITER=1
+ITER=1
 MD_ITEMS="500000"
 MD_UNIQUE=""
 START_TIME="$(date -u +%s)"
@@ -58,7 +58,7 @@ case ${key} in
     shift # past value
     ;;
     -i)
-    MD_ITER="$2"
+    ITER="$2"
     shift # past argument
     shift # past value
     ;;
@@ -136,8 +136,10 @@ python2 ${VEF_HOME}/ifs_m2/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HO
 
 echo "
 ############################################################################
-############################### DAEMON START ############################### ############################################################################
+############################### DAEMON TEST START ##########################
+############################################################################
 "
+# This is just to get some info and if all of them would start up right
 # start adafs daemon on the nodes
 python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${DAEMONPATH} ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
 
@@ -146,15 +148,32 @@ python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numa
 # pssh to get logfiles. hostfile is created by startup script
 ${VEF_HOME}/.local/bin/pssh -O StrictHostKeyChecking=no -i -h /tmp/hostfile_pssh_${SLURM_JOB_ID} "tail /tmp/adafs_daemon.log"
 
+# shut down adafs daemon on the nodes
+python2 ${VEF_HOME}/ifs_m2/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
+
 echo "
 ############################################################################
 ############################ RUNNING BENCHMARK #############################
 ############################################################################
 "
 # Run benchmark
-BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i ${MD_ITER} -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
+BENCHCMD="mpiexec -np ${MD_PROC_N} --map-by node --hostfile ${HOSTFILE} --mca mtl ^psm2,ofi -x LD_PRELOAD=${LIBPATH} numactl --cpunodebind=1 --membind=1 /lustre/miifs01/project/zdvresearch/vef/benchmarks/ior/build/src/mdtest -z 0 -b 1 -i 1 -d ${MD_DIR} -F -I ${MD_ITEMS} -C -r -T -v 1 ${MD_UNIQUE}"
 
-eval ${BENCHCMD}
+for ((i=1;i<=${ITER};i+=1))
+do
+    # Start daemon and clean rootdir
+    echo "Starting ADA-FS Daemon ..."
+    python2 ${VEF_HOME}/ifs_m2/scripts/startup_adafs.py -c -J ${SLURM_JOB_ID} --numactl "--cpunodebind=0 --membind=0" ${DAEMONPATH} ${ROOTDIR} ${MD_DIR} ${HOSTFILE}
+    echo "Startup done."
+    # Run benchmark iteration
+    echo "## Command ${BENCHCMD}"
+    eval ${BENCHCMD}
+    # Stop daemon
+    echo "Stopping ADA-FS Daemon ..."
+    python2 ${VEF_HOME}/ifs/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
+    echo "Done."
+done
+
 
 echo "
 ############################################################################
@@ -164,8 +183,6 @@ END_TIME="$(date -u +%s)"
 ELAPSED="$((${END_TIME}-${START_TIME}))"
 MINUTES=$((${ELAPSED} / 60))
 echo "##Elapsed time: ${MINUTES} minutes or ${ELAPSED} seconds elapsed for test set."
-# shut down adafs daemon on the nodes
-python2 ${VEF_HOME}/ifs_m2/scripts/shutdown_adafs.py -J ${SLURM_JOB_ID} ${VEF_HOME}/ifs_m2/build/bin/adafs_daemon ${HOSTFILE} -9
 
 # cleanup
 rm ${HOSTFILE}
