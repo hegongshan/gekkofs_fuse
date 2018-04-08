@@ -54,7 +54,11 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
  */
 int adafs_rm_node(const std::string& path) {
     init_ld_env_if_needed();
-    return rpc_send_rm_node(path);
+    struct stat node_metadentry{};
+    auto err = adafs_stat(path, &node_metadentry);
+    if (err != 0)
+        return -1;
+    return rpc_send_rm_node(path, node_metadentry.st_size == 0);
 }
 
 int adafs_access(const std::string& path, const int mask) {

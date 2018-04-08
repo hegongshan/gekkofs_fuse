@@ -170,20 +170,27 @@ int rpc_send_stat(const std::string& path, string& attr) {
     return err;
 }
 
-int rpc_send_rm_node(const std::string& path) {
+int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only) {
     hg_return_t ret;
     int err = 0; // assume we succeed
+    // if metadentry should only removed only, send only 1 rpc to remove the metadata
+    // else send an rpc to all hosts and thus broadcast chunk_removal.
+    auto rpc_target_size = remove_metadentry_only ? static_cast<uint64_t>(1) : fs_config->host_size;
 
     ld_logger->debug("{}() Creating Mercury handles for all nodes ...", __func__);
-    vector<hg_handle_t> rpc_handles(fs_config->host_size);
-    vector<margo_request> rpc_waiters(fs_config->host_size);
-    vector<rpc_rm_node_in_t> rpc_in(fs_config->host_size);
+    vector<hg_handle_t> rpc_handles(rpc_target_size);
+    vector<margo_request> rpc_waiters(rpc_target_size);
+    vector<rpc_rm_node_in_t> rpc_in(rpc_target_size);
     // Send rpc to all nodes as all of them can have chunks for this path
-    for (size_t i = 0; i < fs_config->host_size; i++) {
+    for (size_t i = 0; i < rpc_target_size; i++) {
         // fill in
         rpc_in[i].path = path.c_str();
         // create handle
-        ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, i, rpc_handles[i], false);
+        // if only the metadentry needs to removed send one rpc to metadentry's responsible node
+        if (remove_metadentry_only)
+            ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, rpc_handles[i], false);
+        else
+            ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, i, rpc_handles[i], false);
         if (ret != HG_SUCCESS) {
             ld_logger->warn("{}() Unable to create Mercury handle", __func__);
             // We use continue here to remove at least some data
@@ -201,7 +208,7 @@ int rpc_send_rm_node(const std::string& path) {
     }
 
     // Wait for RPC responses and then get response
-    for (size_t i = 0; i < fs_config->host_size; i++) {
+    for (size_t i = 0; i < rpc_target_size; i++) {
         // XXX We might need a timeout here to not wait forever for an output that never comes?
         ret = margo_wait(rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
