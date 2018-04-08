@@ -42,16 +42,22 @@ def parse_file(filepath):
     transfersizes = []
     write_iops_avg = []
     read_iops_avg = []
+    iter_n_tmp = 0
+    iter_n = []
     n = 0
+    set_n = 0
     curr_transfer_size_unit = ''
     with open(filepath, 'r') as rf:
-        for line in rf.readlines():
+        for line_idx, line in enumerate(rf.readlines()):
             if 'Startup successful. Daemon is ready.' in line:
                 n += 1
+            if line_idx == 1:  # Second line has slurm set nodes information
+                set_n = int(line.strip())
             if '<new_transfer_size>' in line:
                 curr_transfer_size_unit = line.strip().split(';')[1]
                 write_tmp = []
                 read_tmp = []
+                iter_n_tmp = 0
             if '<finish_transfer_size>' in line:
                 transfersizes.append(curr_transfer_size_unit)
                 # calc average throughput
@@ -66,9 +72,11 @@ def parse_file(filepath):
                 write_iops_avg.append(write_avg_mb / transfer_norm)
                 read_avg_mb = mebi_to_mega(read_avg[-1])
                 read_iops_avg.append(read_avg_mb / transfer_norm)
+                iter_n.append(iter_n_tmp)
                 curr_transfer_size_unit = ''
             if 'Max Write' in line:
                 write_tmp.append(float(line.split(' ')[2]))
+                iter_n_tmp += 1
             if 'Max Read' in line:
                 read_tmp.append(float(line.split(' ')[3]))
             if 'DAEMON STOP' in line:
@@ -77,6 +85,9 @@ def parse_file(filepath):
         # something is wrong. discard this file
         print 'File %s does not contain results' % filepath
         return
+    if set_n != n:
+        # Something was wrong during test daemon startup
+        print 'MISMATCH: Set number of hosts (%d) and number of successful host daemon startup hosts (%d)' % (set_n, n)
     # put create stat and remove into dict index 0: avg, index 1 std
     node_n.append(n)
     tmp_d = dict()
@@ -88,6 +99,7 @@ def parse_file(filepath):
     tmp_d['write_iops_avg'] = write_iops_avg
     tmp_d['read_iops_avg'] = read_iops_avg
     tmp_d['node_n'] = n
+    tmp_d['iter_n'] = iter_n
     results_n.append(tmp_d)
 
 
@@ -112,6 +124,7 @@ def parse_ior_out(inpath, outpath='', printshell=False, printonly=True, calc_iop
     csv_read_std_l = list()
     csv_write_iops_avg_l = list()
     csv_read_iops_avg_l = list()
+    csv_iteration_n_l = list()
     header_string = '# nodes,%s' % ','.join([x for x in results_n[0]['transfersizes']])
     for i in range(len(node_n)):
         csv_write_avg = '%s,%s' % (node_n[i], ','.join(["{:.2f}".format(x) for x in results_n[i]['write_avg']]))
@@ -127,6 +140,8 @@ def parse_ior_out(inpath, outpath='', printshell=False, printonly=True, calc_iop
         csv_write_iops_avg_l.append([node_n[i], csv_write_iops_avg])
         csv_read_iops_avg = '%s,%s' % (node_n[i], ','.join(["{:.2f}".format(x) for x in results_n[i]['read_iops_avg']]))
         csv_read_iops_avg_l.append([node_n[i], csv_read_iops_avg])
+        csv_iteration_n = '%s,%s' % (node_n[i], ','.join([str(x) for x in results_n[i]['iter_n']]))
+        csv_iteration_n_l.append([node_n[i], csv_iteration_n])
     # sort by number of nodes and create csvs
     csv_write_avg_l.sort(key=lambda x: x[0])
     csv_write_avg = '%s\n%s' % (header_string, '\n'.join([x[1] for x in csv_write_avg_l]))
@@ -140,9 +155,11 @@ def parse_ior_out(inpath, outpath='', printshell=False, printonly=True, calc_iop
     csv_write_iops_avg = '%s\n%s' % (header_string, '\n'.join([x[1] for x in csv_write_iops_avg_l]))
     csv_read_iops_avg_l.sort(key=lambda x: x[0])
     csv_read_iops_avg = '%s\n%s' % (header_string, '\n'.join([x[1] for x in csv_read_iops_avg_l]))
+    csv_iteration_n_l.sort(key=lambda x: x[0])
+    csv_iteration_n = '%s\n%s' % (header_string, '\n'.join([x[1] for x in csv_iteration_n_l]))
     # print output
     if printshell:
-        print 'Write_avg:'
+        print '\nWrite_avg:'
         print csv_write_avg
         print '\nRead_avg:'
         print csv_read_avg
@@ -156,6 +173,9 @@ def parse_ior_out(inpath, outpath='', printshell=False, printonly=True, calc_iop
             print csv_write_iops_avg
             print '\nRead_IOPS_avg:'
             print csv_read_iops_avg
+        # print iterations
+        print '\niteration_n:'
+        print csv_iteration_n
 
     if not printonly and outpath != '':
         # write output
