@@ -42,7 +42,7 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
-                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path);
+                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
     // create metadentry
     out.err = create_metadentry(in.path, in.mode);
 
@@ -69,7 +69,7 @@ static hg_return_t rpc_srv_access(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
-                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path);
+                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
     // access metadentry
     out.err = check_access_mask(in.path, in.mask);
 

@@ -292,7 +292,9 @@ void destroy_preload() {
             }
         }
         ld_logger->debug("{}() About to finalize the margo RPC client. Actually not doing it XXX", __func__);
-//        margo_finalize(ld_margo_rpc_id); // XXX Sometimes this hangs on the cluster. Investigate
+        // XXX Sometimes this hangs on the cluster. Investigate.
+        // Might been solved in margo 0.3. It is not an issue with Omnipath for sure. Maybe CCI only issue.
+        margo_finalize(ld_margo_rpc_id);
         ld_logger->debug("{}() Shut down Margo RPC client successful", __func__);
     }
     // Shut down IPC client if used
@@ -301,7 +303,7 @@ void destroy_preload() {
         if (margo_addr_free(ld_margo_ipc_id, daemon_svr_addr) != HG_SUCCESS)
             ld_logger->warn("{}() Unable to free IPC client's daemon svr address.", __func__);
         ld_logger->debug("{}() About to finalize the margo IPC client. Actually not doing it XXX", __func__);
-//        margo_finalize(ld_margo_ipc_id);
+        margo_finalize(ld_margo_ipc_id);
         ld_logger->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used) {

@@ -258,7 +258,7 @@ MERCURY_VERSION=$(cd ${CURR} && git log --since 02-25-2018 | wc -l)
 echo $MERCURY_VERSION
 if [ ${MERCURY_VERSION} -eq 0 ]; then
     echo "########## Mercury version is too old. Pulling new version ..."
-    cd $CURR && git checkout c4faa382fd228c0b629c9164a984df1779089d3f || exit 1
+    cd $CURR && git checkout d015745ce25d839b8b46e68c11a7d8278423a46b || exit 1
 fi
 prepare_build_dir ${CURR}
 cd ${CURR}
