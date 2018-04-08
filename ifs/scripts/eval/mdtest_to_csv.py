@@ -3,41 +3,56 @@
 
 import argparse
 
+import numpy as np
 import os
 
 __author__ = "Marc-Andre Vef"
 __email__ = "vef@uni-mainz.de"
 
 node_n = list()
-mdtest_d = dict(create=list(), stat=list(), remove=list())
+mdtest_d = dict(create_avg=list(), stat_avg=list(), remove_avg=list(), create_std=list(), stat_std=list(),
+                remove_std=list())
 
 
 def parse_file(filepath):
     flag = False
     # extraxt relevant info from file and put it into mdtest_out list
     mdtest_out = []
-    n = -1
+    create_tmp = []
+    stat_tmp = []
+    remove_tmp = []
+    n = 0
     with open(filepath, 'r') as rf:
         for line in rf.readlines():
-            if 'mdtest-1.9.3 was launched with' in line:
-                n = int(line.strip().split(' ')[-2])
+            if 'Startup successful. Daemon is ready.' in line:
+                n += 1
             if 'SUMMARY: (of' in line:
                 flag = True
             if '-- finished at ' in line or 'V-1: Entering timestamp...' in line:
                 flag = False
+                # Filter for relevant stuff
+                mdtest_out = mdtest_out[3:-2]
+                # put values for iteration in tmp lists
+                create_tmp.append(float([x for x in mdtest_out[0].strip().split(' ') if x][-2:-1][0]))
+                stat_tmp.append(float([x for x in mdtest_out[1].strip().split(' ') if x][-2:-1][0]))
+                remove_tmp.append(float([x for x in mdtest_out[3].strip().split(' ') if x][-2:-1][0]))
             if flag:
                 mdtest_out.append(line.strip())
-    if len(mdtest_out) == 0:
+            if 'DAEMON STOP' in line:
+                break
+    if len(create_tmp) == 0:
         # something is wrong. discard this file
         print 'File %s does not contain mdtest results' % filepath
         return
-    # Filter for relevant stuff
-    mdtest_out = mdtest_out[3:-2]
-    # put create stat and remove into dict index 0: avg, index 1 std
+
     node_n.append(n)
-    mdtest_d['create'].append(','.join([x for x in mdtest_out[0].strip().split(' ') if x][-2:]))
-    mdtest_d['stat'].append(','.join([x for x in mdtest_out[1].strip().split(' ') if x][-2:]))
-    mdtest_d['remove'].append(','.join([x for x in mdtest_out[3].strip().split(' ') if x][-2:]))
+    # calc mean and standard deviation
+    mdtest_d['create_avg'].append(np.mean(create_tmp))
+    mdtest_d['create_std'].append(np.std(create_tmp))
+    mdtest_d['stat_avg'].append(np.mean(stat_tmp))
+    mdtest_d['stat_std'].append(np.std(stat_tmp))
+    mdtest_d['remove_avg'].append(np.mean(remove_tmp))
+    mdtest_d['remove_std'].append(np.std(remove_tmp))
 
 
 def parse_mdtest_out(inpath, outpath='', printshell=False, printonly=True):
@@ -59,13 +74,16 @@ def parse_mdtest_out(inpath, outpath='', printshell=False, printonly=True):
     csv_l = list()
     for i in range(len(node_n)):
         csv_line = ''
-        csv_line += '%s,' % mdtest_d['create'][i]
-        csv_line += '%s,' % mdtest_d['stat'][i]
-        csv_line += '%s\n' % mdtest_d['remove'][i]
+        csv_line += '%s,' % mdtest_d['create_avg'][i]
+        csv_line += '%s,' % mdtest_d['stat_avg'][i]
+        csv_line += '%s' % mdtest_d['remove_avg'][i]
+        csv_line += '%s,' % mdtest_d['create_std'][i]
+        csv_line += '%s,' % mdtest_d['stat_std'][i]
+        csv_line += '%s\n' % mdtest_d['remove_std'][i]
         csv_l.append([node_n[i], csv_line])
     csv_l.sort(key=lambda x: x[0])
     # convert sorted list into csv text file
-    csv = 'n,creates/sec,create_std,stats/sec,stat_std,remove/sec,remove_std\n'
+    csv = 'n,creates_avg/sec,stats_avg/sec,remove_avg/sec,create_std,stat_std,remove_std\n'
     for i in csv_l:
         csv += '%d,%s' % (i[0], i[1])
     # print output
