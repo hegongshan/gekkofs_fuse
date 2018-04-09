@@ -123,8 +123,8 @@ bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
 bool is_local_op(size_t recipient);
 
-template<typename T>
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const T&, hg_handle_t& handle, bool force_rpc);
+hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const std::string&, hg_handle_t& handle, bool force_rpc);
 
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t& recipient, hg_handle_t& handle, bool force_rpc);
 
 #endif //IFS_PRELOAD_UTIL_HPP

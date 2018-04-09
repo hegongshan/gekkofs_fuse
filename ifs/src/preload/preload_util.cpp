@@ -403,10 +403,12 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
  * @param handle
  * @return
  */
-template<>
-hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle,
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id,
+                            const std::string& path, hg_handle_t& handle,
                             bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id, adafs_hash_path(path, fs_config->host_size), handle, force_rpc);
+    return margo_create_wrap_helper(ipc_id, rpc_id,
+                                    adafs_hash_path(path, fs_config->host_size), handle,
+                                    force_rpc);
 }
 
 /**
@@ -418,8 +420,8 @@ hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const st
  * @param svr_addr
  * @return
  */
-template<>
-hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t& recipient, hg_handle_t& handle,
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id,
+                            const size_t& recipient, hg_handle_t& handle,
                             bool force_rpc) {
     return margo_create_wrap_helper(ipc_id, rpc_id, recipient, handle, force_rpc);
 }
