@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
         cerr << "Error opening file (write)" << endl;
         return -1;
     }
-    auto nw = write(fd, buffIn, strlen(buffIn));
+    auto nw = pwrite(fd, buffIn, strlen(buffIn), 10000);
     if(nw != strlen(buffIn)){
         cerr << "Error writing file" << endl;
         return -1;
