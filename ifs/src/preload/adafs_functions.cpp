@@ -37,7 +37,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     // TODO the open flags should not be in the map just set the pos accordingly
-    return CTX->file_map()->add(path, flags);
+    return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
 
 int adafs_mk_node(const std::string& path, const mode_t mode) {

@@ -62,8 +62,8 @@ public:
 
     bool exist(int fd);
 
-    int add(std::string path, int flags);
-
+    int add(std::shared_ptr<OpenFile>);
+    
     bool remove(int fd);
 
     int dup(int oldfd);
