@@ -4,6 +4,7 @@ set(PRELOAD_SRC
     intcp_functions.cpp
     margo_ipc.cpp
     open_file_map.cpp
+    open_dir.cpp
     passthrough.cpp
     preload.cpp
     preload_util.cpp
@@ -27,6 +28,7 @@ set(PRELOAD_HEADERS
     ../../include/preload/adafs_functions.hpp
     ../../include/preload/margo_ipc.hpp
     ../../include/preload/open_file_map.hpp
+    ../../include/preload/open_dir.hpp
     ../../include/preload/passthrough.hpp
     ../../include/preload/preload.hpp
     ../../include/preload/preload_util.hpp

@@ -16,8 +16,13 @@ enum class OpenFile_flags {
     flag_count // this is purely used as a size variable of this enum class
 };
 
+enum file_type {
+    regular,
+    directory
+};
+
 class OpenFile {
-private:
+protected:
     std::string path_;
     std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
     off64_t pos_;
