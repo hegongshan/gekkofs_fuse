@@ -88,4 +88,14 @@ MERCURY_GEN_PROC(rpc_write_data_in_t,
 ((hg_uint64_t) (total_chunk_size))\
 ((hg_bulk_t) (bulk_handle)))
 
+MERCURY_GEN_PROC(rpc_get_dirents_in_t,
+    ((hg_const_string_t) (path))
+    ((hg_bulk_t) (bulk_handle))
+)
+
+MERCURY_GEN_PROC(rpc_get_dirents_out_t,
+        ((hg_int32_t) (err))
+        ((hg_size_t) (dirents_size))
+)
+
 #endif //LFS_RPC_TYPES_HPP

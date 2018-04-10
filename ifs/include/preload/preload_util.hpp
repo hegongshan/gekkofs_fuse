@@ -82,6 +82,7 @@ extern hg_id_t ipc_get_metadentry_size_id;
 extern hg_id_t ipc_update_metadentry_size_id;
 extern hg_id_t ipc_write_data_id;
 extern hg_id_t ipc_read_data_id;
+extern hg_id_t ipc_get_dirents_id;
 // RPC IDs
 extern hg_id_t rpc_minimal_id;
 extern hg_id_t rpc_mk_node_id;
@@ -93,6 +94,7 @@ extern hg_id_t rpc_get_metadentry_size_id;
 extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
+extern hg_id_t rpc_get_dirents_id;
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern std::shared_ptr<struct FsConfig> fs_config;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed

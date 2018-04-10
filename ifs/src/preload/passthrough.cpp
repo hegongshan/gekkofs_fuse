@@ -63,6 +63,9 @@ void* libc_dup;
 void* libc_dup2;
 void* libc_dup3;
 
+void* libc_opendir;
+void* libc_readdir;
+void* libc_closedir;
 
 void init_passthrough_() {
     libc = dlopen("libc.so.6", RTLD_LAZY);
@@ -118,6 +121,10 @@ void init_passthrough_() {
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");
     libc_dup3 = dlsym(libc, "dup3");
+
+    libc_opendir = dlsym(libc, "opendir");
+    libc_readdir = dlsym(libc, "readdir");
+    libc_closedir = dlsym(libc, "closedir");
 
     fs_config = std::make_shared<struct FsConfig>();
 

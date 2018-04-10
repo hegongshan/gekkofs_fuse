@@ -59,6 +59,10 @@ extern void* libc_dup;
 extern void* libc_dup2;
 extern void* libc_dup3;
 
+extern void* libc_opendir;
+extern void* libc_readdir;
+extern void* libc_closedir;
+
 void init_passthrough_if_needed();
 
 #endif //IFS_PASSTHROUGH_HPP

@@ -7,6 +7,9 @@
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
 
+#include <dirent.h>
+
+
 using namespace std;
 
 int open(const char* path, int flags, ...) {
@@ -446,4 +449,60 @@ int dup3(int oldfd, int newfd, int flags) __THROW {
         return -1;
     }
     return (reinterpret_cast<decltype(&dup3)>(libc_dup3))(oldfd, newfd, flags);
+}
+
+/* Directories related calls */
+
+inline int dirp_to_fd(const DIR* dirp){
+    assert(dirp != NULL);
+    return *(reinterpret_cast<int*>(&dirp));
+}
+
+inline DIR* fd_to_dirp(const int fd){
+    assert(fd >= 0);
+    return reinterpret_cast<DIR*>(fd);
+}
+
+DIR* opendir(const char* path){
+    init_passthrough_if_needed();
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        auto fd = adafs_opendir(rel_path);
+        if(fd < 0){
+            return NULL;
+        }
+        return fd_to_dirp(fd);
+    }
+    return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
+}
+
+struct dirent* readdir(DIR* dirp){
+    init_passthrough_if_needed();
+    #pragma GCC diagnostic ignored "-Wnonnull-compare"
+    if(dirp == NULL){
+        errno = EBADF;
+        return NULL;
+    }
+    int fd = dirp_to_fd(dirp);
+    if(ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        return adafs_readdir(fd);
+    }
+    return (reinterpret_cast<decltype(&readdir)>(libc_readdir))(dirp);
+}
+
+int closedir(DIR* dirp) {
+    init_passthrough_if_needed();
+    #pragma GCC diagnostic ignored "-Wnonnull-compare"
+    if(dirp == NULL){
+        errno = EBADF;
+        return -1;
+    }
+    int fd = dirp_to_fd(dirp);
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        // No call to the daemon is required
+        CTX->file_map()->remove(fd);
+        return 0;
+    }
+    return (reinterpret_cast<decltype(&closedir)>(libc_closedir))(dirp);
 }

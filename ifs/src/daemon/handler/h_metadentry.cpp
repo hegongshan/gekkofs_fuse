@@ -1,5 +1,6 @@
 
 #include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_utils.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/backend/metadata/db.hpp>
 
@@ -300,3 +301,88 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
+
+static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
+    rpc_get_dirents_in_t in{};
+    rpc_get_dirents_out_t out{};
+    hg_bulk_t bulk_handle = nullptr;
+
+    // Get input parmeters
+    auto ret = margo_get_input(handle, &in);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Could not get RPC input data with err {}", __func__, ret);
+        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    // Retrieve size of source buffer
+    auto hgi = margo_get_info(handle);
+    auto mid = margo_hg_info_get_instance(hgi);
+    ADAFS_DATA->spdlogger()->debug(
+            "{}() Got dirents RPC (local {}) with path {}", __func__,
+            (hgi->context_id == ADAFS_DATA->host_id()), in.path);
+    auto bulk_size = margo_bulk_get_size(in.bulk_handle);
+
+    //Get directory entries from local DB
+    std::vector<std::pair<std::string, bool>> entries = get_dirents(in.path);
+
+    out.dirents_size = entries.size();
+
+    if(entries.size() == 0){
+        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    //Calculate total output size
+    //TODO OPTIMIZATION: this can be calculated inside db_get_dirents
+    size_t tot_names_size = 0;
+    for(auto const& e: entries){
+        tot_names_size += e.first.size();
+    }
+
+    size_t out_size = tot_names_size + entries.size() * ( sizeof(bool) + sizeof(char) );
+    if(bulk_size < out_size){
+        //Source buffer is smaller than total output size
+        ADAFS_DATA->spdlogger()->error("{}() Entries do not fit source buffer", __func__);
+        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    //Serialize output data on local buffer
+    auto out_buff = std::make_unique<char[]>(out_size);
+    char * out_buff_ptr = out_buff.get();
+
+    bool* bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
+    char* names_ptr = out_buff_ptr + entries.size();
+    for(auto const& e: entries){
+        *bool_ptr = e.second;
+        bool_ptr++;
+
+        const char* name = e.first.c_str();
+        std::strcpy(names_ptr, name);
+        names_ptr += e.first.size() + 1;
+    }
+
+    ret = margo_bulk_create(mid, 1, reinterpret_cast<void**>(&out_buff_ptr), &out_size, HG_BULK_READ_ONLY, &bulk_handle);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
+        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr,
+                              in.bulk_handle, 0,
+                              bulk_handle, 0,
+                              out_size);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error(
+                "{}() Failed push dirents on path {} to client",
+                __func__, in.path
+                );
+        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    out.dirents_size = entries.size();
+    ADAFS_DATA->spdlogger()->debug(
+            "{}() Sending output response", __func__);
+
+    return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)

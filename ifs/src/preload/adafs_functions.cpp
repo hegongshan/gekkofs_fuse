@@ -5,6 +5,7 @@
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
+#include <preload/open_dir.hpp>
 
 using namespace std;
 
@@ -214,4 +215,31 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     }
     // XXX check that we don't try to read past end of the file
     return ret; // return read size or -1 as error
+}
+
+int adafs_opendir(const std::string& path) {
+    init_ld_env_if_needed();
+#if defined(DO_LOOKUP)
+    int err = rpc_send_access(path, F_OK);
+    if(err != 0){
+        return err;
+    }
+#endif
+    auto open_dir = std::make_shared<OpenDir>(path);
+    rpc_send_get_dirents(*open_dir);
+    return CTX->file_map()->add(open_dir);
+}
+
+struct dirent * adafs_readdir(int fd){
+    init_ld_env_if_needed();
+    CTX->log()->trace("{}() called on fd: {}", __func__, fd);
+    auto open_file = CTX->file_map()->get(fd);
+    assert(open_file != nullptr);
+    auto open_dir = static_pointer_cast<OpenDir>(open_file);
+    if(!open_dir){
+        //Cast did not succeeded: open_file is a regular file
+        errno = EBADF;
+        return NULL;
+    }
+    return open_dir->readdir();
 }

@@ -146,3 +146,7 @@ int check_access_mask(const string& path, const int mask) {
 
     return EACCES;
 }
+
+std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir){
+    return ADAFS_DATA->mdb()->get_dirents(dir);
+}

@@ -1,7 +1,9 @@
 #include <global/configure.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <global/rpc/rpc_utils.hpp>
-
+#include <global/rpc/rpc_types.hpp>
+#include <preload/open_dir.hpp>
+#include <daemon/adafs_daemon.hpp>
 
 using namespace std;
 using ns = chrono::nanoseconds;
@@ -108,16 +110,16 @@ int rpc_send_access(const std::string& path, const int mask) {
         margo_destroy(handle);
         return -1;
     }
-    
+
     CTX->log()->debug("{}() Got response with error: {}", __func__, out.err);
-    
+
     if(out.err != 0){
         //In case of error out.err contains the
         //corresponding value of errno
         errno = out.err;
         err = -1;
     }
-    
+
     margo_free_output(handle, &out);
     margo_destroy(handle);
     return err;
@@ -398,4 +400,100 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     }
     margo_destroy(handle);
     return err;
+}
+
+/**
+ * Sends an RPC request to a specific node to push all chunks that belong to him
+ */
+void rpc_send_get_dirents(OpenDir& open_dir){
+    CTX->log()->trace("{}() called", __func__);
+    auto const root_dir = open_dir.path();
+    auto const host_size = fs_config->host_size;
+    std::vector<hg_handle_t> rpc_handles(host_size);
+    std::vector<margo_request> rpc_waiters(host_size);
+    std::vector<rpc_get_dirents_in_t> rpc_in(host_size);
+    std::vector<char*> recv_buffers(host_size);
+
+    // preallocate receiving buffer. The actual size is not known yet.
+    auto recv_buff = std::make_unique<char[]>(RPC_DIRENTS_BUFF_SIZE);
+    const unsigned long int per_host_buff_size = RPC_DIRENTS_BUFF_SIZE / host_size;
+
+    hg_return_t hg_ret;
+
+    for(unsigned int target_host = 0; target_host < host_size; target_host++){
+
+        CTX->log()->trace("{}() target_host: {}", __func__, target_host);
+        //Setup rpc input parameters for each host
+        rpc_in[target_host].path = root_dir.c_str();
+        recv_buffers[target_host] = recv_buff.get() + (target_host * per_host_buff_size);
+
+        if(is_local_op(target_host)){
+            hg_ret = margo_bulk_create(
+                    ld_margo_ipc_id, 1,
+                    reinterpret_cast<void**>(&recv_buffers[target_host]),
+                    &per_host_buff_size,
+                    HG_BULK_WRITE_ONLY, &(rpc_in[target_host].bulk_handle));
+        } else {
+            hg_ret = margo_bulk_create(
+                    ld_margo_rpc_id, 1,
+                    reinterpret_cast<void**>(&recv_buffers[target_host]),
+                    &per_host_buff_size,
+                    HG_BULK_WRITE_ONLY, &(rpc_in[target_host].bulk_handle));
+        }
+        if(hg_ret != HG_SUCCESS){
+            throw std::runtime_error("Failed to create margo bulk handle");
+        }
+
+        hg_ret = margo_create_wrap(ipc_get_dirents_id, rpc_get_dirents_id, target_host, rpc_handles[target_host], false);
+        if (hg_ret != HG_SUCCESS) {
+            std::runtime_error("Failed to create margo handle");
+        }
+        // Send RPC
+        CTX->log()->trace("{}() Sending RPC to host: {}", __func__, target_host);
+        hg_ret = margo_iforward(rpc_handles[target_host],
+                             &rpc_in[target_host],
+                             &rpc_waiters[target_host]);
+        if (hg_ret != HG_SUCCESS) {
+            CTX->log()->error("{}() Unable to send non-blocking get_dirents on {} to recipient {}", __func__, root_dir, target_host);
+            for (uint64_t i = 0; i <= target_host; i++) {
+                margo_bulk_free(rpc_in[i].bulk_handle);
+                margo_destroy(rpc_handles[i]);
+            }
+            throw std::runtime_error("Failed to forward non-blocking rpc request");
+        }
+    }
+
+    for(unsigned int target_host = 0; target_host < host_size; target_host++){
+        hg_ret = margo_wait(rpc_waiters[target_host]);
+        if (hg_ret != HG_SUCCESS) {
+            throw std::runtime_error(fmt::format("Failed while waiting for rpc completion. [root dir: {}, target host: {}]", root_dir, target_host));
+        }
+        rpc_get_dirents_out_t out{};
+        hg_ret = margo_get_output(rpc_handles[target_host], &out);
+        if (hg_ret != HG_SUCCESS) {
+            throw std::runtime_error(fmt::format("Failed to get rpc output.. [path: {}, target host: {}]", root_dir, target_host));
+        }
+
+        bool* bool_ptr = reinterpret_cast<bool*>(recv_buffers[target_host]);
+        char* names_ptr = recv_buffers[target_host] + (out.dirents_size * sizeof(bool));
+
+        for(unsigned int i = 0; i < out.dirents_size; i++){
+
+            file_type ftype = (*bool_ptr)? directory : regular;
+            bool_ptr++;
+
+            //Check that we are not outside the recv_buff for this specific host
+            assert((names_ptr - recv_buffers[target_host]) > 0);
+            assert(static_cast<unsigned long int>(names_ptr - recv_buffers[target_host]) < per_host_buff_size);
+
+            auto name = std::string(names_ptr);
+            names_ptr += name.size() + 1;
+
+            open_dir.add(name, ftype);
+        }
+
+        margo_free_output(rpc_handles[target_host], &out);
+        margo_bulk_free(rpc_in[target_host].bulk_handle);
+        margo_destroy(rpc_handles[target_host]);
+    }
 }
