@@ -32,6 +32,11 @@
 //#define CHECK_ACCESS_DURING_OPEN
 // If disabled, a file or directory is always presumed to be there (even if it is not). No check is executed (enabled by default)
 #define DO_LOOKUP
+/*
+ * Zero buffer before read. This is relevant if sparse files are used.
+ * If buffer is not zeroed, sparse regions contain invalid data.
+ */
+//#define ZERO_BUFFER_BEFORE_READ
 
 // Write-ahead logging of rocksdb
 //#define KV_WOL

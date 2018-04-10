@@ -200,7 +200,10 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = file_map.get(fd);
     auto path = make_shared<string>(adafs_fd->path());
+    // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
+#if defined(ZERO_BUFFER_BEFORE_READ)
     memset(buf, 0, sizeof(char)*count);
+#endif
     auto ret = rpc_send_read(*path, buf, offset, count);
     if (ret < 0) {
         ld_logger->warn("{}() rpc_send_read failed with ret {}", __func__, ret);
