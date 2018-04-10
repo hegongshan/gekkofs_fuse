@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import os
 import time
+
+import os
 
 from util import util
 
@@ -191,15 +192,18 @@ If not set, rootdir will be used instead.''')
                         help='Removes contents of root and metadata directory before starting ADA-FS Daemon. Be careful!')
     parser.add_argument('-n', '--numactl', metavar='<numactl_args>', type=str, default='',
                         help='If adafs daemon should be pinned to certain cores, set numactl arguments here.')
+    parser.add_argument('-H', '--pssh_hostfile', metavar='<pssh_hostfile>', type=str, default='/tmp/hostfile_pssh',
+                        help='''This script creates a hostfile to pass to MPI. This variable defines the path. 
+Defaults to /tmp/hostfile_pssh''')
     args = parser.parse_args()
     if args.pretend:
         PRETEND = True
     else:
         PRETEND = False
     if args.jobid == '':
-        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh'
+        PSSH_HOSTFILE_PATH = args.pssh_hostfile
     else:
-        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
+        PSSH_HOSTFILE_PATH = '%s_%s' % (args.pssh_hostfile, args.jobid)
     PSSH_PATH = args.pssh
     WAITTIME = 5
     init_system(args.daemonpath, args.rootdir, args.metadir, args.mountdir, args.nodelist, args.cleanroot, args.numactl)

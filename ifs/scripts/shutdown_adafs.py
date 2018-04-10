@@ -32,11 +32,11 @@ def check_dependencies():
     exit(1)
 
 
-def shutdown_system(daemon_path, nodelist, sigkill):
+def shutdown_system(daemon_pid_path, nodelist, sigkill):
     """Shuts down ADAFS on specified nodes.
 
     Args:
-        daemon_path (str): Path to daemon executable
+        daemon_pid_path (str): Path to daemon pid file
         nodelist (str): Comma-separated list of nodes where adafs is launched on
         sigkill (bool): If true force kills daemons
     """
@@ -45,7 +45,7 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     global WAITTIME
     global PSSH_HOSTFILE_PATH
     # get absolute paths
-    daemon_path = os.path.realpath(os.path.expanduser(daemon_path))
+    daemon_pid_path = os.path.realpath(os.path.expanduser(daemon_pid_path))
     pssh_nodelist = ''
     nodefile = False
     if os.path.exists(nodelist):
@@ -60,9 +60,9 @@ def shutdown_system(daemon_path, nodelist, sigkill):
     else:
         pssh = '%s -O StrictHostKeyChecking=no -i -H "%s"' % (PSSH_PATH, nodelist.replace(',', ' '))
     if sigkill:
-        cmd_str = '%s "pkill -f -SIGKILL \"%s\""' % (pssh, daemon_path)
+        cmd_str = '%s "pkill -SIGKILL --pidfile \"%s\""' % (pssh, daemon_pid_path)
     else:
-        cmd_str = '%s "pkill -f -SIGTERM \"%s\""' % (pssh, daemon_path)
+        cmd_str = '%s "pkill -SIGTERM --pidfile \"%s\""' % (pssh, daemon_pid_path)
     if PRETEND:
         print 'Pretending: %s' % cmd_str
     else:
@@ -128,8 +128,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='This script stops adafs on multiple nodes',
                                      formatter_class=argparse.RawTextHelpFormatter)
     # positional arguments
-    parser.add_argument('daemonpath', type=str,
-                        help='path to the daemon executable')
+    parser.add_argument('daemonpidpath', type=str,
+                        help='path to the daemon pid file')
     parser.add_argument('nodelist', type=str,
                         help='''list of nodes where the file system is launched. This can be a comma-separated list
                              or a path to a nodefile (one node per line)''')
@@ -143,6 +143,9 @@ if __name__ == "__main__":
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
     parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',
                         help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
+    parser.add_argument('-H', '--pssh_hostfile', metavar='<pssh_hostfile>', type=str, default='/tmp/hostfile_pssh',
+                        help='''This script creates a hostfile to pass to MPI. This variable defines the path. 
+Defaults to /tmp/hostfile_pssh''')
     args = parser.parse_args()
 
     if args.pretend is True:
@@ -150,11 +153,11 @@ if __name__ == "__main__":
     else:
         PRETEND = False
     if args.jobid == '':
-        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh'
+        PSSH_HOSTFILE_PATH = args.pssh_hostfile
     else:
-        PSSH_HOSTFILE_PATH = '/tmp/hostfile_pssh_%s' % args.jobid
+        PSSH_HOSTFILE_PATH = '%s_%s' % (args.pssh_hostfile, args.jobid)
     PSSH_PATH = args.pssh
     WAITTIME = 5
-    shutdown_system(args.daemonpath, args.nodelist, args.sigkill)
+    shutdown_system(args.daemonpidpath, args.nodelist, args.sigkill)
 
     print '\nNothing left to do; exiting. :)'
