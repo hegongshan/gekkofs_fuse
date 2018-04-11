@@ -214,8 +214,6 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
         return adafs_stat64(rel_path, buf);
-//        // Not implemented
-//        return -1;
     }
     return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
 }
@@ -240,24 +238,22 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
 }
 
-extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
+int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // Not implemented
-        return -1;
+        return adafs_stat(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&__lxstat)>(libc___lxstat))(ver, path, buf);
 }
 
-extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
+int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // Not implemented
-        return -1;
+        return adafs_stat64(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }
