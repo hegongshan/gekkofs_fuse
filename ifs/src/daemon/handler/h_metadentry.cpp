@@ -349,7 +349,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     auto out_buff = std::make_unique<char[]>(out_size);
     char * out_buff_ptr = out_buff.get();
 
-    bool* bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
+    auto bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
     char* names_ptr = out_buff_ptr + entries.size();
     for(auto const& e: entries){
         *bool_ptr = e.second;

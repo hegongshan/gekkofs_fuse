@@ -220,7 +220,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 int adafs_opendir(const std::string& path) {
     init_ld_env_if_needed();
 #if defined(DO_LOOKUP)
-    int err = rpc_send_access(path, F_OK);
+    auto err = rpc_send_access(path, F_OK);
     if(err != 0){
         return err;
     }

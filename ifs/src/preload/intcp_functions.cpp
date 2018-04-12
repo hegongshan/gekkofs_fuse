@@ -494,7 +494,7 @@ int closedir(DIR* dirp) {
         errno = EBADF;
         return -1;
     }
-    int fd = dirp_to_fd(dirp);
+    auto fd = dirp_to_fd(dirp);
     if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         // No call to the daemon is required
         CTX->file_map()->remove(fd);
