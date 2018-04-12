@@ -66,6 +66,11 @@ void* libc_dup3;
 
 void init_passthrough_() {
     libc = dlopen("libc.so.6", RTLD_LAZY);
+    if(libc == nullptr){
+        std::cerr << "ERROR: failed opening glibc shared object: " << dlerror() << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     libc_open = dlsym(libc, "open");
 //    libc_fopen = dlsym(libc, "fopen");
 //    libc_fopen64 = dlsym(libc, "fopen64");
