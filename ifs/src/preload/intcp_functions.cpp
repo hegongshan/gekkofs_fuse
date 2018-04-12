@@ -450,7 +450,7 @@ int dup3(int oldfd, int newfd, int flags) __THROW {
 /* Directories related calls */
 
 inline int dirp_to_fd(const DIR* dirp){
-    assert(dirp != NULL);
+    assert(dirp != nullptr);
     return *(reinterpret_cast<int*>(&dirp));
 }
 
@@ -466,7 +466,7 @@ DIR* opendir(const char* path){
     if (CTX->relativize_path(rel_path)) {
         auto fd = adafs_opendir(rel_path);
         if(fd < 0){
-            return NULL;
+            return nullptr;
         }
         return fd_to_dirp(fd);
     }
@@ -476,11 +476,11 @@ DIR* opendir(const char* path){
 struct dirent* readdir(DIR* dirp){
     init_passthrough_if_needed();
     #pragma GCC diagnostic ignored "-Wnonnull-compare"
-    if(dirp == NULL){
+    if(dirp == nullptr){
         errno = EBADF;
-        return NULL;
+        return nullptr;
     }
-    int fd = dirp_to_fd(dirp);
+    auto fd = dirp_to_fd(dirp);
     if(ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         return adafs_readdir(fd);
     }
@@ -490,7 +490,7 @@ struct dirent* readdir(DIR* dirp){
 int closedir(DIR* dirp) {
     init_passthrough_if_needed();
     #pragma GCC diagnostic ignored "-Wnonnull-compare"
-    if(dirp == NULL){
+    if(dirp == nullptr){
         errno = EBADF;
         return -1;
     }

@@ -239,7 +239,7 @@ struct dirent * adafs_readdir(int fd){
     if(!open_dir){
         //Cast did not succeeded: open_file is a regular file
         errno = EBADF;
-        return NULL;
+        return nullptr;
     }
     return open_dir->readdir();
 }
