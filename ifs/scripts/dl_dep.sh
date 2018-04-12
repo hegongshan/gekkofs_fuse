@@ -176,19 +176,19 @@ fi
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     # No need to get libfabric for mogon2 as it is already installed
     if [[ ("${CLUSTER}" != "mogon2") ]]; then
-        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.5.3.tar.gz" &
+        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/archive/v1.6.0.tar.gz" &
     fi
 fi
 # get Mercury
-clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "c4faa382fd228c0b629c9164a984df1779089d3f"  "--recurse-submodules" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "d015745ce25d839b8b46e68c11a7d8278423a46b"  "--recurse-submodules" &
 # get Argobots
 clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
 # get Argobots-snoozer
-clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "3d9240eda290bfb89f08a5673cebd888194a4bd7" &
+clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "54c506103cf2d77bd76460db29a67a875f5c5a85" &
 # get Argobots-IO
 #clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "72eec057314a4251d8658e03a18240275992e1ce" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "a660d149e8c9b840f9a363db03f2ef23476f91f1" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.11.3.tar.gz" &
 

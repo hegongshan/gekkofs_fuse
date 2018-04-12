@@ -50,7 +50,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     auto mid = margo_hg_info_get_instance(hgi);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     ADAFS_DATA->spdlogger()->debug("{}() Got write RPC (local {}) with path {} size {} offset {}", __func__,
-                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
+                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path, bulk_size,
                                    in.offset);
     /*
      * 2. Set up buffers for pull bulk transfers
@@ -242,7 +242,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     auto mid = margo_hg_info_get_instance(hgi);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     ADAFS_DATA->spdlogger()->debug("{}() Got read RPC (local {}) with path {} size {} offset {}", __func__,
-                                   (margo_get_info(handle)->target_id == ADAFS_DATA->host_id()), in.path, bulk_size,
+                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path, bulk_size,
                                    in.offset);
 
     /*
