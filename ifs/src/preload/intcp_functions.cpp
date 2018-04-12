@@ -141,7 +141,7 @@ int __close(int fd) {
 }
 
 int remove(const char* path) {
-   return unlink(path); 
+   return unlink(path);
 }
 
 int access(const char* path, int mask) __THROW {

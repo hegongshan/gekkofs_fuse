@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error closing nonexisting directory: " << std::strerror(errno) << std::endl;
         return -1;
     }
-    
+
     //Create topdir
     ret = mkdir(topdir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     if(ret != 0){
