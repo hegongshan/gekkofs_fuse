@@ -2,7 +2,7 @@
 
 #set -x
 
-COMMON_WGET_FLAGS="--no-verbose"
+COMMON_CURL_FLAGS="--silent --fail --show-error --location -O"
 COMMON_GIT_FLAGS="--quiet --single-branch"
 
 # Stop all backround jobs on interruption.
@@ -10,7 +10,23 @@ COMMON_GIT_FLAGS="--quiet --single-branch"
 # thus killing also descendants.
 trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
+
+exit_child() {
+    if [ ! $? -eq 0 ]; then
+        # notify the parent
+        kill -s SIGTERM `ps --pid $$ -oppid=`
+    fi
+}
+
+error_exit() {
+    echo "$1" >&2   ## Send message to stderr. Exclude >&2 if you don't want it that way.
+    exit "${2:-1}"  ## Return a code specified by $2 or 1 by default.
+}
+
 clonedeps() {
+    set -e
+    trap exit_child EXIT
+
     local FOLDER=$1
     local REPO=$2
     local COMMIT=$3
@@ -19,18 +35,21 @@ clonedeps() {
     local ACTION
 
     if [ -d "${SOURCE}/${FOLDER}/.git" ]; then
-        cd ${SOURCE}/${FOLDER} && git fetch -q || exit 1
+        cd ${SOURCE}/${FOLDER} && git fetch -q
         ACTION="Pulled"
     else
-        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE}/${FOLDER}" > /dev/null || exit 1
+        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE}/${FOLDER}"
         ACTION="Cloned"
     fi
     # fix the version
-    cd "${SOURCE}/${FOLDER}" && git checkout -qf ${COMMIT} || exit 1
+    cd "${SOURCE}/${FOLDER}" && git checkout -qf ${COMMIT}
     echo "${ACTION} ${FOLDER} [$COMMIT]"
 }
 
 wgetdeps() {
+    set -e
+    trap exit_child EXIT
+
     FOLDER=$1
     URL=$2
     if [ -d "${SOURCE}/${FOLDER}" ]; then
@@ -42,8 +61,8 @@ wgetdeps() {
     if [ -f "${SOURCE}/$FILENAME" ]; then
         rm -f "${SOURCE}/$FILENAME"
     fi
-    wget -q "$URL" || exit 1
-    tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1 || exit 1 
+    curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
+    tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1
     rm -f "$FILENAME"
     echo "Downloaded ${FOLDER}"
 }
