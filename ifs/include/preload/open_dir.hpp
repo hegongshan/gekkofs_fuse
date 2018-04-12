@@ -16,9 +16,9 @@ class OpenDir: public OpenFile {
         class DirEntry {
             public:
                 std::string name;
-                file_type type;
+                FileType type;
 
-                DirEntry(const std::string& name, const file_type type);
+                DirEntry(const std::string& name, const FileType type);
         };
 
         std::vector<DirEntry> entries;
@@ -30,7 +30,7 @@ class OpenDir: public OpenFile {
 
     public:
         OpenDir(const std::string& path);
-        void add(const std::string& name, const file_type& type);
+        void add(const std::string& name, const FileType& type);
         struct dirent * readdir();
 };
 

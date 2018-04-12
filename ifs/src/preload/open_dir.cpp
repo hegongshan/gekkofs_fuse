@@ -4,7 +4,7 @@
 #include <cassert>
 
 
-OpenDir::DirEntry::DirEntry(const std::string& name, const file_type type):
+OpenDir::DirEntry::DirEntry(const std::string& name, const FileType type):
     name(name), type(type) {
 }
 
@@ -15,7 +15,7 @@ OpenDir::OpenDir(const std::string& path): OpenFile(path, 0){
 }
 
 
-void OpenDir::add(const std::string& name, const file_type& type){
+void OpenDir::add(const std::string& name, const FileType& type){
     entries.push_back(DirEntry(name, type));
 }
 
@@ -24,7 +24,7 @@ void OpenDir::update_dirent(unsigned int pos){
     std::string entry_absolute_path = path_ + "/" + entry.name;
     dirent_.d_ino = std::hash<std::string>()(entry_absolute_path);
     dirent_.d_off = pos_;
-    dirent_.d_type = ((entry.type == regular)? DT_REG : DT_DIR);
+    dirent_.d_type = ((entry.type == FileType::regular)? DT_REG : DT_DIR);
     assert(sizeof(dirent_.d_name) >= strlen(entry.name.c_str()));
     strcpy(dirent_.d_name, entry.name.c_str());
     dirent_.d_reclen = sizeof(dirent_);

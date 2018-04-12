@@ -16,7 +16,7 @@ enum class OpenFile_flags {
     flag_count // this is purely used as a size variable of this enum class
 };
 
-enum file_type {
+enum class FileType {
     regular,
     directory
 };

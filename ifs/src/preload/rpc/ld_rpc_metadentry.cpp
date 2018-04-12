@@ -479,7 +479,7 @@ void rpc_send_get_dirents(OpenDir& open_dir){
 
         for(unsigned int i = 0; i < out.dirents_size; i++){
 
-            file_type ftype = (*bool_ptr)? directory : regular;
+            FileType ftype = (*bool_ptr)? FileType::directory : FileType::regular;
             bool_ptr++;
 
             //Check that we are not outside the recv_buff for this specific host
