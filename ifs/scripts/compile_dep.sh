@@ -330,8 +330,7 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/rocksdb
 cd ${CURR}
 make clean || exit 1
-sed -i.bak "s#INSTALL_PATH ?= /usr/local#INSTALL_PATH ?= ${INSTALL}#g" Makefile
 make -j${CORES} static_lib || exit 1
-make install || exit 1
+make INSTALL_PATH=${INSTALL} install || exit 1
 
 echo "Done"
