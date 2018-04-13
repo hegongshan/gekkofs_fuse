@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
             └── file_a
     */
     const std::string mntdir = "/tmp/mountdir";
+    const std::string nonexisting = mntdir + "/nonexisting";
     const std::string topdir = mntdir + "/top";
     const std::string longer = topdir + "_plus";
     const std::string dir_a  = topdir + "/dir_a";
@@ -39,14 +40,14 @@ int main(int argc, char* argv[]) {
     struct stat dirstat;
 
     // Open nonexistsing directory
-    dirstream = opendir(topdir.c_str());
+    dirstream = opendir(nonexisting.c_str());
     if(dirstream != NULL || errno != ENOENT){
         std::cerr << "ERROR: succeeded on opening nonexisting dir: " << std::strerror(errno) << std::endl;
         return -1;
     }
 
     // Stat nonexisting directory
-    ret = stat(topdir.c_str(), &dirstat);
+    ret = stat(nonexisting.c_str(), &dirstat);
     if(ret == 0 || errno != ENOENT){
         std::cerr << "Error stating nonexisitng directory: " << std::strerror(errno) << std::endl;
         return -1;
