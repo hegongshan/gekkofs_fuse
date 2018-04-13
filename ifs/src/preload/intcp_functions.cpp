@@ -477,7 +477,7 @@ struct dirent* readdir(DIR* dirp){
     init_passthrough_if_needed();
     #pragma GCC diagnostic ignored "-Wnonnull-compare"
     if(dirp == nullptr){
-        errno = EBADF;
+        errno = EINVAL;
         return nullptr;
     }
     auto fd = dirp_to_fd(dirp);
@@ -491,7 +491,7 @@ int closedir(DIR* dirp) {
     init_passthrough_if_needed();
     #pragma GCC diagnostic ignored "-Wnonnull-compare"
     if(dirp == nullptr){
-        errno = EBADF;
+        errno = EINVAL;
         return -1;
     }
     auto fd = dirp_to_fd(dirp);

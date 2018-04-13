@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 
     // Close nonexisting directory
     ret = closedir(NULL);
-    if(ret != -1 || errno != EBADF){
+    if(ret != -1 || errno != EINVAL){
         std::cerr << "Error closing nonexisting directory: " << std::strerror(errno) << std::endl;
         return -1;
     }
