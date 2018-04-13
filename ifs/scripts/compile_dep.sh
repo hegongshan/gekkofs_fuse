@@ -142,6 +142,9 @@ echo "Install path = '$2'";
 
 mkdir -p ${SOURCE}
 
+######### From now on exits on any error ########
+set -e
+
 # Set cluster dependencies first
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
     # get libtool
@@ -149,45 +152,45 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/libtool
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    ../configure --prefix=${INSTALL} || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    ../configure --prefix=${INSTALL}
+    make -j${CORES}
+    make install
     # compile libev
     echo "############################################################ Installing:  libev"
     CURR=${SOURCE}/libev
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    ../configure --prefix=${INSTALL} || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    ../configure --prefix=${INSTALL}
+    make -j${CORES}
+    make install
     # compile gflags
     echo "############################################################ Installing:  gflags"
     CURR=${SOURCE}/gflags
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    make -j${CORES}
+    make install
     # compile zstd
     echo "############################################################ Installing:  zstd"
     CURR=${SOURCE}/zstd/build/cmake
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    make -j${CORES}
+    make install
     echo "############################################################ Installing:  lz4"
     CURR=${SOURCE}/lz4
 	cd ${CURR}
-    make -j${CORES} || exit 1
-    make DESTDIR=${INSTALL} PREFIX="" install || exit 1
+    make -j${CORES}
+    make DESTDIR=${INSTALL} PREFIX="" install
     echo "############################################################ Installing:  snappy"
     CURR=${SOURCE}/snappy
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release .. || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    make -j${CORES}
+    make install
 fi
 
 if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
@@ -197,11 +200,11 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     CURR=${SOURCE}/bmi
     prepare_build_dir ${CURR}
     cd ${CURR}
-    ./prepare || exit 1
+    ./prepare
     cd ${CURR}/build
-    ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict   || exit 1
-    make -j${CORES} || exit 1
-    make install || exit 1
+    ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
+    make -j${CORES}
+    make install
 fi
 
 if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
@@ -213,22 +216,22 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     cd ${CURR}
     # patch hanging issue
     echo "########## ADA-FS injection: Applying cci hanging patch"
-    git apply ${PATCH_DIR}/cci_hang_final.patch || exit 1
+    git apply ${PATCH_DIR}/cci_hang_final.patch
     echo "########## ADA-FS injection: Disabling cci debug mode/devel mode entirely"
-    git apply ${PATCH_DIR}/cci_remove_devel_mode.patch || exit 1
-    ./autogen.pl || exit 1
+    git apply ${PATCH_DIR}/cci_remove_devel_mode.patch
+    ./autogen.pl
     cd ${CURR}/build
 if [[ ("${CLUSTER}" == "mogon1") || ("${CLUSTER}" == "fh2") ]]; then
-    ../configure --with-verbs --prefix=${INSTALL} LIBS="-lpthread"  || exit 1
+    ../configure --with-verbs --prefix=${INSTALL} LIBS="-lpthread"
 else
-    ../configure --prefix=${INSTALL} LIBS="-lpthread"  || exit 1
+    ../configure --prefix=${INSTALL} LIBS="-lpthread"
 fi
 
     echo "########## ADA-FS injection: Replacing any remaining CFLAGS with '-g -O2' that are added by cci although debug mode is disabled with '-O3'"
     find . -type f -exec sed -i 's/-g -O2/-O3/g' {} \;
-    make -j${CORES} || exit 1
-    make install || exit 1
-    [ "${PERFORM_TEST}" ] && ( make check || exit 1 )
+    make -j${CORES}
+    make install
+    [ "${PERFORM_TEST}" ] && make check
 fi
 
 if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
@@ -240,12 +243,12 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         CURR=${SOURCE}/libfabric
         prepare_build_dir ${CURR}
         cd ${CURR}
-        ./autogen.sh || exit 1
+        ./autogen.sh
         cd ${CURR}/build
-        ../configure --prefix=${INSTALL}  || exit 1
-        make -j${CORES} || exit 1
-        make install || exit 1
-        [ "${PERFORM_TEST}" ] && ( make check || exit 1 )
+        ../configure --prefix=${INSTALL}
+        make -j${CORES}
+        make install
+        [ "${PERFORM_TEST}" ] && make check
     fi
 fi
 
@@ -258,21 +261,21 @@ MERCURY_VERSION=$(cd ${CURR} && git log --since 02-25-2018 | wc -l)
 echo $MERCURY_VERSION
 if [ ${MERCURY_VERSION} -eq 0 ]; then
     echo "########## Mercury version is too old. Pulling new version ..."
-    cd $CURR && git checkout d015745ce25d839b8b46e68c11a7d8278423a46b || exit 1
+    cd $CURR && git checkout d015745ce25d839b8b46e68c11a7d8278423a46b
 fi
 prepare_build_dir ${CURR}
 cd ${CURR}
 if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     # patch cci verbs addr lookup error handling
     echo "########## Applying cci addr lookup error handling patch"
-    git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch || exit 1
+    git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch
 fi
 cd ${CURR}/build
 cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../  || exit 1
-make -j${CORES}  || exit 1
-make install  || exit 1
+-DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
+make -j${CORES}
+make install
 
 echo "############################################################ Installing:  Argobots"
 
@@ -280,24 +283,24 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/argobots
 prepare_build_dir ${CURR}
 cd ${CURR}
-./autogen.sh || exit 1
+./autogen.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL} || exit 1
-make -j${CORES} || exit 1
-make install || exit 1
-[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
+../configure --prefix=${INSTALL}
+make -j${CORES}
+make install
+[ "${PERFORM_TEST}" ] && make check
 
 echo "############################################################ Installing:  Abt-snoozer"
 # Abt snoozer
 CURR=${SOURCE}/abt-snoozer
 prepare_build_dir ${CURR}
 cd ${CURR}
-./prepare.sh || exit 1
+./prepare.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig || exit 1
-make -j${CORES} || exit 1
-make install || exit 1
-[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
+../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
+make -j${CORES}
+make install
+[ "${PERFORM_TEST}" ] && make check
 
 #echo "############################################################ Installing:  Abt-IO"
 ## Abt IO
@@ -305,32 +308,32 @@ make install || exit 1
 #prepare_build_dir ${CURR}
 #cd ${CURR}
 #echo "########## ADA-FS injection: Applying abt-io c++ template clash patch"
-#git apply ${PATCH_DIR}/abt_io_cplusplus_template_clash.patch || exit 1
-#./prepare.sh || exit 1
+#git apply ${PATCH_DIR}/abt_io_cplusplus_template_clash.patch
+#./prepare.sh
 #cd ${CURR}/build
-#../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig || exit 1
-#make -j${CORES} || exit 1
-#make install || exit 1
-#[ "${PERFORM_TEST}" ] && ( make check || exit 1 ) # The tests create so huge files that breaks memory :D
+#../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
+#make -j${CORES}
+#make install
+#[ "${PERFORM_TEST}" ] && make check  # The tests create so huge files that breaks memory :D
 
 echo "############################################################ Installing:  Margo"
 # Margo
 CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
-./prepare.sh || exit 1
+./prepare.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3" || exit 1
-make -j${CORES} || exit 1
-make install || exit 1
-[ "${PERFORM_TEST}" ] && ( make check || exit 1 )
+../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"
+make -j${CORES}
+make install
+[ "${PERFORM_TEST}" ] && make check
 
 echo "############################################################ Installing:  Rocksdb"
 # Rocksdb
 CURR=${SOURCE}/rocksdb
 cd ${CURR}
-make clean || exit 1
-make -j${CORES} static_lib || exit 1
-make INSTALL_PATH=${INSTALL} install || exit 1
+make clean
+make -j${CORES} static_lib
+make INSTALL_PATH=${INSTALL} install
 
 echo "Done"
