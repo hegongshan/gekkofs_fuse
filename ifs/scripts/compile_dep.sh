@@ -110,7 +110,7 @@ Input must be numeric and greater than 0."
 		exit
 	else
 		echo CORES    = "${CORES}"
-	fi	 
+	fi
 fi
 if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
 	echo NAPLUGIN = "${NA_LAYER}"
