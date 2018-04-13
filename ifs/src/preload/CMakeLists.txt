@@ -26,6 +26,7 @@ set(PRELOAD_HEADERS
     ../../include/global/chunk_calc_util.hpp
     ../../include/preload/preload_context.hpp
     ../../include/preload/adafs_functions.hpp
+    ../../include/preload/intcp_functions.hpp
     ../../include/preload/margo_ipc.hpp
     ../../include/preload/open_file_map.hpp
     ../../include/preload/open_dir.hpp

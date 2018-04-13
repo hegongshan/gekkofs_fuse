@@ -6,8 +6,7 @@
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
-
-#include <dirent.h>
+#include <preload/intcp_functions.hpp>
 
 
 using namespace std;
@@ -473,9 +472,8 @@ DIR* opendir(const char* path){
     return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
 }
 
-struct dirent* readdir(DIR* dirp){
+struct dirent* intcp_readdir(DIR* dirp){
     init_passthrough_if_needed();
-    #pragma GCC diagnostic ignored "-Wnonnull-compare"
     if(dirp == nullptr){
         errno = EINVAL;
         return nullptr;
@@ -487,9 +485,8 @@ struct dirent* readdir(DIR* dirp){
     return (reinterpret_cast<decltype(&readdir)>(libc_readdir))(dirp);
 }
 
-int closedir(DIR* dirp) {
+int intcp_closedir(DIR* dirp) {
     init_passthrough_if_needed();
-    #pragma GCC diagnostic ignored "-Wnonnull-compare"
     if(dirp == nullptr){
         errno = EINVAL;
         return -1;
