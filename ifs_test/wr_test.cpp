@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
     char buffIn[] = "oops.";
     char *buffOut = new char[strlen(buffIn)];
     int fd;
+    int ret;
 
     fd = open(p.c_str(), O_RDONLY);
     if(fd >= 0 ){
@@ -70,5 +71,16 @@ int main(int argc, char* argv[]) {
         cerr << "File content mismatch" << endl;
         return -1;
     }
-    close(fd);
+
+    ret = close(fd);
+    if(ret != 0){
+        cerr << "Error closing file: " << strerror(errno) << endl;
+        return -1;
+    };
+
+    ret = remove(p.c_str());
+    if(ret != 0){
+        cerr << "Error removing file: " << strerror(errno) << endl;
+        return -1;
+    };
 }
