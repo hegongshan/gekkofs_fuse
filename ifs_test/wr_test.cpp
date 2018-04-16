@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
         cerr << "ERROR: wrong error number while opening non-existing file: " << errno << endl;
         return -1;
     }
-    
+
     /* Write the file */
 
     fd = open(p.c_str(), O_WRONLY | O_CREAT, 0777);
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
         cerr << "Error writing file" << endl;
         return -1;
     }
-    
+
     if(close(fd) != 0){
         cerr << "Error closing file" << endl;
         return -1;
