@@ -148,4 +148,16 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error closing topdir" << std::strerror(errno) << std::endl;
         return -1;
     }
+
+    ret = rmdir(subdir_a.c_str());
+    if(ret != 0){
+        std::cerr << "Error removing subdirectory: " << std::strerror(errno) << std::endl;
+        return -1;
+    }
+
+    dirstream = opendir(subdir_a.c_str());
+    if(dirstream != NULL || errno != ENOENT){
+        std::cerr << "Error: succede on opening removed directory: " << std::strerror(errno) << std::endl;
+        return -1;
+    }
 }

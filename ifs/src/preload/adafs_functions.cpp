@@ -230,6 +230,23 @@ int adafs_opendir(const std::string& path) {
     return CTX->file_map()->add(open_dir);
 }
 
+int adafs_rmdir(const std::string& path) {
+    init_ld_env_if_needed();
+#if defined(DO_LOOKUP)
+    auto err = rpc_send_access(path, F_OK);
+    if(err != 0){
+        return err;
+    }
+#endif
+    auto open_dir = std::make_shared<OpenDir>(path);
+    rpc_send_get_dirents(*open_dir);
+    if(open_dir->size() != 0){
+        errno = ENOTEMPTY;
+        return -1;
+    }
+    return rpc_send_rm_node(path, true);
+}
+
 struct dirent * adafs_readdir(int fd){
     init_ld_env_if_needed();
     CTX->log()->trace("{}() called on fd: {}", __func__, fd);

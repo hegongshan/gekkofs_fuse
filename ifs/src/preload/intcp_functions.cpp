@@ -119,8 +119,7 @@ int rmdir(const char* path) __THROW {
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
-        return adafs_rm_node(rel_path);
+        return adafs_rmdir(rel_path);
     }
     return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
 }

@@ -50,3 +50,7 @@ struct dirent * OpenDir::readdir(){
     is_dirent_valid = true;
     return &dirent_;
 }
+
+size_t OpenDir::size(){
+    return entries.size();
+}

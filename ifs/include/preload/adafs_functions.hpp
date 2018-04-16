@@ -57,4 +57,6 @@ int adafs_opendir(const std::string& path);
 
 struct dirent * adafs_readdir(int fd);
 
+int adafs_rmdir(const std::string& path);
+
 #endif //IFS_ADAFS_FUNCTIONS_HPP
