@@ -18,13 +18,14 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    string p = "/tmp/mountdir/file"s;
+    string mountdir = "/tmp/mountdir";
+    string p = mountdir + "/file";
     char buffIn[] = "oops.";
     char *buffOut = new char[strlen(buffIn)];
     int fd;
     int ret;
 
-    fd = open(p.c_str(), O_RDONLY);
+    fd = open((mountdir + "/nonexisting").c_str(), O_RDONLY);
     if(fd >= 0 ){
         cerr << "ERROR: Succeeded on opening non-existing file" << endl;
         return -1;
