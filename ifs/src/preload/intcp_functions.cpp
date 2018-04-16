@@ -125,6 +125,10 @@ int __close(int fd) {
     return close(fd);
 }
 
+int remove(const char* path) {
+   return unlink(path); 
+}
+
 int access(const char* path, int mask) __THROW {
     init_passthrough_if_needed();
     ld_logger->trace("{}() called path {} mask {}", __func__, path, mask);
