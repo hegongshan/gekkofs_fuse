@@ -18,12 +18,14 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    string p = "/tmp/mountdir/file"s;
+    string mountdir = "/tmp/mountdir";
+    string p = mountdir + "/file";
     char buffIn[] = "oops.";
     char *buffOut = new char[strlen(buffIn)];
     int fd;
+    int ret;
 
-    fd = open(p.c_str(), O_RDONLY);
+    fd = open((mountdir + "/nonexisting").c_str(), O_RDONLY);
     if(fd >= 0 ){
         cerr << "ERROR: Succeeded on opening non-existing file" << endl;
         return -1;
@@ -32,7 +34,7 @@ int main(int argc, char* argv[]) {
         cerr << "ERROR: wrong error number while opening non-existing file: " << errno << endl;
         return -1;
     }
-    
+
     /* Write the file */
 
     fd = open(p.c_str(), O_WRONLY | O_CREAT, 0777);
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
         cerr << "Error writing file" << endl;
         return -1;
     }
-    
+
     if(close(fd) != 0){
         cerr << "Error closing file" << endl;
         return -1;
@@ -70,5 +72,16 @@ int main(int argc, char* argv[]) {
         cerr << "File content mismatch" << endl;
         return -1;
     }
-    close(fd);
+
+    ret = close(fd);
+    if(ret != 0){
+        cerr << "Error closing file: " << strerror(errno) << endl;
+        return -1;
+    };
+
+    ret = remove(p.c_str());
+    if(ret != 0){
+        cerr << "Error removing file: " << strerror(errno) << endl;
+        return -1;
+    };
 }

@@ -31,7 +31,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
             return -1;
 #endif
     }
-    
+
     // TODO the open flags should not be in the map just set the pos accordingly
     return file_map.add(path, flags);
 }
