@@ -199,7 +199,7 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     fi
 fi
 # get Mercury
-clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "d015745ce25d839b8b46e68c11a7d8278423a46b"  "--recurse-submodules" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "8eb436a6cc42317050117ad9925c2b03c822e6b9"  "--recurse-submodules" &
 # get Argobots
 clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
 # get Argobots-snoozer
@@ -207,7 +207,7 @@ clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "54c5
 # get Argobots-IO
 #clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "a660d149e8c9b840f9a363db03f2ef23476f91f1" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "56a2b6585ec8152d5e7d107a0cf33be84dbd5bed" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.11.3.tar.gz" &
 
