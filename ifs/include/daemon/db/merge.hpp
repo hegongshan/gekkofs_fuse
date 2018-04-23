@@ -37,8 +37,8 @@ class IncreaseSizeOperand: public MergeOperand {
         IncreaseSizeOperand(const size_t size, const bool append);
         IncreaseSizeOperand(const rdb::Slice& serialized_op);
 
-        virtual const OperandID id() const override;
-        virtual std::string serialize_params() const override;
+        const OperandID id() const override;
+        std::string serialize_params() const override;
 };
 
 class CreateOperand: public MergeOperand {
@@ -46,24 +46,24 @@ class CreateOperand: public MergeOperand {
         std::string metadata;
         CreateOperand(const std::string& metadata);
 
-        virtual const OperandID id() const override;
-        virtual std::string serialize_params() const override;
+        const OperandID id() const override;
+        std::string serialize_params() const override;
 };
 
 class MetadataMergeOperator: public rocksdb::MergeOperator {
     public:
         MetadataMergeOperator(){};
         virtual ~MetadataMergeOperator(){};
-        virtual bool FullMergeV2(const MergeOperationInput& merge_in,
+        bool FullMergeV2(const MergeOperationInput& merge_in,
                 MergeOperationOutput* merge_out) const override;
 
-        virtual bool PartialMergeMulti(const rdb::Slice& key,
+        bool PartialMergeMulti(const rdb::Slice& key,
                 const std::deque<rdb::Slice>& operand_list,
                 std::string* new_value, rdb::Logger* logger) const override;
 
-        virtual const char* Name() const override;
+        const char* Name() const override;
 
-        virtual bool AllowSingleOperand() const override;
+        bool AllowSingleOperand() const override;
 };
 
 
