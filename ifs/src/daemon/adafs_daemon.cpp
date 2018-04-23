@@ -3,8 +3,8 @@
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <daemon/handler/rpc_defs.hpp>
-#include <daemon/db/db_util.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
+#include <daemon/backend/metadata/db.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -30,14 +30,18 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
         return false;
     }
-    // Initialize rocksdb
-    if (!init_rocksdb()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to initialize RocksDB.", __func__);
-        return false;
+
+    // Initialize metadata db
+    std::string metadata_path = ADAFS_DATA->metadir() + "/rocksdb"s;
+    try {
+        ADAFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
+    } catch (const std::exception & e) {
+        ADAFS_DATA->spdlogger()->error("{}() unable to initialize metadata DB: {}", __func__, e.what());
     }
+
     // Init margo for RPC
     if (!init_rpc_server()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo RPC server.", __func__);
+        ADAFS_DATA->spdlogger()->error("{}() unable to initialize margo rpc server.", __func__);
         return false;
     }
     // Init margo for RPC
@@ -97,6 +101,10 @@ void destroy_enviroment() {
         margo_finalize(RPC_DATA->server_rpc_mid());
         ADAFS_DATA->spdlogger()->info("{}() Margo RPC server shut down successful", __func__);
     }
+
+    ADAFS_DATA->spdlogger()->info("{}() Closing DB...", __func__);
+    ADAFS_DATA->close_mdb();
+
     ADAFS_DATA->spdlogger()->info("All services shut down. ADA-FS shutdown complete.");
 }
 
@@ -317,6 +325,7 @@ void shutdown_handler(int dummy) {
 void initialize_loggers() {
     auto logger_names = std::vector<std::string>{
         "main",
+        "MetadataDB",
     };
 
     /* Create common sink */

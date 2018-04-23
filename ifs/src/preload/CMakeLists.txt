@@ -47,3 +47,12 @@ target_link_libraries(adafs_preload_client
     ${Boost_LIBRARIES}
     Threads::Threads
 )
+
+target_include_directories(adafs_preload_client
+    PRIVATE
+    ${ABT_INCLUDE_DIRS}
+    ${ABT_SNOOZER_INCLUDE_DIRS}
+    ${LIBEV_INCLUDE_DIRS}
+    ${MERCURY_INCLUDE_DIRS}
+    ${MARGO_INCLUDE_DIRS}
+    )

@@ -1,7 +1,7 @@
 
 #include <daemon/adafs_ops/metadentry.hpp>
 #include <daemon/adafs_ops/data.hpp>
-#include <daemon/db/db_ops.hpp>
+#include <daemon/backend/metadata/db.hpp>
 
 using namespace std;
 
@@ -39,11 +39,11 @@ int create_metadentry(const std::string& path, mode_t mode) {
     if (ADAFS_DATA->inode_no_state())
         md.inode_no(generate_inode_no());
 
-    return db_put_metadentry(path, md.serialize()) ? 0 : -1;
+    return ADAFS_DATA->mdb()->put(path, md.serialize()) ? 0 : -1;
 }
 
 int get_metadentry(const std::string& path, std::string& val) {
-    auto ok = db_get_metadentry(path, val);
+    auto ok = ADAFS_DATA->mdb()->get(path, val);
     if (!ok || val.size() == 0) {
         return -1;
     }
@@ -73,7 +73,7 @@ int get_metadentry(const std::string& path, Metadata& md) {
  * @return
  */
 int remove_metadentry(const string& path) {
-    return db_delete_metadentry(path) ? 0 : -1;
+    return ADAFS_DATA->mdb()->remove(path) ? 0 : -1;
 }
 
 /**
@@ -100,7 +100,7 @@ int remove_node(const string& path) {
  */
 int get_metadentry_size(const string& path, size_t& ret_size) {
     string val;
-    auto err = db_get_metadentry(path, val);
+    auto err = ADAFS_DATA->mdb()->get(path, val);
     if (!err || val.empty()) {
         return ENOENT;
     }
@@ -117,14 +117,14 @@ int get_metadentry_size(const string& path, size_t& ret_size) {
  */
 int update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append,  size_t& read_size) {
 #ifdef LOG_TRACE
-    db_iterate_all_entries();
+    ADAFS_DATA->mdb()->iterate_all();
 #endif
-    auto err = db_update_metadentry_size(path, io_size, offset, append);
+    auto err = ADAFS_DATA->mdb()->update_size(path, io_size, offset, append);
     if (!err) {
         return EBUSY;
     }
 #ifdef LOG_TRACE
-    db_iterate_all_entries();
+    ADAFS_DATA->mdb()->iterate_all();
 #endif
     //XXX This breaks append writes, needs to be fixed
     read_size = 0;
@@ -132,7 +132,7 @@ int update_metadentry_size(const string& path, size_t io_size, off64_t offset, b
 }
 
 int update_metadentry(const string& path, Metadata& md) {
-    return db_update_metadentry(path, md.path(), md.serialize()) ? 0 : -1;
+    return ADAFS_DATA->mdb()->update(path, md.path(), md.serialize()) ? 0 : -1;
 }
 
 /**

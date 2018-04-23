@@ -1,6 +1,7 @@
 
 #include <global/rpc/rpc_types.hpp>
 #include <daemon/handler/rpc_defs.hpp>
+#include <daemon/backend/metadata/db.hpp>
 
 #include <daemon/adafs_ops/metadentry.hpp>
 
@@ -104,6 +105,7 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
             out.err = EBUSY;
         }
     } else {
+        assert(val.size() != 0);
         out.err = 0;
         out.db_val = val.c_str();
     }

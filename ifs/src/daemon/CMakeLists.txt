@@ -1,3 +1,5 @@
+add_subdirectory(backend/metadata)
+
 set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
     ../global/global_func.cpp
@@ -8,9 +10,6 @@ set(DAEMON_SRC
     classes/fs_data.cpp
     classes/rpc_data.cpp
     classes/metadata.cpp
-    db/db_util.cpp
-    db/db_ops.cpp
-    db/merge.cpp
     handler/h_metadentry.cpp
     handler/h_data.cpp
     handler/h_preload.cpp
@@ -30,21 +29,12 @@ set(DAEMON_HEADERS
     ../../include/daemon/classes/fs_data.hpp
     ../../include/daemon/classes/metadata.hpp
     ../../include/daemon/classes/rpc_data.hpp
-    ../../include/daemon/db/db_ops.hpp
-    ../../include/daemon/db/db_util.hpp
-    ../../include/daemon/db/merge.hpp
     ../../include/daemon/handler/rpc_defs.hpp
     )
 add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
 target_link_libraries(adafs_daemon
-    ${ROCKSDB_LIBRARIES}
-    # rocksdb libs
-    ${snappy_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${ZSTD_LIBRARIES}
-    ${LZ4_LIBRARY}
-    ${gflags_LIBRARIES}
+    # internal libs
+    metadata_db
     # margo libs
     ${ABT_LIBRARIES}
     ${ABT_SNOOZER_LIBRARIES}
@@ -55,4 +45,13 @@ target_link_libraries(adafs_daemon
     ${Boost_LIBRARIES}
     ${JEMALLOC_LIBRARIES}
     Threads::Threads
+    )
+
+target_include_directories(adafs_daemon
+    PRIVATE
+    ${ABT_INCLUDE_DIRS}
+    ${ABT_SNOOZER_INCLUDE_DIRS}
+    ${LIBEV_INCLUDE_DIRS}
+    ${MERCURY_INCLUDE_DIRS}
+    ${MARGO_INCLUDE_DIRS}
     )

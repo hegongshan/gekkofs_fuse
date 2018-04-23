@@ -1,5 +1,7 @@
 
 #include <daemon/classes/fs_data.hpp>
+#include <daemon/backend/metadata/db.hpp>
+
 
 // Utility member functions
 
@@ -46,6 +48,18 @@ void FsData::spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger_) {
     FsData::spdlogger_ = spdlogger_;
 }
 
+const std::shared_ptr<MetadataDB>& FsData::mdb() const {
+    return mdb_;
+}
+
+void FsData::mdb(const std::shared_ptr<MetadataDB>& mdb) {
+    mdb_ = mdb;
+}
+
+void FsData::close_mdb() {
+    mdb_.reset();
+}
+
 const std::string& FsData::rootdir() const {
     return rootdir_;
 }
@@ -76,62 +90,6 @@ const std::string& FsData::chunk_path() const {
 
 void FsData::chunk_path(const std::string& chunk_path_) {
     FsData::chunk_path_ = chunk_path_;
-}
-
-const rocksdb::Options& FsData::rdb_options() const {
-    return rdb_options_;
-}
-
-void FsData::rdb_options(const rocksdb::Options& rdb_options) {
-    FsData::rdb_options_ = rdb_options;
-}
-
-const std::string& FsData::rdb_path() const {
-    return rdb_path_;
-}
-
-void FsData::rdb_path(const std::string& rdb_path) {
-    FsData::rdb_path_ = rdb_path;
-}
-
-const std::shared_ptr<rocksdb::DB>& FsData::rdb() const {
-    return rdb_;
-}
-
-void FsData::rdb(const std::shared_ptr<rocksdb::DB>& rdb) {
-    FsData::rdb_ = rdb;
-}
-
-const std::shared_ptr<rocksdb::OptimisticTransactionDB>& FsData::txn_rdb() const {
-    return txn_rdb_;
-}
-
-void FsData::txn_rdb(const std::shared_ptr<rocksdb::OptimisticTransactionDB>& tx_rdb) {
-    FsData::txn_rdb_ = tx_rdb;
-}
-
-const std::shared_ptr<rocksdb::DB>& FsData::rdb_crt() const {
-    return rdb_crt_;
-}
-
-void FsData::rdb_crt(const std::shared_ptr<rocksdb::DB>& rdb_crt) {
-    FsData::rdb_crt_ = rdb_crt;
-}
-
-const rocksdb::OptimisticTransactionOptions& FsData::txn_rdb_options() const {
-    return txn_rdb_options_;
-}
-
-void FsData::txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb_options) {
-    FsData::txn_rdb_options_ = tx_rdb_options;
-}
-
-const rocksdb::WriteOptions& FsData::rdb_write_options() const {
-    return rdb_write_options_;
-}
-
-void FsData::rdb_write_options(const rocksdb::WriteOptions& rdb_write_options) {
-    FsData::rdb_write_options_ = rdb_write_options;
 }
 
 ino_t FsData::inode_count() const {
