@@ -21,7 +21,7 @@ OperandID MergeOperand::get_id(const rdb::Slice& serialized_op){
 
 rdb::Slice MergeOperand::get_params(const rdb::Slice& serialized_op){
     assert(serialized_op[1] == operand_id_suffix);
-    return rdb::Slice(serialized_op.data() + 2, serialized_op.size() - 2);
+    return {serialized_op.data() + 2, serialized_op.size() - 2};
 }
 
 IncreaseSizeOperand::IncreaseSizeOperand(const size_t size, const bool append):
