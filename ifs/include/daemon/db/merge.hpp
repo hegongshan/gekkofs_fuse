@@ -52,7 +52,6 @@ class CreateOperand: public MergeOperand {
 
 class MetadataMergeOperator: public rocksdb::MergeOperator {
     public:
-        MetadataMergeOperator(){};
         virtual ~MetadataMergeOperator(){};
         bool FullMergeV2(const MergeOperationInput& merge_in,
                 MergeOperationOutput* merge_out) const override;
