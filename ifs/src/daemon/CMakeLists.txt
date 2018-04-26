@@ -51,8 +51,6 @@ target_link_libraries(adafs_daemon
     ${MERCURY_UTIL_LIBRARIES}
     ${MARGO_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${JEMALLOC_LIBRARIES}
     Threads::Threads
     )
-if (${JEMALLOC_FOUND})
-    target_link_libraries(adafs_daemon ${JEMALLOC_LIBRARIES})
-endif ()
