@@ -2,6 +2,7 @@
 #include <daemon/db/db_util.hpp>
 #include <rocksdb/table.h>
 #include <rocksdb/filter_policy.h>
+#include <daemon/db/merge.hpp>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ bool init_rocksdb() {
     options.OptimizeLevelStyleCompaction();
     // create the DB if it's not already present
     options.create_if_missing = true;
-
+    options.merge_operator.reset(new MetadataMergeOperator);
     optimize_rocksdb(options);
 
     // Disable Write-Ahead Logging if configured
@@ -48,6 +49,7 @@ bool init_rocksdb() {
 }
 
 void optimize_rocksdb(rocksdb::Options& options) {
+    options.max_successive_merges = 128;
 #if defined(KV_OPTIMIZE_RAMDISK)
     // as described at https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
     // use mmap read

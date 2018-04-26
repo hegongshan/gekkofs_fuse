@@ -126,38 +126,40 @@ void Metadata::update_ACM_time(bool a, bool c, bool m) {
  * Creates a key value metadentry string that is used as a value in the KV store
  * @return
  */
-std::string Metadata::to_KVentry() {
-    auto val = ""s;
+std::string Metadata::to_KVentry() const {
+    std::string val;
+    this->serialize(val);
+    return val;
+}
 
+void Metadata::serialize(std::string& s) const {
     // The order is important. don't change.
-    val += fmt::FormatInt(mode_).c_str(); // add mandatory mode
-    val += dentry_val_delim + fmt::FormatInt(size_).c_str(); // add mandatory size
+    s += fmt::FormatInt(mode_).c_str(); // add mandatory mode
+    s += dentry_val_delim + fmt::FormatInt(size_).c_str(); // add mandatory size
     if (ADAFS_DATA->atime_state()) {
-        val += dentry_val_delim + fmt::FormatInt(atime_).c_str();
+        s += dentry_val_delim + fmt::FormatInt(atime_).c_str();
     }
     if (ADAFS_DATA->mtime_state()) {
-        val += dentry_val_delim + fmt::FormatInt(mtime_).c_str();
+        s += dentry_val_delim + fmt::FormatInt(mtime_).c_str();
     }
     if (ADAFS_DATA->ctime_state()) {
-        val += dentry_val_delim + fmt::FormatInt(ctime_).c_str();
+        s += dentry_val_delim + fmt::FormatInt(ctime_).c_str();
     }
     if (ADAFS_DATA->uid_state()) {
-        val += dentry_val_delim + fmt::FormatInt(uid_).str();
+        s += dentry_val_delim + fmt::FormatInt(uid_).str();
     }
     if (ADAFS_DATA->gid_state()) {
-        val += dentry_val_delim + fmt::FormatInt(gid_).str();
+        s += dentry_val_delim + fmt::FormatInt(gid_).str();
     }
     if (ADAFS_DATA->inode_no_state()) {
-        val += dentry_val_delim + fmt::FormatInt(inode_no_).str();
+        s += dentry_val_delim + fmt::FormatInt(inode_no_).str();
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        val += dentry_val_delim + fmt::FormatInt(link_count_).c_str();
+        s += dentry_val_delim + fmt::FormatInt(link_count_).c_str();
     }
     if (ADAFS_DATA->blocks_state()) {
-        val += dentry_val_delim + fmt::FormatInt(blocks_).c_str();
+        s += dentry_val_delim + fmt::FormatInt(blocks_).c_str();
     }
-
-    return val;
 }
 
 //-------------------------------------------- GETTER/SETTER
