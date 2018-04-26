@@ -43,7 +43,6 @@ endif (NOT ADAFS_DEPS_INSTALL)
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
-find_package(GFlags REQUIRED)
 find_package(snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
