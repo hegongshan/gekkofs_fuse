@@ -5,7 +5,7 @@ ENV ADAFS_PATH	/opt/adafs
 
 ENV SCRIPTS_PATH	${ADAFS_PATH}/scripts
 ENV DEPS_SRC_PATH	${ADAFS_PATH}/deps_src
-ENV INSTALL_PATH	${ADAFS_PATH}/build
+ENV INSTALL_PATH	${ADAFS_PATH}/build_deps
 
 
 # Enable epel and scl repository
@@ -60,7 +60,7 @@ RUN /bin/bash $SCRIPTS_PATH/compile_dep.sh $DEPS_SRC_PATH $INSTALL_PATH
 FROM centos:7
 
 ENV ADAFS_PATH	/opt/adafs
-ENV INSTALL_PATH	${ADAFS_PATH}/build
+ENV INSTALL_PATH	${ADAFS_PATH}/build_deps
 
 
 # Enable epel and scl repository
