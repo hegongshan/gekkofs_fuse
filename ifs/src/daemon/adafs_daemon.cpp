@@ -353,7 +353,7 @@ int main(int argc, const char* argv[]) {
         cout << desc << "\n";
         return 1;
     }
-    
+
     try {
         po::notify(vm);
     } catch (po::required_option& e) {
