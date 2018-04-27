@@ -21,7 +21,7 @@ find_path(JEMALLOC_ROOT_DIR
     NAMES include/jemalloc/jemalloc.h
     )
 
-find_library(JEMALLOC_LIBRARIES
+find_library(JEMALLOC_LIBRARY
     NAMES jemalloc
     HINTS ${JEMALLOC_ROOT_DIR}/lib
     )
@@ -33,12 +33,15 @@ find_path(JEMALLOC_INCLUDE_DIR
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(JeMalloc DEFAULT_MSG
-    JEMALLOC_LIBRARIES
+    JEMALLOC_LIBRARY
     JEMALLOC_INCLUDE_DIR
     )
 
 mark_as_advanced(
     JEMALLOC_ROOT_DIR
-    JEMALLOC_LIBRARIES
+    JEMALLOC_LIBRARY
     JEMALLOC_INCLUDE_DIR
 )
+
+set(JMALLOC_LIBRARIES ${JMALLOC_LIBRARY})
+set(JMALLOC_INCLUDE_DIRS ${JMALLOC_INCLUDE_DIR})
