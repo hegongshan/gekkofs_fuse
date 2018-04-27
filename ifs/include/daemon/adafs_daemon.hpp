@@ -4,12 +4,6 @@
 
 // std libs
 #include <string>
-#include <iostream>
-#include <cstdint>
-#include <cerrno>
-#include <unordered_map>
-#include <thread>
-#include <map>
 
 // adafs config
 #include <global/configure.hpp>
