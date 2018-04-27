@@ -6,12 +6,20 @@
 #include <daemon/db/db_util.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
 
+#include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
+#include <boost/tokenizer.hpp>
+
+#include <iostream>
+#include <fstream>
 #include <csignal>
+
 #include <condition_variable>
 #include <global/global_func.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
+namespace bfs = boost::filesystem;
 
 static condition_variable shutdown_please;
 static mutex mtx;
