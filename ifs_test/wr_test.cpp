@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
     char *buffOut = new char[strlen(buffIn)];
     int fd;
     int ret;
+    struct stat st;
 
     fd = open((mountdir + "/nonexisting").c_str(), O_RDONLY);
     if(fd >= 0 ){
@@ -33,6 +34,18 @@ int main(int argc, char* argv[]) {
     }
     if(errno != ENOENT){
         cerr << "ERROR: wrong error number while opening non-existing file: " << errno << endl;
+        return -1;
+    }
+
+    /* Stat nonexisting file */
+    ret = stat(p.c_str(), &st);
+    if(ret == 0){
+        cerr << "ERROR: succeeded on stating non-existing file" << endl;
+        return -1;
+    };
+
+    if(errno != ENOENT){
+        cerr << "ERROR: wrong error number while staing non-existing file: " << errno << endl;
         return -1;
     }
 
@@ -55,8 +68,6 @@ int main(int argc, char* argv[]) {
     }
 
     /* Check file size */
-    struct stat st;
-
     ret = stat(p.c_str(), &st);
     if(ret != 0){
         cerr << "Error stating file: " << strerror(errno) << endl;
