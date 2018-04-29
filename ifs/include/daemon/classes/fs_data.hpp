@@ -4,6 +4,8 @@
 
 #include <daemon/adafs_daemon.hpp>
 
+#include <unordered_map>
+#include <functional> //std::hash
 
 class FsData {
 

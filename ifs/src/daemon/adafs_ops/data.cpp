@@ -1,6 +1,8 @@
 
 #include <daemon/adafs_ops/data.hpp>
+#include <boost/filesystem.hpp>
 
+namespace bfs = boost::filesystem;
 using namespace std;
 
 std::string path_to_fspath(const std::string& path) {

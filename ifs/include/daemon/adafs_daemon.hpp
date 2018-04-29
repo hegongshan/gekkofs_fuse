@@ -4,21 +4,10 @@
 
 // std libs
 #include <string>
-#include <iostream>
-#include <cstdint>
-#include <cerrno>
-#include <unordered_map>
-#include <thread>
-#include <map>
 
 // adafs config
 #include <global/configure.hpp>
 #include <global/global_defs.hpp>
-// boost libs
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/program_options.hpp>
-#include <boost/tokenizer.hpp>
 // third party libs
 #include <extern/spdlog/spdlog.h>
 #include <extern/spdlog/fmt/fmt.h>
@@ -39,8 +28,6 @@ extern "C" {
 // adafs
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/classes/rpc_data.hpp>
-
-namespace bfs = boost::filesystem;
 
 #define INVALID_INODE static_cast<ino_t>(0)
 #define ADAFS_DATA (static_cast<FsData*>(FsData::getInstance()))
