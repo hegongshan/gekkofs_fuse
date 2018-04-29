@@ -42,6 +42,14 @@ int create_metadentry(const std::string& path, mode_t mode) {
     return db_put_metadentry(path, md.to_KVentry()) ? 0 : -1;
 }
 
+int get_metadentry(const std::string& path, std::string& val) {
+    auto ok = db_get_metadentry(path, val);
+    if (!ok || val.size() == 0) {
+        return -1;
+    }
+    return 0;
+}
+
 /**
  * Returns the metadata of an object at a specific path. The metadata can be of dummy values if configured
  * @param path
@@ -50,8 +58,8 @@ int create_metadentry(const std::string& path, mode_t mode) {
  */
 int get_metadentry(const std::string& path, Metadata& md) {
     string val;
-    auto err = db_get_metadentry(path, val);
-    if (!err || val.size() == 0) {
+    auto err = get_metadentry(path, val);
+    if (err) {
         return -1;
     }
     Metadata mdi{path, val};

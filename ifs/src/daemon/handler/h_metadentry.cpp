@@ -4,8 +4,6 @@
 
 #include <daemon/adafs_ops/metadentry.hpp>
 
-#include <daemon/db/db_ops.hpp>
-
 using namespace std;
 
 static hg_return_t rpc_minimal(hg_handle_t handle) {
@@ -97,14 +95,17 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Got srv stat RPC for path {}", in.path);
     // get the metadata
     string val;
-    auto err = db_get_metadentry(in.path, val);
-    // TODO set return values proper with errorcodes the whole way
+    auto err = get_metadentry(in.path, val);
     if (err) {
+        // DB operations failed
+        if(val.size() == 0){
+            out.err = ENOENT;
+        } else {
+            out.err = EBUSY;
+        }
+    } else {
         out.err = 0;
         out.db_val = val.c_str();
-    } else {
-        // if db_get_metadentry didn't return anything we set the errno to ENOENT
-        out.err = ENOENT;
     }
 
     ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
