@@ -7,10 +7,10 @@ using namespace std;
 
 bool db_get_metadentry(const std::string& key, std::string& val) {
     auto db = ADAFS_DATA->rdb();
-    auto err = db->Get(ReadOptions(), key, &val).ok();
+    auto ok = db->Get(ReadOptions(), key, &val).ok();
     // TODO check what happens if nothing could have been found. Will val be NULL, nullptr, ""?
     // It matters because the client RPC is checking for an empty string to see if get_attr was successful or not
-    return err;
+    return ok;
 }
 
 bool db_put_metadentry(const std::string& key, const std::string& val) {

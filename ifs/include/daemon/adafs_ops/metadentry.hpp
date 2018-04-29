@@ -11,6 +11,8 @@ int create_metadentry(const std::string& path, mode_t mode);
 
 int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
 
+int get_metadentry(const std::string& path, std::string& val);
+
 int get_metadentry(const std::string& path, Metadata& md);
 
 int remove_metadentry(const std::string& path);
