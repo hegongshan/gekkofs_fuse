@@ -94,26 +94,25 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got srv stat RPC for path {}", in.path);
-    // get the metadata
-    string val;
-    auto err = get_metadentry(in.path, val);
-    if (err) {
-        // DB operations failed
-        if(val.size() == 0){
-            out.err = ENOENT;
-        } else {
-            out.err = EBUSY;
-        }
-    } else {
-        assert(val.size() != 0);
-        out.err = 0;
+    std::string val;
+
+    try {
+        // get the metadata
+        val = get_metadentry_str(in.path);
         out.db_val = val.c_str();
+        out.err = 0;
+        ADAFS_DATA->spdlogger()->debug("{}() Sending output mode {}", __func__, out.db_val);
+    } catch (const NotFoundException& e) {
+        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: {}", __func__, in.path);
+        out.err = ENOENT;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry from DB: {}", __func__, e.what());
+        out.err = EBUSY;
     }
 
-    ADAFS_DATA->spdlogger()->debug("Sending output mode {}", out.db_val);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
     }
 
     // Destroy handle when finished
@@ -163,9 +162,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Got update metadentry RPC with path {}", in.path);
 
     // do update
-    Metadata md{};
-    auto err = get_metadentry(in.path, md);
-    if (err == 0) {
+    try {
+        Metadata md = get_metadentry(in.path);
         out.err = 0;
         if (in.inode_no_flag == HG_TRUE)
             md.inode_no(in.inode_no);
@@ -186,9 +184,12 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
         if (in.ctime_flag == HG_TRUE)
             md.ctime(in.ctime);
         out.err = update_metadentry(in.path, md);
-    } else {
+    } catch (const std::exception& e){
+        //TODO handle NotFoundException
+        ADAFS_DATA->spdlogger()->error("{}() Failed to update entry", __func__);
         out.err = 1;
     }
+
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
@@ -250,15 +251,17 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     ADAFS_DATA->spdlogger()->debug("Got update metadentry size RPC with path {}", in.path);
 
     // do update
-    size_t ret_size;
-    auto err = get_metadentry_size(in.path, ret_size);
-    if (err == 0) {
+    try {
+        out.ret_size = get_metadentry_size(in.path);
         out.err = 0;
-        out.ret_size = ret_size;
-    } else {
-        out.err = err;
-        out.ret_size = 0;
+    } catch (const NotFoundException& e) {
+        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: {}", in.path);
+        out.err = ENOENT;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry size from DB: {}", e.what());
+        out.err = EBUSY;
     }
+
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {

@@ -1,6 +1,8 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/metadata/merge.hpp>
+#include <daemon/backend/exceptions.hpp>
 
+#include <extern/spdlog/spdlog.h>
 
 MetadataDB::MetadataDB(const std::string& path): path(path) {
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
@@ -22,11 +24,23 @@ MetadataDB::MetadataDB(const std::string& path): path(path) {
     this->db.reset(rdb_ptr);
 }
 
-bool MetadataDB::get(const std::string& key, std::string& val) {
-    auto ok = db->Get(rdb::ReadOptions(), key, &val).ok();
-    // TODO check what happens if nothing could have been found. Will val be NULL, nullptr, ""?
-    // It matters because the client RPC is checking for an empty string to see if get_attr was successful or not
-    return ok;
+void MetadataDB::throw_rdb_status_excpt(const rdb::Status& s){
+    assert(!s.ok());
+
+    if(s.IsNotFound()){
+        throw NotFoundException(s.ToString());
+    } else {
+        throw DBException(s.ToString());
+    }
+}
+
+std::string MetadataDB::get(const std::string& key) const {
+    std::string val;
+    auto s = db->Get(rdb::ReadOptions(), key, &val);
+    if(!s.ok()){
+        MetadataDB::throw_rdb_status_excpt(s);
+    }
+    return val;
 }
 
 bool MetadataDB::put(const std::string& key, const std::string& val) {
@@ -136,4 +150,3 @@ void MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
     options.min_write_buffer_number_to_merge = 1;
 #endif
 }
-

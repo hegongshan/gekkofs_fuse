@@ -42,12 +42,8 @@ int create_metadentry(const std::string& path, mode_t mode) {
     return ADAFS_DATA->mdb()->put(path, md.serialize()) ? 0 : -1;
 }
 
-int get_metadentry(const std::string& path, std::string& val) {
-    auto ok = ADAFS_DATA->mdb()->get(path, val);
-    if (!ok || val.size() == 0) {
-        return -1;
-    }
-    return 0;
+std::string get_metadentry_str(const std::string& path) {
+        return ADAFS_DATA->mdb()->get(path);
 }
 
 /**
@@ -56,15 +52,8 @@ int get_metadentry(const std::string& path, std::string& val) {
  * @param attr
  * @return
  */
-int get_metadentry(const std::string& path, Metadata& md) {
-    string val;
-    auto err = get_metadentry(path, val);
-    if (err) {
-        return -1;
-    }
-    Metadata mdi{path, val};
-    md = mdi;
-    return 0;
+Metadata get_metadentry(const std::string& path) {
+    return {path, get_metadentry_str(path)};
 }
 
 /**
@@ -98,15 +87,8 @@ int remove_node(const string& path) {
  * @param ret_size (return val)
  * @return err
  */
-int get_metadentry_size(const string& path, size_t& ret_size) {
-    string val;
-    auto err = ADAFS_DATA->mdb()->get(path, val);
-    if (!err || val.empty()) {
-        return ENOENT;
-    }
-    Metadata md{path, val};
-    ret_size = md.size();
-    return 0;
+size_t get_metadentry_size(const string& path) {
+    return get_metadentry(path).size();
 }
 
 /**
@@ -141,10 +123,12 @@ int update_metadentry(const string& path, Metadata& md) {
  * @return errno
  */
 int check_access_mask(const string& path, const int mask) {
-    Metadata md{};
-    auto err = get_metadentry(path, md);
-    if (err == -1)  // metadentry not found
+    Metadata md;
+    try {
+        md = get_metadentry(path);
+    } catch (const NotFoundException& e) {
         return ENOENT;
+    }
 
     /*
      * if only check if file exists is wanted, return success.

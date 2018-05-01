@@ -3,9 +3,9 @@
 
 #include <memory>
 #include "rocksdb/db.h"
+#include "daemon/backend/exceptions.hpp"
 
 namespace rdb = rocksdb;
-
 
 class MetadataDB {
     private:
@@ -16,9 +16,11 @@ class MetadataDB {
         static void optimize_rocksdb_options(rdb::Options& options);
 
     public:
+        static inline void throw_rdb_status_excpt(const rdb::Status& s);
+
         MetadataDB(const std::string& path);
 
-        bool get(const std::string& key, std::string& val);
+        std::string get(const std::string& key) const;
         bool put(const std::string& key, const std::string& val);
         bool remove(const std::string& key);
         bool exists(const std::string& key);
@@ -26,6 +28,5 @@ class MetadataDB {
         bool update_size(const std::string& key, size_t size, off64_t offset, bool append);
         void iterate_all();
 };
-
 
 #endif //IFS_METADATA_DB_HPP
