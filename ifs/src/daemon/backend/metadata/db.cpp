@@ -43,13 +43,12 @@ std::string MetadataDB::get(const std::string& key) const {
     return val;
 }
 
-bool MetadataDB::put(const std::string& key, const std::string& val) {
+void MetadataDB::put(const std::string& key, const std::string& val) {
     auto cop = CreateOperand(val);
     auto s = db->Merge(write_opts, key, cop.serialize());
     if(!s.ok()){
-        //TODO ADAFS_DATA->spdlogger()->error("Failed to create metadentry size. RDB error: [{}]", s.ToString());
+        MetadataDB::throw_rdb_status_excpt(s);
     }
-    return s.ok();
 }
 
 void MetadataDB::remove(const std::string& key) {

@@ -42,9 +42,14 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
                                    (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
-    // create metadentry
-    out.err = create_metadentry(in.path, in.mode);
-
+    try {
+        // create metadentry
+        create_metadentry(in.path, in.mode);
+        out.err = 0;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to create metadentry: {}",  __func__, e.what());
+        out.err = -1;
+    }
     ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {

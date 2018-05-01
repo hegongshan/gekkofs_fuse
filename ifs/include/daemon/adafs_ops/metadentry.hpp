@@ -7,7 +7,7 @@
 
 int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_t mode);
 
-int create_metadentry(const std::string& path, mode_t mode);
+void create_metadentry(const std::string& path, mode_t mode);
 
 int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
 

@@ -15,9 +15,8 @@ ino_t generate_inode_no() {
  * Creates metadata (if required) and dentry at the same time
  * @param path
  * @param mode
- * @return
  */
-int create_metadentry(const std::string& path, mode_t mode) {
+void create_metadentry(const std::string& path, mode_t mode) {
 
     Metadata md{path, mode};
     // update metadata object based on what metadata is needed
@@ -39,7 +38,7 @@ int create_metadentry(const std::string& path, mode_t mode) {
     if (ADAFS_DATA->inode_no_state())
         md.inode_no(generate_inode_no());
 
-    return ADAFS_DATA->mdb()->put(path, md.serialize()) ? 0 : -1;
+    ADAFS_DATA->mdb()->put(path, md.serialize());
 }
 
 std::string get_metadentry_str(const std::string& path) {

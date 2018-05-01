@@ -21,7 +21,7 @@ class MetadataDB {
         MetadataDB(const std::string& path);
 
         std::string get(const std::string& key) const;
-        bool put(const std::string& key, const std::string& val);
+        void put(const std::string& key, const std::string& val);
         void remove(const std::string& key);
         bool exists(const std::string& key);
         bool update(const std::string& old_key, const std::string& new_key, const std::string& val);

@@ -64,8 +64,10 @@ bool init_environment() {
     ADAFS_DATA->link_cnt_state(MDATA_USE_LINK_CNT);
     ADAFS_DATA->blocks_state(MDATA_USE_BLOCKS);
     // Create metadentry for root directory
-    if (create_metadentry(ADAFS_DATA->mountdir(), S_IFDIR | 777) != 0) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to write root metadentry to KV store.", __func__);
+    try {
+        create_metadentry(ADAFS_DATA->mountdir(), S_IFDIR | 777);
+    } catch (const std::exception& e ) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to write root metadentry to KV store: {}", __func__, e.what());
         return false;
     }
     ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
