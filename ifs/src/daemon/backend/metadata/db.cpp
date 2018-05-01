@@ -59,8 +59,16 @@ void MetadataDB::remove(const std::string& key) {
 }
 
 bool MetadataDB::exists(const std::string& key) {
-    std::string val_str;
-    return db->Get(rdb::ReadOptions(), key, &val_str).ok();
+    std::string val;
+    auto s = db->Get(rdb::ReadOptions(), key, &val);
+    if(!s.ok()){
+        if(s.IsNotFound()){
+            return false;
+        } else {
+            MetadataDB::throw_rdb_status_excpt(s);
+        }
+    }
+    return true;
 }
 
 /**
