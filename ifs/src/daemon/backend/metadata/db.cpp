@@ -52,8 +52,11 @@ bool MetadataDB::put(const std::string& key, const std::string& val) {
     return s.ok();
 }
 
-bool MetadataDB::remove(const std::string& key) {
-    return db->Delete(write_opts, key).ok();
+void MetadataDB::remove(const std::string& key) {
+    auto s = db->Delete(write_opts, key);
+    if(!s.ok()){
+        MetadataDB::throw_rdb_status_excpt(s);
+    }
 }
 
 bool MetadataDB::exists(const std::string& key) {

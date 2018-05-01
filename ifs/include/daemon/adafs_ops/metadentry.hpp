@@ -15,9 +15,7 @@ std::string get_metadentry_str(const std::string& path);
 
 Metadata get_metadentry(const std::string& path);
 
-int remove_metadentry(const std::string& path);
-
-int remove_node(const std::string& path);
+void remove_node(const std::string& path);
 
 size_t get_metadentry_size(const std::string& path);
 

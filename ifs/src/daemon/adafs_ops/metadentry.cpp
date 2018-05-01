@@ -57,28 +57,13 @@ Metadata get_metadentry(const std::string& path) {
 }
 
 /**
- * Wrapper to remove a KV store entry with the path as key
- * @param path
- * @return
- */
-int remove_metadentry(const string& path) {
-    return ADAFS_DATA->mdb()->remove(path) ? 0 : -1;
-}
-
-/**
  * Remove metadentry if exists and try to remove all chunks for path
  * @param path
  * @return
  */
-int remove_node(const string& path) {
-    int err = 0; // assume we succeed
-    Metadata md{};
-    // If metadentry exists, try to remove it
-    if (get_metadentry(path, md) == 0) {
-        err = remove_metadentry(path);
-    }
+void remove_node(const string& path) {
+    ADAFS_DATA->mdb()->remove(path); // remove metadentry
     destroy_chunk_space(path); // destroys all chunks for the path on this node
-    return err;
 }
 
 /**

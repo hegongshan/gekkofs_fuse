@@ -22,7 +22,7 @@ class MetadataDB {
 
         std::string get(const std::string& key) const;
         bool put(const std::string& key, const std::string& val);
-        bool remove(const std::string& key);
+        void remove(const std::string& key);
         bool exists(const std::string& key);
         bool update(const std::string& old_key, const std::string& new_key, const std::string& val);
         bool update_size(const std::string& key, size_t size, off64_t offset, bool append);

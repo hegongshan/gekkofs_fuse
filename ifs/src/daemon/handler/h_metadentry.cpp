@@ -133,8 +133,24 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("Got remove node RPC with path {}", in.path);
 
-    // Remove metadentry if exists on the node but also remove all chunks for that path
-    out.err = remove_node(in.path);
+    try {
+        // Remove metadentry if exists on the node
+        // and remove all chunks for that file
+        remove_node(in.path);
+        out.err = 0;
+    } catch (const NotFoundException& e) {
+        /* The metadentry was not found on this node,
+         * this is not an error. At least one node involved in this
+         * broadcast operation will find and delete the entry on its local
+         * MetadataDB.
+         * TODO: send the metadentry remove only to the node that actually
+         * has it.
+         */
+        out.err = 0;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to remove node: {}", __func__, e.what());
+        out.err = EBUSY;
+    }
 
     ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
     auto hret = margo_respond(handle, &out);
