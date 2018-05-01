@@ -21,7 +21,7 @@ size_t get_metadentry_size(const std::string& path);
 
 int update_metadentry_size(const std::string& path, size_t io_size, off_t offset, bool append, size_t& read_size);
 
-int update_metadentry(const std::string& path, Metadata& md);
+void update_metadentry(const std::string& path, Metadata& md);
 
 int check_access_mask(const std::string& path, int mask);
 

@@ -97,8 +97,8 @@ int update_metadentry_size(const string& path, size_t io_size, off64_t offset, b
     return 0;
 }
 
-int update_metadentry(const string& path, Metadata& md) {
-    return ADAFS_DATA->mdb()->update(path, md.path(), md.serialize()) ? 0 : -1;
+void update_metadentry(const string& path, Metadata& md) {
+    ADAFS_DATA->mdb()->update(path, md.path(), md.serialize());
 }
 
 /**

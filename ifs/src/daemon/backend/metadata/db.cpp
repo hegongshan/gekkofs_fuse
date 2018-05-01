@@ -78,11 +78,15 @@ bool MetadataDB::exists(const std::string& key) {
  * @param val
  * @return
  */
-bool MetadataDB::update(const std::string& old_key, const std::string& new_key, const std::string& val) {
+void MetadataDB::update(const std::string& old_key, const std::string& new_key, const std::string& val) {
+    //TODO use rdb::Put() method
     rdb::WriteBatch batch;
     batch.Delete(old_key);
     batch.Put(new_key, val);
-    return db->Write(write_opts, &batch).ok();
+    auto s = db->Write(write_opts, &batch);
+    if(!s.ok()){
+        MetadataDB::throw_rdb_status_excpt(s);
+    }
 }
 
 bool MetadataDB::update_size(const std::string& key, size_t size, off64_t offset, bool append){

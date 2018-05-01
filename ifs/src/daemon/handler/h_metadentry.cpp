@@ -185,7 +185,6 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     // do update
     try {
         Metadata md = get_metadentry(in.path);
-        out.err = 0;
         if (in.inode_no_flag == HG_TRUE)
             md.inode_no(in.inode_no);
         if (in.block_flag == HG_TRUE)
@@ -204,7 +203,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
             md.mtime(in.mtime);
         if (in.ctime_flag == HG_TRUE)
             md.ctime(in.ctime);
-        out.err = update_metadentry(in.path, md);
+        update_metadentry(in.path, md);
+        out.err = 0;
     } catch (const std::exception& e){
         //TODO handle NotFoundException
         ADAFS_DATA->spdlogger()->error("{}() Failed to update entry", __func__);
