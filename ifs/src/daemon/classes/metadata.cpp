@@ -123,13 +123,8 @@ void Metadata::update_ACM_time(bool a, bool c, bool m) {
 }
 
 /**
- * Creates a key value metadentry string that is used as a value in the KV store
- * @return
+ * Returns the string rapresentation of metadata
  */
-std::string Metadata::to_KVentry() const {
-    return serialize();
-}
-
 std::string Metadata::serialize() const {
     std::string s;
     // The order is important. don't change.
