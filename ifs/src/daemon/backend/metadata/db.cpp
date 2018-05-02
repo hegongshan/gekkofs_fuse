@@ -89,13 +89,12 @@ void MetadataDB::update(const std::string& old_key, const std::string& new_key, 
     }
 }
 
-bool MetadataDB::update_size(const std::string& key, size_t size, off64_t offset, bool append){
-    auto uop = IncreaseSizeOperand(offset + size, append);
+void MetadataDB::update_size(const std::string& key, size_t size, bool append){
+    auto uop = IncreaseSizeOperand(size, append);
     auto s = db->Merge(write_opts, key, uop.serialize());
     if(!s.ok()){
-       //TODO ADAFS_DATA->spdlogger()->error("Failed to update metadentry size. RDB error: [{}]", s.ToString());
+        MetadataDB::throw_rdb_status_excpt(s);
     }
-    return s.ok();
 }
 
 void MetadataDB::iterate_all() {

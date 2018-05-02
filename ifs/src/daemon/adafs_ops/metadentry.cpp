@@ -81,20 +81,14 @@ size_t get_metadentry_size(const string& path) {
  * @param io_size
  * @return the updated size
  */
-int update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append,  size_t& read_size) {
+void update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append) {
 #ifdef LOG_TRACE
     ADAFS_DATA->mdb()->iterate_all();
 #endif
-    auto err = ADAFS_DATA->mdb()->update_size(path, io_size, offset, append);
-    if (!err) {
-        return EBUSY;
-    }
+    ADAFS_DATA->mdb()->update_size(path, io_size + offset, append);
 #ifdef LOG_TRACE
     ADAFS_DATA->mdb()->iterate_all();
 #endif
-    //XXX This breaks append writes, needs to be fixed
-    read_size = 0;
-    return 0;
 }
 
 void update_metadentry(const string& path, Metadata& md) {

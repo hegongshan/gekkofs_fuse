@@ -236,16 +236,20 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("{}() Got update metadentry size RPC with path {}", __func__, in.path);
 
-    // do update
-    size_t read_size;
-    auto err = update_metadentry_size(in.path, in.size, in.offset, (in.append == HG_TRUE), read_size);
-    if (err == 0) {
+    try {
+        update_metadentry_size(in.path, in.size, in.offset, (in.append == HG_TRUE));
         out.err = 0;
-        out.ret_size = read_size;
-    } else {
-        out.err = err;
-        out.ret_size = 0;
+        //TODO the actual size of the file could be different after the size update
+        // do to concurrency on size
+        out.ret_size = in.size + in.offset;
+    } catch (const NotFoundException& e) {
+        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: {}", in.path);
+        out.err = ENOENT;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to update metadentry size on DB: {}", e.what());
+        out.err = EBUSY;
     }
+
     ADAFS_DATA->spdlogger()->debug("{}() Sending output {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
