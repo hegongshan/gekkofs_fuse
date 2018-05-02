@@ -39,7 +39,7 @@ int create_metadentry(const std::string& path, mode_t mode) {
     if (ADAFS_DATA->inode_no_state())
         md.inode_no(generate_inode_no());
 
-    return db_put_metadentry(path, md.to_KVentry()) ? 0 : -1;
+    return db_put_metadentry(path, md.serialize()) ? 0 : -1;
 }
 
 int get_metadentry(const std::string& path, std::string& val) {
@@ -132,7 +132,7 @@ int update_metadentry_size(const string& path, size_t io_size, off64_t offset, b
 }
 
 int update_metadentry(const string& path, Metadata& md) {
-    return db_update_metadentry(path, md.path(), md.to_KVentry()) ? 0 : -1;
+    return db_update_metadentry(path, md.path(), md.serialize()) ? 0 : -1;
 }
 
 /**

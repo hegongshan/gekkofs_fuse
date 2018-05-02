@@ -116,7 +116,7 @@ bool MetadataMergeOperator::FullMergeV2(
     }
 
     md.size(fsize);
-    md.serialize(merge_out->new_value);
+    merge_out->new_value = md.serialize();
     return true;
 }
 

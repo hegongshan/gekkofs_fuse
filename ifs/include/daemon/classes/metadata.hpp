@@ -31,9 +31,7 @@ public:
 
     void update_ACM_time(bool a, bool c, bool m);
 
-    std::string to_KVentry() const;
-
-    void serialize(std::string& s) const;
+    std::string serialize() const;
 
     //Getter and Setter
     time_t atime() const;
