@@ -33,7 +33,7 @@ public:
 
     std::string to_KVentry() const;
 
-    void serialize(std::string& s) const;
+    std::string serialize() const;
 
     //Getter and Setter
     time_t atime() const;
