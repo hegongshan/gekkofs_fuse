@@ -98,7 +98,7 @@ void read_file_abt(void* _arg) {
 
     int fd = open(chnk_path.c_str(), R_OK);
     if (fd < 0) { //the case that file does not exist e.g sparse file or random write
-        read_size = static_cast<size_t>(0); 
+        read_size = static_cast<size_t>(0);
         ABT_eventual_set(arg->eventual, &read_size, sizeof(size_t));
         return;
     }
