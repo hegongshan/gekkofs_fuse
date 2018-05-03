@@ -4,7 +4,7 @@
 #include <global/path_util.hpp>
 
 namespace bfs = boost::filesystem;
-using namespace std;
+
 
 std::string path_to_fspath(const std::string& path) {
     assert(is_absolute_path(path));
