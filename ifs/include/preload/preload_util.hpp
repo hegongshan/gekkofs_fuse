@@ -5,7 +5,6 @@
 #include <preload/preload.hpp>
 #include <preload/open_file_map.hpp>
 // third party libs
-#include <extern/spdlog/spdlog.h>
 #include <string>
 
 // TODO singleton this stuff away
@@ -95,8 +94,6 @@ extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern std::shared_ptr<struct FsConfig> fs_config;
-// global logger instance
-extern std::shared_ptr<spdlog::logger> ld_logger;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed
 extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 // file descriptor index validation flag

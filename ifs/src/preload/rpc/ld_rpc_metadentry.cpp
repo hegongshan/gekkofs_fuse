@@ -12,7 +12,7 @@ inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_
     auto ret = margo_forward_timed_wrap(handle, in_struct);
     auto diff_count = chrono::duration_cast<ns>(get_time::now() - start_t).count();
     if (((diff_count) / 1000000.) > MARGO_FORWARD_TIMER_THRESHOLD)
-        ld_logger->info("{}() rpc_time: {} ms", func, ((diff_count) / 1000000.));
+        CTX->log()->info("{}() rpc_time: {} ms", func, ((diff_count) / 1000000.));
     return ret;
 }
 
@@ -37,14 +37,14 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     in.path = path.c_str();
     in.mode = mode;
     // Create handle
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_mk_node_id, rpc_mk_node_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
     }
     // Send rpc
-    ld_logger->debug("{}() About to send RPC ...", __func__);
+    CTX->log()->debug("{}() About to send RPC ...", __func__);
 #if defined(MARGO_FORWARD_TIMER)
     ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
 #else
@@ -52,20 +52,20 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
 #endif
     // Get response
     if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
+        CTX->log()->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
             err = out.err;
         } else {
             // something is wrong
             errno = EBUSY;
-            ld_logger->error("{}() while getting rpc output", __func__);
+            CTX->log()->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        ld_logger->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out");
         errno = EBUSY;
     }
     margo_destroy(handle);
@@ -80,14 +80,14 @@ int rpc_send_access(const std::string& path, const int mask) {
     // fill in
     in.path = path.c_str();
     in.mask = mask;
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
     }
     // Send rpc
-    ld_logger->debug("{}() About to send RPC ...", __func__);
+    CTX->log()->debug("{}() About to send RPC ...", __func__);
 #if defined(MARGO_FORWARD_TIMER)
     ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
 #else
@@ -95,7 +95,7 @@ int rpc_send_access(const std::string& path, const int mask) {
 #endif
     // Get response
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() timed out");
+        CTX->log()->error("{}() timed out");
         errno = EBUSY;
         margo_destroy(handle);
         return -1;
@@ -103,13 +103,13 @@ int rpc_send_access(const std::string& path, const int mask) {
 
     ret = margo_get_output(handle, &out);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() while getting rpc output", __func__);
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
         margo_destroy(handle);
         return -1;
     }
     
-    ld_logger->debug("{}() Got response with error: {}", __func__, out.err);
+    CTX->log()->debug("{}() Got response with error: {}", __func__, out.err);
     
     if(out.err != 0){
         //In case of error out.err contains the
@@ -130,7 +130,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     int err = 0;
     // fill in
     in.path = path.c_str();
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
@@ -145,21 +145,21 @@ int rpc_send_stat(const std::string& path, string& attr) {
     // Get response
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
-        ld_logger->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out");
         margo_destroy(handle);
         return -1;
     }
 
     ret = margo_get_output(handle, &out);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() while getting rpc output", __func__);
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
         margo_free_output(handle, &out);
         margo_destroy(handle);
         return -1;
     }
 
-    ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+    CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
 
     if(out.err != 0) {
         err = -1;
@@ -181,7 +181,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
     // else send an rpc to all hosts and thus broadcast chunk_removal.
     auto rpc_target_size = remove_metadentry_only ? static_cast<uint64_t>(1) : fs_config->host_size;
 
-    ld_logger->debug("{}() Creating Mercury handles for all nodes ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handles for all nodes ...", __func__);
     vector<hg_handle_t> rpc_handles(rpc_target_size);
     vector<margo_request> rpc_waiters(rpc_target_size);
     vector<rpc_rm_node_in_t> rpc_in(rpc_target_size);
@@ -196,7 +196,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
         else
             ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, i, rpc_handles[i], false);
         if (ret != HG_SUCCESS) {
-            ld_logger->warn("{}() Unable to create Mercury handle", __func__);
+            CTX->log()->warn("{}() Unable to create Mercury handle", __func__);
             // We use continue here to remove at least some data
             // XXX In the future we can discuss RPC retrying. This should be a function to be used in general
             errno = EBUSY;
@@ -205,7 +205,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
         // send async rpc
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->warn("{}() Unable to create Mercury handle", __func__);
+            CTX->log()->warn("{}() Unable to create Mercury handle", __func__);
             errno = EBUSY;
             err = -1;
         }
@@ -216,14 +216,14 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
         // XXX We might need a timeout here to not wait forever for an output that never comes?
         ret = margo_wait(rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->warn("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path, i);
+            CTX->log()->warn("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path, i);
             errno = EBUSY;
             err = -1;
         }
         rpc_err_out_t out{};
         ret = margo_get_output(rpc_handles[i], &out);
         if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
             if (err != 0) {
                 errno = out.err;
                 err = -1;
@@ -232,7 +232,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
             // something is wrong
             errno = EBUSY;
             err = -1;
-            ld_logger->error("{}() while getting rpc output", __func__);
+            CTX->log()->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(rpc_handles[i], &out);
@@ -270,7 +270,7 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     in.mtime_flag = bool_to_merc_bool(md_flags.mtime);
     in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
 
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_update_metadentry_id, rpc_update_metadentry_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
@@ -284,20 +284,20 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
 #endif
     // Get response
     if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
+        CTX->log()->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
             err = out.err;
         } else {
             // something is wrong
             errno = EBUSY;
-            ld_logger->error("{}() while getting rpc output", __func__);
+            CTX->log()->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        ld_logger->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out");
         errno = EBUSY;
     }
 
@@ -320,7 +320,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
         in.append = HG_FALSE;
     int err = EUNKNOWN;
 
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
@@ -334,22 +334,22 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
 #endif
     // Get response
     if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
+        CTX->log()->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
             err = out.err;
             ret_size = out.ret_size;
         } else {
             // something is wrong
             errno = EBUSY;
             ret_size = 0;
-            ld_logger->error("{}() while getting rpc output", __func__);
+            CTX->log()->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        ld_logger->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out");
         errno = EBUSY;
     }
     margo_destroy(handle);
@@ -364,7 +364,7 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     in.path = path.c_str();
     int err = EUNKNOWN;
 
-    ld_logger->debug("{}() Creating Mercury handle ...", __func__);
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(ipc_get_metadentry_size_id, rpc_get_metadentry_size_id, path, handle, false);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
@@ -378,22 +378,22 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 #endif
     // Get response
     if (ret == HG_SUCCESS) {
-        ld_logger->trace("{}() Waiting for response", __func__);
+        CTX->log()->trace("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            ld_logger->debug("{}() Got response success: {}", __func__, out.err);
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
             err = out.err;
             ret_size = out.ret_size;
         } else {
             // something is wrong
             errno = EBUSY;
             ret_size = 0;
-            ld_logger->error("{}() while getting rpc output", __func__);
+            CTX->log()->error("{}() while getting rpc output", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        ld_logger->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out");
         errno = EBUSY;
     }
     margo_destroy(handle);

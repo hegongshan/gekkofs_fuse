@@ -1,3 +1,4 @@
+#include <preload/preload.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
@@ -186,12 +187,12 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
 
     ret = rpc_send_update_metadentry_size(*path, count, offset, append_flag, updated_size);
     if (ret != 0) {
-        ld_logger->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
+        CTX->log()->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
         return 0; // ERR
     }
     ret = rpc_send_write(*path, buf, append_flag, offset, count, updated_size);
     if (ret < 0) {
-        ld_logger->warn("{}() rpc_send_write failed with ret {}", __func__, ret);
+        CTX->log()->warn("{}() rpc_send_write failed with ret {}", __func__, ret);
     }
     return ret; // return written size or -1 as error
 }
@@ -206,7 +207,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 #endif
     auto ret = rpc_send_read(*path, buf, offset, count);
     if (ret < 0) {
-        ld_logger->warn("{}() rpc_send_read failed with ret {}", __func__, ret);
+        CTX->log()->warn("{}() rpc_send_read failed with ret {}", __func__, ret);
     }
     // XXX check that we don't try to read past end of the file
     return ret; // return read size or -1 as error

@@ -7,8 +7,6 @@
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 
-// external variables that are initialized here
-std::shared_ptr<spdlog::logger> ld_logger;
 std::shared_ptr<FsConfig> fs_config;
 
 // function pointer for preloading
@@ -120,8 +118,9 @@ void init_passthrough_() {
     libc_dup3 = dlsym(libc, "dup3");
 
     fs_config = std::make_shared<struct FsConfig>();
+
     //set the spdlogger and initialize it with spdlog
-    ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
+    auto ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
     // set logger format
     spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
     // flush log when info, warning, error messages are encountered
@@ -131,15 +130,15 @@ void init_passthrough_() {
     ld_logger->flush_on(spdlog::level::trace);
 #elif defined(LOG_PRELOAD_DEBUG)
     spdlog::set_level(spdlog::level::debug);
-//    ld_logger->flush_on(spdlog::level::debug);
 #elif defined(LOG_PRELOAD_INFO)
     spdlog::set_level(spdlog::level::info);
-//    ld_logger->flush_on(spdlog::level::info);
 #else
     spdlog::set_level(spdlog::level::off);
 #endif
 
-    ld_logger->debug("{}() Passthrough initialized.", __func__);
+    CTX->log(ld_logger);
+
+    CTX->log()->debug("{}() Passthrough initialized.", __func__);
 }
 
 void init_passthrough_if_needed() {

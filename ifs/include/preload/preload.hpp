@@ -23,8 +23,11 @@ extern "C" {
 }
 
 #include <preload/preload_util.hpp>
+#include <preload/preload_context.hpp>
 
 #define EUNKNOWN (-1)
+
+#define CTX PreloadContext::getInstance()
 
 bool ld_is_aux_loaded();
 
