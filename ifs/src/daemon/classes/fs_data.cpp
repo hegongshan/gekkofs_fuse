@@ -60,6 +60,14 @@ void FsData::close_mdb() {
     mdb_.reset();
 }
 
+const std::shared_ptr<ChunkStorage>& FsData::storage() const {
+    return storage_;
+}
+
+void FsData::storage(const std::shared_ptr<ChunkStorage>& storage) {
+    storage_ = storage;
+}
+
 const std::string& FsData::rootdir() const {
     return rootdir_;
 }
@@ -82,14 +90,6 @@ const std::string& FsData::metadir() const {
 
 void FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
-}
-
-const std::string& FsData::chunk_path() const {
-    return chunk_path_;
-}
-
-void FsData::chunk_path(const std::string& chunk_path_) {
-    FsData::chunk_path_ = chunk_path_;
 }
 
 ino_t FsData::inode_count() const {

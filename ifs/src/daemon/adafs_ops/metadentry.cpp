@@ -1,7 +1,7 @@
 
 #include <daemon/adafs_ops/metadentry.hpp>
-#include <daemon/adafs_ops/data.hpp>
 #include <daemon/backend/metadata/db.hpp>
+#include <daemon/backend/data/chunk_storage.hpp>
 
 using namespace std;
 
@@ -62,7 +62,7 @@ Metadata get_metadentry(const std::string& path) {
  */
 void remove_node(const string& path) {
     ADAFS_DATA->mdb()->remove(path); // remove metadentry
-    destroy_chunk_space(path); // destroys all chunks for the path on this node
+    ADAFS_DATA->storage()->destroy_chunk_space(path); // destroys all chunks for the path on this node
 }
 
 /**
