@@ -63,11 +63,11 @@ bool ipc_send_get_fs_config() {
         CTX->log()->debug("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            if (!fs_config->mountdir.empty() && fs_config->mountdir != out.mountdir) {
+            if (!CTX->mountdir().empty() && CTX->mountdir() != out.mountdir) {
                 CTX->log()->warn(
                         "{}() fs_config mountdir {} and received out.mountdir {} mismatch detected! Using received mountdir",
-                        __func__, fs_config->mountdir, out.mountdir);
-                fs_config->mountdir = out.mountdir;
+                        __func__, CTX->mountdir(), out.mountdir);
+                CTX->mountdir(out.mountdir);
             }
             fs_config->rootdir = out.rootdir;
             fs_config->atime_state = out.atime_state;

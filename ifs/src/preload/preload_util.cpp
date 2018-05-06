@@ -51,7 +51,7 @@ int get_fd_idx() {
 }
 
 bool is_fs_path(const char* path) {
-    return strstr(path, fs_config->mountdir.c_str()) == path;
+    return strstr(path, CTX->mountdir().c_str()) == path;
 }
 
 // TODO merge the two stat functions
@@ -239,7 +239,7 @@ int get_daemon_pid() {
         }
         // second line is mountdir
         if (getline(ifs, mountdir) && !mountdir.empty()) {
-            fs_config->mountdir = mountdir;
+            CTX->mountdir(mountdir);
         } else {
             CTX->log()->error("{}() ADA-FS daemon pid file contains no mountdir path. Exiting ...", __func__);
             ifs.close();

@@ -255,12 +255,12 @@ void init_preload() {
     init_passthrough_if_needed();
     // The logger is initialized in init_passthrough. So we cannot log before that.
     CTX->log()->info("{}() enter", __func__);
-    if (get_daemon_pid() == -1 || fs_config->mountdir.empty()) {
+    if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {
-        CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, fs_config->mountdir);
+        CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, CTX->mountdir());
         is_aux_loaded_ = true;
     }
     CTX->log()->debug("{}() exit", __func__);

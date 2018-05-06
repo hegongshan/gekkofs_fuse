@@ -24,6 +24,9 @@ class PreloadContext {
 
     void log(std::shared_ptr<spdlog::logger> logger);
     std::shared_ptr<spdlog::logger> log() const;
+
+    void mountdir(const std::string& path);
+    std::string mountdir() const;
 };
 
 

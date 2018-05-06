@@ -244,7 +244,7 @@ int statfs(const char* path, struct statfs* buf) __THROW {
         // get information of the underlying fs.
         // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
         struct statfs realfs{};
-        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(fs_config->mountdir.c_str(), &realfs);
+        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(CTX->mountdir().c_str(), &realfs);
         if (ret != 0)
             return ret;
         return adafs_statfs(path, buf, realfs);
@@ -260,7 +260,7 @@ int fstatfs(int fd, struct statfs* buf) {
         // get information of the underlying fs
         // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
         struct statfs realfs{};
-        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(fs_config->mountdir.c_str(), &realfs);
+        auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(CTX->mountdir().c_str(), &realfs);
         if (ret != 0)
             return ret;
         return adafs_statfs(adafs_fd->path(), buf, realfs);

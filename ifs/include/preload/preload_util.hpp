@@ -23,7 +23,6 @@ struct FsConfig {
     uid_t uid;
     gid_t gid;
 
-    std::string mountdir;
     std::string rootdir;
 
     // rpc infos
