@@ -19,8 +19,9 @@ int open(const char* path, int flags, ...) {
         mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_open(path, mode, flags);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_open(rel_path, mode, flags);
     }
     return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
 }
@@ -73,8 +74,9 @@ int creat64(const char* path, mode_t mode) {
 int mkdir(const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_mk_node(path, mode | S_IFDIR);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_mk_node(rel_path, mode | S_IFDIR);
     }
     return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
 }
@@ -82,7 +84,8 @@ int mkdir(const char* path, mode_t mode) __THROW {
 int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
         // not implemented
         CTX->log()->trace("{}() not implemented.", __func__);
         errno = EBUSY;
@@ -95,8 +98,9 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_rm_node(path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_rm_node(rel_path);
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
 }
@@ -104,9 +108,10 @@ int unlink(const char* path) __THROW {
 int rmdir(const char* path) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
         // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
-        return adafs_rm_node(path);
+        return adafs_rm_node(rel_path);
     }
     return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
 }
@@ -132,8 +137,9 @@ int remove(const char* path) {
 int access(const char* path, int mask) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called path {} mask {}", __func__, path, mask);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_access(path, mask);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_access(rel_path, mask);
     }
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
 }
@@ -141,7 +147,8 @@ int access(const char* path, int mask) __THROW {
 int faccessat(int dirfd, const char* path, int mode, int flags) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
         // not implemented
         CTX->log()->trace("{}() not implemented.", __func__);
         return -1;
@@ -153,8 +160,9 @@ int faccessat(int dirfd, const char* path, int mode, int flags) __THROW {
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_stat(path, buf);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_stat(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
 }
@@ -172,9 +180,10 @@ int fstat(int fd, struct stat* buf) __THROW {
 int lstat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
         CTX->log()->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
-        return adafs_stat(path, buf);
+        return adafs_stat(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&lstat)>(libc_lstat))(path, buf);
 }
@@ -182,8 +191,9 @@ int lstat(const char* path, struct stat* buf) __THROW {
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_stat(path, buf);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_stat(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
 }
@@ -191,8 +201,9 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-        return adafs_stat64(path, buf);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        return adafs_stat64(rel_path, buf);
 //        // Not implemented
 //        return -1;
     }
@@ -221,8 +232,10 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
 
 extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-// Not implemented
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        // Not implemented
         return -1;
     }
     return (reinterpret_cast<decltype(&__lxstat)>(libc___lxstat))(ver, path, buf);
@@ -230,8 +243,10 @@ extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
 
 extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
-// Not implemented
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        // Not implemented
         return -1;
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
@@ -240,14 +255,15 @@ extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
 int statfs(const char* path, struct statfs* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    if (ld_is_aux_loaded() && is_fs_path(path)) {
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
         // get information of the underlying fs.
         // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
         struct statfs realfs{};
         auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(CTX->mountdir().c_str(), &realfs);
         if (ret != 0)
             return ret;
-        return adafs_statfs(path, buf, realfs);
+        return adafs_statfs(rel_path, buf, realfs);
     }
     return (reinterpret_cast<decltype(&statfs)>(libc_statfs))(path, buf);
 }

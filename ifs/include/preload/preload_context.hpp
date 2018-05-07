@@ -27,6 +27,8 @@ class PreloadContext {
 
     void mountdir(const std::string& path);
     std::string mountdir() const;
+
+    bool relativize_path(std::string& path) const;
 };
 
 
