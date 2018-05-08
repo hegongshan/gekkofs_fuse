@@ -13,8 +13,6 @@
 #include <cerrno>
 #include <unistd.h>
 
-#include <global/global_defs.hpp>
-
 extern "C" {
 #include <abt.h>
 #include <mercury.h>
