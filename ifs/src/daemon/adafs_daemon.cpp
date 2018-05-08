@@ -314,30 +314,47 @@ void shutdown_handler(int dummy) {
     shutdown_please.notify_all();
 }
 
+void initialize_loggers() {
+    auto logger_names = std::vector<std::string>{
+        "main",
+    };
+
+    /* Create common sink */
+    auto file_sink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(LOG_DAEMON_PATH);
+
+    /* Create and configure loggers */
+    auto loggers = std::list<std::shared_ptr<spdlog::logger>>();
+    for(const auto& name: logger_names){
+        auto logger = std::make_shared<spdlog::logger>(name, file_sink);
+        logger->flush_on(spdlog::level::trace);
+        loggers.push_back(logger);
+    }
+
+    /* register loggers */
+    for(const auto& logger: loggers){
+        spdlog::register_logger(logger);
+    }
+
+    // set logger format
+    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L][%n] %v");
+
+#if defined(LOG_TRACE)
+        spdlog::set_level(spdlog::level::trace);
+#elif defined(LOG_DEBUG)
+        spdlog::set_level(spdlog::level::debug);
+#elif defined(LOG_INFO)
+        spdlog::set_level(spdlog::level::info);
+#else
+        spdlog::set_level(spdlog::level::off);
+#endif
+}
+
 int main(int argc, const char* argv[]) {
 
-
-    //set the spdlogger and initialize it with spdlog
-    ADAFS_DATA->spdlogger(spdlog::basic_logger_mt("basic_logger", LOG_DAEMON_PATH));
-    // set logger format
-    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
-    // flush log when info, warning, error messages are encountered
-    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::info);
-#if defined(LOG_TRACE)
-    spdlog::set_level(spdlog::level::trace);
-    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::trace);
-#elif defined(LOG_DEBUG)
-    spdlog::set_level(spdlog::level::debug);
-//    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::debug);
-#elif defined(LOG_INFO)
-    spdlog::set_level(spdlog::level::info);
-//    ADAFS_DATA->spdlogger()->flush_on(spdlog::level::info);
-#else
-    spdlog::set_level(spdlog::level::off);
-#endif
+    initialize_loggers();
+    ADAFS_DATA->spdlogger(spdlog::get("main"));
 
     // Parse input
-
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
