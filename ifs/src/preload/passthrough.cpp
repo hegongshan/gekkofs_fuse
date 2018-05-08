@@ -2,6 +2,7 @@
  * All intercepted functions are mapped to a different function pointer prefixing <libc_>
  */
 #include <preload/passthrough.hpp>
+#include <global/configure.hpp>
 
 #include <dlfcn.h>
 

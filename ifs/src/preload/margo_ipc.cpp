@@ -1,4 +1,4 @@
-
+#include <global/configure.hpp>
 #include <preload/margo_ipc.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
