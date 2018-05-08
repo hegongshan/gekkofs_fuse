@@ -5,6 +5,7 @@
 #include <preload/margo_ipc.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/passthrough.hpp>
+#include <preload/preload_util.hpp>
 
 enum class Margo_mode {
     RPC, IPC

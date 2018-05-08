@@ -1,5 +1,6 @@
 #include <global/configure.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
+#include <preload/preload_util.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/chunk_calc_util.hpp>
 

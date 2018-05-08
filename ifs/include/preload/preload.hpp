@@ -1,10 +1,8 @@
-
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP
 
-
-#include <preload/preload_util.hpp>
 #include <preload/preload_context.hpp>
+
 
 #define EUNKNOWN (-1)
 
@@ -17,5 +15,6 @@ void init_ld_env_if_needed();
 void init_preload() __attribute__((constructor));
 
 void destroy_preload() __attribute__((destructor));
+
 
 #endif //IOINTERCEPT_PRELOAD_HPP
