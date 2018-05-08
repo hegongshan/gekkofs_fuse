@@ -1,6 +1,7 @@
 set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
     ../global/global_func.cpp
+    ../global/path_util.cpp
     adafs_daemon.cpp
     adafs_ops/data.cpp
     adafs_ops/metadentry.cpp
@@ -22,6 +23,7 @@ set(DAEMON_HEADERS
     ../../include/global/rpc/ipc_types.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
+    ../../include/global/path_util.hpp
     ../../include/daemon/adafs_daemon.hpp
     ../../include/daemon/adafs_ops/data.hpp
     ../../include/daemon/adafs_ops/metadentry.hpp

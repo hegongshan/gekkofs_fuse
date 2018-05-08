@@ -53,13 +53,13 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     auto size = make_shared<size_t>(write_size);
     auto ret = margo_bulk_create(ld_margo_rpc_id, 1, &bulk_buf, size.get(), HG_BULK_READ_ONLY, &rpc_bulk_handle);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() Failed to create rpc bulk handle", __func__);
+        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
         errno = EBUSY;
         return -1;
     }
     ret = margo_bulk_create(ld_margo_ipc_id, 1, &bulk_buf, size.get(), HG_BULK_READ_ONLY, &ipc_bulk_handle);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() Failed to create rpc bulk handle", __func__);
+        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
         errno = EBUSY;
         return -1;
     }
@@ -83,7 +83,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Unable to send non-blocking rpc for path {} and recipient {}", __func__, path,
+            CTX->log()->error("{}() Unable to send non-blocking rpc for path {} and recipient {}", __func__, path,
                              target);
             errno = EBUSY;
             for (uint64_t j = 0; j < i + 1; j++) {
@@ -104,7 +104,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         // XXX We might need a timeout here to not wait forever for an output that never comes?
         ret = margo_wait(rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path,
+            CTX->log()->error("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path,
                              targets[i]);
             errno = EBUSY;
             err = -1;
@@ -113,10 +113,10 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         rpc_data_out_t out{};
         ret = margo_get_output(rpc_handles[i], &out);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Failed to get rpc output for path {} recipient {}", __func__, path, targets[i]);
+            CTX->log()->error("{}() Failed to get rpc output for path {} recipient {}", __func__, path, targets[i]);
             err = -1;
         }
-        ld_logger->debug("{}() Got response {}", __func__, out.res);
+        CTX->log()->debug("{}() Got response {}", __func__, out.res);
         if (out.res != 0)
             errno = out.res;
         out_size += static_cast<size_t>(out.io_size);
@@ -169,13 +169,13 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     auto size = make_shared<size_t>(read_size);
     auto ret = margo_bulk_create(ld_margo_rpc_id, 1, &bulk_buf, size.get(), HG_BULK_WRITE_ONLY, &rpc_bulk_handle);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() Failed to create rpc bulk handle", __func__);
+        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
         errno = EBUSY;
         return -1;
     }
     ret = margo_bulk_create(ld_margo_ipc_id, 1, &bulk_buf, size.get(), HG_BULK_WRITE_ONLY, &ipc_bulk_handle);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() Failed to create rpc bulk handle", __func__);
+        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
         errno = EBUSY;
         return -1;
     }
@@ -200,7 +200,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Unable to send non-blocking rpc for path {} and recipient {}", __func__, path,
+            CTX->log()->error("{}() Unable to send non-blocking rpc for path {} and recipient {}", __func__, path,
                              target);
             errno = EBUSY;
             for (uint64_t j = 0; j < i + 1; j++) {
@@ -221,7 +221,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         // XXX We might need a timeout here to not wait forever for an output that never comes?
         ret = margo_wait(rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path,
+            CTX->log()->error("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path,
                              targets[i]);
             errno = EBUSY;
             err = -1;
@@ -230,10 +230,10 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         rpc_data_out_t out{};
         ret = margo_get_output(rpc_handles[i], &out);
         if (ret != HG_SUCCESS) {
-            ld_logger->error("{}() Failed to get rpc output for path {} recipient {}", __func__, path, targets[i]);
+            CTX->log()->error("{}() Failed to get rpc output for path {} recipient {}", __func__, path, targets[i]);
             err = -1;
         }
-        ld_logger->debug("{}() Got response {}", __func__, out.res);
+        CTX->log()->debug("{}() Got response {}", __func__, out.res);
         if (out.res != 0)
             errno = out.res;
         out_size += static_cast<size_t>(out.io_size);

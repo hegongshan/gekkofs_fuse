@@ -1,5 +1,6 @@
 
 #include <preload/open_file_map.hpp>
+#include <preload/preload.hpp>
 #include <preload/preload_util.hpp>
 
 using namespace std;
@@ -111,7 +112,7 @@ bool OpenFileMap::remove(const int fd) {
     files_.erase(fd);
     if (fd_validation_needed && files_.empty()) {
         fd_validation_needed = false;
-        ld_logger->info("{}() fd_validation flag reset", __func__);
+        CTX->log()->info("{}() fd_validation flag reset", __func__);
     }
     return true;
 }

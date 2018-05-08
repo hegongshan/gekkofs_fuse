@@ -47,10 +47,10 @@ bool ipc_send_get_fs_config() {
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
     auto ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_config_id, &handle);
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle for failed", __func__);
+        CTX->log()->error("{}() creating handle for failed", __func__);
         return false;
     }
-    ld_logger->debug("{}() About to send get config IPC to daemon", __func__);
+    CTX->log()->debug("{}() About to send get config IPC to daemon", __func__);
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
@@ -60,14 +60,14 @@ bool ipc_send_get_fs_config() {
     }
     if (send_ret == HG_SUCCESS) {
         /* decode response */
-        ld_logger->debug("{}() Waiting for response", __func__);
+        CTX->log()->debug("{}() Waiting for response", __func__);
         ret = margo_get_output(handle, &out);
         if (ret == HG_SUCCESS) {
-            if (!fs_config->mountdir.empty() && fs_config->mountdir != out.mountdir) {
-                ld_logger->warn(
+            if (!CTX->mountdir().empty() && CTX->mountdir() != out.mountdir) {
+                CTX->log()->warn(
                         "{}() fs_config mountdir {} and received out.mountdir {} mismatch detected! Using received mountdir",
-                        __func__, fs_config->mountdir, out.mountdir);
-                fs_config->mountdir = out.mountdir;
+                        __func__, CTX->mountdir(), out.mountdir);
+                CTX->mountdir(out.mountdir);
             }
             fs_config->rootdir = out.rootdir;
             fs_config->atime_state = out.atime_state;
@@ -94,14 +94,14 @@ bool ipc_send_get_fs_config() {
                 hostmap[i++] = s;
             }
             fs_config->hosts = hostmap;
-            ld_logger->debug("{}() Got response with mountdir {}", __func__, out.mountdir);
+            CTX->log()->debug("{}() Got response with mountdir {}", __func__, out.mountdir);
         } else {
-            ld_logger->error("{}() Retrieving fs configurations from daemon", __func__);
+            CTX->log()->error("{}() Retrieving fs configurations from daemon", __func__);
         }
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        ld_logger->warn("{}() timed out", __func__);
+        CTX->log()->warn("{}() timed out", __func__);
     }
 
     margo_destroy(handle);

@@ -1,21 +1,16 @@
 
 #include <daemon/adafs_ops/data.hpp>
 #include <boost/filesystem.hpp>
+#include <global/path_util.hpp>
 
 namespace bfs = boost::filesystem;
 using namespace std;
 
 std::string path_to_fspath(const std::string& path) {
-    // root path is absolute as is the path comes in here which is hierarchically under root_path
-    // XXX check if this can be done easier
-    string fs_path;
-    set_difference(path.begin(), path.end(), ADAFS_DATA->mountdir().begin(), ADAFS_DATA->mountdir().end(),
-                   std::back_inserter(fs_path));
-    if (fs_path.at(0) == '/') {
-        fs_path = fs_path.substr(1, fs_path.size());
-    }
+    assert(is_absolute_path(path));
+    auto fs_path = path.substr(1); //remove leading slash
     // replace / with : to avoid making a bunch of mkdirs to store the data in the underlying fs. XXX Can this be done with hashing?
-    replace(fs_path.begin(), fs_path.end(), '/', ':');
+    std::replace(fs_path.begin(), fs_path.end(), '/', ':');
     return fs_path;
 }
 

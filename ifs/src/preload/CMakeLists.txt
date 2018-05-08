@@ -1,4 +1,5 @@
 set(PRELOAD_SRC
+    preload_context.cpp
     adafs_functions.cpp
     intcp_functions.cpp
     margo_ipc.cpp
@@ -10,6 +11,7 @@ set(PRELOAD_SRC
     rpc/ld_rpc_metadentry.cpp
     ../global/rpc/rpc_utils.cpp
     ../global/global_func.cpp
+    ../global/path_util.cpp
     )
 set(PRELOAD_HEADERS
     ../../configure_public.hpp
@@ -19,7 +21,9 @@ set(PRELOAD_HEADERS
     ../../include/global/rpc/ipc_types.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
+    ../../include/global/path_util.hpp
     ../../include/global/chunk_calc_util.hpp
+    ../../include/preload/preload_context.hpp
     ../../include/preload/adafs_functions.hpp
     ../../include/preload/margo_ipc.hpp
     ../../include/preload/open_file_map.hpp

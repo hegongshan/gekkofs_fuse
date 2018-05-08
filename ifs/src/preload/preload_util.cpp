@@ -33,7 +33,7 @@ int generate_fd_idx() {
     // We need a mutex here for thread safety
     std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
     if (fd_idx == std::numeric_limits<int>::max()) {
-        ld_logger->info("{}() File descriptor index exceeded ints max value. Setting it back to 100000", __func__);
+        CTX->log()->info("{}() File descriptor index exceeded ints max value. Setting it back to 100000", __func__);
         /*
          * Setting fd_idx back to 3 could have the effect that fd are given twice for different path.
          * This must not happen. Instead a flag is set which tells can tell the OpenFileMap that it should check
@@ -51,7 +51,7 @@ int get_fd_idx() {
 }
 
 bool is_fs_path(const char* path) {
-    return strstr(path, fs_config->mountdir.c_str()) == path;
+    return strstr(path, CTX->mountdir().c_str()) == path;
 }
 
 // TODO merge the two stat functions
@@ -226,29 +226,29 @@ int get_daemon_pid() {
             adafs_daemon_pid = ::stoi(adafs_daemon_pid_s);
         else {
             cerr << "ADA-FS daemon pid not found. Daemon not running?" << endl;
-            ld_logger->error("{}() Unable to read daemon pid from pid file", __func__);
+            CTX->log()->error("{}() Unable to read daemon pid from pid file", __func__);
             ifs.close();
             return -1;
         }
         // check that daemon is running
         if (kill(adafs_daemon_pid, 0) != 0) {
             cerr << "ADA-FS daemon process with pid " << adafs_daemon_pid << " not found. Daemon not running?" << endl;
-            ld_logger->error("{}() ADA-FS daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
+            CTX->log()->error("{}() ADA-FS daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
             ifs.close();
             return -1;
         }
         // second line is mountdir
         if (getline(ifs, mountdir) && !mountdir.empty()) {
-            fs_config->mountdir = mountdir;
+            CTX->mountdir(mountdir);
         } else {
-            ld_logger->error("{}() ADA-FS daemon pid file contains no mountdir path. Exiting ...", __func__);
+            CTX->log()->error("{}() ADA-FS daemon pid file contains no mountdir path. Exiting ...", __func__);
             ifs.close();
             return -1;
         }
     } else {
         cerr << "No permission to open pid file at " << daemon_pid_path()
              << " or ADA-FS daemon pid file not found. Daemon not running?" << endl;
-        ld_logger->error(
+        CTX->log()->error(
                 "{}() No permission to open pid file at {} or ADA-FS daemon pid file not found. Daemon not running?",
                 __func__, daemon_pid_path());
     }
@@ -280,7 +280,7 @@ bool read_system_hostfile() {
         }
     }
     fs_config->sys_hostfile = sys_hostfile;
-    ld_logger->info("{}() /etc/hosts successfully mapped into ADA-FS", __func__);
+    CTX->log()->info("{}() /etc/hosts successfully mapped into ADA-FS", __func__);
     return true;
 }
 
@@ -310,7 +310,7 @@ bool lookup_all_hosts() {
             remote_addr = RPC_PROTOCOL + "://"s + hostname + ":"s +
                           fs_config->rpc_port; // convert hostid to remote_addr and port
         }
-        ld_logger->trace("generated remote_addr {} for hostname {} with rpc_port {}",
+        CTX->log()->trace("generated remote_addr {} for hostname {} with rpc_port {}",
                          remote_addr, hostname, fs_config->rpc_port);
         // try to look up 3 times before erroring out
         hg_return_t ret;
@@ -319,7 +319,7 @@ bool lookup_all_hosts() {
             if (ret != HG_SUCCESS) {
                 // still not working after 5 tries.
                 if (i == 4) {
-                    ld_logger->error("{}() Unable to lookup address {} from host {}", __func__,
+                    CTX->log()->error("{}() Unable to lookup address {} from host {}", __func__,
                                      remote_addr, fs_config->hosts.at(fs_config->host_id));
                     return false;
                 }
@@ -332,7 +332,7 @@ bool lookup_all_hosts() {
             }
         }
         if (svr_addr == HG_ADDR_NULL) {
-            ld_logger->error("{}() looked up address is NULL for address {} from host {}", __func__,
+            CTX->log()->error("{}() looked up address is NULL for address {} from host {}", __func__,
                              remote_addr, fs_config->hosts.at(fs_config->host_id));
             return false;
         }
@@ -352,12 +352,12 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
     auto found = address_lookup != rpc_addresses.end();
     if (found) {
         svr_addr = address_lookup->second;
-        ld_logger->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
+        CTX->log()->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
         return true;
     } else {
         // not found, unexpected host.
         // This should not happen because all addresses are looked when the environment is initialized.
-        ld_logger->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__, hostid);
+        CTX->log()->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__, hostid);
         assert(found && "Unexpected host id for rpc address lookup. ID was not found in RPC address cache.");
     }
     return false;
@@ -378,18 +378,18 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
     hg_return_t ret;
     if (is_local_op(recipient) && !force_rpc) { // local
         ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_id, &handle);
-        ld_logger->debug("{}() to local daemon (IPC)", __func__);
+        CTX->log()->debug("{}() to local daemon (IPC)", __func__);
     } else { // remote
         hg_addr_t svr_addr = HG_ADDR_NULL;
         if (!get_addr_by_hostid(recipient, svr_addr)) {
-            ld_logger->error("{}() server address not resolvable for host id {}", __func__, recipient);
+            CTX->log()->error("{}() server address not resolvable for host id {}", __func__, recipient);
             return HG_OTHER_ERROR;
         }
         ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
-        ld_logger->debug("{}() to remote daemon (RPC)", __func__);
+        CTX->log()->debug("{}() to remote daemon (RPC)", __func__);
     }
     if (ret != HG_SUCCESS) {
-        ld_logger->error("{}() creating handle FAILED", __func__);
+        CTX->log()->error("{}() creating handle FAILED", __func__);
         return HG_OTHER_ERROR;
     }
     return ret;
