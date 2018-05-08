@@ -1,9 +1,14 @@
 #include <preload/preload_context.hpp>
 
+#include <preload/open_file_map.hpp>
 #include <extern/spdlog/spdlog.h>
 #include <global/path_util.hpp>
 #include <cassert>
 
+
+PreloadContext::PreloadContext():
+    ofm_(std::make_shared<OpenFileMap>())
+{}
 
 void PreloadContext::log(std::shared_ptr<spdlog::logger> logger) {
     log_ = logger;
@@ -39,4 +44,8 @@ bool PreloadContext::relativize_path(std::string& path) const {
 
     path = path_to_relative(mountdir_, path);
     return !path.empty();
+}
+    
+const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {
+    return ofm_;
 }

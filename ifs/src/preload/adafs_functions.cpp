@@ -34,7 +34,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     // TODO the open flags should not be in the map just set the pos accordingly
-    return file_map.add(path, flags);
+    return CTX->file_map()->add(path, flags);
 }
 
 int adafs_mk_node(const std::string& path, const mode_t mode) {
@@ -131,7 +131,7 @@ int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& re
 
 off64_t adafs_lseek(int fd, off64_t offset, int whence) {
     init_ld_env_if_needed();
-    return adafs_lseek(file_map.get(fd), offset, whence);
+    return adafs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
 off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
@@ -169,17 +169,17 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
 }
 
 int adafs_dup(const int oldfd) {
-    return file_map.dup(oldfd);
+    return CTX->file_map()->dup(oldfd);
 }
 
 int adafs_dup2(const int oldfd, const int newfd) {
-    return file_map.dup2(oldfd, newfd);
+    return CTX->file_map()->dup2(oldfd, newfd);
 }
 
 
 ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
-    auto adafs_fd = file_map.get(fd);
+    auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
     auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
     ssize_t ret = 0;
@@ -199,7 +199,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
-    auto adafs_fd = file_map.get(fd);
+    auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
 #if defined(ZERO_BUFFER_BEFORE_READ)

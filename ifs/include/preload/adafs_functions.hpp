@@ -2,6 +2,7 @@
 #define IFS_ADAFS_FUNCTIONS_HPP
 
 #include <preload/preload_util.hpp>
+#include <preload/open_file_map.hpp>
 
 /*
  * See include/linux/statfs.h (not includable)
