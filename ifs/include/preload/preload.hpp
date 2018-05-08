@@ -2,7 +2,6 @@
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP
 
-#include <iostream>
 #include <sys/statfs.h>
 
 extern "C" {

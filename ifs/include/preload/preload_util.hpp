@@ -6,6 +6,7 @@
 #include <preload/open_file_map.hpp>
 // third party libs
 #include <string>
+#include <iostream>
 
 // TODO singleton this stuff away
 // The contents of FsConfig or only set once when set up
