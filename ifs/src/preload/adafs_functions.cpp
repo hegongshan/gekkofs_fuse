@@ -1,3 +1,5 @@
+#include <sys/statfs.h>
+
 #include <global/configure.hpp>
 #include <preload/preload.hpp>
 #include <preload/adafs_functions.hpp>

@@ -1,6 +1,8 @@
 /**
  * All intercepted functions are defined here
  */
+#include <sys/statfs.h>
+
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>

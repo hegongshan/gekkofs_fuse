@@ -2,8 +2,6 @@
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP
 
-#include <sys/statfs.h>
-
 extern "C" {
 #include <abt.h>
 #include <mercury.h>
