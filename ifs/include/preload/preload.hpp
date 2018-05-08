@@ -2,16 +2,8 @@
 #ifndef IOINTERCEPT_PRELOAD_HPP
 #define IOINTERCEPT_PRELOAD_HPP
 
-#include <memory>
-#include <map>
-#include <mutex>
 #include <iostream>
 #include <sys/statfs.h>
-#include <cstdio>
-#include <cstdint>
-#include <fcntl.h>
-#include <cerrno>
-#include <unistd.h>
 
 extern "C" {
 #include <abt.h>
