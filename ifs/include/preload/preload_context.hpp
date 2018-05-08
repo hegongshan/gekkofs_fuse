@@ -5,12 +5,16 @@
 #include <memory>
 #include <string>
 
+/* Forward declarations */
+class OpenFileMap;
+
 
 class PreloadContext {
     private:
-    PreloadContext() = default;
+    PreloadContext();
 
     std::shared_ptr<spdlog::logger> log_;
+    std::shared_ptr<OpenFileMap> ofm_;
     std::string mountdir_;
 
     public:
@@ -29,6 +33,8 @@ class PreloadContext {
     std::string mountdir() const;
 
     bool relativize_path(std::string& path) const;
+
+    const std::shared_ptr<OpenFileMap>& file_map() const;
 };
 
 

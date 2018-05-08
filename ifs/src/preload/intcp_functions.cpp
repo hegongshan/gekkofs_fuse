@@ -7,8 +7,6 @@
 
 using namespace std;
 
-OpenFileMap file_map{};
-
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
@@ -118,9 +116,9 @@ int rmdir(const char* path) __THROW {
 
 int close(int fd) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         // No call to the daemon is required
-        file_map.remove(fd);
+        CTX->file_map()->remove(fd);
         return 0;
     }
     return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
@@ -170,8 +168,8 @@ int stat(const char* path, struct stat* buf) __THROW {
 int fstat(int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path();
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        auto path = CTX->file_map()->get(fd)->path();
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
@@ -213,8 +211,8 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
 int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path();
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        auto path = CTX->file_map()->get(fd)->path();
         return adafs_stat(path, buf);
     }
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
@@ -223,8 +221,8 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        auto path = file_map.get(fd)->path();
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        auto path = CTX->file_map()->get(fd)->path();
         return adafs_stat64(path, buf);
     }
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
@@ -271,8 +269,8 @@ int statfs(const char* path, struct statfs* buf) __THROW {
 int fstatfs(int fd, struct statfs* buf) {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with fd {}", __func__, fd);
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        auto adafs_fd = file_map.get(fd);
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        auto adafs_fd = CTX->file_map()->get(fd);
         // get information of the underlying fs
         // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
         struct statfs realfs{};
@@ -290,9 +288,9 @@ int puts(const char* str) {
 
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
-        auto adafs_fd = file_map.get(fd);
+        auto adafs_fd = CTX->file_map()->get(fd);
         auto pos = adafs_fd->pos(); // retrieve the current offset
         if (adafs_fd->get_flag(OpenFile_flags::append))
             adafs_lseek(adafs_fd, 0, SEEK_END);
@@ -308,7 +306,7 @@ ssize_t write(int fd, const void* buf, size_t count) {
 
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         return adafs_pwrite_ws(fd, buf, count, offset);
     }
@@ -317,7 +315,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 
 ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         return adafs_pwrite_ws(fd, buf, count, offset);
     }
@@ -326,8 +324,8 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
 
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        auto adafs_fd = file_map.get(fd);
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        auto adafs_fd = CTX->file_map()->get(fd);
         auto pos = adafs_fd->pos(); //retrieve the current offset
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         auto ret = adafs_pread_ws(fd, buf, count, pos);
@@ -342,7 +340,7 @@ ssize_t read(int fd, void* buf, size_t count) {
 
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         return adafs_pread_ws(fd, buf, count, offset);
     }
@@ -351,7 +349,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
 
 ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         return adafs_pread_ws(fd, buf, count, offset);
     }
@@ -360,7 +358,7 @@ ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
 
 off_t lseek(int fd, off_t offset, int whence) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
         auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
         if (off_ret > std::numeric_limits<off_t>::max()) {
@@ -376,7 +374,7 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
 #undef lseek64
 off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
         CTX->log()->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
         return adafs_lseek(fd, offset, whence);
     }
@@ -385,8 +383,8 @@ off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
 
 int fsync(int fd) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, file_map.get(fd)->path());
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, CTX->file_map()->get(fd)->path());
         return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
     }
     return (reinterpret_cast<decltype(&fsync)>(libc_fsync))(fd);
@@ -394,8 +392,8 @@ int fsync(int fd) {
 
 int fdatasync(int fd) {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(fd)) {
-        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, file_map.get(fd)->path());
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, CTX->file_map()->get(fd)->path());
         return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
     }
     return (reinterpret_cast<decltype(&fdatasync)>(libc_fdatasync))(fd);
@@ -413,7 +411,7 @@ int ftruncate(int fd, off_t length) __THROW {
 
 int dup(int oldfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(oldfd)) {
         CTX->log()->trace("{}() called with oldfd {}", __func__, oldfd);
         return adafs_dup(oldfd);
     }
@@ -422,7 +420,7 @@ int dup(int oldfd) __THROW {
 
 int dup2(int oldfd, int newfd) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(oldfd)) {
         CTX->log()->trace("{}() called with oldfd {} newfd {}", __func__, oldfd, newfd);
         return adafs_dup2(oldfd, newfd);
     }
@@ -431,7 +429,7 @@ int dup2(int oldfd, int newfd) __THROW {
 
 int dup3(int oldfd, int newfd, int flags) __THROW {
     init_passthrough_if_needed();
-    if (ld_is_aux_loaded() && file_map.exist(oldfd)) {
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(oldfd)) {
         // TODO implement O_CLOEXEC flag first which is used with fcntl(2)
         // It is in glibc since kernel 2.9. So maybe not that important :)
         CTX->log()->error("{}() Not implemented.", __func__);
