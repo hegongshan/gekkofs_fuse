@@ -1,6 +1,7 @@
 #include <global/configure.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <preload/open_dir.hpp>
 #include <daemon/adafs_daemon.hpp>
@@ -408,7 +409,8 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 void rpc_send_get_dirents(OpenDir& open_dir){
     CTX->log()->trace("{}() called", __func__);
     auto const root_dir = open_dir.path();
-    auto const host_size = fs_config->host_size;
+    auto const targets = CTX->distributor()->locate_directory_metadata(root_dir);
+    auto const host_size = targets.size();
     std::vector<hg_handle_t> rpc_handles(host_size);
     std::vector<margo_request> rpc_waiters(host_size);
     std::vector<rpc_get_dirents_in_t> rpc_in(host_size);
@@ -420,7 +422,7 @@ void rpc_send_get_dirents(OpenDir& open_dir){
 
     hg_return_t hg_ret;
 
-    for(unsigned int target_host = 0; target_host < host_size; target_host++){
+    for(const auto& target_host: targets){
 
         CTX->log()->trace("{}() target_host: {}", __func__, target_host);
         //Setup rpc input parameters for each host

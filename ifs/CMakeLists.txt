@@ -121,8 +121,9 @@ include_directories(
     ${INCLUDE_DIR}
 )
 
+# Global components
+add_subdirectory(src/global)
 # Daemon
 add_subdirectory(src/daemon)
-
 # Client library
 add_subdirectory(src/preload)

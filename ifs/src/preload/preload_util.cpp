@@ -1,6 +1,7 @@
 
 #include <preload/preload_util.hpp>
 #include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/distributor.hpp>
 #include <global/global_func.hpp>
 
 #include <fstream>
@@ -406,9 +407,8 @@ margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_
 hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id,
                             const std::string& path, hg_handle_t& handle,
                             bool force_rpc) {
-    return margo_create_wrap_helper(ipc_id, rpc_id,
-                                    adafs_hash_path(path, fs_config->host_size), handle,
-                                    force_rpc);
+    auto recipient = CTX->distributor()->locate_file_metadata(path);
+    return margo_create_wrap_helper(ipc_id, rpc_id, recipient, handle, force_rpc);
 }
 
 /**

@@ -2,6 +2,7 @@
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/preload_util.hpp>
 #include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
 
 using namespace std;
@@ -30,7 +31,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
     for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
-        auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
+        auto target = CTX->distributor()->locate_data(path, chnk_id);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
             targets.push_back(target);
@@ -146,7 +147,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
     for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
-        auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
+        auto target = CTX->distributor()->locate_data(path, chnk_id);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
             targets.push_back(target);
