@@ -6,6 +6,7 @@
 
 /* Forward declarations */
 class MetadataDB;
+class ChunkStorage;
 
 #include <unordered_map>
 #include <functional> //std::hash
@@ -32,7 +33,6 @@ private:
     std::string rootdir_;
     std::string mountdir_;
     std::string metadir_;
-    std::string chunk_path_;
 
     // hosts_
     std::string hosts_raw_; // raw hosts string, given when daemon is started. Used to give it to fs client
@@ -43,6 +43,8 @@ private:
 
     // Database
     std::shared_ptr<MetadataDB> mdb_;
+    // Storage backend
+    std::shared_ptr<ChunkStorage> storage_;
 
     // configurable metadata
     bool atime_state_;
@@ -109,15 +111,15 @@ public:
 
     void metadir(const std::string& metadir_);
 
-    const std::string& chunk_path() const;
-
-    void chunk_path(const std::string& chunk_path_);
-
     const std::shared_ptr<MetadataDB>& mdb() const;
 
     void mdb(const std::shared_ptr<MetadataDB>& mdb);
 
     void close_mdb();
+
+    const std::shared_ptr<ChunkStorage>& storage() const;
+
+    void storage(const std::shared_ptr<ChunkStorage>& storage);
 
     const std::string& hosts_raw() const;
 

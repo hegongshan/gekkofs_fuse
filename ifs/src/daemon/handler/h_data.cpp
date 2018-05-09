@@ -1,10 +1,85 @@
 
 #include <global/rpc/rpc_types.hpp>
 #include <daemon/handler/rpc_defs.hpp>
-#include <daemon/adafs_ops/data.hpp>
 #include <global/rpc/rpc_utils.hpp>
+#include <daemon/adafs_daemon.hpp>
+#include <daemon/backend/data/chunk_storage.hpp>
+
 
 using namespace std;
+
+struct write_chunk_args {
+    const std::string* path;
+    const char* buf;
+    rpc_chnk_id_t chnk_id;
+    size_t size;
+    off64_t off;
+    ABT_eventual eventual;
+};
+
+/**
+ * Used by an argobots threads. Argument args has the following fields:
+ * const std::string* path;
+   const char* buf;
+   const rpc_chnk_id_t* chnk_id;
+   size_t size;
+   off64_t off;
+   ABT_eventual* eventual;
+ * This function is driven by the IO pool. so there is a maximum allowed number of concurrent IO operations per daemon.
+ * This function is called by tasklets, as this function cannot be allowed to block.
+ * @return written_size<size_t> is put into eventual and returned that way
+ */
+void write_file_abt(void* _arg) {
+    // Unpack args
+    auto* arg = static_cast<struct write_chunk_args*>(_arg);
+    const std::string& path = *(arg->path);
+
+    try {
+        ADAFS_DATA->storage()->write_chunk(path, arg->chnk_id,
+                arg->buf, arg->size, arg->off, arg->eventual);
+    } catch (const std::exception& e){
+        ADAFS_DATA->spdlogger()->error("{}() Error writing chunk {} of file {}", __func__, arg->chnk_id, path);
+        auto err = static_cast<size_t>(EIO);
+        ABT_eventual_set(arg->eventual, &err, sizeof(size_t));
+    }
+
+}
+
+struct read_chunk_args {
+    const std::string* path;
+    char* buf;
+    rpc_chnk_id_t chnk_id;
+    size_t size;
+    off64_t off;
+    ABT_eventual eventual;
+};
+
+/**
+ * Used by an argobots threads. Argument args has the following fields:
+ * const std::string* path;
+   char* buf;
+   const rpc_chnk_id_t* chnk_id;
+   size_t size;
+   off64_t off;
+   ABT_eventual* eventual;
+ * This function is driven by the IO pool. so there is a maximum allowed number of concurrent IO operations per daemon.
+ * This function is called by tasklets, as this function cannot be allowed to block.
+ * @return read_size<size_t> is put into eventual and returned that way
+ */
+void read_file_abt(void* _arg) {
+    //unpack args
+    auto* arg = static_cast<struct read_chunk_args*>(_arg);
+    const std::string& path = *(arg->path);
+
+    try {
+        ADAFS_DATA->storage()->read_chunk(path, arg->chnk_id,
+                arg->buf, arg->size, arg->off, arg->eventual);
+    } catch (const std::exception& e){
+        ADAFS_DATA->spdlogger()->error("{}() Error reading chunk {} of file {}", __func__, arg->chnk_id, path);
+        auto err = static_cast<size_t>(EIO);
+        ABT_eventual_set(arg->eventual, &err, sizeof(size_t));
+    }
+}
 
 /**
  * Free Argobots tasks and eventual constructs in a given vector until max_idx.

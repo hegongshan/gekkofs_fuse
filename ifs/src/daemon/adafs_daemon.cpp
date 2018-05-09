@@ -5,6 +5,7 @@
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
+#include <daemon/backend/data/chunk_storage.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -37,6 +38,16 @@ bool init_environment() {
         ADAFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize metadata DB: {}", __func__, e.what());
+    }
+
+    // Initialize data backend
+    std::string chunk_storage_path = ADAFS_DATA->rootdir() + "/data/chunks"s;
+    ADAFS_DATA->spdlogger()->debug("{}() Creating chunk storage directory: '{}'", __func__, chunk_storage_path);
+    bfs::create_directories(chunk_storage_path);
+    try {
+        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path));
+    } catch (const std::exception & e) {
+        ADAFS_DATA->spdlogger()->error("{}() unable to initialize storage backend: {}", __func__, e.what());
     }
 
     // Init margo for RPC
@@ -328,6 +339,7 @@ void initialize_loggers() {
     auto logger_names = std::vector<std::string>{
         "main",
         "MetadataDB",
+        "ChunkStorage",
     };
 
     /* Create common sink */
@@ -465,12 +477,10 @@ int main(int argc, const char* argv[]) {
     ADAFS_DATA->host_size(hostmap.size());
     ADAFS_DATA->rpc_port(fmt::FormatInt(RPC_PORT).str());
     ADAFS_DATA->hosts_raw(hosts_raw);
-    ADAFS_DATA->chunk_path(ADAFS_DATA->rootdir() + "/data/chunks"s);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
 
     // Make sure directory structure exists
-    bfs::create_directories(ADAFS_DATA->chunk_path());
     bfs::create_directories(ADAFS_DATA->metadir());
     // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
     bfs::create_directories(ADAFS_DATA->mountdir());

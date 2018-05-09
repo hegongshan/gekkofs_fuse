@@ -1,11 +1,11 @@
 add_subdirectory(backend/metadata)
+add_subdirectory(backend/data)
 
 set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
     ../global/global_func.cpp
     ../global/path_util.cpp
     adafs_daemon.cpp
-    adafs_ops/data.cpp
     adafs_ops/metadentry.cpp
     classes/fs_data.cpp
     classes/rpc_data.cpp
@@ -24,7 +24,6 @@ set(DAEMON_HEADERS
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp
     ../../include/daemon/adafs_daemon.hpp
-    ../../include/daemon/adafs_ops/data.hpp
     ../../include/daemon/adafs_ops/metadentry.hpp
     ../../include/daemon/classes/fs_data.hpp
     ../../include/daemon/classes/metadata.hpp
@@ -35,6 +34,7 @@ add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
 target_link_libraries(adafs_daemon
     # internal libs
     metadata_db
+    storage
     # margo libs
     ${ABT_LIBRARIES}
     ${ABT_SNOOZER_LIBRARIES}
