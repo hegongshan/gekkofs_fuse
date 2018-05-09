@@ -18,7 +18,6 @@ target_link_libraries(metadata_db
     ${BZIP2_LIBRARIES}
     ${ZSTD_LIBRARIES}
     ${LZ4_LIBRARY}
-    ${gflags_LIBRARIES}
     ${JEMALLOC_LIBRARIES}
     )
 
