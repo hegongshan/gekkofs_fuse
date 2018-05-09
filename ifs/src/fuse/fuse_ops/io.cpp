@@ -1,7 +1,6 @@
 
 #include "../../../main.hpp"
 #include "../fuse_ops.hpp"
-#include "../db/db_ops.hpp"
 #include "../adafs_ops/mdata_ops.hpp"
 #include "../rpc/client/c_data.hpp"
 #include "../adafs_ops/io.hpp"

@@ -1,4 +1,4 @@
-#include <daemon/db/merge.hpp>
+#include <daemon/backend/metadata/merge.hpp>
 
 
 std::string MergeOperand::serialize_id() const {

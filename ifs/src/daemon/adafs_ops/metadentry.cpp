@@ -1,7 +1,7 @@
 
 #include <daemon/adafs_ops/metadentry.hpp>
 #include <daemon/adafs_ops/data.hpp>
-#include <daemon/db/db_ops.hpp>
+#include <daemon/backend/metadata/db.hpp>
 
 using namespace std;
 
@@ -15,9 +15,8 @@ ino_t generate_inode_no() {
  * Creates metadata (if required) and dentry at the same time
  * @param path
  * @param mode
- * @return
  */
-int create_metadentry(const std::string& path, mode_t mode) {
+void create_metadentry(const std::string& path, mode_t mode) {
 
     Metadata md{path, mode};
     // update metadata object based on what metadata is needed
@@ -39,15 +38,11 @@ int create_metadentry(const std::string& path, mode_t mode) {
     if (ADAFS_DATA->inode_no_state())
         md.inode_no(generate_inode_no());
 
-    return db_put_metadentry(path, md.serialize()) ? 0 : -1;
+    ADAFS_DATA->mdb()->put(path, md.serialize());
 }
 
-int get_metadentry(const std::string& path, std::string& val) {
-    auto ok = db_get_metadentry(path, val);
-    if (!ok || val.size() == 0) {
-        return -1;
-    }
-    return 0;
+std::string get_metadentry_str(const std::string& path) {
+        return ADAFS_DATA->mdb()->get(path);
 }
 
 /**
@@ -56,24 +51,8 @@ int get_metadentry(const std::string& path, std::string& val) {
  * @param attr
  * @return
  */
-int get_metadentry(const std::string& path, Metadata& md) {
-    string val;
-    auto err = get_metadentry(path, val);
-    if (err) {
-        return -1;
-    }
-    Metadata mdi{path, val};
-    md = mdi;
-    return 0;
-}
-
-/**
- * Wrapper to remove a KV store entry with the path as key
- * @param path
- * @return
- */
-int remove_metadentry(const string& path) {
-    return db_delete_metadentry(path) ? 0 : -1;
+Metadata get_metadentry(const std::string& path) {
+    return {path, get_metadentry_str(path)};
 }
 
 /**
@@ -81,15 +60,9 @@ int remove_metadentry(const string& path) {
  * @param path
  * @return
  */
-int remove_node(const string& path) {
-    int err = 0; // assume we succeed
-    Metadata md{};
-    // If metadentry exists, try to remove it
-    if (get_metadentry(path, md) == 0) {
-        err = remove_metadentry(path);
-    }
+void remove_node(const string& path) {
+    ADAFS_DATA->mdb()->remove(path); // remove metadentry
     destroy_chunk_space(path); // destroys all chunks for the path on this node
-    return err;
 }
 
 /**
@@ -98,15 +71,8 @@ int remove_node(const string& path) {
  * @param ret_size (return val)
  * @return err
  */
-int get_metadentry_size(const string& path, size_t& ret_size) {
-    string val;
-    auto err = db_get_metadentry(path, val);
-    if (!err || val.empty()) {
-        return ENOENT;
-    }
-    Metadata md{path, val};
-    ret_size = md.size();
-    return 0;
+size_t get_metadentry_size(const string& path) {
+    return get_metadentry(path).size();
 }
 
 /**
@@ -115,24 +81,18 @@ int get_metadentry_size(const string& path, size_t& ret_size) {
  * @param io_size
  * @return the updated size
  */
-int update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append,  size_t& read_size) {
+void update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append) {
 #ifdef LOG_TRACE
-    db_iterate_all_entries();
+    ADAFS_DATA->mdb()->iterate_all();
 #endif
-    auto err = db_update_metadentry_size(path, io_size, offset, append);
-    if (!err) {
-        return EBUSY;
-    }
+    ADAFS_DATA->mdb()->update_size(path, io_size + offset, append);
 #ifdef LOG_TRACE
-    db_iterate_all_entries();
+    ADAFS_DATA->mdb()->iterate_all();
 #endif
-    //XXX This breaks append writes, needs to be fixed
-    read_size = 0;
-    return 0;
 }
 
-int update_metadentry(const string& path, Metadata& md) {
-    return db_update_metadentry(path, md.path(), md.serialize()) ? 0 : -1;
+void update_metadentry(const string& path, Metadata& md) {
+    ADAFS_DATA->mdb()->update(path, md.path(), md.serialize());
 }
 
 /**
@@ -141,10 +101,12 @@ int update_metadentry(const string& path, Metadata& md) {
  * @return errno
  */
 int check_access_mask(const string& path, const int mask) {
-    Metadata md{};
-    auto err = get_metadentry(path, md);
-    if (err == -1)  // metadentry not found
+    Metadata md;
+    try {
+        md = get_metadentry(path);
+    } catch (const NotFoundException& e) {
         return ENOENT;
+    }
 
     /*
      * if only check if file exists is wanted, return success.

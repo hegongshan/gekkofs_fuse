@@ -11,13 +11,6 @@
 // third party libs
 #include <extern/spdlog/spdlog.h>
 #include <extern/spdlog/fmt/fmt.h>
-// rocksdb
-#include <rocksdb/db.h>
-#include <rocksdb/slice.h>
-#include <rocksdb/options.h>
-#include <rocksdb/utilities/transaction.h>
-#include <rocksdb/utilities/optimistic_transaction_db.h>
-#include <rocksdb/write_batch.h>
 // margo
 extern "C" {
 #include <abt.h>

@@ -4,6 +4,9 @@
 
 #include <daemon/adafs_daemon.hpp>
 
+/* Forward declarations */
+class MetadataDB;
+
 #include <unordered_map>
 #include <functional> //std::hash
 
@@ -38,14 +41,8 @@ private:
     size_t host_size_;
     std::string rpc_port_;
 
-    // rocksdb
-    std::shared_ptr<rocksdb::DB> rdb_;
-    std::shared_ptr<rocksdb::DB> rdb_crt_; // additional db instance (currently not used)
-    std::shared_ptr<rocksdb::OptimisticTransactionDB> txn_rdb_;
-    rocksdb::Options rdb_options_;
-    rocksdb::OptimisticTransactionOptions txn_rdb_options_; // needed for snapshots
-    rocksdb::WriteOptions rdb_write_options_;
-    std::string rdb_path_;
+    // Database
+    std::shared_ptr<MetadataDB> mdb_;
 
     // configurable metadata
     bool atime_state_;
@@ -116,33 +113,11 @@ public:
 
     void chunk_path(const std::string& chunk_path_);
 
-    const std::shared_ptr<rocksdb::DB>& rdb() const;
+    const std::shared_ptr<MetadataDB>& mdb() const;
 
-    void rdb(const std::shared_ptr<rocksdb::DB>& rdb);
+    void mdb(const std::shared_ptr<MetadataDB>& mdb);
 
-    const rocksdb::Options& rdb_options() const;
-
-    void rdb_options(const rocksdb::Options& rdb_options);
-
-    const std::string& rdb_path() const;
-
-    void rdb_path(const std::string& rdb_path);
-
-    const std::shared_ptr<rocksdb::OptimisticTransactionDB>& txn_rdb() const;
-
-    void txn_rdb(const std::shared_ptr<rocksdb::OptimisticTransactionDB>& tx_rdb);
-
-    const std::shared_ptr<rocksdb::DB>& rdb_crt() const;
-
-    void rdb_crt(const std::shared_ptr<rocksdb::DB>& rdb_crt);
-
-    const rocksdb::OptimisticTransactionOptions& txn_rdb_options() const;
-
-    void txn_rdb_options(const rocksdb::OptimisticTransactionOptions& tx_rdb_options);
-
-    const rocksdb::WriteOptions& rdb_write_options() const;
-
-    void rdb_write_options(const rocksdb::WriteOptions& rdb_write_options);
+    void close_mdb();
 
     const std::string& hosts_raw() const;
 

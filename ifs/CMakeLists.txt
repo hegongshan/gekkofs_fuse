@@ -110,14 +110,11 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
+
 # define include directories that are relevant for all targets
 include_directories(
-    include
-    ${ABT_INCLUDE_DIRS}
-    ${ABT_SNOOZER_INCLUDE_DIRS}
-    ${LIBEV_INCLUDE_DIRS}
-    ${MERCURY_INCLUDE_DIRS}
-    ${MARGO_INCLUDE_DIRS}
+    ${INCLUDE_DIR}
 )
 
 # Daemon
