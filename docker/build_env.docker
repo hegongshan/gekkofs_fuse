@@ -5,13 +5,13 @@ ENV ADAFS_PATH	/opt/adafs
 
 ENV SCRIPTS_PATH	${ADAFS_PATH}/scripts
 ENV DEPS_SRC_PATH	${ADAFS_PATH}/deps_src
-ENV INSTALL_PATH	${ADAFS_PATH}/build
+ENV INSTALL_PATH	${ADAFS_PATH}/build_deps
 
 
 # Enable epel and scl repository
 RUN yum -y -q update  && yum -y -q install \
 	epel-release \
-	centos-release-scl \	
+	centos-release-scl \
 && yum -y -q clean all
 
 # Install compile script dependencies
@@ -45,7 +45,7 @@ RUN yum -y -q update  && yum -y -q install \
 
 # Enable gcc/g++ 7.x
 ENV	CC		"/opt/rh/devtoolset-7/root/usr/bin/gcc"
-ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++" 
+ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++"
 
 # Download dependencies source
 COPY ifs/scripts/dl_dep.sh		$SCRIPTS_PATH/
@@ -60,13 +60,13 @@ RUN /bin/bash $SCRIPTS_PATH/compile_dep.sh $DEPS_SRC_PATH $INSTALL_PATH
 FROM centos:7
 
 ENV ADAFS_PATH	/opt/adafs
-ENV INSTALL_PATH	${ADAFS_PATH}/build
+ENV INSTALL_PATH	${ADAFS_PATH}/build_deps
 
 
 # Enable epel and scl repository
 RUN yum -y -q update  && yum -y -q install \
 	epel-release \
-	centos-release-scl \	
+	centos-release-scl \
 && yum -y -q clean all
 
 # Install compile script dependencies
@@ -101,7 +101,7 @@ RUN yum -y -q update  && yum -y -q install \
 
 # Enable gcc/g++ 7.x
 ENV	CC		"/opt/rh/devtoolset-7/root/usr/bin/gcc"
-ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++" 
+ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++"
 
 
 COPY --from=builder ${INSTALL_PATH} ${INSTALL_PATH}
