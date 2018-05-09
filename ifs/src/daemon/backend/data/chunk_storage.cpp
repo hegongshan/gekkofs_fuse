@@ -54,8 +54,8 @@ void ChunkStorage::init_chunk_space(const std::string& file_path) const {
     }
 }
 
-unsigned int ChunkStorage::write_chunk(const std::string& file_path, unsigned int chunk_id,
-        const char * buff, size_t size, off64_t offset) const {
+void ChunkStorage::write_chunk(const std::string& file_path, unsigned int chunk_id,
+        const char * buff, size_t size, off64_t offset, ABT_eventual& eventual) const {
 
     init_chunk_space(file_path);
 
@@ -73,17 +73,18 @@ unsigned int ChunkStorage::write_chunk(const std::string& file_path, unsigned in
         throw std::system_error(errno, std::system_category(), "Failed to write chunk file");
     }
 
+    ABT_eventual_set(eventual, &wrote, sizeof(size_t));
+
     auto err = close(fd);
     if (err < 0) {
         log->error("Failed to close chunk file after write. File: {}, Error: {}",
                 chunk_path, std::strerror(errno));
-        throw std::system_error(errno, std::system_category(), "Failed to close chunk file");
+        //throw std::system_error(errno, std::system_category(), "Failed to close chunk file");
     }
-    return wrote;
 }
 
-unsigned int ChunkStorage::read_chunk(const std::string& file_path, unsigned int chunk_id,
-        char * buff, size_t size, off64_t offset) const {
+void ChunkStorage::read_chunk(const std::string& file_path, unsigned int chunk_id,
+        char * buff, size_t size, off64_t offset, ABT_eventual& eventual) const {
 
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
     int fd = open(chunk_path.c_str(), O_RDONLY);
@@ -99,11 +100,12 @@ unsigned int ChunkStorage::read_chunk(const std::string& file_path, unsigned int
         throw std::system_error(errno, std::system_category(), "Failed to read chunk file");
     }
 
+    ABT_eventual_set(eventual, &read, sizeof(size_t));
+
     auto err = close(fd);
     if (err < 0) {
         log->error("Failed to close chunk file after read. File: {}, Error: {}",
                 chunk_path, std::strerror(errno));
-        throw std::system_error(errno, std::system_category(), "Failed to close chunk file");
+        //throw std::system_error(errno, std::system_category(), "Failed to close chunk file");
     }
-    return read;
 }

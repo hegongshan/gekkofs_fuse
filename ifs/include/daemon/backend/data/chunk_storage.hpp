@@ -1,6 +1,7 @@
 #ifndef IFS_CHUNK_STORAGE_HPP
 #define IFS_CHUNK_STORAGE_HPP
 
+#include <abt.h>
 #include <string>
 #include <memory>
 
@@ -24,10 +25,12 @@ class ChunkStorage {
 
     public:
         ChunkStorage(const std::string& path);
-        unsigned int write_chunk(const std::string& file_path, unsigned int chunk_id,
-                                 const char * buff, size_t size, off64_t offset) const;
-        unsigned int read_chunk(const std::string& file_path, unsigned int chunk_id,
-                                char * buff, size_t size, off64_t offset) const;
+        void write_chunk(const std::string& file_path, unsigned int chunk_id,
+                         const char * buff, size_t size, off64_t offset,
+                         ABT_eventual& eventual) const;
+        void read_chunk(const std::string& file_path, unsigned int chunk_id,
+                         char * buff, size_t size, off64_t offset,
+                         ABT_eventual& eventual) const;
         void destroy_chunk_space(const std::string& file_path) const;
 };
 
