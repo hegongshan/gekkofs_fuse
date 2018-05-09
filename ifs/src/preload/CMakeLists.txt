@@ -44,7 +44,6 @@ target_link_libraries(adafs_preload_client
     ${MERCURY_LIBRARIES}
     ${MERCURY_UTIL_LIBRARIES}
     ${MARGO_LIBRARIES}
-    ${Boost_LIBRARIES}
     Threads::Threads
 )
 

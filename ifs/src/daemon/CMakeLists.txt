@@ -42,7 +42,8 @@ target_link_libraries(adafs_daemon
     ${MERCURY_LIBRARIES}
     ${MERCURY_UTIL_LIBRARIES}
     ${MARGO_LIBRARIES}
-    ${Boost_LIBRARIES}
+    Boost::program_options
+    Boost::filesystem
     ${JEMALLOC_LIBRARIES}
     Threads::Threads
     )

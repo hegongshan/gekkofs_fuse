@@ -56,7 +56,11 @@ find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 
 # boost dependencies, system is required for filesystem
-find_package(Boost 1.53 REQUIRED COMPONENTS system filesystem program_options)
+find_package(Boost 1.53 REQUIRED
+    COMPONENTS
+    filesystem
+    program_options
+    )
 
 find_package(Threads REQUIRED)
 
