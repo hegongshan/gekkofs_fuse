@@ -1,7 +1,11 @@
-
+#include <global/configure.hpp>
 #include <preload/margo_ipc.hpp>
+#include <preload/preload_util.hpp>
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
+extern "C" {
+#include <margo.h>
+}
 
 void send_minimal_ipc(const hg_id_t minimal_id) {
 

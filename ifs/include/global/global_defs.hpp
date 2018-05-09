@@ -1,6 +1,8 @@
 #ifndef IFS_GLOBAL_DEFS_HPP
 #define IFS_GLOBAL_DEFS_HPP
 
+#include <type_traits> //underlying_type
+
 // These constexpr set the RPC's identity and which handler the receiver end should use
 namespace hg_tag {
     constexpr auto fs_config = "ipc_srv_fs_config";

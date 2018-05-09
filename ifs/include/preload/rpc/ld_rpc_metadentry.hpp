@@ -3,6 +3,7 @@
 #define IFS_PRELOAD_C_METADENTRY_HPP
 
 #include <preload/preload.hpp>
+#include <preload/preload_util.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <iostream>
 

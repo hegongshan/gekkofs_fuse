@@ -5,6 +5,11 @@
 #include <preload/preload.hpp>
 // third party libs
 #include <string>
+#include <iostream>
+
+extern "C" {
+#include <margo.h>
+}
 
 // TODO singleton this stuff away
 // The contents of FsConfig or only set once when set up

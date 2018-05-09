@@ -1,4 +1,4 @@
-
+#include <global/configure.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <global/rpc/rpc_utils.hpp>
 
