@@ -6,6 +6,8 @@
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
+#include <preload/intcp_functions.hpp>
+
 
 using namespace std;
 
@@ -13,6 +15,13 @@ int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     mode_t mode = 0;
+
+    if(flags & O_DIRECTORY){
+        CTX->log()->error("{}() called with `O_DIRECTORY` flag on {}", __func__, path);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     if (flags & O_CREAT) {
         va_list vl;
         va_start(vl, flags);
@@ -110,8 +119,7 @@ int rmdir(const char* path) __THROW {
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // XXX Possible need another call to specifically handle remove dirs. For now handle them the same as files
-        return adafs_rm_node(rel_path);
+        return adafs_rmdir(rel_path);
     }
     return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
 }
@@ -131,7 +139,7 @@ int __close(int fd) {
 }
 
 int remove(const char* path) {
-   return unlink(path); 
+   return unlink(path);
 }
 
 int access(const char* path, int mask) __THROW {
@@ -204,8 +212,6 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
         return adafs_stat64(rel_path, buf);
-//        // Not implemented
-//        return -1;
     }
     return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
 }
@@ -230,24 +236,22 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
 }
 
-extern int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
+int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // Not implemented
-        return -1;
+        return adafs_stat(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&__lxstat)>(libc___lxstat))(ver, path, buf);
 }
 
-extern int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
+int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path {}", __func__, path);
     std::string rel_path(path);
     if (CTX->relativize_path(rel_path)) {
-        // Not implemented
-        return -1;
+        return adafs_stat64(rel_path, buf);
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }
@@ -439,4 +443,58 @@ int dup3(int oldfd, int newfd, int flags) __THROW {
         return -1;
     }
     return (reinterpret_cast<decltype(&dup3)>(libc_dup3))(oldfd, newfd, flags);
+}
+
+/* Directories related calls */
+
+inline int dirp_to_fd(const DIR* dirp){
+    assert(dirp != nullptr);
+    return *(reinterpret_cast<int*>(&dirp));
+}
+
+inline DIR* fd_to_dirp(const int fd){
+    assert(fd >= 0);
+    return reinterpret_cast<DIR*>(fd);
+}
+
+DIR* opendir(const char* path){
+    init_passthrough_if_needed();
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        auto fd = adafs_opendir(rel_path);
+        if(fd < 0){
+            return nullptr;
+        }
+        return fd_to_dirp(fd);
+    }
+    return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
+}
+
+struct dirent* intcp_readdir(DIR* dirp){
+    init_passthrough_if_needed();
+    if(dirp == nullptr){
+        errno = EINVAL;
+        return nullptr;
+    }
+    auto fd = dirp_to_fd(dirp);
+    if(ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        return adafs_readdir(fd);
+    }
+    return (reinterpret_cast<decltype(&readdir)>(libc_readdir))(dirp);
+}
+
+int intcp_closedir(DIR* dirp) {
+    init_passthrough_if_needed();
+    if(dirp == nullptr){
+        errno = EINVAL;
+        return -1;
+    }
+    auto fd = dirp_to_fd(dirp);
+    if (ld_is_aux_loaded() && CTX->file_map()->exist(fd)) {
+        // No call to the daemon is required
+        CTX->file_map()->remove(fd);
+        return 0;
+    }
+    return (reinterpret_cast<decltype(&closedir)>(libc_closedir))(dirp);
 }

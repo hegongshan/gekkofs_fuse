@@ -244,6 +244,8 @@ void register_server_rpcs(margo_instance_id mid) {
                    rpc_srv_get_metadentry_size);
     MARGO_REGISTER(mid, hg_tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
                    rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
+    MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+                   rpc_srv_get_dirents);
     MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
     MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
 }

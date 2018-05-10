@@ -15,7 +15,7 @@ bool is_absolute_path(const std::string& path) {
 }
 
 bool has_trailing_slash(const std::string& path) {
-    return (path.size() > 1) && (path.back() == PSP);
+    return path.back() == PSP;
 }
 
 /* Make an absolute path relative to a root path
@@ -34,16 +34,23 @@ std::string path_to_relative(const std::string& root_path, const std::string& ab
         // complete path doesn't start with root_path
         return {};
     }
-    
+
     // iterator to the starting char of the relative portion of the @absolute_path
     auto rel_it_begin = diff_its.first;
+    // iterator to the end of the relative portion of the @absolute_path
+    auto rel_it_end = absolute_path.cend();
 
     // relative path start exactly after the root_path prefix
-    assert(rel_it_begin == (absolute_path.cbegin() + root_path.size()));
+    assert((size_t)(rel_it_begin - absolute_path.cbegin()) == root_path.size());
 
-    // iterator to the last char of the relative portion of the @absolute_path
-    auto rel_it_end = absolute_path.cend();
-    if(has_trailing_slash(absolute_path)) {
+    if(rel_it_begin == rel_it_end) {
+        //relative path is empty, @absolute_path was equal to @root_path
+        return {'/'};
+    }
+
+    // remove the trailing slash from relative path
+    if(has_trailing_slash(absolute_path) &&
+      rel_it_begin != rel_it_end - 1) { // the relative path is longer then 1 char ('/')
         --rel_it_end;
     }
 

@@ -16,8 +16,13 @@ enum class OpenFile_flags {
     flag_count // this is purely used as a size variable of this enum class
 };
 
+enum class FileType {
+    regular,
+    directory
+};
+
 class OpenFile {
-private:
+protected:
     std::string path_;
     std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
     off64_t pos_;
@@ -62,8 +67,8 @@ public:
 
     bool exist(int fd);
 
-    int add(std::string path, int flags);
-
+    int add(std::shared_ptr<OpenFile>);
+    
     bool remove(int fd);
 
     int dup(int oldfd);

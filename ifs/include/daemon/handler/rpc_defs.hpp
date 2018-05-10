@@ -27,6 +27,8 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
+
 // data
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 

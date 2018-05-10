@@ -68,6 +68,9 @@
 // sets the threshold in milliseconds when a log entry should be created
 #define MARGO_FORWARD_TIMER_THRESHOLD 1000
 
+//size of preallocated buffer to hold directory entries in rpc call
+#define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega
+
 // Debug configurations
 //#define RPC_TEST //unused
 

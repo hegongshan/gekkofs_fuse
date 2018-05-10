@@ -5,6 +5,7 @@
 #include <preload/preload.hpp>
 #include <preload/preload_util.hpp>
 #include <global/rpc/rpc_types.hpp>
+#include <preload/open_dir.hpp>
 #include <iostream>
 
 inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_struct, const char* func);
@@ -27,5 +28,7 @@ int rpc_send_update_metadentry_size(const std::string& path, size_t size, off64_
                                     off64_t& ret_size);
 
 int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size);
+
+void rpc_send_get_dirents(OpenDir& open_dir);
 
 #endif //IFS_PRELOAD_C_METADENTRY_HPP

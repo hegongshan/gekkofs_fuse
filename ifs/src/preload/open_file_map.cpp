@@ -95,9 +95,8 @@ int OpenFileMap::safe_generate_fd_idx_() {
     return fd;
 }
 
-int OpenFileMap::add(string path, const int flags) {
+int OpenFileMap::add(std::shared_ptr<OpenFile> open_file) {
     auto fd = safe_generate_fd_idx_();
-    auto open_file = make_shared<OpenFile>(path, flags);
     lock_guard<recursive_mutex> lock(files_mutex_);
     files_.insert(make_pair(fd, open_file));
     return fd;

@@ -82,6 +82,7 @@ extern hg_id_t ipc_get_metadentry_size_id;
 extern hg_id_t ipc_update_metadentry_size_id;
 extern hg_id_t ipc_write_data_id;
 extern hg_id_t ipc_read_data_id;
+extern hg_id_t ipc_get_dirents_id;
 // RPC IDs
 extern hg_id_t rpc_minimal_id;
 extern hg_id_t rpc_mk_node_id;
@@ -93,6 +94,7 @@ extern hg_id_t rpc_get_metadentry_size_id;
 extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
+extern hg_id_t rpc_get_dirents_id;
 // fs_config is set ONCE in the beginning. It shall not be modified afterwards
 extern std::shared_ptr<struct FsConfig> fs_config;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed
@@ -123,8 +125,8 @@ bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
 bool is_local_op(size_t recipient);
 
-template<typename T>
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const T&, hg_handle_t& handle, bool force_rpc);
+hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const std::string&, hg_handle_t& handle, bool force_rpc);
 
+hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t& recipient, hg_handle_t& handle, bool force_rpc);
 
 #endif //IFS_PRELOAD_UTIL_HPP

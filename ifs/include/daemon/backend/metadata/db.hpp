@@ -26,6 +26,7 @@ class MetadataDB {
         bool exists(const std::string& key);
         void update(const std::string& old_key, const std::string& new_key, const std::string& val);
         void update_size(const std::string& key, size_t size, bool append);
+        std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir) const;
         void iterate_all();
 };
 

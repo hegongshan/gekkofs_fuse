@@ -29,6 +29,7 @@ hg_id_t ipc_get_metadentry_size_id;
 hg_id_t ipc_update_metadentry_size_id;
 hg_id_t ipc_write_data_id;
 hg_id_t ipc_read_data_id;
+hg_id_t ipc_get_dirents_id;
 // RPC IDs
 hg_id_t rpc_minimal_id;
 hg_id_t rpc_mk_node_id;
@@ -40,6 +41,7 @@ hg_id_t rpc_get_metadentry_size_id;
 hg_id_t rpc_update_metadentry_size_id;
 hg_id_t rpc_write_data_id;
 hg_id_t rpc_read_data_id;
+hg_id_t rpc_get_dirents_id;
 // Margo instances
 margo_instance_id ld_margo_ipc_id;
 margo_instance_id ld_margo_rpc_id;
@@ -108,6 +110,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
                                            NULL);
         ipc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
                                           NULL);
+        ipc_get_dirents_id = MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+                                          NULL);
     } else {
         // RPC IDs
         rpc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
@@ -127,6 +131,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
         rpc_write_data_id = MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t,
                                            NULL);
         rpc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
+                                          NULL);
+        rpc_get_dirents_id = MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
                                           NULL);
     }
 }

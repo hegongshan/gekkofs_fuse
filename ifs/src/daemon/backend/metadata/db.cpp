@@ -2,6 +2,7 @@
 #include <daemon/backend/metadata/merge.hpp>
 #include <daemon/backend/exceptions.hpp>
 
+#include <global/path_util.hpp>
 #include <extern/spdlog/spdlog.h>
 
 MetadataDB::MetadataDB(const std::string& path): path(path) {
@@ -44,6 +45,9 @@ std::string MetadataDB::get(const std::string& key) const {
 }
 
 void MetadataDB::put(const std::string& key, const std::string& val) {
+    assert(is_absolute_path(key));
+    assert(key == "/" || !has_trailing_slash(key));
+
     auto cop = CreateOperand(val);
     auto s = db->Merge(write_opts, key, cop.serialize());
     if(!s.ok()){
@@ -95,6 +99,60 @@ void MetadataDB::update_size(const std::string& key, size_t size, bool append){
     if(!s.ok()){
         MetadataDB::throw_rdb_status_excpt(s);
     }
+}
+
+/**
+ * Return all the first-level entries of the directory @dir
+ *
+ * @return vector of pair <std::string name, bool is_dir>,
+ *         where name is the name of the entries and is_dir
+ *         is true in the case the entry is a directory.
+ */
+std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::string& dir) const {
+    auto root_path = dir;
+    assert(is_absolute_path(root_path));
+    //add trailing slash if missing
+    if(!has_trailing_slash(root_path) && root_path.size() != 1) {
+        //add trailing slash only if missing and is not the root_folder "/"
+        root_path.push_back('/');
+    }
+
+    rocksdb::ReadOptions ropts;
+    auto it = db->NewIterator(ropts);
+
+    std::vector<std::pair<std::string, bool>> entries;
+
+    for(it->Seek(root_path);
+            it->Valid() &&
+            it->key().starts_with(root_path) &&
+            it->key().size() != root_path.size();
+        it->Next()){
+
+        /***** Get File name *****/
+        auto name = it->key().ToString();
+        if(name.find_first_of('/', root_path.size()) != std::string::npos){
+            //skip stuff deeper then one level depth
+            continue;
+        }
+        // remove prefix
+        name = name.substr(root_path.size());
+
+        //relative path of directory entries must not be empty
+        assert(name.size() > 0);
+
+        /***** Get File type *****/
+        /*TODO: move this routine along with general metadata {de,se}rialization
+         * functions
+         */
+        auto metadata = it->value().ToString();
+        assert(metadata.size() > 0);
+        auto mode = static_cast<mode_t>(stoul(metadata.substr(0, metadata.find(','))));
+        auto is_dir = S_ISDIR(mode);
+
+        entries.push_back(std::make_pair(std::move(name), std::move(is_dir)));
+    }
+    assert(it->status().ok());
+    return entries;
 }
 
 void MetadataDB::iterate_all() {
