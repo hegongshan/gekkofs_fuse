@@ -124,9 +124,13 @@ std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::str
 
     for(it->Seek(root_path);
             it->Valid() &&
-            it->key().starts_with(root_path) &&
-            it->key().size() != root_path.size();
+            it->key().starts_with(root_path);
         it->Next()){
+
+        if(it->key().size() == root_path.size()) {
+            //we skip this path cause it is exactly the root_path
+            continue;
+        }
 
         /***** Get File name *****/
         auto name = it->key().ToString();
