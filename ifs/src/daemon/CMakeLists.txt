@@ -40,9 +40,9 @@ target_link_libraries(adafs_daemon
     ${ABT_SNOOZER_LIBRARIES}
     mercury
     ${MARGO_LIBRARIES}
+    # others
     Boost::program_options
     Boost::filesystem
-    ${JEMALLOC_LIBRARIES}
     Threads::Threads
     )
 

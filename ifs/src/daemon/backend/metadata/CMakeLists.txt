@@ -12,17 +12,5 @@ target_sources(metadata_db
     )
 
 target_link_libraries(metadata_db
-    ${ROCKSDB_LIBRARIES}
-    # rocksdb libs
-    ${snappy_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${ZSTD_LIBRARIES}
-    ${LZ4_LIBRARY}
-    ${JEMALLOC_LIBRARIES}
-    )
-
-target_include_directories(metadata_db
-    PRIVATE
-    ${ROCKSDB_INCLUDE_DIRS}
-    )
+    RocksDB
+)

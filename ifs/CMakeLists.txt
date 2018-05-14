@@ -113,6 +113,33 @@ if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 
+
+# Imported target
+add_library(RocksDB INTERFACE IMPORTED GLOBAL)
+target_link_libraries(RocksDB
+    INTERFACE
+    ${ROCKSDB_LIBRARIES}
+    # rocksdb libs
+    ${snappy_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${BZIP2_LIBRARIES}
+    ${ZSTD_LIBRARIES}
+    ${LZ4_LIBRARY}
+)
+
+if(${JeMalloc_FOUND})
+    target_link_libraries(RocksDB
+        INTERFACE
+        ${JEMALLOC_LIBRARIES}
+    )
+endif()
+# we cannot use target_include_directories with CMake < 3.11
+set_target_properties(RocksDB
+    PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
+)
+
+
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 
 # define include directories that are relevant for all targets
