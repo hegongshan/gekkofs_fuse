@@ -67,6 +67,9 @@ void* libc_opendir;
 void* libc_readdir;
 void* libc_closedir;
 
+void* libc_chdir;
+
+
 void init_passthrough_() {
     libc = dlopen("libc.so.6", RTLD_LAZY);
     if(libc == nullptr){
@@ -125,6 +128,8 @@ void init_passthrough_() {
     libc_opendir = dlsym(libc, "opendir");
     libc_readdir = dlsym(libc, "readdir");
     libc_closedir = dlsym(libc, "closedir");
+
+    libc_chdir = dlsym(libc, "chdir");
 
     fs_config = std::make_shared<struct FsConfig>();
 

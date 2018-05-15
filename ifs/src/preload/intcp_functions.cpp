@@ -498,3 +498,15 @@ int intcp_closedir(DIR* dirp) {
     }
     return (reinterpret_cast<decltype(&closedir)>(libc_closedir))(dirp);
 }
+
+int chdir(const char* path){
+    init_passthrough_if_needed();
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        CTX->log()->error("Attempt to chdir into adafs namespace: NOT SUPPORTED", __func__, path);
+        errno = ENOTSUP;
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&chdir)>(libc_chdir))(path);
+}
