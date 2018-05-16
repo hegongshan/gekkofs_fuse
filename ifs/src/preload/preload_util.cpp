@@ -89,7 +89,6 @@ int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr
         db_val.erase(0, pos + 1);
     } else {
         attr.st_size = stol(db_val);
-        return 0;
     }
     // The order is important. don't change.
     if (fs_config->atime_state) {
@@ -111,12 +110,18 @@ int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr
         pos = db_val.find(dentry_val_delim);
         attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
+    } else {
+        attr.st_uid = fs_config->uid;
     }
+    
     if (fs_config->gid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
+    } else {
+        attr.st_gid = fs_config->gid;
     }
+
     if (fs_config->inode_no_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
@@ -167,7 +172,6 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
         db_val.erase(0, pos + 1);
     } else {
         attr.st_size = stol(db_val);
-        return 0;
     }
     // The order is important. don't change.
     if (fs_config->atime_state) {
@@ -189,11 +193,15 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
         pos = db_val.find(dentry_val_delim);
         attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
+    } else {
+        attr.st_uid = fs_config->gid;
     }
     if (fs_config->gid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
+    } else {
+        attr.st_gid = fs_config->gid;
     }
     if (fs_config->inode_no_state) {
         pos = db_val.find(dentry_val_delim);
