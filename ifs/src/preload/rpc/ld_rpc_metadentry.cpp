@@ -182,7 +182,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
     int err = 0; // assume we succeed
     // if metadentry should only removed only, send only 1 rpc to remove the metadata
     // else send an rpc to all hosts and thus broadcast chunk_removal.
-    auto rpc_target_size = remove_metadentry_only ? static_cast<uint64_t>(1) : fs_config->host_size;
+    auto rpc_target_size = remove_metadentry_only ? static_cast<uint64_t>(1) : CTX->fs_conf()->host_size;
 
     CTX->log()->debug("{}() Creating Mercury handles for all nodes ...", __func__);
     vector<hg_handle_t> rpc_handles(rpc_target_size);

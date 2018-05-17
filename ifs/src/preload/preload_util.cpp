@@ -70,8 +70,8 @@ int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr
         attr.st_ino = std::hash<std::string>{}(path);
         attr.st_mode = static_cast<unsigned int>(stoul(db_val));
         attr.st_nlink = 1;
-        attr.st_uid = fs_config->uid;
-        attr.st_gid = fs_config->gid;
+        attr.st_uid = CTX->fs_conf()->uid;
+        attr.st_gid = CTX->fs_conf()->gid;
         attr.st_size = 0;
         attr.st_blksize = BLOCKSIZE;
         attr.st_blocks = 0;
@@ -92,48 +92,48 @@ int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr
         attr.st_size = stol(db_val);
     }
     // The order is important. don't change.
-    if (fs_config->atime_state) {
+    if (CTX->fs_conf()->atime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->mtime_state) {
+    if (CTX->fs_conf()->mtime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->ctime_state) {
+    if (CTX->fs_conf()->ctime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->uid_state) {
+    if (CTX->fs_conf()->uid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     } else {
-        attr.st_uid = fs_config->uid;
+        attr.st_uid = CTX->fs_conf()->uid;
     }
-    
-    if (fs_config->gid_state) {
+
+    if (CTX->fs_conf()->gid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     } else {
-        attr.st_gid = fs_config->gid;
+        attr.st_gid = CTX->fs_conf()->gid;
     }
 
-    if (fs_config->inode_no_state) {
+    if (CTX->fs_conf()->inode_no_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->link_cnt_state) {
+    if (CTX->fs_conf()->link_cnt_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->blocks_state) { // last one will not encounter a delimiter anymore
+    if (CTX->fs_conf()->blocks_state) { // last one will not encounter a delimiter anymore
         attr.st_blocks = static_cast<blkcnt_t>(stoul(db_val));
     }
     return 0;
@@ -153,8 +153,8 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
         attr.st_ino = std::hash<std::string>{}(path);
         attr.st_mode = static_cast<unsigned int>(stoul(db_val));
         attr.st_nlink = 1;
-        attr.st_uid = fs_config->uid;
-        attr.st_gid = fs_config->gid;
+        attr.st_uid = CTX->fs_conf()->uid;
+        attr.st_gid = CTX->fs_conf()->gid;
         attr.st_size = 0;
         attr.st_blksize = BLOCKSIZE;
         attr.st_blocks = 0;
@@ -175,46 +175,46 @@ int db_val_to_stat64(const std::string path, std::string db_val, struct stat64& 
         attr.st_size = stol(db_val);
     }
     // The order is important. don't change.
-    if (fs_config->atime_state) {
+    if (CTX->fs_conf()->atime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->mtime_state) {
+    if (CTX->fs_conf()->mtime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->ctime_state) {
+    if (CTX->fs_conf()->ctime_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->uid_state) {
+    if (CTX->fs_conf()->uid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     } else {
-        attr.st_uid = fs_config->gid;
+        attr.st_uid = CTX->fs_conf()->gid;
     }
-    if (fs_config->gid_state) {
+    if (CTX->fs_conf()->gid_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     } else {
-        attr.st_gid = fs_config->gid;
+        attr.st_gid = CTX->fs_conf()->gid;
     }
-    if (fs_config->inode_no_state) {
+    if (CTX->fs_conf()->inode_no_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->link_cnt_state) {
+    if (CTX->fs_conf()->link_cnt_state) {
         pos = db_val.find(dentry_val_delim);
         attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (fs_config->blocks_state) { // last one will not encounter a delimiter anymore
+    if (CTX->fs_conf()->blocks_state) { // last one will not encounter a delimiter anymore
         attr.st_blocks = static_cast<blkcnt_t>(stoul(db_val));
     }
     return 0;
@@ -288,13 +288,13 @@ bool read_system_hostfile() {
                 sys_hostfile.insert(make_pair(tmp_list[i], tmp_list[0]));
         }
     }
-    fs_config->sys_hostfile = sys_hostfile;
+    CTX->fs_conf()->sys_hostfile = sys_hostfile;
     CTX->log()->info("{}() /etc/hosts successfully mapped into ADA-FS", __func__);
     return true;
 }
 
 bool lookup_all_hosts() {
-    vector<uint64_t> hosts(fs_config->host_size);
+    vector<uint64_t> hosts(CTX->fs_conf()->host_size);
     // populate vector with [0, ..., host_size - 1]
     ::iota(::begin(hosts), ::end(hosts), 0);
     /*
@@ -308,19 +308,19 @@ bool lookup_all_hosts() {
     for (auto& host : hosts) {
         string remote_addr;
         hg_addr_t svr_addr = HG_ADDR_NULL;
-        auto hostname = fs_config->hosts.at(host) + HOSTNAME_SUFFIX;
+        auto hostname = CTX->fs_conf()->hosts.at(host) + HOSTNAME_SUFFIX;
         // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
-        if (fs_config->sys_hostfile.count(hostname) == 1) {
-            auto remote_ip = fs_config->sys_hostfile.at(hostname);
-            remote_addr = RPC_PROTOCOL + "://"s + remote_ip + ":"s + fs_config->rpc_port;
+        if (CTX->fs_conf()->sys_hostfile.count(hostname) == 1) {
+            auto remote_ip = CTX->fs_conf()->sys_hostfile.at(hostname);
+            remote_addr = RPC_PROTOCOL + "://"s + remote_ip + ":"s + CTX->fs_conf()->rpc_port;
         }
         // fallback hostname to use for lookup
         if (remote_addr.empty()) {
             remote_addr = RPC_PROTOCOL + "://"s + hostname + ":"s +
-                          fs_config->rpc_port; // convert hostid to remote_addr and port
+                          CTX->fs_conf()->rpc_port; // convert hostid to remote_addr and port
         }
         CTX->log()->trace("generated remote_addr {} for hostname {} with rpc_port {}",
-                         remote_addr, hostname, fs_config->rpc_port);
+                         remote_addr, hostname, CTX->fs_conf()->rpc_port);
         // try to look up 3 times before erroring out
         hg_return_t ret;
         for (uint32_t i = 0; i < 4; i++) {
@@ -329,7 +329,7 @@ bool lookup_all_hosts() {
                 // still not working after 5 tries.
                 if (i == 4) {
                     CTX->log()->error("{}() Unable to lookup address {} from host {}", __func__,
-                                     remote_addr, fs_config->hosts.at(fs_config->host_id));
+                                     remote_addr, CTX->fs_conf()->hosts.at(CTX->fs_conf()->host_id));
                     return false;
                 }
                 // Wait a random amount of time and try again
@@ -342,7 +342,7 @@ bool lookup_all_hosts() {
         }
         if (svr_addr == HG_ADDR_NULL) {
             CTX->log()->error("{}() looked up address is NULL for address {} from host {}", __func__,
-                             remote_addr, fs_config->hosts.at(fs_config->host_id));
+                             remote_addr, CTX->fs_conf()->hosts.at(CTX->fs_conf()->host_id));
             return false;
         }
         rpc_addresses.insert(make_pair(host, svr_addr));
@@ -378,7 +378,7 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
  * @return
  */
 bool is_local_op(const size_t recipient) {
-    return recipient == fs_config->host_id;
+    return recipient == CTX->fs_conf()->host_id;
 }
 
 inline hg_return

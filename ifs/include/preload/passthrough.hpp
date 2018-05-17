@@ -5,9 +5,6 @@
 #ifndef IFS_PASSTHROUGH_HPP
 #define IFS_PASSTHROUGH_HPP
 
-#include <preload/preload.hpp>
-#include <iostream>
-
 // function pointer for preloading
 extern void* libc;
 

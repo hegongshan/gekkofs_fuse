@@ -115,11 +115,11 @@ int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& re
     adafs_buf->f_type = 0; // fs is not know to VFS. Therefore, no valid specifier possible
     adafs_buf->f_bsize = static_cast<int>(CHUNKSIZE);
     // some rough estimations
-    adafs_buf->f_blocks = realfs_buf.f_blocks * fs_config->host_size;
-    adafs_buf->f_bfree = realfs_buf.f_bfree * fs_config->host_size;
-    adafs_buf->f_bavail = realfs_buf.f_bavail * fs_config->host_size;
-    adafs_buf->f_files = realfs_buf.f_files * fs_config->host_size;
-    adafs_buf->f_ffree = realfs_buf.f_ffree * fs_config->host_size;
+    adafs_buf->f_blocks = realfs_buf.f_blocks * CTX->fs_conf()->host_size;
+    adafs_buf->f_bfree = realfs_buf.f_bfree * CTX->fs_conf()->host_size;
+    adafs_buf->f_bavail = realfs_buf.f_bavail * CTX->fs_conf()->host_size;
+    adafs_buf->f_files = realfs_buf.f_files * CTX->fs_conf()->host_size;
+    adafs_buf->f_ffree = realfs_buf.f_ffree * CTX->fs_conf()->host_size;
     adafs_buf->f_fsid = realfs_buf.f_fsid; // "Nobody knows what f_fsid is supposed to contain"
     adafs_buf->f_namelen = realfs_buf.f_namelen;
     adafs_buf->f_frsize = realfs_buf.f_frsize;
@@ -128,7 +128,7 @@ int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& re
     adafs_buf->f_spare[2] = 0;
     adafs_buf->f_spare[3] = 0;
     adafs_buf->f_flags = ST_NOATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
-    if (!fs_config->atime_state)
+    if (!CTX->fs_conf()->atime_state)
         adafs_buf->f_flags = adafs_buf->f_flags | ST_NOATIME | ST_NODIRATIME;
     return 0;
 }

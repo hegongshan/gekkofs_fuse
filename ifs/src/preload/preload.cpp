@@ -1,5 +1,6 @@
 
 #include <global/global_defs.hpp>
+#include <global/configure.hpp>
 #include <preload/preload.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/distributor.hpp>
@@ -12,8 +13,6 @@ enum class Margo_mode {
     RPC, IPC
 };
 
-// atomic bool to check if auxiliary files from daemon are loaded
-std::atomic<bool> is_aux_loaded_(false);
 // thread to initialize the whole margo shazaam only once per process
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
@@ -213,14 +212,6 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
 }
 
 /**
- * Returns atomic bool, if Margo is running
- * @return
- */
-bool ld_is_aux_loaded() {
-    return is_aux_loaded_;
-}
-
-/**
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
 void init_ld_environment_() {
@@ -238,7 +229,7 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
-    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(fs_config->host_id, fs_config->host_size);
+    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->fs_conf()->host_id, CTX->fs_conf()->host_size);
     CTX->distributor(simple_hash_dist);
 
     if (!init_margo_client(Margo_mode::RPC, RPC_PROTOCOL)) {
@@ -260,22 +251,42 @@ void init_ld_env_if_needed() {
     pthread_once(&init_env_thread, init_ld_environment_);
 }
 
+void init_logging() {
+    //set the spdlogger and initialize it with spdlog
+    auto ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
+    // set logger format
+    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
+    // flush log when info, warning, error messages are encountered
+    ld_logger->flush_on(spdlog::level::info);
+#if defined(LOG_PRELOAD_TRACE)
+    spdlog::set_level(spdlog::level::trace);
+    ld_logger->flush_on(spdlog::level::trace);
+#elif defined(LOG_PRELOAD_DEBUG)
+    spdlog::set_level(spdlog::level::debug);
+#elif defined(LOG_PRELOAD_INFO)
+    spdlog::set_level(spdlog::level::info);
+#else
+    spdlog::set_level(spdlog::level::off);
+#endif
+
+    CTX->log(ld_logger);
+}
 
 /**
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
     init_passthrough_if_needed();
-    // The logger is initialized in init_passthrough. So we cannot log before that.
-    CTX->log()->info("{}() enter", __func__);
+    init_logging();
+    CTX->log()->debug("Initialized logging subsystem");
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {
         CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, CTX->mountdir());
-        is_aux_loaded_ = true;
     }
+    CTX->initialized(true);
     CTX->log()->debug("{}() exit", __func__);
 }
 

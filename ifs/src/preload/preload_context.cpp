@@ -7,7 +7,8 @@
 
 
 PreloadContext::PreloadContext():
-    ofm_(std::make_shared<OpenFileMap>())
+    ofm_(std::make_shared<OpenFileMap>()),
+    fs_conf_(std::make_shared<FsConfig>())
 {}
 
 void PreloadContext::log(std::shared_ptr<spdlog::logger> logger) {
@@ -28,12 +29,10 @@ std::string PreloadContext::mountdir() const {
 }
 
 bool PreloadContext::relativize_path(std::string& path) const {
-    if(mountdir_.empty()) {
-        /* Relativize path has been called before the library constructor has been invoked
-         * thus the mountdir has not been set yet
-         */
-        return false;
-    }
+    // Relativize path should be called only after the library constructor has been executed
+    assert(initialized_);
+    // If we run the constructor we also already setup the mountdir
+    assert(!mountdir_.empty());
 
     if(!is_absolute_path(path)) {
         /* We don't support path resolution at the moment
@@ -56,4 +55,16 @@ void PreloadContext::distributor(std::shared_ptr<Distributor> d) {
 
 std::shared_ptr<Distributor> PreloadContext::distributor() const {
     return distributor_;
+}
+
+const std::shared_ptr<FsConfig>& PreloadContext::fs_conf() const {
+    return fs_conf_;
+}
+
+void PreloadContext::initialized(const bool& flag) {
+    initialized_ = flag;
+}
+
+bool PreloadContext::initialized() const {
+    return initialized_;
 }

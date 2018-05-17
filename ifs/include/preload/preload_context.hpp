@@ -10,6 +10,31 @@ class OpenFileMap;
 class Distributor;
 
 
+struct FsConfig {
+    // configurable metadata
+    bool atime_state;
+    bool mtime_state;
+    bool ctime_state;
+    bool uid_state;
+    bool gid_state;
+    bool inode_no_state;
+    bool link_cnt_state;
+    bool blocks_state;
+
+    uid_t uid;
+    gid_t gid;
+
+    std::string rootdir;
+
+    // rpc infos
+    std::map<uint64_t, std::string> hosts;
+    std::map<std::string, std::string> sys_hostfile;
+    uint64_t host_id; // my host number
+    size_t host_size;
+    std::string rpc_port;
+};
+
+
 class PreloadContext {
     private:
     PreloadContext();
@@ -17,7 +42,10 @@ class PreloadContext {
     std::shared_ptr<spdlog::logger> log_;
     std::shared_ptr<OpenFileMap> ofm_;
     std::shared_ptr<Distributor> distributor_;
+    std::shared_ptr<FsConfig> fs_conf_;
+
     std::string mountdir_;
+    bool initialized_;
 
     public:
     static PreloadContext* getInstance() {
@@ -40,6 +68,10 @@ class PreloadContext {
 
     void distributor(std::shared_ptr<Distributor> distributor);
     std::shared_ptr<Distributor> distributor() const;
+    const std::shared_ptr<FsConfig>& fs_conf() const;
+
+    void initialized(const bool& flag);
+    bool initialized() const;
 };
 
 

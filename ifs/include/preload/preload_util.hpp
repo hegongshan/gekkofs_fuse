@@ -11,31 +11,6 @@ extern "C" {
 #include <margo.h>
 }
 
-// TODO singleton this stuff away
-// The contents of FsConfig or only set once when set up
-struct FsConfig {
-    // configurable metadata
-    bool atime_state;
-    bool mtime_state;
-    bool ctime_state;
-    bool uid_state;
-    bool gid_state;
-    bool inode_no_state;
-    bool link_cnt_state;
-    bool blocks_state;
-
-    uid_t uid;
-    gid_t gid;
-
-    std::string rootdir;
-
-    // rpc infos
-    std::map<uint64_t, std::string> hosts;
-    std::map<std::string, std::string> sys_hostfile;
-    uint64_t host_id; // my host number
-    size_t host_size;
-    std::string rpc_port;
-};
 // Used to bundle metadata into one place
 struct Metadentry {
     time_t atime;
@@ -95,8 +70,6 @@ extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
 extern hg_id_t rpc_get_dirents_id;
-// fs_config is set ONCE in the beginning. It shall not be modified afterwards
-extern std::shared_ptr<struct FsConfig> fs_config;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed
 extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 // file descriptor index validation flag
