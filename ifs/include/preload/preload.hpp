@@ -8,8 +8,6 @@
 
 #define CTX PreloadContext::getInstance()
 
-bool ld_is_aux_loaded();
-
 void init_ld_env_if_needed();
 
 void init_preload() __attribute__((constructor));

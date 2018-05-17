@@ -12,8 +12,6 @@ enum class Margo_mode {
     RPC, IPC
 };
 
-// atomic bool to check if auxiliary files from daemon are loaded
-std::atomic<bool> is_aux_loaded_(false);
 // thread to initialize the whole margo shazaam only once per process
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
@@ -213,14 +211,6 @@ bool init_margo_client(Margo_mode mode, const string na_plugin) {
 }
 
 /**
- * Returns atomic bool, if Margo is running
- * @return
- */
-bool ld_is_aux_loaded() {
-    return is_aux_loaded_;
-}
-
-/**
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
 void init_ld_environment_() {
@@ -289,7 +279,6 @@ void init_preload() {
         exit(EXIT_FAILURE);
     } else {
         CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, CTX->mountdir());
-        is_aux_loaded_ = true;
     }
     CTX->initialized(true);
     CTX->log()->debug("{}() exit", __func__);
