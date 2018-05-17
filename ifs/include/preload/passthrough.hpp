@@ -63,6 +63,8 @@ extern void* libc_opendir;
 extern void* libc_readdir;
 extern void* libc_closedir;
 
+extern void* libc_chdir;
+
 void init_passthrough_if_needed();
 
 #endif //IFS_PASSTHROUGH_HPP
