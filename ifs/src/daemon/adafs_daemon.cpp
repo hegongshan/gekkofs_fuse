@@ -2,6 +2,7 @@
 #include <daemon/adafs_daemon.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
+#include <global/rpc/distributor.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
@@ -65,6 +66,11 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
         return false;
     }
+
+    /* Setup distributor */
+    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(ADAFS_DATA->host_id(), ADAFS_DATA->host_size());
+    ADAFS_DATA->distributor(simple_hash_dist);
+
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
     ADAFS_DATA->atime_state(MDATA_USE_ATIME);
     ADAFS_DATA->mtime_state(MDATA_USE_MTIME);

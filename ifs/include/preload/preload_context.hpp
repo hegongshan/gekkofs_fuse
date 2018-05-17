@@ -7,6 +7,7 @@
 
 /* Forward declarations */
 class OpenFileMap;
+class Distributor;
 
 
 class PreloadContext {
@@ -15,6 +16,7 @@ class PreloadContext {
 
     std::shared_ptr<spdlog::logger> log_;
     std::shared_ptr<OpenFileMap> ofm_;
+    std::shared_ptr<Distributor> distributor_;
     std::string mountdir_;
 
     public:
@@ -35,6 +37,9 @@ class PreloadContext {
     bool relativize_path(std::string& path) const;
 
     const std::shared_ptr<OpenFileMap>& file_map() const;
+
+    void distributor(std::shared_ptr<Distributor> distributor);
+    std::shared_ptr<Distributor> distributor() const;
 };
 
 

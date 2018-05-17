@@ -45,7 +45,15 @@ bool PreloadContext::relativize_path(std::string& path) const {
     path = path_to_relative(mountdir_, path);
     return !path.empty();
 }
-    
+
 const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {
     return ofm_;
+}
+
+void PreloadContext::distributor(std::shared_ptr<Distributor> d) {
+    distributor_ = d;
+}
+
+std::shared_ptr<Distributor> PreloadContext::distributor() const {
+    return distributor_;
 }

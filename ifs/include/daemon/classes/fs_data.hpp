@@ -7,6 +7,7 @@
 /* Forward declarations */
 class MetadataDB;
 class ChunkStorage;
+class Distributor;
 
 #include <unordered_map>
 #include <functional> //std::hash
@@ -45,6 +46,8 @@ private:
     std::shared_ptr<MetadataDB> mdb_;
     // Storage backend
     std::shared_ptr<ChunkStorage> storage_;
+    // Distributor
+    std::shared_ptr<Distributor> distributor_;
 
     // configurable metadata
     bool atime_state_;
@@ -120,6 +123,10 @@ public:
     const std::shared_ptr<ChunkStorage>& storage() const;
 
     void storage(const std::shared_ptr<ChunkStorage>& storage);
+
+    void distributor(std::shared_ptr<Distributor> d);
+
+    std::shared_ptr<Distributor> distributor() const;
 
     const std::string& hosts_raw() const;
 

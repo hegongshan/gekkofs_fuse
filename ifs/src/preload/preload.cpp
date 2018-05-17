@@ -2,6 +2,7 @@
 #include <global/global_defs.hpp>
 #include <preload/preload.hpp>
 #include <global/rpc/ipc_types.hpp>
+#include <global/rpc/distributor.hpp>
 #include <preload/margo_ipc.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/passthrough.hpp>
@@ -235,6 +236,11 @@ void init_ld_environment_() {
         CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through IPC.", __func__);
         exit(EXIT_FAILURE);
     }
+
+    /* Setup distributor */
+    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(fs_config->host_id, fs_config->host_size);
+    CTX->distributor(simple_hash_dist);
+
     if (!init_margo_client(Margo_mode::RPC, RPC_PROTOCOL)) {
         CTX->log()->error("{}() Unable to initialize Margo RPC client.", __func__);
         exit(EXIT_FAILURE);
