@@ -9,12 +9,39 @@
 class OpenFileMap;
 
 
+struct FsConfig {
+    // configurable metadata
+    bool atime_state;
+    bool mtime_state;
+    bool ctime_state;
+    bool uid_state;
+    bool gid_state;
+    bool inode_no_state;
+    bool link_cnt_state;
+    bool blocks_state;
+
+    uid_t uid;
+    gid_t gid;
+
+    std::string rootdir;
+
+    // rpc infos
+    std::map<uint64_t, std::string> hosts;
+    std::map<std::string, std::string> sys_hostfile;
+    uint64_t host_id; // my host number
+    size_t host_size;
+    std::string rpc_port;
+};
+
+
 class PreloadContext {
     private:
     PreloadContext();
 
     std::shared_ptr<spdlog::logger> log_;
     std::shared_ptr<OpenFileMap> ofm_;
+    std::shared_ptr<FsConfig> fs_conf_;
+
     std::string mountdir_;
 
     public:
@@ -35,6 +62,7 @@ class PreloadContext {
     bool relativize_path(std::string& path) const;
 
     const std::shared_ptr<OpenFileMap>& file_map() const;
+    const std::shared_ptr<FsConfig>& fs_conf() const;
 };
 
 

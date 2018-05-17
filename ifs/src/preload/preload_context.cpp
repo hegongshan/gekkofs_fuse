@@ -7,7 +7,8 @@
 
 
 PreloadContext::PreloadContext():
-    ofm_(std::make_shared<OpenFileMap>())
+    ofm_(std::make_shared<OpenFileMap>()),
+    fs_conf_(std::make_shared<FsConfig>())
 {}
 
 void PreloadContext::log(std::shared_ptr<spdlog::logger> logger) {
@@ -45,7 +46,12 @@ bool PreloadContext::relativize_path(std::string& path) const {
     path = path_to_relative(mountdir_, path);
     return !path.empty();
 }
-    
+
 const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {
     return ofm_;
 }
+
+const std::shared_ptr<FsConfig>& PreloadContext::fs_conf() const {
+    return fs_conf_;
+}
+

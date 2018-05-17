@@ -69,24 +69,24 @@ bool ipc_send_get_fs_config() {
         if (ret == HG_SUCCESS) {
             if (!CTX->mountdir().empty() && CTX->mountdir() != out.mountdir) {
                 CTX->log()->warn(
-                        "{}() fs_config mountdir {} and received out.mountdir {} mismatch detected! Using received mountdir",
+                        "{}() fs_conf mountdir {} and received out.mountdir {} mismatch detected! Using received mountdir",
                         __func__, CTX->mountdir(), out.mountdir);
                 CTX->mountdir(out.mountdir);
             }
-            fs_config->rootdir = out.rootdir;
-            fs_config->atime_state = out.atime_state;
-            fs_config->mtime_state = out.mtime_state;
-            fs_config->ctime_state = out.ctime_state;
-            fs_config->uid_state = out.uid_state;
-            fs_config->gid_state = out.gid_state;
-            fs_config->inode_no_state = out.inode_no_state;
-            fs_config->link_cnt_state = out.link_cnt_state;
-            fs_config->blocks_state = out.blocks_state;
-            fs_config->uid = out.uid;
-            fs_config->gid = out.gid;
-            fs_config->host_id = out.host_id;
-            fs_config->host_size = out.host_size;
-            fs_config->rpc_port = to_string(RPC_PORT);
+            CTX->fs_conf()->rootdir = out.rootdir;
+            CTX->fs_conf()->atime_state = out.atime_state;
+            CTX->fs_conf()->mtime_state = out.mtime_state;
+            CTX->fs_conf()->ctime_state = out.ctime_state;
+            CTX->fs_conf()->uid_state = out.uid_state;
+            CTX->fs_conf()->gid_state = out.gid_state;
+            CTX->fs_conf()->inode_no_state = out.inode_no_state;
+            CTX->fs_conf()->link_cnt_state = out.link_cnt_state;
+            CTX->fs_conf()->blocks_state = out.blocks_state;
+            CTX->fs_conf()->uid = out.uid;
+            CTX->fs_conf()->gid = out.gid;
+            CTX->fs_conf()->host_id = out.host_id;
+            CTX->fs_conf()->host_size = out.host_size;
+            CTX->fs_conf()->rpc_port = to_string(RPC_PORT);
 
             // split comma separated host string and create a hosts map
             string hosts_raw = out.hosts_raw;
@@ -97,7 +97,7 @@ bool ipc_send_get_fs_config() {
             for (auto&& s : tok) {
                 hostmap[i++] = s;
             }
-            fs_config->hosts = hostmap;
+            CTX->fs_conf()->hosts = hostmap;
             CTX->log()->debug("{}() Got response with mountdir {}", __func__, out.mountdir);
         } else {
             CTX->log()->error("{}() Retrieving fs configurations from daemon", __func__);

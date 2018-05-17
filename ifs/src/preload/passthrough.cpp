@@ -2,14 +2,11 @@
  * All intercepted functions are mapped to a different function pointer prefixing <libc_>
  */
 #include <preload/passthrough.hpp>
-#include <preload/preload_util.hpp>
 #include <global/configure.hpp>
 
 #include <dlfcn.h>
 
 static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
-
-std::shared_ptr<FsConfig> fs_config;
 
 // function pointer for preloading
 void* libc;
@@ -125,8 +122,6 @@ void init_passthrough_() {
     libc_opendir = dlsym(libc, "opendir");
     libc_readdir = dlsym(libc, "readdir");
     libc_closedir = dlsym(libc, "closedir");
-
-    fs_config = std::make_shared<struct FsConfig>();
 
     //set the spdlogger and initialize it with spdlog
     auto ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);

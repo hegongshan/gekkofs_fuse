@@ -1,6 +1,6 @@
 #include <global/configure.hpp>
-#include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/preload_util.hpp>
+#include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/chunk_calc_util.hpp>
 
@@ -30,7 +30,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
     for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
-        auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
+        auto target = adafs_hash_path_chunk(path, chnk_id, CTX->fs_conf()->host_size);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
             targets.push_back(target);
@@ -79,7 +79,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
         rpc_in[i].total_chunk_size = total_chunk_size; // total size to write
-        rpc_in[i].bulk_handle = (target == fs_config->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
+        rpc_in[i].bulk_handle = (target == CTX->fs_conf()->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
         margo_create_wrap(ipc_write_data_id, rpc_write_data_id, target, rpc_handles[i], false);
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
@@ -146,7 +146,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
     for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
-        auto target = adafs_hash_path_chunk(path, chnk_id, fs_config->host_size);
+        auto target = adafs_hash_path_chunk(path, chnk_id, CTX->fs_conf()->host_size);
         if (target_chnks.count(target) == 0) {
             target_chnks.insert(make_pair(target, vector<uint64_t>{chnk_id}));
             targets.push_back(target);
@@ -196,7 +196,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
         rpc_in[i].total_chunk_size = total_chunk_size; // total size to write
-        rpc_in[i].bulk_handle = (target == fs_config->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
+        rpc_in[i].bulk_handle = (target == CTX->fs_conf()->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
         margo_create_wrap(ipc_read_data_id, rpc_read_data_id, target, rpc_handles[i], false);
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
