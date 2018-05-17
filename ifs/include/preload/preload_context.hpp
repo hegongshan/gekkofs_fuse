@@ -43,6 +43,7 @@ class PreloadContext {
     std::shared_ptr<FsConfig> fs_conf_;
 
     std::string mountdir_;
+    bool initialized_;
 
     public:
     static PreloadContext* getInstance() {
@@ -63,6 +64,9 @@ class PreloadContext {
 
     const std::shared_ptr<OpenFileMap>& file_map() const;
     const std::shared_ptr<FsConfig>& fs_conf() const;
+
+    void initialized(const bool& flag);
+    bool initialized() const;
 };
 
 

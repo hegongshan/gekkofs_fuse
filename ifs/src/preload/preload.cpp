@@ -1,5 +1,6 @@
 
 #include <global/global_defs.hpp>
+#include <global/configure.hpp>
 #include <preload/preload.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <preload/margo_ipc.hpp>
@@ -254,14 +255,34 @@ void init_ld_env_if_needed() {
     pthread_once(&init_env_thread, init_ld_environment_);
 }
 
+void init_logging() {
+    //set the spdlogger and initialize it with spdlog
+    auto ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
+    // set logger format
+    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
+    // flush log when info, warning, error messages are encountered
+    ld_logger->flush_on(spdlog::level::info);
+#if defined(LOG_PRELOAD_TRACE)
+    spdlog::set_level(spdlog::level::trace);
+    ld_logger->flush_on(spdlog::level::trace);
+#elif defined(LOG_PRELOAD_DEBUG)
+    spdlog::set_level(spdlog::level::debug);
+#elif defined(LOG_PRELOAD_INFO)
+    spdlog::set_level(spdlog::level::info);
+#else
+    spdlog::set_level(spdlog::level::off);
+#endif
+
+    CTX->log(ld_logger);
+}
 
 /**
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
     init_passthrough_if_needed();
-    // The logger is initialized in init_passthrough. So we cannot log before that.
-    CTX->log()->info("{}() enter", __func__);
+    init_logging();
+    CTX->log()->debug("Initialized logging subsystem");
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
@@ -270,6 +291,7 @@ void init_preload() {
         CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, CTX->mountdir());
         is_aux_loaded_ = true;
     }
+    CTX->initialized(true);
     CTX->log()->debug("{}() exit", __func__);
 }
 
