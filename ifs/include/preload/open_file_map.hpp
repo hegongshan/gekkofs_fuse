@@ -14,6 +14,7 @@ enum class OpenFile_flags {
     rdonly,
     wronly,
     rdwr,
+    cloexec,
     flag_count // this is purely used as a size variable of this enum class
 };
 
