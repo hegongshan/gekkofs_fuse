@@ -62,7 +62,7 @@ extern hg_id_t rpc_get_dirents_id;
 
 bool is_fs_path(const char* path);
 
-int db_val_to_stat(std::string path, std::string db_val, struct stat& attr);
+int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
 
 int get_daemon_pid();
 
