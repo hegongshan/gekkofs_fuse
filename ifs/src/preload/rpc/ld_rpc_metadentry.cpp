@@ -468,8 +468,13 @@ void rpc_send_get_dirents(OpenDir& open_dir){
     std::vector<rpc_get_dirents_in_t> rpc_in(host_size);
     std::vector<char*> recv_buffers(host_size);
 
-    // preallocate receiving buffer. The actual size is not known yet.
-    auto recv_buff = std::make_unique<char[]>(RPC_DIRENTS_BUFF_SIZE);
+    /* preallocate receiving buffer. The actual size is not known yet.
+     *
+     * On C++14 make_unique function also zeroes the newly allocated buffer.
+     * It turns out that this operation is increadibly slow for such a big
+     * buffer. Moreover we don't need a zeroed buffer here.
+     */
+    auto recv_buff = std::unique_ptr<char[]>(new char[RPC_DIRENTS_BUFF_SIZE]);
     const unsigned long int per_host_buff_size = RPC_DIRENTS_BUFF_SIZE / host_size;
 
     hg_return_t hg_ret;
