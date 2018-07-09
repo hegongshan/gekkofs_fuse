@@ -43,6 +43,7 @@ target_link_libraries(adafs_daemon
     mercury
     ${MARGO_LIBRARIES}
     # others
+    Boost::boost # needed for tokenizer header
     Boost::program_options
     Boost::filesystem
     Threads::Threads
