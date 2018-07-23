@@ -148,6 +148,7 @@ USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
 CMAKE=`find_cmake`
+CMAKE="${CMAKE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
 echo "Source path = ${SOURCE}";
 echo "Install path = ${INSTALL}";
