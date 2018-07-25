@@ -45,6 +45,7 @@ class PreloadContext {
     std::shared_ptr<Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
+    std::string cwd_;
     std::string mountdir_;
     std::string daemon_addr_str_;
     bool initialized_;
@@ -66,6 +67,9 @@ class PreloadContext {
 
     void daemon_addr_str(const std::string& path);
     const std::string& daemon_addr_str() const;
+
+    void cwd(const std::string& path);
+    std::string cwd() const;
 
     bool relativize_path(std::string& path) const;
 
