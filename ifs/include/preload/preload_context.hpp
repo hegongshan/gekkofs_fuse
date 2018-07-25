@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <map>
 #include <memory>
+#include <vector>
 #include <string>
 
 /* Forward declarations */
@@ -46,6 +47,7 @@ class PreloadContext {
     std::shared_ptr<FsConfig> fs_conf_;
 
     std::string cwd_;
+    std::vector<std::string> mountdir_components_;
     std::string mountdir_;
     std::string daemon_addr_str_;
     bool initialized_;
@@ -63,13 +65,14 @@ class PreloadContext {
     std::shared_ptr<spdlog::logger> log() const;
 
     void mountdir(const std::string& path);
-    std::string mountdir() const;
+    const std::string& mountdir() const;
+    const std::vector<std::string>& mountdir_components() const;
 
     void daemon_addr_str(const std::string& path);
     const std::string& daemon_addr_str() const;
 
     void cwd(const std::string& path);
-    std::string cwd() const;
+    const std::string& cwd() const;
 
     bool relativize_path(std::string& path) const;
 
