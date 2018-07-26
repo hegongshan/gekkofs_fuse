@@ -1,10 +1,10 @@
 #include <global/path_util.hpp>
 #include <unistd.h>
 #include <system_error>
+#include <cstring>
 #include <cassert>
+#include <sys/stat.h>
 
-
-const constexpr char PSP('/'); // PATH SEPARATOR
 
 bool is_relative_path(const std::string& path) {
     return (!path.empty()) &&
@@ -20,7 +20,44 @@ bool has_trailing_slash(const std::string& path) {
     return path.back() == PSP;
 }
 
-std::vector<std::string> split_path(const std::string& path) { 
+/* Add path prefix to a given C string.
+ *
+ * Returns a string composed by the `prefix_path`
+ * followed by `raw_path`.
+ *
+ * This would return the same of:
+ * ```
+ * std::string(raw_path).append(prefix_path);
+ * ```
+ * But it is faster because it avoids to copy the `raw_path` twice.
+ *
+ *
+ * Time cost approx: O(len(prefix_path)) + 2 O(len(raw_path))
+ *
+ * Example:
+ * ```
+ * prepend_path("/tmp/prefix", "./my/path") == "/tmp/prefix/./my/path"
+ * ```
+ */
+std::string prepend_path(const std::string& prefix_path, const char * raw_path) {
+    assert(!has_trailing_slash(prefix_path));
+    std::size_t raw_len = std::strlen(raw_path);
+    std::string res;
+    res.reserve(prefix_path.size() + 1 + raw_len);
+    res.append(prefix_path);
+    res.push_back(PSP);
+    res.append(raw_path, raw_len);
+    return res;
+}
+
+/* Split a path into its components
+ *
+ * Returns a vector of the components of the given path.
+ *
+ * Example:
+ *  split_path("/first/second/third") == ["first", "second", "third"]
+ */
+std::vector<std::string> split_path(const std::string& path) {
     std::vector<std::string> tokens;
     size_t start = std::string::npos;
     size_t end = (path.front() != PSP)? 0 : 1;
@@ -31,9 +68,13 @@ std::vector<std::string> split_path(const std::string& path) {
         if(end != std::string::npos) {
             ++end;
         }
-    } 
+    }
     return tokens;
 }
+
+
+
+
 
 /* Make an absolute path relative to a root path
  *
@@ -86,19 +127,3 @@ std::string dirname(const std::string& path) {
     }
     return path.substr(0, parent_path_size);
 }
-
-std::string get_current_working_dir() {
-    char temp[PATH_MAX_LEN];
-    if(getcwd(temp, PATH_MAX_LEN) == NULL) {
-        throw std::system_error(errno,
-                                std::system_category(),
-                                "Failed to retrieve current working directory");
-    }
-    // getcwd could return "(unreachable)<PATH>" in some cases
-    if(temp[0] != '/') {
-        throw std::runtime_error(
-                "Current working directory is unreachable");
-    }
-    return {temp};
-}
-
