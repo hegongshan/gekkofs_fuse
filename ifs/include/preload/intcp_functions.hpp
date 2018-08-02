@@ -22,6 +22,9 @@ extern "C" {
 struct dirent* intcp_readdir(DIR* dirp);
 weak_alias(intcp_readdir, readdir)
 
+int intcp_dirfd(DIR* dirp);
+weak_alias(intcp_dirfd, dirfd)
+
 int intcp_closedir(DIR* dirp);
 weak_alias(intcp_closedir, closedir)
 
