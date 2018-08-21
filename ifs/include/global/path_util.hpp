@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#define PATH_MAX_LEN 4096 // 4k chars
+constexpr unsigned int PATH_MAX_LEN = 4096; // 4k chars
 
 constexpr char PSP = '/'; // PATH SEPARATOR
 

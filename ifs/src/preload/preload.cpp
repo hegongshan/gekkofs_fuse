@@ -11,6 +11,8 @@
 #include <preload/passthrough.hpp>
 #include <preload/preload_util.hpp>
 
+#include <fstream>
+
 // thread to initialize the whole margo shazaam only once per process
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
@@ -162,6 +164,20 @@ void init_logging() {
     CTX->log(spdlog::get(logger_names.at(0)));
 }
 
+void log_prog_name() {
+    std::string line;
+    std::ifstream cmdline("/proc/self/cmdline");
+    if (!cmdline.is_open()) {
+        CTX->log()->error("Unable to open cmdline file");
+        throw runtime_error("Unable to open cmdline file");
+    }
+    if(!getline(cmdline, line)) {
+        throw runtime_error("Unable to read cmdline file");
+    }
+    CTX->log()->info("Command to itercept: '{}'", line);
+    cmdline.close();
+}
+
 /**
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
@@ -169,7 +185,8 @@ void init_preload() {
     init_passthrough_if_needed();
     init_logging();
     CTX->log()->debug("Initialized logging subsystem");
-    CTX->cwd(get_sys_cwd());
+    log_prog_name();
+    init_cwd();
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
