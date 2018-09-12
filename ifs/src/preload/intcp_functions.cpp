@@ -213,12 +213,9 @@ size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
         auto fd = file_to_fd(stream);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
-            auto adafs_fd = CTX->file_map()->get(fd);
-            auto pos = adafs_fd->pos(); //retrieve the current offset
-            auto ret = adafs_pwrite_ws(fd, ptr, size*nmemb, pos);
+            auto ret = adafs_write(fd, ptr, size*nmemb);
             if (ret > 0) {
                 // Update offset in file descriptor in the file map
-                adafs_fd->pos(pos + ret);
                 return ret / size;
             }
             return ret;
@@ -922,16 +919,7 @@ ssize_t write(int fd, const void* buf, size_t count) {
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
-            auto adafs_fd = CTX->file_map()->get(fd);
-            auto pos = adafs_fd->pos(); // retrieve the current offset
-            if (adafs_fd->get_flag(OpenFile_flags::append))
-                adafs_lseek(adafs_fd, 0, SEEK_END);
-            auto ret = adafs_pwrite_ws(fd, buf, count, pos);
-            // Update offset in file descriptor in the file map
-            if (ret > 0) {
-                adafs_fd->pos(pos + count);
-            }
-            return ret;
+            return adafs_write(fd, buf, count);
         }
     }
     return (reinterpret_cast<decltype(&write)>(libc_write))(fd, buf, count);
@@ -964,33 +952,7 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
-            auto adafs_fd = CTX->file_map()->get(fd);
-            auto pos = adafs_fd->pos(); // retrieve the current offset
-            ssize_t written = 0;
-            ssize_t ret;
-            for (int i = 0; i < iovcnt; ++i){
-                auto count = (iov+i)->iov_len;
-                if(count == 0) {
-                    continue;
-                }
-                auto buf = (iov+i)->iov_base;
-                ret = adafs_pwrite_ws(fd, buf, count, pos);
-                if(ret == -1) {
-                    break;
-                }
-                written += ret;
-                pos += ret;
-
-                if(static_cast<size_t>(ret) < count){
-                    break;
-                }
-            }
-
-            if(written == 0){
-                return -1;
-            }
-            adafs_fd->pos(pos);
-            return written;
+            return adafs_writev(fd, iov, iovcnt);
         }
     }
     return (reinterpret_cast<decltype(&writev)>(libc_writev))(fd, iov, iovcnt);
