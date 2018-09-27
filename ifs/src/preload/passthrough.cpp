@@ -68,6 +68,8 @@ void* libc___lxstat64;
 
 void* libc_statfs;
 void* libc_fstatfs;
+void* libc_statvfs;
+void* libc_fstatvfs;
 
 void* libc_write;
 void* libc_pwrite;
@@ -182,6 +184,8 @@ void init_passthrough_() {
 
     libc_statfs = dlsym(libc, "statfs");
     libc_fstatfs = dlsym(libc, "fstatfs");
+    libc_statvfs = dlsym(libc, "statvfs");
+    libc_fstatvfs = dlsym(libc, "fstatvfs");
 
     libc_write = dlsym(libc, "write");
     libc_pwrite = dlsym(libc, "pwrite");

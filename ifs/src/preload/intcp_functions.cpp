@@ -875,43 +875,28 @@ int __lxstat64(int ver, const char* path, struct stat64* buf) noexcept {
     return -1;
 }
 
-int statfs(const char* path, struct statfs* buf) noexcept {
+int intcp_statvfs(const char *path, struct statvfs *buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
-        return LIBC_FUNC(statfs, path, buf);
-    }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(statvfs, path, buf);
+    }
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
-        return LIBC_FUNC(statfs, path, buf);
+        return LIBC_FUNC(statvfs, path, buf);
     }
-
-    // get information of the underlying fs.
-    // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
-    struct statfs realfs{};
-    auto ret = LIBC_FUNC(statfs, CTX->mountdir().c_str(), &realfs);
-    if (ret != 0) {
-        return ret;
-    }
-    return adafs_statfs(rel_path, buf, realfs);
+    return adafs_statvfs(buf);
 }
 
-int fstatfs(int fd, struct statfs* buf) noexcept {
+int intcp_fstatvfs(int fd, struct statvfs *buf) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
-            auto adafs_fd = CTX->file_map()->get(fd);
-            // get information of the underlying fs
-            // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
-            struct statfs realfs{};
-            auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(CTX->mountdir().c_str(), &realfs);
-            if (ret != 0)
-                return ret;
-            return adafs_statfs(adafs_fd->path(), buf, realfs);
+            return adafs_statvfs(buf);
         }
     }
-    return (reinterpret_cast<decltype(&fstatfs)>(libc_fstatfs))(fd, buf);
+    return LIBC_FUNC(fstatvfs, fd, buf);
 }
 
 ssize_t write(int fd, const void* buf, size_t count) {

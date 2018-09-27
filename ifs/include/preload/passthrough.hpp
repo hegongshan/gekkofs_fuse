@@ -68,6 +68,8 @@ extern void* libc___lxstat64;
 
 extern void* libc_statfs;
 extern void* libc_fstatfs;
+extern void* libc_statvfs;
+extern void* libc_fstatvfs;
 
 extern void* libc_write;
 extern void* libc_pwrite;
