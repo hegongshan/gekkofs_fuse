@@ -1,24 +1,14 @@
+#include "global/metadata.hpp"
+#include "global/configure.hpp"
 
-#include <daemon/classes/metadata.hpp>
+#include <fmt/fmt.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-using namespace std;
+#include <ctime>
+
 
 static const char MSP = '|'; // metadata separator
-
-// By default create an empty metadata object
-
-Metadata::Metadata() :
-    atime_(),
-    mtime_(),
-    ctime_(),
-    uid_(),
-    gid_(),
-    mode_(),
-    inode_no_(INVALID_INODE),
-    link_count_(0),
-    size_(0),
-    blocks_(0)
-{}
 
 Metadata::Metadata(const mode_t mode) :
     atime_(),
@@ -27,17 +17,12 @@ Metadata::Metadata(const mode_t mode) :
     uid_(),
     gid_(),
     mode_(mode),
-    inode_no_(INVALID_INODE),
+    inode_no_(0),
     link_count_(0),
     size_(0),
     blocks_(0)
 {}
 
-/**
- * Creates a metadata object from a value from the database
- * @param path
- * @param db_val
- */
 Metadata::Metadata(std::string db_val) {
     auto pos = db_val.find(MSP);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
@@ -65,44 +50,86 @@ Metadata::Metadata(std::string db_val) {
         return;
     }
     // The order is important. don't change.
-    if (ADAFS_DATA->atime_state()) {
+    if (MDATA_USE_ATIME) {
         pos = db_val.find(MSP);
         atime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->mtime_state()) {
+    if (MDATA_USE_MTIME) {
         pos = db_val.find(MSP);
         mtime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->ctime_state()) {
+    if (MDATA_USE_CTIME) {
         pos = db_val.find(MSP);
         ctime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->uid_state()) {
+    if (MDATA_USE_UID) {
         pos = db_val.find(MSP);
         uid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->gid_state()) {
+    if (MDATA_USE_GID) {
         pos = db_val.find(MSP);
         gid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->inode_no_state()) {
+    if (MDATA_USE_INODE_NO) {
         pos = db_val.find(MSP);
         inode_no_ = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->link_cnt_state()) {
+    if (MDATA_USE_LINK_CNT) {
         pos = db_val.find(MSP);
         link_count_ = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
-    if (ADAFS_DATA->blocks_state()) { // last one will not encounter a delimiter anymore
+    if (MDATA_USE_BLOCKS) { // last one will not encounter a delimiter anymore
         blocks_ = static_cast<blkcnt_t>(stoul(db_val));
     }
+}
+
+std::string Metadata::serialize() const
+{
+    std::string s;
+    // The order is important. don't change.
+    s += fmt::format_int(mode_).c_str(); // add mandatory mode
+    s += MSP;
+    s += fmt::format_int(size_).c_str(); // add mandatory size
+    if (MDATA_USE_ATIME) {
+        s += MSP;
+        s += fmt::format_int(atime_).c_str();
+    }
+    if (MDATA_USE_MTIME) {
+        s += MSP;
+        s += fmt::format_int(mtime_).c_str();
+    }
+    if (MDATA_USE_CTIME) {
+        s += MSP;
+        s += fmt::format_int(ctime_).c_str();
+    }
+    if (MDATA_USE_UID) {
+        s += MSP;
+        s += fmt::format_int(uid_).c_str();
+    }
+    if (MDATA_USE_GID) {
+        s += MSP;
+        s += fmt::format_int(gid_).c_str();
+    }
+    if (MDATA_USE_INODE_NO) {
+        s += MSP;
+        s += fmt::format_int(inode_no_).c_str();
+    }
+    if (MDATA_USE_LINK_CNT) {
+        s += MSP;
+        s += fmt::format_int(link_count_).c_str();
+    }
+    if (MDATA_USE_BLOCKS) {
+        s += MSP;
+        s += fmt::format_int(blocks_).c_str();
+    }
+    return s;
 }
 
 void Metadata::init_ACM_time() {
@@ -122,50 +149,6 @@ void Metadata::update_ACM_time(bool a, bool c, bool m) {
         ctime_ = time;
     if (m)
         mtime_ = time;
-}
-
-/**
- * Returns the string rapresentation of metadata
- */
-std::string Metadata::serialize() const {
-    std::string s;
-    // The order is important. don't change.
-    s += fmt::format_int(mode_).c_str(); // add mandatory mode
-    s += MSP;
-    s += fmt::format_int(size_).c_str(); // add mandatory size
-    if (ADAFS_DATA->atime_state()) {
-        s += MSP;
-        s += fmt::format_int(atime_).c_str();
-    }
-    if (ADAFS_DATA->mtime_state()) {
-        s += MSP;
-        s += fmt::format_int(mtime_).c_str();
-    }
-    if (ADAFS_DATA->ctime_state()) {
-        s += MSP;
-        s += fmt::format_int(ctime_).c_str();
-    }
-    if (ADAFS_DATA->uid_state()) {
-        s += MSP;
-        s += fmt::format_int(uid_).c_str();
-    }
-    if (ADAFS_DATA->gid_state()) {
-        s += MSP;
-        s += fmt::format_int(gid_).c_str();
-    }
-    if (ADAFS_DATA->inode_no_state()) {
-        s += MSP;
-        s += fmt::format_int(inode_no_).c_str();
-    }
-    if (ADAFS_DATA->link_cnt_state()) {
-        s += MSP;
-        s += fmt::format_int(link_count_).c_str();
-    }
-    if (ADAFS_DATA->blocks_state()) {
-        s += MSP;
-        s += fmt::format_int(blocks_).c_str();
-    }
-    return s;
 }
 
 //-------------------------------------------- GETTER/SETTER

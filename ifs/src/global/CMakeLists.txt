@@ -18,3 +18,15 @@ target_sources(log_util
 target_link_libraries(log_util
     spdlog
     )
+
+add_library(metadata STATIC)
+set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_sources(metadata
+    PUBLIC
+    ${INCLUDE_DIR}/global/metadata.hpp
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/metadata.cpp
+    )
+target_link_libraries(metadata
+    fmt
+    )
