@@ -3,7 +3,7 @@
 
 using namespace std;
 
-static const std::string dentry_val_delim = ","s;
+static const char MSP = '|'; // metadata separator
 
 // By default create an empty metadata object
 
@@ -36,7 +36,7 @@ Metadata::Metadata(const std::string& path, const mode_t mode) : atime_(),
  * @param db_val
  */
 Metadata::Metadata(const std::string& path, std::string db_val) {
-    auto pos = db_val.find(dentry_val_delim);
+    auto pos = db_val.find(MSP);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
         inode_no_ = std::hash<std::string>{}(path);
         mode_ = static_cast<unsigned int>(stoul(db_val));
@@ -54,7 +54,7 @@ Metadata::Metadata(const std::string& path, std::string db_val) {
     mode_ = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
     db_val.erase(0, pos + 1);
     // size is also there
-    pos = db_val.find(dentry_val_delim);
+    pos = db_val.find(MSP);
     if (pos != std::string::npos) {  // delimiter found. more metadata is coming
         size_ = stol(db_val.substr(0, pos));
         db_val.erase(0, pos + 1);
@@ -64,37 +64,37 @@ Metadata::Metadata(const std::string& path, std::string db_val) {
     }
     // The order is important. don't change.
     if (ADAFS_DATA->atime_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         atime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->mtime_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         mtime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->ctime_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         ctime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->uid_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         uid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->gid_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         gid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->inode_no_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         inode_no_ = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         link_count_ = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
@@ -129,38 +129,38 @@ std::string Metadata::serialize() const {
     std::string s;
     // The order is important. don't change.
     s += fmt::format_int(mode_).c_str(); // add mandatory mode
-    s += dentry_val_delim;
+    s += MSP;
     s += fmt::format_int(size_).c_str(); // add mandatory size
     if (ADAFS_DATA->atime_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(atime_).c_str();
     }
     if (ADAFS_DATA->mtime_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(mtime_).c_str();
     }
     if (ADAFS_DATA->ctime_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(ctime_).c_str();
     }
     if (ADAFS_DATA->uid_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(uid_).c_str();
     }
     if (ADAFS_DATA->gid_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(gid_).c_str();
     }
     if (ADAFS_DATA->inode_no_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(inode_no_).c_str();
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(link_count_).c_str();
     }
     if (ADAFS_DATA->blocks_state()) {
-        s += dentry_val_delim;
+        s += MSP;
         s += fmt::format_int(blocks_).c_str();
     }
     return s;
