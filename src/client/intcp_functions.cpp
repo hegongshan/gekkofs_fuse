@@ -641,8 +641,8 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
     //TODO handle the AT_EACCESS flag
 
     std::string resolved;
-    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved,
-                                           !(flags & AT_SYMLINK_NOFOLLOW));
+    bool follow_links = !(flags & AT_SYMLINK_NOFOLLOW);
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, follow_links);
     switch(rstatus) {
         case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
@@ -655,7 +655,7 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
             return -1;
 
         case RelativizeStatus::internal:
-            return adafs_access(resolved, mode);
+            return adafs_access(resolved, mode, follow_links);
 
         default:
             CTX->log()->error("{}() relativize status unknown: {}", __func__);
@@ -700,8 +700,7 @@ int lstat(const char* path, struct stat* buf) noexcept {
     if (!CTX->relativize_path(path, rel_path, false)) {
         return LIBC_FUNC(lstat, rel_path.c_str(), buf);
     }
-    CTX->log()->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
-    return adafs_stat(rel_path, buf);
+    return adafs_stat(rel_path, buf, false);
 }
 
 int __xstat(int ver, const char* path, struct stat* buf) noexcept {
@@ -760,8 +759,8 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
     }
 
     std::string resolved;
-    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved,
-                                           !(flags & AT_SYMLINK_NOFOLLOW));
+    bool follow_links = !(flags & AT_SYMLINK_NOFOLLOW);
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, follow_links);
     switch(rstatus) {
         case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
@@ -774,7 +773,7 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
             return -1;
 
         case RelativizeStatus::internal:
-            return adafs_stat(resolved, buf);
+            return adafs_stat(resolved, buf, follow_links);
 
         default:
             CTX->log()->error("{}() relativize status unknown: {}", __func__);
@@ -815,7 +814,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) noexcept {
     if (!CTX->relativize_path(path, rel_path, false)) {
         return LIBC_FUNC(__lxstat, ver, rel_path.c_str(), buf);
     }
-    return adafs_stat(rel_path, buf);
+    return adafs_stat(rel_path, buf, false);
 }
 
 int __lxstat64(int ver, const char* path, struct stat64* buf) noexcept {
@@ -1406,38 +1405,73 @@ int linkat(int olddirfd, const char *oldpath,
     return LIBC_FUNC(linkat, olddirfd, oldpath, newdirfd, newpath, flags);
 }
 
-int symlink(const char* oldpath, const char* newpath) noexcept {
-    init_passthrough_if_needed();
-    if(!CTX->interception_enabled()) {
-        return LIBC_FUNC(symlink, oldpath, newpath);
-    }
-    CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
-            __func__, oldpath, newpath);
-
-    std::string rel_oldpath;
-    bool oldpath_internal = CTX->relativize_path(oldpath, rel_oldpath);
-
-    std::string rel_newpath;
-    bool newpath_internal = CTX->relativize_path(newpath, rel_newpath);
-
-    if (oldpath_internal || newpath_internal) {
-        CTX->log()->error("{}() not implemented", __func__);
-        errno = ENOTSUP;
-        return -1;
-    }
-    return LIBC_FUNC(symlink, rel_oldpath.c_str(), rel_newpath.c_str());
+int intcp_symlink(const char* oldname, const char* newname) noexcept {
+    return symlinkat(oldname, AT_FDCWD, newname);
 }
 
-int symlinkat(const char* oldpath, int fd, const char* newpath) noexcept {
+int intcp_symlinkat(const char* oldname, int newdfd, const char* newname) noexcept {
     init_passthrough_if_needed();
-    if(CTX->interception_enabled()) {
-        CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
-               __func__, oldpath, newpath);
-        CTX->log()->error("{}() not implemented", __func__);
+    if(!CTX->interception_enabled()) {
+        return LIBC_FUNC(symlinkat, oldname, newdfd, newname);
+    }
+
+    CTX->log()->trace("{}() called with oldname '{}', new fd {}, new name '{}'",
+                      __func__, oldname, newdfd, newname);
+
+    std::string oldname_resolved;
+    auto oldname_is_internal = CTX->relativize_path(oldname, oldname_resolved);
+
+#ifndef HAS_SYMLINKS
+    if (oldname_is_internal) {
+        CTX->log()->warn("{}() attempt to create link to GekkoFS namespace: operation not supported."
+                "Enable through compile flags `-DHAS_SYMLINKS` or"
+                "with the cmake option `SYMLINK_SUPPORT`.", __func__);
         errno = ENOTSUP;
         return -1;
     }
-    return LIBC_FUNC(symlinkat, oldpath, fd, newpath);
+#endif
+
+    std::string newname_resolved;
+    auto new_status = CTX->relativize_fd_path(newdfd, newname, newname_resolved, false);
+    switch(new_status) {
+        case RelativizeStatus::fd_unknown:
+            return LIBC_FUNC(symlinkat, oldname, newdfd, newname);
+
+        case RelativizeStatus::external:
+            if(oldname_is_internal) {
+                CTX->log()->warn("{}() attempt to create link from outside to GekkoFS namespace: operation not supported."
+                        "Enable through compile flags `-DHAS_SYMLINKS` or"
+                        "with the cmake option `SYMLINK_SUPPORT`.", __func__);
+                errno = ENOTSUP;
+                return -1;
+            }
+            return LIBC_FUNC(symlinkat, oldname, newdfd, newname_resolved.c_str());
+
+        case RelativizeStatus::fd_not_a_dir:
+            errno = ENOTDIR;
+            return -1;
+
+        case RelativizeStatus::internal:
+#ifdef HAS_SYMLINKS
+            if(!oldname_is_internal) {
+                CTX->log()->warn("{}() attempt to create link from inside GekkoFS to outside: operation not supported", __func__);
+                errno = ENOTSUP;
+                return -1;
+            }
+            return adafs_mk_symlink(newname_resolved, oldname_resolved);
+#else
+            CTX->log()->warn("{}() attempt to create link from GekkoFS namespace: operation not supported."
+                "Enable through compile flags `-DHAS_SYMLINKS` or"
+                "with the cmake option `SYMLINK_SUPPORT`.", __func__);
+            errno = ENOTSUP;
+            return -1;
+#endif
+
+        default:
+            CTX->log()->error("{}() relativize status unknown", __func__);
+            errno = EINVAL;
+            return -1;
+    }
 }
 
 char *realpath(const char *path, char *resolved_path) {

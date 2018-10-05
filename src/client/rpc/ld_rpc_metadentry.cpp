@@ -453,4 +453,48 @@ void get_dirents(OpenDir& open_dir){
     }
 }
 
+#ifdef HAS_SYMLINKS
+
+int mk_symlink(const std::string& path, const std::string& target_path) {
+    hg_handle_t handle;
+    rpc_mk_symlink_in_t in{};
+    rpc_err_out_t out{};
+    int err = EUNKNOWN;
+    // fill in
+    in.path = path.c_str();
+    in.target_path = target_path.c_str();
+    // Create handle
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
+    auto ret = margo_create_wrap(rpc_mk_symlink_id, path, handle);
+    if (ret != HG_SUCCESS) {
+        errno = EBUSY;
+        return -1;
+    }
+    // Send rpc
+    CTX->log()->debug("{}() About to send RPC ...", __func__);
+    ret = margo_forward_timed_wrap(handle, &in);
+    // Get response
+    if (ret == HG_SUCCESS) {
+        CTX->log()->trace("{}() Waiting for response", __func__);
+        ret = margo_get_output(handle, &out);
+        if (ret == HG_SUCCESS) {
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
+            err = out.err;
+        } else {
+            // something is wrong
+            errno = EBUSY;
+            CTX->log()->error("{}() while getting rpc output", __func__);
+        }
+        /* clean up resources consumed by this rpc */
+        margo_free_output(handle, &out);
+    } else {
+        CTX->log()->warn("{}() timed out");
+        errno = EBUSY;
+    }
+    margo_destroy(handle);
+    return err;
+}
+
+#endif
+
 } //end namespace rpc_send

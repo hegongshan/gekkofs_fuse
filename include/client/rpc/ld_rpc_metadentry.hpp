@@ -29,6 +29,10 @@ int get_metadentry_size(const std::string& path, off64_t& ret_size);
 
 void get_dirents(OpenDir& open_dir);
 
+#ifdef HAS_SYMLINKS
+int mk_symlink(const std::string& path, const std::string& target_path);
+#endif
+
 
 } // end namespace rpc_send
 
