@@ -201,7 +201,7 @@ clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "f7f6955f140426b2a7
 # get Argobots
 clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215d6862f527775387418f7f6" "-b dev-fifo-wait" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "cf673d430ce3d4b4f0a32f19f261e7898a863b81" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "2676c8cf61874c4378ed699e3ca056636a4e152b" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.13.3.tar.gz" &
 
