@@ -70,8 +70,6 @@ extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
 extern hg_id_t rpc_get_dirents_id;
-// rpc addresses. Populated when environment is initialized. After that it is read-only accessed
-extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 
 // function definitions
 
@@ -87,6 +85,8 @@ int get_daemon_pid();
 bool read_system_hostfile();
 
 bool lookup_all_hosts();
+
+void cleanup_addresses();
 
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 

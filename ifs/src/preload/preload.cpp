@@ -45,8 +45,6 @@ hg_id_t rpc_get_dirents_id;
 // Margo instances
 margo_instance_id ld_margo_ipc_id;
 margo_instance_id ld_margo_rpc_id;
-// rpc address cache
-std::map<uint64_t, hg_addr_t> rpc_addresses;
 // local daemon IPC address
 hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
 
@@ -322,13 +320,7 @@ void destroy_preload() {
     // Shut down RPC client if used
     if (ld_margo_rpc_id != nullptr) {
         // free all rpc addresses in LRU map and finalize margo rpc
-        CTX->log()->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
-        for (auto& e : rpc_addresses) {
-            CTX->log()->info("{}() Trying to free hostid {}", __func__, e.first);
-            if (margo_addr_free(ld_margo_rpc_id, e.second) != HG_SUCCESS) {
-                CTX->log()->warn("{}() Unable to free RPC client's svr address: {}.", __func__, e.first);
-            }
-        }
+        cleanup_addresses();
         CTX->log()->debug("{}() About to finalize the margo RPC client. Actually not doing it XXX", __func__);
         // XXX Sometimes this hangs on the cluster. Investigate.
         // Might been solved in margo 0.3. It is not an issue with Omnipath for sure. Maybe CCI only issue.
@@ -345,7 +337,6 @@ void destroy_preload() {
         CTX->log()->debug("{}() Shut down Margo IPC client successful", __func__);
     }
     if (services_used) {
-        rpc_addresses.clear();
         CTX->log()->info("All services shut down. Client shutdown complete.");
     }
     else

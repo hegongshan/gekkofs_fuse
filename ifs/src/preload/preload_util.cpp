@@ -6,6 +6,8 @@
 
 #include <fstream>
 #include <iterator>
+#include <memory>
+#include <unordered_map>
 #include <sstream>
 #include <csignal>
 #include <random>
@@ -13,6 +15,9 @@
 using namespace std;
 
 static const std::string dentry_val_delim = ","s;
+
+// rpc address cache
+std::unique_ptr<std::unordered_map<uint64_t, hg_addr_t>> rpc_addresses;
 
 bool is_fs_path(const char* path) {
     return strstr(path, CTX->mountdir().c_str()) == path;
@@ -257,6 +262,7 @@ bool read_system_hostfile() {
 }
 
 bool lookup_all_hosts() {
+    rpc_addresses = std::make_unique<std::unordered_map<uint64_t, hg_addr_t>>();
     vector<uint64_t> hosts(CTX->fs_conf()->host_size);
     // populate vector with [0, ..., host_size - 1]
     ::iota(::begin(hosts), ::end(hosts), 0);
@@ -308,9 +314,19 @@ bool lookup_all_hosts() {
                              remote_addr, CTX->fs_conf()->hosts.at(CTX->fs_conf()->host_id));
             return false;
         }
-        rpc_addresses.insert(make_pair(host, svr_addr));
+        rpc_addresses->insert(make_pair(host, svr_addr));
     }
     return true;
+}
+
+void cleanup_addresses() {
+    CTX->log()->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
+    for (const auto& e : *rpc_addresses) {
+        CTX->log()->info("{}() Trying to free hostid {}", __func__, e.first);
+        if (margo_addr_free(ld_margo_rpc_id, e.second) != HG_SUCCESS) {
+            CTX->log()->warn("{}() Unable to free RPC client's svr address: {}.", __func__, e.first);
+        }
+    }
 }
 
 /**
@@ -320,8 +336,8 @@ bool lookup_all_hosts() {
  * @return
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    auto address_lookup = rpc_addresses.find(hostid);
-    auto found = address_lookup != rpc_addresses.end();
+    auto address_lookup = rpc_addresses->find(hostid);
+    auto found = address_lookup != rpc_addresses->end();
     if (found) {
         svr_addr = address_lookup->second;
         CTX->log()->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
