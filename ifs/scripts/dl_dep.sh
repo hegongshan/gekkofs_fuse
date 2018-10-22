@@ -8,13 +8,13 @@ COMMON_GIT_FLAGS="--quiet --single-branch"
 # Stop all backround jobs on interruption.
 # "kill -- -$$" sends a SIGTERM to the whole process group,
 # thus killing also descendants.
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
 
 
 exit_child() {
     if [ ! $? -eq 0 ]; then
         # notify the parent
-        kill -s SIGTERM `ps --pid $$ -oppid=`
+        kill -s SIGTERM -- -$$
     fi
 }
 
