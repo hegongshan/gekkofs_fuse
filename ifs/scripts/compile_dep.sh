@@ -89,7 +89,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
     echo "Positional arguments missing."
     usage_short
-    exit
+    exit 1
 fi
 SOURCE="$( readlink -f "${1}" )"
 INSTALL="$( readlink -f "${2}" )"

@@ -130,7 +130,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ -z ${1+x} ]]; then
     echo "Positional arguments missing."
     usage_short
-    exit
+    exit 1
 fi
 SOURCE="$( readlink -mn "${1}" )"
 
