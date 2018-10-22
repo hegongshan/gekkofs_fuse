@@ -30,15 +30,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# required packages
-set(ADAFS_DEPS_INSTALL CACHE PATH "Set the path to the required ADA-FS dependencies for libraries and headers")
-if (NOT ADAFS_DEPS_INSTALL)
-    set(ADAFS_DEPS_INSTALL /usr/local)
-    message("* ADA-FS dependency install path set to DEFAULT PATH: \"${ADAFS_DEPS_INSTALL}\"\n Use cmake argument \"-DADAFS_DEPS_INSTALL:PATH=<path>\" to expicitly set it.")
-else ()
-    message("* ADA-FS dependency install path set to \"${ADAFS_DEPS_INSTALL}\"")
-endif (NOT ADAFS_DEPS_INSTALL)
-
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
