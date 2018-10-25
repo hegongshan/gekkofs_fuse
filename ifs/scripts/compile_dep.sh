@@ -91,8 +91,8 @@ if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
     usage_short
     exit 1
 fi
-SOURCE="$( readlink -f "${1}" )"
-INSTALL="$( readlink -f "${2}" )"
+SOURCE="$( readlink -mn "${1}" )"
+INSTALL="$( readlink -mn "${2}" )"
 
 # deal with optional arguments
 if [ "${NA_LAYER}" == "" ]; then
@@ -137,8 +137,8 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
-echo "Source path = '$1'";
-echo "Install path = '$2'";
+echo "Source path = ${SOURCE}";
+echo "Install path = ${INSTALL}";
 
 mkdir -p ${SOURCE}
 
