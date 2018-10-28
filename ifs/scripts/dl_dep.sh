@@ -197,7 +197,7 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     fi
 fi
 # get Mercury
-clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "f7f6955f140426b2a7c9e26dc35f8c8e1654d86a"  "--recurse-submodules" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "v1.0.0rc1"  "--recurse-submodules" &
 # get Argobots
 clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215d6862f527775387418f7f6" "-b dev-fifo-wait" &
 # get Margo

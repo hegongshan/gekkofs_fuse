@@ -260,24 +260,19 @@ echo "############################################################ Installing:  
 
 # Mercury
 CURR=${SOURCE}/mercury
-# check for specific Mercury version which has to be newer than from 25-02-2018
-MERCURY_VERSION=$(cd ${CURR} && git log --since 02-25-2018 | wc -l)
-echo $MERCURY_VERSION
-if [ ${MERCURY_VERSION} -eq 0 ]; then
-    echo "########## Mercury version is too old. Pulling new version ..."
-    cd $CURR && git checkout d015745ce25d839b8b46e68c11a7d8278423a46b
-fi
 prepare_build_dir ${CURR}
-cd ${CURR}
-if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
-    # patch cci verbs addr lookup error handling
-    echo "########## Applying cci addr lookup error handling patch"
-    git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch
-fi
 cd ${CURR}/build
-$CMAKE -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
--DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
+$CMAKE \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
+    -DMERCURY_USE_CHECKSUMS:BOOL=OFF \
+    -DMERCURY_USE_BOOST_PP:BOOL=ON \
+    -DMERCURY_USE_EAGER_BULK:BOOL=ON \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL} \
+    ${USE_BMI} ${USE_CCI} ${USE_OFI} \
+    ..
 make -j${CORES}
 make install
 
