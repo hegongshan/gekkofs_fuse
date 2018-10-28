@@ -104,10 +104,11 @@ optional arguments:
 
 ## Compile ADA-FS
 You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is considered stable at the moment.
- - `bmi+tcp` for using the bmi plugin with the tcp protocol 
+ - `ofi+tcp` for using the libfabric plugin with TCP
  - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (not threadsafe. Do not use.)
  - `ofi+psm2` for using the libfabric plugin with Intel Omni-Path
  - `cci+verbs` for using the cci plugin with Infiniband verbs
+ - `bmi+tcp` for using the bmi plugin with the tcp protocol 
 
 In addition you can add a specific directory where all dependencies are located, i.e., headers and libraries. This can
 be done by using `-DADAFS_DEPS_INSTALL=<path>`. If the variable is not set this path points to `/usr/local`.

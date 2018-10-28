@@ -27,7 +27,6 @@ bool init_environment();
 void destroy_enviroment();
 
 bool init_io_tasklet_pool();
-bool init_ipc_server();
 bool init_rpc_server();
 
 void register_server_rpcs(margo_instance_id mid);
@@ -35,7 +34,5 @@ void register_server_rpcs(margo_instance_id mid);
 bool register_daemon_proc();
 
 bool deregister_daemon_proc();
-
-std::string get_my_hostname(bool short_hostname);
 
 #endif //IFS_ADAFS_DAEMON_HPP

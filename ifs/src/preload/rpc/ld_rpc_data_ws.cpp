@@ -50,7 +50,6 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     vector<rpc_write_data_in_t> rpc_in(target_n);
     // register local target buffer for bulk access for IPC and RPC margo instance
     auto bulk_buf = const_cast<void*>(buf);
-    hg_bulk_t ipc_bulk_handle = nullptr;
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(write_size);
     auto ret = margo_bulk_create(ld_margo_rpc_id, 1, &bulk_buf, size.get(), HG_BULK_READ_ONLY, &rpc_bulk_handle);
@@ -59,12 +58,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         errno = EBUSY;
         return -1;
     }
-    ret = margo_bulk_create(ld_margo_ipc_id, 1, &bulk_buf, size.get(), HG_BULK_READ_ONLY, &ipc_bulk_handle);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
-        errno = EBUSY;
-        return -1;
-    }
+
     // Issue non-blocking RPC requests and wait for the result later
     for (uint64_t i = 0; i < target_n; i++) {
         auto target = targets[i];
@@ -80,8 +74,8 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
         rpc_in[i].total_chunk_size = total_chunk_size; // total size to write
-        rpc_in[i].bulk_handle = (target == CTX->fs_conf()->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
-        margo_create_wrap(ipc_write_data_id, rpc_write_data_id, target, rpc_handles[i], false);
+        rpc_in[i].bulk_handle = rpc_bulk_handle;
+        margo_create_wrap_helper(rpc_write_data_id, target, rpc_handles[i]);
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
@@ -93,7 +87,6 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
             }
             // free bulk handles for buffer
             margo_bulk_free(rpc_bulk_handle);
-            margo_bulk_free(ipc_bulk_handle);
             return -1;
         }
     }
@@ -127,7 +120,6 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     }
     // free bulk handles for buffer
     margo_bulk_free(rpc_bulk_handle);
-    margo_bulk_free(ipc_bulk_handle);
     return (err < 0) ? err : out_size;
 }
 
@@ -166,16 +158,9 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     vector<rpc_read_data_in_t> rpc_in(target_n);
     // register local target buffer for bulk access for IPC and RPC margo instance
     auto bulk_buf = buf;
-    hg_bulk_t ipc_bulk_handle = nullptr;
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(read_size);
     auto ret = margo_bulk_create(ld_margo_rpc_id, 1, &bulk_buf, size.get(), HG_BULK_WRITE_ONLY, &rpc_bulk_handle);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
-        errno = EBUSY;
-        return -1;
-    }
-    ret = margo_bulk_create(ld_margo_ipc_id, 1, &bulk_buf, size.get(), HG_BULK_WRITE_ONLY, &ipc_bulk_handle);
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() Failed to create rpc bulk handle", __func__);
         errno = EBUSY;
@@ -197,8 +182,8 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
         rpc_in[i].chunk_end = chnk_end; // chunk end id of this write
         rpc_in[i].total_chunk_size = total_chunk_size; // total size to write
-        rpc_in[i].bulk_handle = (target == CTX->fs_conf()->host_id) ? ipc_bulk_handle : rpc_bulk_handle;
-        margo_create_wrap(ipc_read_data_id, rpc_read_data_id, target, rpc_handles[i], false);
+        rpc_in[i].bulk_handle = rpc_bulk_handle;
+        margo_create_wrap_helper(rpc_read_data_id, target, rpc_handles[i]);
         // Send RPC
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
@@ -210,7 +195,6 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
             }
             // free bulk handles for buffer
             margo_bulk_free(rpc_bulk_handle);
-            margo_bulk_free(ipc_bulk_handle);
             return -1;
         }
     }
@@ -244,6 +228,5 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     }
     // free bulk handles for buffer
     margo_bulk_free(rpc_bulk_handle);
-    margo_bulk_free(ipc_bulk_handle);
     return (err < 0) ? err : out_size;
 }

@@ -3,6 +3,7 @@
 #include <global/log_util.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
@@ -28,12 +29,6 @@ static condition_variable shutdown_please;
 static mutex mtx;
 
 bool init_environment() {
-    // Register daemon to system
-    if (!register_daemon_proc()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
-        return false;
-    }
-
     // Initialize metadata db
     std::string metadata_path = ADAFS_DATA->metadir() + "/rocksdb"s;
     try {
@@ -57,11 +52,7 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize margo rpc server.", __func__);
         return false;
     }
-    // Init margo for RPC
-    if (!init_ipc_server()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo IPC server.", __func__);
-        return false;
-    }
+
     // Init Argobots ESs to drive IO
     if (!init_io_tasklet_pool()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
@@ -88,6 +79,13 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to write root metadentry to KV store: {}", __func__, e.what());
         return false;
     }
+
+    // Register daemon to system
+    if (!register_daemon_proc()) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
+        return false;
+    }
+
     ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
     return true;
 }
@@ -97,8 +95,6 @@ bool init_environment() {
  */
 void destroy_enviroment() {
 #ifdef MARGODIAG
-    cout << "\n####################\n\nMargo IPC server stats: " << endl;
-    margo_diag_dump(RPC_DATA->server_ipc_mid(), "-", 0);
     cout << "\n####################\n\nMargo RPC server stats: " << endl;
     margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
 #endif
@@ -112,11 +108,7 @@ void destroy_enviroment() {
         ADAFS_DATA->spdlogger()->warn("{}() Unable to clean up auxiliary files", __func__);
     else
         ADAFS_DATA->spdlogger()->debug("{}() Cleaning auxiliary files successful", __func__);
-    // The shutdown order is important because the RPC server is started first, it has to be stopped last due to Argobots
-    if (RPC_DATA->server_ipc_mid() != nullptr) {
-        margo_finalize(RPC_DATA->server_ipc_mid());
-        ADAFS_DATA->spdlogger()->info("{}() Margo IPC server shut down successful", __func__);
-    }
+
     if (RPC_DATA->server_rpc_mid() != nullptr) {
         margo_finalize(RPC_DATA->server_rpc_mid());
         ADAFS_DATA->spdlogger()->info("{}() Margo RPC server shut down successful", __func__);
@@ -156,60 +148,19 @@ bool init_io_tasklet_pool() {
     return true;
 }
 
-bool init_ipc_server() {
-    auto protocol_port = "na+sm://"s;
-    hg_addr_t addr_self;
-    hg_size_t addr_self_cstring_sz = 128;
-    char addr_self_cstring[128];
-
-
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
-    // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_IPC_HANDLER_XSTREAMS);
-
-    if (mid == MARGO_INSTANCE_NULL) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_init() failed to initialize the Margo IPC server", __func__);
-        return false;
-    }
-#ifdef MARGODIAG
-    margo_diag_start(mid);
-#endif
-    // Figure out what address this server is listening on (must be freed when finished)
-    auto hret = margo_addr_self(mid, &addr_self);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_addr_self() Failed to retrieve server IPC address", __func__);
-        margo_finalize(mid);
-        return false;
-    }
-    // Convert the address to a cstring (with \0 terminator).
-    hret = margo_addr_to_string(mid, addr_self_cstring, &addr_self_cstring_sz, addr_self);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_addr_to_string() Failed to convert address to cstring", __func__);
-        margo_addr_free(mid, addr_self);
-        margo_finalize(mid);
-        return false;
-    }
-    margo_addr_free(mid, addr_self);
-
-    ADAFS_DATA->spdlogger()->info("{}() Margo IPC server initialized. Accepting IPCs on PID {}", __func__,
-                                  addr_self_cstring);
-    // Put context and class into RPC_data object
-    RPC_DATA->server_ipc_mid(mid);
-
-    // register RPCs
-    register_server_rpcs(mid);
-
-    return true;
-}
-
 bool init_rpc_server() {
-    auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPC_PORT);
+    auto protocol_port = RPC_PROTOCOL + "://"s + get_my_hostname(false) + ":"s + to_string(RPC_PORT);
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
+    // IMPORTANT: this struct needs to be zeroed before use
+    struct hg_init_info hg_options = {};
+    hg_options.auto_sm = HG_TRUE;
+    hg_options.stats = HG_FALSE;
+    hg_options.na_class = nullptr;
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_RPC_HANDLER_XSTREAMS);
+    auto mid = margo_init_info(protocol_port.c_str(), MARGO_SERVER_MODE, &hg_options, 1, DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;
@@ -234,6 +185,8 @@ bool init_rpc_server() {
     }
     margo_addr_free(mid, addr_self);
 
+    std::string addr_self_str(addr_self_cstring);
+    RPC_DATA->self_addr_str(addr_self_str);
 
     ADAFS_DATA->spdlogger()->info("{}() Margo RPC server initialized. Accepting RPCs on address {}", __func__,
                                   addr_self_cstring);
@@ -252,8 +205,7 @@ bool init_rpc_server() {
  * @param hg_class
  */
 void register_server_rpcs(margo_instance_id mid) {
-    if (RPC_DATA->server_ipc_mid() == mid)
-        MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
+    MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t, ipc_srv_fs_config);
     MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, rpc_minimal);
     MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
     MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, rpc_srv_access);
@@ -317,9 +269,9 @@ bool register_daemon_proc() {
     }
     ofstream ofs(pid_file, ::ofstream::trunc);
     if (ofs) {
-        ofs << to_string(my_pid);
-        ofs << "\n";
-        ofs << ADAFS_DATA->mountdir();
+        ofs << to_string(my_pid) << std::endl;
+        ofs << RPC_DATA->self_addr_str() << std::endl;
+        ofs << ADAFS_DATA->mountdir() << std::endl;
     } else {
         cerr << "Unable to create daemon pid file at " << pid_file << endl;
         ADAFS_DATA->spdlogger()->error("{}() Unable to create daemon pid file at {}. No permissions?", __func__,
@@ -332,26 +284,6 @@ bool register_daemon_proc() {
 
 bool deregister_daemon_proc() {
     return bfs::remove(daemon_pid_path());
-}
-
-/**
- * Returns the machine's hostname
- * @return
- */
-string get_my_hostname(bool short_hostname) {
-    char hostname[1024];
-    auto ret = gethostname(hostname, 1024);
-    if (ret == 0) {
-        string hostname_s(hostname);
-        if (!short_hostname)
-            return hostname_s;
-        // get short hostname
-        auto pos = hostname_s.find("."s);
-        if (pos != std::string::npos)
-            hostname_s = hostname_s.substr(0, pos);
-        return hostname_s;
-    } else
-        return ""s;
 }
 
 void shutdown_handler(int dummy) {
