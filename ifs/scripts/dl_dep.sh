@@ -8,13 +8,13 @@ COMMON_GIT_FLAGS="--quiet --single-branch"
 # Stop all backround jobs on interruption.
 # "kill -- -$$" sends a SIGTERM to the whole process group,
 # thus killing also descendants.
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM
 
 
 exit_child() {
     if [ ! $? -eq 0 ]; then
         # notify the parent
-        kill -s SIGTERM `ps --pid $$ -oppid=`
+        kill -s SIGTERM -- -$$
     fi
 }
 
@@ -130,7 +130,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ -z ${1+x} ]]; then
     echo "Positional arguments missing."
     usage_short
-    exit
+    exit 1
 fi
 SOURCE="$( readlink -mn "${1}" )"
 
@@ -168,8 +168,6 @@ mkdir -p ${SOURCE}
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "mogon2" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     # get libtool for cci
     wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz" &
-    # get libev for mercury
-    wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz" &
     # get gflags for rocksdb
     wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz" &
     # get zstd for fast compression in rocksdb
@@ -185,7 +183,7 @@ fi
 
 # get BMI
 if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "bmi" "git://git.mcs.anl.gov/bmi" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
+    clonedeps "bmi" "http://git.mcs.anl.gov/bmi.git" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
 fi
 # get CCI
 if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
@@ -199,17 +197,13 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     fi
 fi
 # get Mercury
-clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "8eb436a6cc42317050117ad9925c2b03c822e6b9"  "--recurse-submodules" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "f7f6955f140426b2a7c9e26dc35f8c8e1654d86a"  "--recurse-submodules" &
 # get Argobots
-clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
-# get Argobots-snoozer
-clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "54c506103cf2d77bd76460db29a67a875f5c5a85" &
-# get Argobots-IO
-#clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
+clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215d6862f527775387418f7f6" "-b dev-fifo-wait" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "56a2b6585ec8152d5e7d107a0cf33be84dbd5bed" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "cf673d430ce3d4b4f0a32f19f261e7898a863b81" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.12.4.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.13.3.tar.gz" &
 
 # Wait for all download to be completed
 wait

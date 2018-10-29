@@ -89,10 +89,10 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ ( -z ${1+x} ) || ( -z ${2+x} ) ]]; then
     echo "Positional arguments missing."
     usage_short
-    exit
+    exit 1
 fi
-SOURCE="$( readlink -f "${1}" )"
-INSTALL="$( readlink -f "${2}" )"
+SOURCE="$( readlink -mn "${1}" )"
+INSTALL="$( readlink -mn "${2}" )"
 
 # deal with optional arguments
 if [ "${NA_LAYER}" == "" ]; then
@@ -137,8 +137,8 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
-echo "Source path = '$1'";
-echo "Install path = '$2'";
+echo "Source path = ${SOURCE}";
+echo "Install path = ${INSTALL}";
 
 mkdir -p ${SOURCE}
 
@@ -150,14 +150,6 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     # get libtool
     echo "############################################################ Installing:  libtool"
     CURR=${SOURCE}/libtool
-    prepare_build_dir ${CURR}
-    cd ${CURR}/build
-    ../configure --prefix=${INSTALL}
-    make -j${CORES}
-    make install
-    # compile libev
-    echo "############################################################ Installing:  libev"
-    CURR=${SOURCE}/libev
     prepare_build_dir ${CURR}
     cd ${CURR}/build
     ../configure --prefix=${INSTALL}
@@ -285,36 +277,10 @@ prepare_build_dir ${CURR}
 cd ${CURR}
 ./autogen.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL}
+../configure --prefix=${INSTALL} --enable-perf-opt --disable-checks
 make -j${CORES}
 make install
 [ "${PERFORM_TEST}" ] && make check
-
-echo "############################################################ Installing:  Abt-snoozer"
-# Abt snoozer
-CURR=${SOURCE}/abt-snoozer
-prepare_build_dir ${CURR}
-cd ${CURR}
-./prepare.sh
-cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
-make -j${CORES}
-make install
-[ "${PERFORM_TEST}" ] && make check
-
-#echo "############################################################ Installing:  Abt-IO"
-## Abt IO
-#CURR=${SOURCE}/abt-io
-#prepare_build_dir ${CURR}
-#cd ${CURR}
-#echo "########## ADA-FS injection: Applying abt-io c++ template clash patch"
-#git apply ${PATCH_DIR}/abt_io_cplusplus_template_clash.patch
-#./prepare.sh
-#cd ${CURR}/build
-#../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
-#make -j${CORES}
-#make install
-#[ "${PERFORM_TEST}" ] && make check  # The tests create so huge files that breaks memory :D
 
 echo "############################################################ Installing:  Margo"
 # Margo

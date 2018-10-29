@@ -1,5 +1,6 @@
 
 #include <daemon/adafs_daemon.hpp>
+#include <global/log_util.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/distributor.hpp>
@@ -128,16 +129,30 @@ void destroy_enviroment() {
 }
 
 bool init_io_tasklet_pool() {
-    vector<ABT_xstream> io_streams_tmp(DAEMON_IO_XSTREAMS);
-    ABT_pool io_pools_tmp;
-    auto ret = ABT_snoozer_xstream_create(DAEMON_IO_XSTREAMS, &io_pools_tmp, io_streams_tmp.data());
+    unsigned int xstreams_num = DAEMON_IO_XSTREAMS;
+    assert(xstreams_num >= 0);
+
+    //retrieve the pool of the just created scheduler
+    ABT_pool pool;
+    auto ret = ABT_pool_create_basic(ABT_POOL_FIFO_WAIT, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &pool);
     if (ret != ABT_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error(
-                "{}() ABT_snoozer_xstream_create() failed to initialize ABT_pool for I/O operations", __func__);
+        ADAFS_DATA->spdlogger()->error("{}() Failed to create I/O tasks pool", __func__);
         return false;
     }
-    RPC_DATA->io_streams(io_streams_tmp);
-    RPC_DATA->io_pool(io_pools_tmp);
+
+    //create all subsequent xstream and the associated scheduler, all tapping into the same pool
+    vector<ABT_xstream> xstreams(xstreams_num);
+    for (unsigned int i = 0; i < xstreams_num; ++i) {
+        ret = ABT_xstream_create_basic(ABT_SCHED_BASIC_WAIT, 1, &pool,
+                ABT_SCHED_CONFIG_NULL, &xstreams[i]);
+        if (ret != ABT_SUCCESS) {
+            ADAFS_DATA->spdlogger()->error("{}() Failed to create task execution streams for I/O operations", __func__);
+            return false;
+        }
+    }
+
+    RPC_DATA->io_streams(xstreams);
+    RPC_DATA->io_pool(pool);
     return true;
 }
 
@@ -344,40 +359,31 @@ void shutdown_handler(int dummy) {
 }
 
 void initialize_loggers() {
+    std::string path = DEFAULT_DAEMON_LOG_PATH;
+    // Try to get log path from env variable
+    std::string env_path_key = ENV_PREFIX;
+    env_path_key += "DAEMON_LOG_PATH";
+    char* env_path = getenv(env_path_key.c_str());
+    if (env_path != nullptr) {
+        path = env_path;
+    }
+
+    spdlog::level::level_enum level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
+    // Try to get log path from env variable
+    std::string env_level_key = ENV_PREFIX;
+    env_level_key += "LOG_LEVEL";
+    char* env_level = getenv(env_level_key.c_str());
+    if (env_level != nullptr) {
+        level = get_spdlog_level(env_level);
+    }
+
     auto logger_names = std::vector<std::string>{
         "main",
         "MetadataDB",
         "ChunkStorage",
     };
 
-    /* Create common sink */
-    auto file_sink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(LOG_DAEMON_PATH);
-
-    /* Create and configure loggers */
-    auto loggers = std::list<std::shared_ptr<spdlog::logger>>();
-    for(const auto& name: logger_names){
-        auto logger = std::make_shared<spdlog::logger>(name, file_sink);
-        logger->flush_on(spdlog::level::trace);
-        loggers.push_back(logger);
-    }
-
-    /* register loggers */
-    for(const auto& logger: loggers){
-        spdlog::register_logger(logger);
-    }
-
-    // set logger format
-    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L][%n] %v");
-
-#if defined(LOG_TRACE)
-        spdlog::set_level(spdlog::level::trace);
-#elif defined(LOG_DEBUG)
-        spdlog::set_level(spdlog::level::debug);
-#elif defined(LOG_INFO)
-        spdlog::set_level(spdlog::level::info);
-#else
-        spdlog::set_level(spdlog::level::off);
-#endif
+    setup_loggers(logger_names, level, path);
 }
 
 int main(int argc, const char* argv[]) {

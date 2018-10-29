@@ -28,11 +28,9 @@ RUN yum -y -q update  && yum -y -q install \
 	# Mercury dependencies
 	libtool \
 	libtool-ltdl-devel \
-	libev-devel \
 	boost-devel \
 	# RocksDB
 	which \
-	libev-devel \
 	snappy-devel \
 	gflags-devel \
 	libzstd-devel \
@@ -83,11 +81,9 @@ RUN yum -y -q update  && yum -y -q install \
 	# Mercury dependencies
 	libtool \
 	libtool-ltdl-devel \
-	libev-devel \
 	boost-devel \
 	# RocksDB
 	which \
-	libev-devel \
 	snappy-devel \
 	gflags-devel \
 	libzstd-devel \

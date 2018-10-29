@@ -30,15 +30,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# required packages
-set(ADAFS_DEPS_INSTALL CACHE PATH "Set the path to the required ADA-FS dependencies for libraries and headers")
-if (NOT ADAFS_DEPS_INSTALL)
-    set(ADAFS_DEPS_INSTALL /usr/local)
-    message("* ADA-FS dependency install path set to DEFAULT PATH: \"${ADAFS_DEPS_INSTALL}\"\n Use cmake argument \"-DADAFS_DEPS_INSTALL:PATH=<path>\" to expicitly set it.")
-else ()
-    message("* ADA-FS dependency install path set to \"${ADAFS_DEPS_INSTALL}\"")
-endif (NOT ADAFS_DEPS_INSTALL)
-
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -48,10 +39,8 @@ find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
 # margo dependencies
-find_package(Libev REQUIRED)
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
-find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 
 # boost dependencies, system is required for filesystem

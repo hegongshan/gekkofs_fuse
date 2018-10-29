@@ -17,10 +17,6 @@
 #  JEMALLOC_LIBRARIES         The jemalloc library/libraries
 #  JEMALLOC_INCLUDE_DIR       The location of jemalloc headers
 
-find_path(JEMALLOC_ROOT_DIR
-    NAMES include/jemalloc/jemalloc.h
-    )
-
 find_library(JEMALLOC_LIBRARY
     NAMES jemalloc
     HINTS ${JEMALLOC_ROOT_DIR}/lib
@@ -38,10 +34,9 @@ find_package_handle_standard_args(JeMalloc DEFAULT_MSG
     )
 
 mark_as_advanced(
-    JEMALLOC_ROOT_DIR
     JEMALLOC_LIBRARY
     JEMALLOC_INCLUDE_DIR
 )
 
-set(JMALLOC_LIBRARIES ${JMALLOC_LIBRARY})
-set(JMALLOC_INCLUDE_DIRS ${JMALLOC_INCLUDE_DIR})
+set(JEMALLOC_LIBRARIES ${JEMALLOC_LIBRARY})
+set(JEMALLOC_INCLUDE_DIRS ${JEMALLOC_INCLUDE_DIR})

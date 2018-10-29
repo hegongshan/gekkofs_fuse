@@ -1,4 +1,4 @@
-
+#include <global/log_util.hpp>
 #include <global/global_defs.hpp>
 #include <global/configure.hpp>
 #include <preload/preload.hpp>
@@ -57,18 +57,6 @@ hg_addr_t daemon_svr_addr = HG_ADDR_NULL;
 bool init_ld_argobots() {
     CTX->log()->debug("{}() Initializing Argobots ...", __func__);
 
-    // We need no arguments to init
-    auto argo_err = ABT_init(0, nullptr);
-    if (argo_err != 0) {
-        CTX->log()->error("{}() ABT_init() Failed to init Argobots (client)", __func__);
-        return false;
-    }
-    // Set primary execution stream to idle without polling. Normally xstreams cannot sleep. This is what ABT_snoozer does
-    argo_err = ABT_snoozer_xstream_self_set();
-    if (argo_err != 0) {
-        CTX->log()->error("{}() ABT_snoozer_xstream_self_set()  (client)", __func__);
-        return false;
-    }
     /*
      * Single producer (progress function) and multiple consumers are causing an excess memory consumption
      * in some Argobots version. It does only show if an ES with a pool is created.
@@ -77,6 +65,27 @@ bool init_ld_argobots() {
      * See for reference: https://xgitlab.cels.anl.gov/sds/margo/issues/40
      */
     putenv(const_cast<char*>("ABT_MEM_MAX_NUM_STACKS=8"));
+
+    // We need no arguments to init
+    auto err = ABT_init(0, nullptr);
+    if (err != ABT_SUCCESS) {
+        CTX->log()->error("{}() failed to init Argobots environment", __func__);
+        return false;
+    }
+
+    ABT_xstream self_xstream;
+    err = ABT_xstream_self(&self_xstream);
+    if (err != ABT_SUCCESS) {
+        CTX->log()->error("{}() failed to get argobots self xstream", __func__);
+        return false;
+    }
+
+    err = ABT_xstream_set_main_sched_basic(self_xstream, ABT_SCHED_BASIC_WAIT, 1, nullptr);
+    if (err != ABT_SUCCESS) {
+        CTX->log()->error("{}() failed to set scheduler for main threads pool", __func__);
+        return false;
+    }
+
     CTX->log()->debug("{}() Argobots initialization successful.", __func__);
     return true;
 }
@@ -252,24 +261,29 @@ void init_ld_env_if_needed() {
 }
 
 void init_logging() {
-    //set the spdlogger and initialize it with spdlog
-    auto ld_logger = spdlog::basic_logger_mt("basic_logger", LOG_PRELOAD_PATH);
-    // set logger format
-    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L] %v");
-    // flush log when info, warning, error messages are encountered
-    ld_logger->flush_on(spdlog::level::info);
-#if defined(LOG_PRELOAD_TRACE)
-    spdlog::set_level(spdlog::level::trace);
-    ld_logger->flush_on(spdlog::level::trace);
-#elif defined(LOG_PRELOAD_DEBUG)
-    spdlog::set_level(spdlog::level::debug);
-#elif defined(LOG_PRELOAD_INFO)
-    spdlog::set_level(spdlog::level::info);
-#else
-    spdlog::set_level(spdlog::level::off);
-#endif
+    std::string path = DEFAULT_PRELOAD_LOG_PATH;
+    // Try to get log path from env variable
+    std::string env_key = ENV_PREFIX;
+    env_key += "PRELOAD_LOG_PATH";
+    char* env_log_path = getenv(env_key.c_str());
+    if (env_log_path != nullptr) {
+        path = env_log_path;
+    }
 
-    CTX->log(ld_logger);
+    spdlog::level::level_enum level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
+    // Try to get log path from env variable
+    std::string env_level_key = ENV_PREFIX;
+    env_level_key += "LOG_LEVEL";
+    char* env_level = getenv(env_level_key.c_str());
+    if (env_level != nullptr) {
+        level = get_spdlog_level(env_level);
+    }
+
+    auto logger_names = std::vector<std::string> {"main"};
+
+    setup_loggers(logger_names, level, path);
+
+    CTX->log(spdlog::get(logger_names.at(0)));
 }
 
 /**

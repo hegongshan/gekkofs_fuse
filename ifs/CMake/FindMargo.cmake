@@ -17,48 +17,22 @@
 #  MARGO_LIBRARIES           The Margo library.
 #  MARGO_INCLUDE_DIRS        The location of Margo headers.
 
-find_path(MARGO_DIR
-        HINTS
-        /usr
-        /usr/local
-        /usr/local/adafs/
-        ${ADAFS_DEPS_INSTALL}
-        )
 
-find_path(MARGO_INCLUDE_DIR margo.h
-        HINTS
-        ${ADAFS_DEPS_INSTALL}
-        ${MARGO_DIR}
-        /usr
-        /usr/local
-        /usr/local/adafs
-        /opt
-        PATH_SUFFIXES include
-        PATH_SUFFIXES include/margo
-        )
+find_path(MARGO_INCLUDE_DIR
+    NAMES margo.h
+)
 
-find_library(MARGO_LIBRARY margo
-        HINTS
-        ${ADAFS_DEPS_INSTALL}
-        ${MARGO_DIR}
-        $ENV{HOME}/opt
-        /usr
-        /usr/local
-        /usr/local/adafs
-        /opt/
-        PATH_SUFFIXES lib
-        PATH_SUFFIXES lib/margo
-        )
+find_library(MARGO_LIBRARY
+    NAMES margo
+)
 
 set(MARGO_INCLUDE_DIRS ${MARGO_INCLUDE_DIR})
 set(MARGO_LIBRARIES ${MARGO_LIBRARY})
-
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Margo DEFAULT_MSG MARGO_LIBRARY MARGO_INCLUDE_DIR)
 
 mark_as_advanced(
-        MARGO_DIR
         MARGO_LIBRARY
         MARGO_INCLUDE_DIR
 )
