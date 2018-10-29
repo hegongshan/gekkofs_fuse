@@ -6,8 +6,12 @@
 # LZ4_LIBRARY
 #
 
+find_path(LZ4_INCLUDE_DIR
+    NAMES lz4.h
+)
+
 find_library(LZ4_LIBRARY
-  NAMES lz4
+    NAMES lz4
 )
 
 set(LZ4_LIBRARIES ${LZ4_LIBRARY} )
