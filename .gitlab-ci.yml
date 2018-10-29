@@ -48,7 +48,6 @@ compile GekkoFS:
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
-      -DUSE_BMI:BOOL=ON
       ..
     - make -j$(nproc)
   artifacts:
