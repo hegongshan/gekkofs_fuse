@@ -168,8 +168,6 @@ mkdir -p ${SOURCE}
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "mogon2" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
     # get libtool for cci
     wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz" &
-    # get libev for mercury
-    wgetdeps "libev" "http://dist.schmorp.de/libev/libev-4.24.tar.gz" &
     # get gflags for rocksdb
     wgetdeps "gflags" "https://github.com/gflags/gflags/archive/v2.2.1.tar.gz" &
     # get zstd for fast compression in rocksdb

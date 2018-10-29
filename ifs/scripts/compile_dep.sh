@@ -155,14 +155,6 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     ../configure --prefix=${INSTALL}
     make -j${CORES}
     make install
-    # compile libev
-    echo "############################################################ Installing:  libev"
-    CURR=${SOURCE}/libev
-    prepare_build_dir ${CURR}
-    cd ${CURR}/build
-    ../configure --prefix=${INSTALL}
-    make -j${CORES}
-    make install
     # compile gflags
     echo "############################################################ Installing:  gflags"
     CURR=${SOURCE}/gflags

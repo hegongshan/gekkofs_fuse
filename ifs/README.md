@@ -47,11 +47,6 @@ be /usr/local/lib.
    make && sudo make install
 ```
 
-## Mercury
-
-- Install libev to get libev.h, ev.h etc.
-`sudo apt install libev-dev` or `sudo apt install libev`
-
 # Usage
 
 ## Clone and compile direct ADA-FS dependencies
