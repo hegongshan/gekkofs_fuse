@@ -52,56 +52,15 @@ find_package(Boost 1.53 REQUIRED
 
 find_package(Threads REQUIRED)
 
-option(USE_OFI_VERBS "Use libfabric plugin with verbs." OFF)
-if (USE_OFI_VERBS)
-    find_package(LibFabric REQUIRED)
-    set(NA_LIB
-            ${NA_LIB}
-            ${LIBFABRIC_LIBRARIES}
-            )
-    add_definitions(-DRPC_PROTOCOL="ofi+verbs")
-endif()
-
-option(USE_OFI_PSM2 "Use libfabric plugin with verbs." OFF)
-if (USE_OFI_PSM2)
-    find_package(LibFabric REQUIRED)
-    set(NA_LIB
-            ${NA_LIB}
-            ${LIBFABRIC_LIBRARIES}
-            )
-    add_definitions(-DRPC_PROTOCOL="ofi+psm2")
-endif ()
-
-option(USE_CCI "Use cci plugin." OFF)
-if(USE_CCI)
-    find_package(CCI REQUIRED)
-    set(NA_LIB
-            ${NA_LIB}
-            ${CCI_LIBRARIES}
-            )
-    add_definitions(-DRPC_PROTOCOL="cci+verbs")
-endif()
-
-option(USE_BMI "Use bmi plugin." OFF)
-if(USE_BMI)
-    find_package(BMI REQUIRED)
-    set(NA_LIB
-            ${NA_LIB}
-            ${BMI_LIBRARIES}
-            )
-    add_definitions(-DRPC_PROTOCOL="bmi+tcp")
-endif()
-
-if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
-    message("* No Mercury NA plugin selected. BMI automatically selected ... Use -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON for other plugins")
-    find_package(BMI REQUIRED)
-    set(NA_LIB
-            ${NA_LIB}
-            ${BMI_LIBRARIES}
-            )
-    add_definitions(-DRPC_PROTOCOL="bmi+tcp")
-endif()
-
+set(RPC_PROTOCOL "bmi+tcp" CACHE STRING "Communication plugin used for RPCs")
+set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
+   "bmi+tcp"
+   "ofi+verbs"
+   "ofi+psm2"
+   "cci+verbs"
+)
+message(STATUS "RPC protocol: '${RPC_PROTOCOL}'")
+add_definitions(-DRPC_PROTOCOL="${RPC_PROTOCOL}")
 
 # Imported target
 add_library(RocksDB INTERFACE IMPORTED GLOBAL)

@@ -360,7 +360,7 @@ bool is_local_op(const size_t recipient) {
     return recipient == CTX->fs_conf()->host_id;
 }
 
-inline hg_return
+hg_return
 margo_create_wrap_helper(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t recipient, hg_handle_t& handle,
                          bool force_rpc) {
     hg_return_t ret;

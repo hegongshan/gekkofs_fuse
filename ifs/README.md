@@ -103,20 +103,17 @@ optional arguments:
 ```
 
 ## Compile ADA-FS
-You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is
-considered stable at the moment.
-The following options are available with cmake:
-- `-DUSE_BMI` for using the bmi plugin with the tcp protocol (Stable for TCP/IP)
-- `-DUSE_CCI` for using the cci plugin with Infiniband verbs (Stable with Infiniband)
-- `-DUSE_OFI_VERBS` for using the libfabric plugin with Infiniband verbs (not threadsafe. Do not use.)
-- `-DUSE_OFI_PSM2` for using the libfabric plugin with Intel Omni-Path (This plugin is still in development by the
-Mercury team but will be used for the Omni-Path fabric.)
+You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is considered stable at the moment.
+ - `bmi+tcp` for using the bmi plugin with the tcp protocol 
+ - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (not threadsafe. Do not use.)
+ - `ofi+psm2` for using the libfabric plugin with Intel Omni-Path
+ - `cci+verbs` for using the cci plugin with Infiniband verbs
 
 In addition you can add a specific directory where all dependencies are located, i.e., headers and libraries. This can
 be done by using `-DADAFS_DEPS_INSTALL=<path>`. If the variable is not set this path points to `/usr/local`.
 ```bash
 mkdir build && cd build
-cmake -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON -DADAFS_DEPS_INSTALL=<path> -DCMAKE_BUILD_TYPE={Release, Debug}} ..
+cmake -DADAFS_DEPS_INSTALL=<path> -DCMAKE_BUILD_TYPE={Release, Debug}} ..
 make
 ```
 

@@ -39,6 +39,16 @@ prepare_build_dir() {
     fi
     rm -rf $1/build/*
 }
+
+find_cmake() {
+    local CMAKE=`command -v cmake3 || command -v cmake`
+    if [ $? -ne 0 ]; then
+        >&2 echo "ERROR: could not find cmake"
+        exit 1
+    fi
+    echo ${CMAKE}
+}
+
 PATCH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_DIR="${PATCH_DIR}/patches"
 CLUSTER=""
@@ -137,6 +147,8 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
+CMAKE=`find_cmake`
+
 echo "Source path = ${SOURCE}";
 echo "Install path = ${INSTALL}";
 
@@ -160,7 +172,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/gflags
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
     # compile zstd
@@ -168,7 +180,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/zstd/build/cmake
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
     echo "############################################################ Installing:  lz4"
@@ -180,7 +192,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/snappy
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
 fi
@@ -248,24 +260,19 @@ echo "############################################################ Installing:  
 
 # Mercury
 CURR=${SOURCE}/mercury
-# check for specific Mercury version which has to be newer than from 25-02-2018
-MERCURY_VERSION=$(cd ${CURR} && git log --since 02-25-2018 | wc -l)
-echo $MERCURY_VERSION
-if [ ${MERCURY_VERSION} -eq 0 ]; then
-    echo "########## Mercury version is too old. Pulling new version ..."
-    cd $CURR && git checkout d015745ce25d839b8b46e68c11a7d8278423a46b
-fi
 prepare_build_dir ${CURR}
-cd ${CURR}
-if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
-    # patch cci verbs addr lookup error handling
-    echo "########## Applying cci addr lookup error handling patch"
-    git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch
-fi
 cd ${CURR}/build
-cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
--DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
+cmake \
+    -DCMAKE_BUILD_TYPE:STRING=Release \
+    -DBUILD_TESTING:BOOL=OFF \
+    -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
+    -DMERCURY_USE_CHECKSUMS:BOOL=OFF \
+    -DMERCURY_USE_BOOST_PP:BOOL=ON \
+    -DMERCURY_USE_EAGER_BULK:BOOL=ON \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
+    -DCMAKE_INSTALL_PREFIX=${INSTALL} \
+    ${USE_BMI} ${USE_CCI} ${USE_OFI} \
+    ..
 make -j${CORES}
 make install
 
