@@ -129,30 +129,39 @@ std::string Metadata::serialize() const {
     std::string s;
     // The order is important. don't change.
     s += fmt::format_int(mode_).c_str(); // add mandatory mode
-    s += dentry_val_delim + fmt::format_int(size_).c_str(); // add mandatory size
+    s += dentry_val_delim;
+    s += fmt::format_int(size_).c_str(); // add mandatory size
     if (ADAFS_DATA->atime_state()) {
-        s += dentry_val_delim + fmt::format_int(atime_).c_str();
+        s += dentry_val_delim;
+        s += fmt::format_int(atime_).c_str();
     }
     if (ADAFS_DATA->mtime_state()) {
-        s += dentry_val_delim + fmt::format_int(mtime_).c_str();
+        s += dentry_val_delim;
+        s += fmt::format_int(mtime_).c_str();
     }
     if (ADAFS_DATA->ctime_state()) {
-        s += dentry_val_delim + fmt::format_int(ctime_).c_str();
+        s += dentry_val_delim;
+        s += fmt::format_int(ctime_).c_str();
     }
     if (ADAFS_DATA->uid_state()) {
-        s += dentry_val_delim + fmt::format_int(uid_).str();
+        s += dentry_val_delim;
+        s += fmt::format_int(uid_).c_str();
     }
     if (ADAFS_DATA->gid_state()) {
-        s += dentry_val_delim + fmt::format_int(gid_).str();
+        s += dentry_val_delim;
+        s += fmt::format_int(gid_).c_str();
     }
     if (ADAFS_DATA->inode_no_state()) {
-        s += dentry_val_delim + fmt::format_int(inode_no_).str();
+        s += dentry_val_delim;
+        s += fmt::format_int(inode_no_).c_str();
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        s += dentry_val_delim + fmt::format_int(link_count_).c_str();
+        s += dentry_val_delim;
+        s += fmt::format_int(link_count_).c_str();
     }
     if (ADAFS_DATA->blocks_state()) {
-        s += dentry_val_delim + fmt::format_int(blocks_).c_str();
+        s += dentry_val_delim;
+        s += fmt::format_int(blocks_).c_str();
     }
     return s;
 }
