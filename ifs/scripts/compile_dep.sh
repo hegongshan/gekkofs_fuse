@@ -262,7 +262,7 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/mercury
 prepare_build_dir ${CURR}
 cd ${CURR}/build
-cmake \
+$CMAKE \
     -DCMAKE_BUILD_TYPE:STRING=Release \
     -DBUILD_TESTING:BOOL=OFF \
     -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
