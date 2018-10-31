@@ -16,8 +16,17 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("minimal RPC is running...\n");
 
     /* create handle */
-    auto ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, minimal_id, &handle);
-    assert(ret == HG_SUCCESS);
+    auto local_addr = get_local_addr();
+    if (local_addr == HG_ADDR_NULL) {
+        CTX->log()->error("{}() Unable to lookup local addr", __func__);
+        return;
+    }
+    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
+    if (ret != HG_SUCCESS) {
+        margo_addr_free(ld_margo_rpc_id, local_addr);
+        CTX->log()->error("{}() creating handle for failed", __func__);
+        return;
+    }
 
     /* Send rpc. Note that we are also transmitting the bulk handle in the
      * input struct.  It was set above.
@@ -33,6 +42,7 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("Got response ret: %d\n", out.output);
 
     /* clean up resources consumed by this rpc */
+    margo_addr_free(ld_margo_rpc_id, local_addr);
     margo_free_output(handle, &out);
     margo_destroy(handle);
 
@@ -49,8 +59,14 @@ bool ipc_send_get_fs_config() {
     ipc_config_out_t out{};
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
-    auto ret = margo_create(ld_margo_ipc_id, daemon_svr_addr, ipc_config_id, &handle);
+    auto local_addr = get_local_addr();
+    if (local_addr == HG_ADDR_NULL) {
+        CTX->log()->error("{}() Unable to lookup local addr", __func__);
+        return false;
+    }
+    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
     if (ret != HG_SUCCESS) {
+        margo_addr_free(ld_margo_rpc_id, local_addr);
         CTX->log()->error("{}() creating handle for failed", __func__);
         return false;
     }
@@ -103,6 +119,7 @@ bool ipc_send_get_fs_config() {
             CTX->log()->error("{}() Retrieving fs configurations from daemon", __func__);
         }
         /* clean up resources consumed by this rpc */
+        margo_addr_free(ld_margo_rpc_id, local_addr);
         margo_free_output(handle, &out);
     } else {
         CTX->log()->warn("{}() timed out", __func__);

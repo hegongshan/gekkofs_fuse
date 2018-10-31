@@ -246,10 +246,8 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         #libfabric
         CURR=${SOURCE}/libfabric
         prepare_build_dir ${CURR}
-        cd ${CURR}
-        ./autogen.sh
         cd ${CURR}/build
-        ../configure --prefix=${INSTALL}
+        ../configure --prefix=${INSTALL} --enable-tcp=yes
         make -j${CORES}
         make install
         [ "${PERFORM_TEST}" ] && make check
@@ -264,7 +262,8 @@ prepare_build_dir ${CURR}
 cd ${CURR}/build
 $CMAKE \
     -DCMAKE_BUILD_TYPE:STRING=Release \
-    -DBUILD_TESTING:BOOL=OFF \
+    -DBUILD_TESTING:BOOL=ON \
+    -DMERCURY_USE_SM_ROUTING:BOOL=ON \
     -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
     -DMERCURY_USE_CHECKSUMS:BOOL=OFF \
     -DMERCURY_USE_BOOST_PP:BOOL=ON \
@@ -294,6 +293,8 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
+echo "########## Applying allow init option path"
+git apply ${PATCH_DIR}/margo_allow_init_options.patch
 ./prepare.sh
 cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"

@@ -52,9 +52,10 @@ find_package(Boost 1.53 REQUIRED
 
 find_package(Threads REQUIRED)
 
-set(RPC_PROTOCOL "bmi+tcp" CACHE STRING "Communication plugin used for RPCs")
+set(RPC_PROTOCOL "ofi+tcp" CACHE STRING "Communication plugin used for RPCs")
 set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
    "bmi+tcp"
+   "ofi+tcp"
    "ofi+verbs"
    "ofi+psm2"
    "cci+verbs"

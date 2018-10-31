@@ -29,8 +29,8 @@ compile dependencies:
    # If the download and compile script have been modified the cache gets invalidated and dependencies will be built again.
    - ( [ -f "${DEPS_COMMIT}" ] && git diff --quiet "`cat ${DEPS_COMMIT}`" -- ifs/scripts/dl_dep.sh ifs/scripts/compile_dep.sh ) || (
            rm -f ${DEPS_COMMIT} &&
-           ifs/scripts/dl_dep.sh ${DEPS_SRC_PATH} -n bmi &&
-           ifs/scripts/compile_dep.sh -n bmi ${DEPS_SRC_PATH} ${DEPS_INSTALL_PATH} &&
+           ifs/scripts/dl_dep.sh ${DEPS_SRC_PATH} -n ofi &&
+           ifs/scripts/compile_dep.sh -n ofi ${DEPS_SRC_PATH} ${DEPS_INSTALL_PATH} &&
            echo "${CI_COMMIT_SHA}" > "${DEPS_COMMIT}"
      )
   artifacts:
