@@ -456,7 +456,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         out.io_size += *task_read_size; // add task read size to output size
     }
 
-    ADAFS_DATA->spdlogger()->debug("{}() total chunk size read {}/{}", __func__, out.io_size, in.total_chunk_size);
+    ADAFS_DATA->spdlogger()->trace("{}() total chunk size read {}/{}", __func__, out.io_size, in.total_chunk_size);
 
     /*
      * 5. Respond and cleanup
