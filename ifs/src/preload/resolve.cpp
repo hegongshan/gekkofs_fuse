@@ -104,6 +104,11 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
             // component is '..' we need to rollback resolved path
             if (resolved.size() > 0) {
                 resolved.erase(last_slash_pos);
+                /* TODO     Optimization
+                 * the previous slash position should be stored.
+                 * The following search could be avoided.
+                 */
+                last_slash_pos = resolved.find_last_of(PSP);
             }
             if (resolved_components > 0) {
                 if (matched_components == resolved_components) {
