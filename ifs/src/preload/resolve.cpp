@@ -106,10 +106,10 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
                 resolved.erase(last_slash_pos);
             }
             if (resolved_components > 0) {
+                if (matched_components == resolved_components) {
+                    --matched_components;
+                }
                 --resolved_components;
-            }
-            if (matched_components > 0) {
-                --matched_components;
             }
             continue;
         }
