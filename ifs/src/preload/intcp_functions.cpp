@@ -1521,14 +1521,24 @@ int linkat(int olddirfd, const char *oldpath,
 
 int symlink(const char *oldpath, const char *newpath) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
-               __func__, oldpath, newpath);
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(symlink, oldpath, newpath);
+    }
+    CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
+            __func__, oldpath, newpath);
+
+    std::string rel_oldpath;
+    bool oldpath_internal = CTX->relativize_path(oldpath, rel_oldpath);
+
+    std::string rel_newpath;
+    bool newpath_internal = CTX->relativize_path(newpath, rel_newpath);
+
+    if (oldpath_internal || newpath_internal) {
         CTX->log()->error("{}() not implemented", __func__);
         errno = ENOTSUP;
         return -1;
     }
-    return LIBC_FUNC(symlink, oldpath, newpath);
+    return LIBC_FUNC(symlink, rel_oldpath.c_str(), rel_newpath.c_str());
 }
 
 int symlinkat(const char *oldpath, int fd, const char *newpath) {
