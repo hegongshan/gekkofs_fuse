@@ -555,7 +555,7 @@ int unlink(const char* path) __THROW {
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
-    if (!CTX->relativize_path(path, rel_path)) {
+    if (!CTX->relativize_path(path, rel_path, false)) {
         return LIBC_FUNC(unlink, rel_path.c_str());
     }
     return adafs_rm_node(rel_path);
@@ -731,7 +731,7 @@ int lstat(const char* path, struct stat* buf) __THROW {
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
-    if (!CTX->relativize_path(path, rel_path)) {
+    if (!CTX->relativize_path(path, rel_path, false)) {
         return LIBC_FUNC(lstat, rel_path.c_str(), buf);
     }
     CTX->log()->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
@@ -861,7 +861,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
-    if (!CTX->relativize_path(path, rel_path)) {
+    if (!CTX->relativize_path(path, rel_path, false)) {
         return LIBC_FUNC(__lxstat, ver, path, buf);
     }
     return adafs_stat(rel_path, buf);
