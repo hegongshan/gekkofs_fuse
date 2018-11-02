@@ -12,6 +12,7 @@ target_sources(metadata_db
     )
 
 target_link_libraries(metadata_db
+    metadata
     RocksDB
     spdlog
 )

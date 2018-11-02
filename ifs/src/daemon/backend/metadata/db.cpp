@@ -2,6 +2,7 @@
 #include <daemon/backend/metadata/merge.hpp>
 #include <daemon/backend/exceptions.hpp>
 
+#include <global/metadata.hpp>
 #include <global/path_util.hpp>
 
 #include <sys/stat.h>
@@ -154,14 +155,8 @@ std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::str
         //relative path of directory entries must not be empty
         assert(name.size() > 0);
 
-        /***** Get File type *****/
-        /*TODO: move this routine along with general metadata {de,se}rialization
-         * functions
-         */
-        auto metadata = it->value().ToString();
-        assert(metadata.size() > 0);
-        auto mode = static_cast<mode_t>(stoul(metadata.substr(0, metadata.find(','))));
-        auto is_dir = S_ISDIR(mode);
+        Metadata md(it->value().ToString());
+        auto is_dir = S_ISDIR(md.mode());
 
         entries.push_back(std::make_pair(std::move(name), std::move(is_dir)));
     }
