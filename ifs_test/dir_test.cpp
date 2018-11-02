@@ -36,6 +36,7 @@ int main(int argc, char* argv[]) {
 
 
     int ret;
+    int fd;
     DIR * dirstream = NULL;
     struct stat dirstat;
 
@@ -75,6 +76,33 @@ int main(int argc, char* argv[]) {
     }
     assert(S_ISDIR(dirstat.st_mode));
 
+    // Open topdir
+    fd = open(topdir.c_str(), O_DIRECTORY);
+    if(ret != 0){
+        std::cerr << "Error opening topdir: " << std::strerror(errno) << std::endl;
+        return -1;
+    }
+    
+    // Read and write should be impossible on directories
+    char buff;
+    ret = read(fd, &buff, 1);
+    if (ret == 0) {
+        std::cerr << "ERROR: succeded on reading directory" << std::endl;
+        return -1;
+    }
+    if (errno != EISDIR) {
+        std::cerr << "ERROR: wrong error number on directory read" << std::endl;
+        return -1;
+    }
+    ret = write(fd, &buff, 1);
+    if (ret == 0) {
+        std::cerr << "ERROR: succeded on reading directory" << std::endl;
+        return -1;
+    }
+    if (errno != EISDIR) {
+        std::cerr << "ERROR: wrong error number on directory read" << std::endl;
+        return -1;
+    }
 
     /* Read top directory that is empty */
     //opening top directory
