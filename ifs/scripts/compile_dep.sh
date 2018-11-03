@@ -148,6 +148,7 @@ USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
 CMAKE=`find_cmake`
+CMAKE="${CMAKE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
 echo "Source path = ${SOURCE}";
 echo "Install path = ${INSTALL}";
@@ -156,6 +157,9 @@ mkdir -p ${SOURCE}
 
 ######### From now on exits on any error ########
 set -e
+
+export CPATH="${CPATH}:${INSTALL}/include"
+export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL}/lib:${INSTALL}/lib64"
 
 # Set cluster dependencies first
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
@@ -307,7 +311,7 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/rocksdb
 cd ${CURR}
 make clean
-make USE_RTTI=1 -j${CORES} static_lib
-make INSTALL_PATH=${INSTALL} install
+USE_RTTI=1 make -j${CORES} static_lib
+INSTALL_PATH=${INSTALL} make install
 
 echo "Done"

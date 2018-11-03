@@ -35,6 +35,7 @@ bool init_environment() {
         ADAFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize metadata DB: {}", __func__, e.what());
+        return false;
     }
 
     // Initialize data backend
@@ -42,7 +43,7 @@ bool init_environment() {
     ADAFS_DATA->spdlogger()->debug("{}() Creating chunk storage directory: '{}'", __func__, chunk_storage_path);
     bfs::create_directories(chunk_storage_path);
     try {
-        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path));
+        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, CHUNKSIZE));
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize storage backend: {}", __func__, e.what());
     }
@@ -210,6 +211,7 @@ void register_server_rpcs(margo_instance_id mid) {
     MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
     MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, rpc_srv_access);
     MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
     MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_rm_node);
     MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
@@ -221,6 +223,7 @@ void register_server_rpcs(margo_instance_id mid) {
                    rpc_srv_get_dirents);
     MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
     MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
+    MARGO_REGISTER(mid, hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_trunc_data);
 }
 
 /**

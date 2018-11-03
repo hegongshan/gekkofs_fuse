@@ -2,6 +2,7 @@
 
 #include <global/global_defs.hpp>
 #include <preload/open_file_map.hpp>
+#include <preload/open_dir.hpp>
 #include <preload/preload.hpp>
 
 using namespace std;
@@ -73,6 +74,15 @@ shared_ptr<OpenFile> OpenFileMap::get(int fd) {
     }
 }
 
+shared_ptr<OpenDir> OpenFileMap::get_dir(int dirfd) {
+    auto f = get(dirfd);
+    if(f == nullptr){
+        return nullptr;
+    }
+    auto open_dir = static_pointer_cast<OpenDir>(f);
+    // If open_file is not an OpenDir we are returning nullptr
+    return open_dir;
+}
 
 bool OpenFileMap::exist(const int fd) {
     lock_guard<recursive_mutex> lock(files_mutex_);

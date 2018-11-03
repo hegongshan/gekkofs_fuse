@@ -18,6 +18,8 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_access)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
+
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_rm_node)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
@@ -32,5 +34,7 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
+
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_trunc_data)
 
 #endif //LFS_RPC_DEFS_HPP

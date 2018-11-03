@@ -2,14 +2,23 @@
  * All intercepted functions are defined here
  */
 #include <sys/statfs.h>
+#include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/unistd.h>
 
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/intcp_functions.hpp>
+#include <preload/open_dir.hpp>
+#include <global/path_util.hpp>
 
 
 using namespace std;
+
+void inline notsup_error_32_bit_func(const char* func = __builtin_FUNCTION()) {
+    CTX->log()->error("{}() is NOT SUPPORTED. According to glibc, this function should be called only on 32-bit machine", func);
+}
 
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
@@ -24,12 +33,6 @@ int open(const char* path, int flags, ...) {
 
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path {}", __func__, path);
-        if(flags & O_DIRECTORY){
-            CTX->log()->error("{}() called with `O_DIRECTORY` flag on {}", __func__, path);
-            errno = ENOTSUP;
-            return -1;
-        }
-
         std::string rel_path(path);
         if (CTX->relativize_path(rel_path)) {
             return adafs_open(rel_path, mode, flags);
@@ -52,19 +55,332 @@ int open64(const char* path, int flags, ...) {
     return open(path, flags | O_LARGEFILE, mode);
 }
 
-//// TODO This function somehow always blocks forever if one puts anything between the paththru...
-//FILE* fopen(const char* path, const char* mode) {
-////    init_passthrough_if_needed();
-////    DAEMON_DEBUG(debug_fd, "fopen called with path %s\n", path);
-//    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
-//}
+int openat(int dirfd, const char *cpath, int flags, ...) {
+    init_passthrough_if_needed();
 
-//// TODO This function somehow always blocks forever if one puts anything between the paththru...
-//FILE* fopen64(const char* path, const char* mode) {
-////    init_passthrough_if_needed();
-////    DAEMON_DEBUG(debug_fd, "fopen64 called with path %s\n", path);
-//    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
-//}
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list vl;
+        va_start(vl, flags);
+        mode = static_cast<mode_t>(va_arg(vl, int));
+        va_end(vl);
+    }
+
+    if(CTX->initialized()) {
+        std::string path(cpath);
+        CTX->log()->trace("{}() called with path {}", __func__, path);
+
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_open(dir->path() + '/' + path, mode, flags);
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_open(path, mode, flags);
+            }
+        }
+    }
+passthrough:
+    return (reinterpret_cast<decltype(&openat)>(libc_openat))(dirfd, cpath, flags, mode);
+}
+
+int openat64(int dirfd, const char *path, int flags, ...) {
+    init_passthrough_if_needed();
+
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list vl;
+        va_start(vl, flags);
+        mode = static_cast<mode_t>(va_arg(vl, int));
+        va_end(vl);
+    }
+
+    return openat(dirfd, path, flags | O_LARGEFILE, mode);
+}
+
+/******  FILE OPS  ******/
+
+inline int file_to_fd(const FILE* f){
+    assert(f != nullptr);
+    return *(reinterpret_cast<int*>(&f));
+}
+
+inline FILE* fd_to_file(const int fd){
+    assert(fd >= 0);
+    return reinterpret_cast<FILE*>(fd);
+}
+
+FILE* fopen(const char* path, const char* fmode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            int flags = 0;
+            std::string str_mode(fmode);
+            if(str_mode == "r") {
+                flags = O_RDONLY;
+            } else if(str_mode == "r+") {
+                flags = O_RDWR;
+            } else if(str_mode == "w") {
+                flags = (O_WRONLY | O_CREAT | O_TRUNC);
+            } else {
+                CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
+                errno = ENOTSUP;
+                return nullptr;
+            }
+            mode_t mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+            auto fd = adafs_open(rel_path, mode, flags);
+            if(fd == -1){
+                return nullptr;
+            } else {
+                return fd_to_file(fd);
+            }
+        }
+    }
+    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, fmode);
+}
+
+FILE* fopen64(const char* path, const char* fmode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return fopen(path, fmode);
+        }
+    }
+    return (reinterpret_cast<decltype(&fopen64)>(libc_fopen64))(path, fmode);
+}
+
+size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pread_ws(fd, ptr, size*nmemb, pos);
+            if (ret > 0) {
+                // Update offset in file descriptor in the file map
+                adafs_fd->pos(pos + ret);
+                return ret / size;
+            }
+            return ret;
+        }
+    }
+    return (reinterpret_cast<decltype(&fread)>(libc_fread))(ptr, size, nmemb, stream);
+}
+
+size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pwrite_ws(fd, ptr, size*nmemb, pos);
+            if (ret > 0) {
+                // Update offset in file descriptor in the file map
+                adafs_fd->pos(pos + ret);
+                return ret / size;
+            }
+            return ret;
+        }
+    }
+    return (reinterpret_cast<decltype(&fwrite)>(libc_fwrite))(ptr, size, nmemb, stream);
+}
+
+int fclose(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            // No call to the daemon is required
+            CTX->file_map()->remove(fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fclose)>(libc_fclose))(stream);
+}
+
+int fileno(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            return fd;
+        }
+    }
+    return (reinterpret_cast<decltype(&fileno)>(libc_fileno))(stream);
+}
+
+void clearerr(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&clearerr)>(libc_clearerr))(stream);
+}
+
+int feof(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&feof)>(libc_feof))(stream);
+}
+
+int ferror(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&ferror)>(libc_ferror))(stream);
+}
+
+int fflush(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fflush)>(libc_fflush))(stream);
+}
+
+int fpurge(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fpurge)>(libc_fpurge))(stream);
+}
+
+void __fpurge(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&__fpurge)>(libc___fpurge))(stream);
+}
+
+void setbuf(FILE *stream, char *buf) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setbuf)>(libc_setbuf))(stream, buf);
+}
+
+void setbuffer(FILE *stream, char *buf, size_t size) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setbuffer)>(libc_setbuffer))(stream, buf, size);
+}
+
+void setlinebuf(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setlinebuf)>(libc_setlinebuf))(stream);
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&setvbuf)>(libc_setvbuf))(stream, buf, mode, size);
+}
+
+int putc(int c, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return (reinterpret_cast<decltype(&putc)>(libc_putc))(c, stream);
+}
+
+int fputc(int c, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return (reinterpret_cast<decltype(&fputc)>(libc_fputc))(c, stream);
+}
+
+/******  FILE OPS  ******/
 
 #undef creat
 
@@ -105,8 +421,8 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
         std::string rel_path(path);
         if (CTX->relativize_path(rel_path)) {
             // not implemented
-            CTX->log()->trace("{}() not implemented.", __func__);
-            errno = EBUSY;
+            CTX->log()->error("{}() not implemented.", __func__);
+            errno = ENOTSUP;
             return -1;
         }
     }
@@ -124,6 +440,45 @@ int unlink(const char* path) __THROW {
         }
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
+}
+
+int unlinkat(int dirfd, const char *cpath, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        std::string path(cpath);
+        CTX->log()->trace("{}() called with path '{}' dirfd {}, flags {}", __func__, path, dirfd, flags);
+
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            path = dir->path() + '/' + path;
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (!CTX->relativize_path(path)) {
+                goto passthrough;
+            }
+        }
+
+        if(flags & AT_REMOVEDIR) {
+            return adafs_rmdir(path);
+        } else {
+            return adafs_rm_node(path);
+        }
+    }
+passthrough:
+    return (reinterpret_cast<decltype(&unlinkat)>(libc_unlinkat))(dirfd, cpath, flags);
 }
 
 int rmdir(const char* path) __THROW {
@@ -168,18 +523,37 @@ int access(const char* path, int mask) __THROW {
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
 }
 
-int faccessat(int dirfd, const char* path, int mode, int flags) __THROW {
+int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
+        std::string path(cpath);
         CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            // not implemented
-            CTX->log()->trace("{}() not implemented.", __func__);
-            return -1;
+
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_access(dir->path() + '/' + path, mode);
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_access(path, mode);
+            }
         }
     }
-    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, path, mode, flags);
+passthrough:
+    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, cpath, mode, flags);
 }
 
 
@@ -235,11 +609,9 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat64(rel_path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
 }
@@ -256,14 +628,62 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
 }
 
+int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        std::string path(cpath);
+        CTX->log()->trace("{}() called with path '{}' and fd {}", __func__, path, dirfd);
+        if(flags & AT_EMPTY_PATH) {
+            CTX->log()->error("{}() AT_EMPTY_PATH flag not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+
+        if(is_relative_path(path)) {
+            if((dirfd == AT_FDCWD) || !CTX->file_map()->exist(dirfd)) {
+                goto passthrough;
+            }
+
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_stat(dir->path() + '/' + path, buf);
+
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_stat(path, buf);
+            }
+        }
+    }
+passthrough:
+    return (reinterpret_cast<decltype(&__fxstatat)>(libc___fxstatat))(ver, dirfd, cpath, buf, flags);
+}
+
+int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
+    }
+    return (reinterpret_cast<decltype(&__fxstatat64)>(libc___fxstatat64))(ver, dirfd, path, buf, flags);
+}
+
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {}", __func__, fd);
-        if (CTX->file_map()->exist(fd)) {
-            auto path = CTX->file_map()->get(fd)->path();
-            return adafs_stat64(path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
 }
@@ -283,11 +703,9 @@ int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
 int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat64(rel_path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }
@@ -326,10 +744,6 @@ int fstatfs(int fd, struct statfs* buf) {
         }
     }
     return (reinterpret_cast<decltype(&fstatfs)>(libc_fstatfs))(fd, buf);
-}
-
-int puts(const char* str) {
-    return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
 }
 
 ssize_t write(int fd, const void* buf, size_t count) {
@@ -374,18 +788,69 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
     return (reinterpret_cast<decltype(&pwrite64)>(libc_pwrite64))(fd, buf, count, offset);
 }
 
-ssize_t read(int fd, void* buf, size_t count) {
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); // retrieve the current offset
+            ssize_t written = 0;
+            ssize_t ret;
+            for (int i = 0; i < iovcnt; ++i){
+                auto count = (iov+i)->iov_len;
+                if(count == 0) {
+                    continue;
+                }
+                auto buf = (iov+i)->iov_base;
+                ret = adafs_pwrite_ws(fd, buf, count, pos);
+                if(ret == -1) {
+                    break;
+                }
+                written += ret;
+                pos += ret;
+
+                if(static_cast<size_t>(ret) < count){
+                    break;
+                }
+            }
+
+            if(written == 0){
+                return -1;
+            }
+            adafs_fd->pos(pos);
+            return written;
+        }
+    }
+    return (reinterpret_cast<decltype(&writev)>(libc_writev))(fd, iov, iovcnt);
+}
+
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&readv)>(libc_readv))(fd, iov, iovcnt);
+}
+
+ssize_t read(int fd, void* buf, size_t count) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}, count {}", __func__, fd, count);
         if (CTX->file_map()->exist(fd)) {
             auto adafs_fd = CTX->file_map()->get(fd);
             auto pos = adafs_fd->pos(); //retrieve the current offset
             auto ret = adafs_pread_ws(fd, buf, count, pos);
             // Update offset in file descriptor in the file map
             if (ret > 0) {
-                adafs_fd->pos(pos + count);
+                adafs_fd->pos(pos + ret);
             }
+            CTX->log()->trace("{}() returning {}", __func__, ret);
             return ret;
         }
     }
@@ -465,14 +930,82 @@ int fdatasync(int fd) {
     return (reinterpret_cast<decltype(&fdatasync)>(libc_fdatasync))(fd);
 }
 
-int truncate(const char* path, off_t length) __THROW {
+int truncate(const char* path, off_t length) {
     init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path: {}, offset: {}", __func__,
+                path, length);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return adafs_truncate(rel_path, length);
+        }
+    }
     return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
 }
 
-int ftruncate(int fd, off_t length) __THROW {
+int ftruncate(int fd, off_t length) {
     init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called  [fd: {}, offset: {}]", __func__, fd, length);
+        if (CTX->file_map()->exist(fd)) {
+            auto path = CTX->file_map()->get(fd)->path();
+            return adafs_truncate(path, length);
+        }
+    }
     return (reinterpret_cast<decltype(&ftruncate)>(libc_ftruncate))(fd, length);
+}
+
+int fcntl(int fd, int cmd, ...) {
+    init_passthrough_if_needed();
+    va_list ap;
+    void *arg;
+
+    va_start (ap, cmd);
+    arg = va_arg (ap, void *);
+    va_end (ap);
+
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            switch(cmd) {
+                case F_DUPFD:
+                    CTX->log()->trace("{}() F_DUPFD on fd {}", __func__, fd);
+                    return adafs_dup(fd);
+                case F_DUPFD_CLOEXEC: {
+                    CTX->log()->trace("{}() F_DUPFD_CLOEXEC on fd {}", __func__, fd);
+                    auto ret = adafs_dup(fd);
+                    if(ret == -1) {
+                        return ret;
+                    }
+                    CTX->file_map()->get(fd)
+                        ->set_flag(OpenFile_flags::cloexec, true);
+                    return ret;
+                }
+                case F_GETFD:
+                    CTX->log()->trace("{}() F_GETFD on fd {}", __func__, fd);
+                    if(CTX->file_map()->get(fd)
+                            ->get_flag(OpenFile_flags::cloexec)) {
+                        return FD_CLOEXEC;
+                    } else {
+                        return 0;
+                    }
+                case F_SETFD: {
+                    va_start (ap, cmd);
+                    int flags = va_arg (ap, int);
+                    va_end (ap);
+                    CTX->log()->trace("{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]", __func__, fd, (flags & FD_CLOEXEC));
+                    CTX->file_map()->get(fd)
+                        ->set_flag(OpenFile_flags::cloexec, (flags & FD_CLOEXEC));
+                    return 0;
+                }
+                default:
+                    CTX->log()->error("{}() unrecognized command {} on fd {}", __func__, cmd, fd);
+                    errno = ENOTSUP;
+                    return -1;
+            }
+        }
+    }
+    return (reinterpret_cast<decltype(&fcntl)>(libc_fcntl))(fd, cmd, arg);
 }
 
 int dup(int oldfd) __THROW {
@@ -539,6 +1072,24 @@ DIR* opendir(const char* path){
     return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
 }
 
+DIR* fdopendir(int fd){
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            auto open_file = CTX->file_map()->get(fd);
+            auto open_dir = static_pointer_cast<OpenDir>(open_file);
+            if(!open_dir){
+                //Cast did not succeeded: open_file is a regular file
+                errno = EBADF;
+                return nullptr;
+            }
+            return fd_to_dirp(fd);
+        }
+    }
+    return (reinterpret_cast<decltype(&fdopendir)>(libc_fdopendir))(fd);
+}
+
 struct dirent* intcp_readdir(DIR* dirp){
     init_passthrough_if_needed();
     if(CTX->initialized()) {
@@ -581,4 +1132,27 @@ int chdir(const char* path){
         return -1;
     }
     return (reinterpret_cast<decltype(&chdir)>(libc_chdir))(path);
+}
+
+char *realpath(const char *path, char *resolved_path) {
+    init_passthrough_if_needed();
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        if(resolved_path != nullptr) {
+            CTX->log()->error("{}() use of user level buffer not supported", __func__);
+            errno = ENOTSUP;
+            return nullptr;
+        }
+        auto absolute_path = CTX->mountdir() + rel_path;
+        auto ret_ptr = static_cast<char*>(malloc(absolute_path.size() +  1));
+        if(ret_ptr == nullptr){
+            CTX->log()->error("{}() failed to allocate buffer for called with path {}", __func__, path);
+            errno = ENOMEM;
+            return nullptr;
+        }
+        strcpy(ret_ptr, absolute_path.c_str());
+        return ret_ptr;
+    }
+    return (reinterpret_cast<decltype(&realpath)>(libc_realpath))(path, resolved_path);
 }

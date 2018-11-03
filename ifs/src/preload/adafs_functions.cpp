@@ -1,6 +1,7 @@
 #include <sys/statfs.h>
 
 #include <global/configure.hpp>
+#include <global/path_util.hpp>
 #include <preload/preload.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
@@ -13,31 +14,84 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
     int err = 0;
 
-    if (flags & O_CREAT){
-        // no access check required here. If one is using our FS they have the permissions.
-        err = adafs_mk_node(path, mode | S_IFREG);
-        if(err != 0)
-            return -1;
+    if(flags & O_PATH){
+        CTX->log()->error("{}() `O_PATH` flag is not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
 
+    bool exists = true;
+    struct stat st;
+    err = adafs_stat(path, &st);
+    if(err) {
+        if(errno == ENOENT) {
+            exists = false;
+        } else {
+            CTX->log()->error("{}() error while retriving stat to file", __func__);
+            return -1;
+        }
+    }
+
+    if (!exists) {
+        if (! (flags & O_CREAT)) {
+            // file doesn't exists and O_CREAT was not set
+            errno = ENOENT;
+            return -1;
+        }
+
+        /***   CREATION    ***/
+        assert(flags & O_CREAT);
+
+        if(flags & O_DIRECTORY){
+            CTX->log()->error("{}() O_DIRECTORY use with O_CREAT. NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+
+        // no access check required here. If one is using our FS they have the permissions.
+        if(adafs_mk_node(path, mode | S_IFREG)) {
+            CTX->log()->error("{}() error creating non-existent file", __func__);
+            return -1;
+        }
     } else {
-        auto mask = F_OK; // F_OK == 0
+        /* File already exists */
+
+        if(flags & O_EXCL) {
+            // File exists and O_EXCL was set
+            errno = EEXIST;
+            return -1;
+        }
+
 #if defined(CHECK_ACCESS_DURING_OPEN)
+        auto mask = F_OK; // F_OK == 0
         if ((mode & S_IRUSR) || (mode & S_IRGRP) || (mode & S_IROTH))
             mask = mask & R_OK;
         if ((mode & S_IWUSR) || (mode & S_IWGRP) || (mode & S_IWOTH))
             mask = mask & W_OK;
         if ((mode & S_IXUSR) || (mode & S_IXGRP) || (mode & S_IXOTH))
             mask = mask & X_OK;
-#endif
-#if defined(DO_LOOKUP)
-        // check if file exists
-        err = rpc_send_access(path, mask);
-        if(err != 0)
+
+        if( ! ((mask & md.mode()) == mask)) {
+            errno = EACCES;
             return -1;
+        }
 #endif
+
+        if(S_ISDIR(st.st_mode)) {
+            return adafs_opendir(path);
+        }
+
+        /*** Regular file exists ***/
+        assert(S_ISREG(st.st_mode));
+
+        if( (flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY)) ) {
+            if(adafs_truncate(path, st.st_size, 0)) {
+                CTX->log()->error("{}() error truncating file", __func__);
+                return -1;
+            }
+        }
     }
 
-    // TODO the open flags should not be in the map just set the pos accordingly
     return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
 
@@ -49,6 +103,19 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
     //file type must be either regular file or directory
     assert(S_ISREG(mode) || S_ISDIR(mode));
 
+    struct stat st;
+    auto p_comp = dirname(path);
+    auto ret = adafs_stat(p_comp, &st);
+    if(ret != 0) {
+        CTX->log()->debug("{}() parent component does not exists: '{}'", __func__, p_comp);
+        errno = ENOENT;
+        return -1;
+    }
+    if(!S_ISDIR(st.st_mode)) {
+        CTX->log()->debug("{}() parent component is not a direcotory: '{}'", __func__, p_comp);
+        errno = ENOTDIR;
+        return -1;
+    }
     return rpc_send_mk_node(path, mode);
 }
 
@@ -79,22 +146,12 @@ int adafs_access(const std::string& path, const int mask) {
 #endif
 }
 
-// TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const string& path, struct stat* buf) {
     init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
     if (err == 0)
         db_val_to_stat(path, attr, *buf);
-    return err;
-}
-
-int adafs_stat64(const string& path, struct stat64* buf) {
-    init_ld_env_if_needed();
-    string attr = ""s;
-    auto err = rpc_send_stat(path, attr);
-    if (err == 0)
-        db_val_to_stat64(path, attr, *buf);
     return err;
 }
 
@@ -172,6 +229,56 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
     return adafs_fd->pos();
 }
 
+int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
+    assert(new_size >= 0);
+    assert(new_size <= old_size);
+
+    if(new_size == old_size) {
+        return 0;
+    }
+
+    if (rpc_send_decr_size(path, new_size)) {
+        CTX->log()->debug("{}() failed to decrease size", __func__);
+        return -1;
+    }
+
+    if(rpc_send_trunc_data(path, old_size, new_size)){
+        CTX->log()->debug("{}() failed to truncate data", __func__);
+        return -1;
+    }
+    return 0;
+}
+
+int adafs_truncate(const std::string& path, off_t length) {
+    /* TODO CONCURRENCY:
+     * At the moment we first ask the length to the metadata-server in order to
+     * know which data-server have data to be deleted.
+     *
+     * From the moment we issue the adafs_stat and the moment we issue the
+     * adafs_trunc_data, some more data could have been added to the file and the
+     * length increased.
+     */
+    init_ld_env_if_needed();
+    if(length < 0) {
+        CTX->log()->debug("{}() length is negative: {}", __func__, length);
+        errno = EINVAL;
+        return -1;
+    }
+
+    struct stat st;
+    if(adafs_stat(path, &st)) {
+        return -1;
+    }
+
+    if(length > st.st_size) {
+        CTX->log()->debug("{}() length is greater then file size: {} > {}",
+               __func__, length, st.st_size);
+        errno = EINVAL;
+        return -1;
+    }
+    return adafs_truncate(path, st.st_size, length);
+}
+
 int adafs_dup(const int oldfd) {
     return CTX->file_map()->dup(oldfd);
 }
@@ -185,6 +292,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
+    CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
     ssize_t ret = 0;
     long updated_size = 0;
@@ -205,6 +313,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
+    CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
 #if defined(ZERO_BUFFER_BEFORE_READ)
     memset(buf, 0, sizeof(char)*count);
@@ -219,12 +328,17 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 
 int adafs_opendir(const std::string& path) {
     init_ld_env_if_needed();
-#if defined(DO_LOOKUP)
-    auto err = rpc_send_access(path, F_OK);
-    if(err != 0){
-        return err;
+
+    struct stat st;
+    if(adafs_stat(path, &st)) {
+        return -1;
     }
-#endif
+    if(!(st.st_mode & S_IFDIR)) {
+        CTX->log()->debug("{}() path is not a directory", __func__);
+        errno = ENOTDIR;
+        return -1;
+    }
+
     auto open_dir = std::make_shared<OpenDir>(path);
     rpc_send_get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);

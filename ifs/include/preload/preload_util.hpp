@@ -49,21 +49,20 @@ extern hg_id_t rpc_mk_node_id;
 extern hg_id_t rpc_stat_id;
 extern hg_id_t rpc_access_id;
 extern hg_id_t rpc_rm_node_id;
+extern hg_id_t rpc_decr_size_id;
 extern hg_id_t rpc_update_metadentry_id;
 extern hg_id_t rpc_get_metadentry_size_id;
 extern hg_id_t rpc_update_metadentry_size_id;
 extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
+extern hg_id_t rpc_trunc_data_id;
 extern hg_id_t rpc_get_dirents_id;
 
 // function definitions
 
 bool is_fs_path(const char* path);
 
-// TODO template these two suckers
-int db_val_to_stat(std::string path, std::string db_val, struct stat& attr);
-
-int db_val_to_stat64(std::string path, std::string db_val, struct stat64& attr);
+int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
 
 int get_daemon_pid();
 

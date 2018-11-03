@@ -148,7 +148,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     // Get response
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->error("{}() timed out");
         margo_destroy(handle);
         return -1;
     }
@@ -172,6 +172,58 @@ int rpc_send_stat(const std::string& path, string& attr) {
     }
 
     /* clean up resources consumed by this rpc */
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
+    return err;
+}
+
+int rpc_send_decr_size(const std::string& path, size_t length) {
+    hg_handle_t handle;
+    rpc_trunc_in_t in{};
+    int err = 0;
+    in.path = path.c_str();
+    in.length = length;
+
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
+    auto ret = margo_create_wrap(rpc_decr_size_id, path, handle);
+    if (ret != HG_SUCCESS) {
+        errno = EBUSY;
+        return -1;
+    }
+
+    // Send rpc
+#if defined(MARGO_FORWARD_TIMER)
+    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
+#else
+    ret = margo_forward_timed_wrap(handle, &in);
+#endif
+    // Get response
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() timed out", __func__);
+        margo_destroy(handle);
+        errno = EBUSY;
+        return -1;
+    }
+
+    rpc_err_out_t out{};
+    ret = margo_get_output(handle, &out);
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
+        margo_free_output(handle, &out);
+        margo_destroy(handle);
+        errno = EBUSY;
+        return -1;
+    }
+
+    CTX->log()->debug("{}() Got response: {}", __func__, out.err);
+
+    if(out.err != 0){
+        //In case of error out.err contains the
+        //corresponding value of errno
+        errno = out.err;
+        err = -1;
+    }
+
     margo_free_output(handle, &out);
     margo_destroy(handle);
     return err;
@@ -416,8 +468,13 @@ void rpc_send_get_dirents(OpenDir& open_dir){
     std::vector<rpc_get_dirents_in_t> rpc_in(host_size);
     std::vector<char*> recv_buffers(host_size);
 
-    // preallocate receiving buffer. The actual size is not known yet.
-    auto recv_buff = std::make_unique<char[]>(RPC_DIRENTS_BUFF_SIZE);
+    /* preallocate receiving buffer. The actual size is not known yet.
+     *
+     * On C++14 make_unique function also zeroes the newly allocated buffer.
+     * It turns out that this operation is increadibly slow for such a big
+     * buffer. Moreover we don't need a zeroed buffer here.
+     */
+    auto recv_buff = std::unique_ptr<char[]>(new char[RPC_DIRENTS_BUFF_SIZE]);
     const unsigned long int per_host_buff_size = RPC_DIRENTS_BUFF_SIZE / host_size;
 
     hg_return_t hg_ret;
