@@ -15,8 +15,6 @@
 
 using namespace std;
 
-static const std::string dentry_val_delim = ","s;
-
 // rpc address cache
 std::unique_ptr<std::unordered_map<uint64_t, hg_addr_t>> rpc_addresses;
 
@@ -24,15 +22,14 @@ bool is_fs_path(const char* path) {
     return strstr(path, CTX->mountdir().c_str()) == path;
 }
 
-// TODO merge the two stat functions
 /**
- * Converts the dentry db value into a stat struct, which is needed by Linux
+ * Converts the Metadata object into a stat struct, which is needed by Linux
  * @param path
- * @param db_val
+ * @param md
  * @param attr
  * @return
  */
-int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr) {
+int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr) {
 
     /* Populate default values */
     attr.st_dev = makedev(0, 0);
@@ -48,69 +45,32 @@ int db_val_to_stat(const std::string& path, std::string db_val, struct stat& att
     memset(&attr.st_mtim, 0, sizeof(timespec));
     memset(&attr.st_ctim, 0, sizeof(timespec));
 
-    auto pos = db_val.find(dentry_val_delim);
-    if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
-        attr.st_mode = static_cast<unsigned int>(stoul(db_val));
-        attr.st_nlink = 1;
-        attr.st_uid = CTX->fs_conf()->uid;
-        attr.st_gid = CTX->fs_conf()->gid;
-        attr.st_size = 0;
-        attr.st_blksize = BLOCKSIZE;
-        attr.st_blocks = 0;
-        attr.st_atim.tv_sec = 0;
-        attr.st_mtim.tv_sec = 0;
-        attr.st_ctim.tv_sec = 0;
-        return 0;
-    }
-    // some metadata is enabled: mode is always there
-    attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
-    db_val.erase(0, pos + 1);
-    // size is also there XXX
-    pos = db_val.find(dentry_val_delim);
-    if (pos != std::string::npos) {  // delimiter found. more metadata is coming
-        attr.st_size = stol(db_val.substr(0, pos));
-        db_val.erase(0, pos + 1);
-    } else {
-        attr.st_size = stol(db_val);
-    }
-    // The order is important. don't change.
+    attr.st_mode = md.mode();
+    attr.st_size = md.size();
+
     if (CTX->fs_conf()->atime_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_atim.tv_sec = md.atime();
     }
     if (CTX->fs_conf()->mtime_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_mtim.tv_sec = md.mtime();
     }
     if (CTX->fs_conf()->ctime_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_ctim.tv_sec = md.ctime();
     }
     if (CTX->fs_conf()->uid_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_uid = md.uid();
     }
     if (CTX->fs_conf()->gid_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_gid = md.gid();
     }
     if (CTX->fs_conf()->inode_no_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_ino = md.inode_no();
     }
     if (CTX->fs_conf()->link_cnt_state) {
-        pos = db_val.find(dentry_val_delim);
-        attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        attr.st_nlink = md.link_count();
     }
     if (CTX->fs_conf()->blocks_state) { // last one will not encounter a delimiter anymore
-        attr.st_blocks = static_cast<blkcnt_t>(stoul(db_val));
+        attr.st_blocks = md.blocks();
     }
     return 0;
 }

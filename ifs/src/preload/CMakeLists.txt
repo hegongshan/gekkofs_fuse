@@ -41,6 +41,7 @@ add_library(adafs_preload_client SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
 target_link_libraries(adafs_preload_client
     # internal
+    metadata
     distributor
     log_util
     # external

@@ -148,10 +148,13 @@ int adafs_access(const std::string& path, const int mask) {
 
 int adafs_stat(const string& path, struct stat* buf) {
     init_ld_env_if_needed();
-    string attr = ""s;
+    std::string attr;
     auto err = rpc_send_stat(path, attr);
-    if (err == 0)
-        db_val_to_stat(path, attr, *buf);
+    if (err) {
+        return err;
+    }
+    Metadata md(attr);
+    metadata_to_stat(path, md, *buf);
     return err;
 }
 
