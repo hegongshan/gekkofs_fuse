@@ -5,6 +5,10 @@
 #ifndef IFS_PASSTHROUGH_HPP
 #define IFS_PASSTHROUGH_HPP
 
+
+#define LIBC_FUNC(FNAME, ...) \
+    ((reinterpret_cast<decltype(&FNAME)>(libc_##FNAME))(__VA_ARGS__))
+
 // function pointer for preloading
 extern void* libc;
 
@@ -31,6 +35,13 @@ extern void* libc_setvbuf;
 
 extern void* libc_putc;
 extern void* libc_fputc;
+extern void* libc_fputs;
+extern void* libc_getc;
+extern void* libc_fgetc;
+extern void* libc_fgets;
+extern void* libc_ungetc;
+
+extern void* libc_fseek;
 
 extern void* libc_mkdir;
 extern void* libc_mkdirat;
@@ -82,12 +93,26 @@ extern void* libc_dup;
 extern void* libc_dup2;
 extern void* libc_dup3;
 
+extern void* libc_dirfd;
 extern void* libc_opendir;
 extern void* libc_fdopendir;
 extern void* libc_readdir;
 extern void* libc_closedir;
 
+extern void* libc_chmod;
+extern void* libc_fchmod;
+extern void* libc_fchmodat;
+
 extern void* libc_chdir;
+extern void* libc_fchdir;
+
+extern void* libc_getcwd;
+extern void* libc_get_current_dir_name;
+
+extern void* libc_link;
+extern void* libc_linkat;
+extern void* libc_symlink;
+extern void* libc_symlinkat;
 
 extern void* libc_realpath;
 

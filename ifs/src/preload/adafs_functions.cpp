@@ -20,6 +20,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         return -1;
     }
 
+    if(flags & O_APPEND){
+        CTX->log()->error("{}() `O_APPEND` flag is not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     bool exists = true;
     struct stat st;
     err = adafs_stat(path, &st);
@@ -316,6 +322,17 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
         CTX->log()->warn("{}() rpc_send_write failed with ret {}", __func__, ret);
     }
     return ret; // return written size or -1 as error
+}
+
+ssize_t adafs_read(int fd, void* buf, size_t count) {
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pread_ws(fd, buf, count, pos);
+            // Update offset in file descriptor in the file map
+            if (ret > 0) {
+                adafs_fd->pos(pos + ret);
+            }
+            return ret;
 }
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {

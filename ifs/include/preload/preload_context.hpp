@@ -4,6 +4,7 @@
 #include <spdlog/spdlog.h>
 #include <map>
 #include <memory>
+#include <vector>
 #include <string>
 
 /* Forward declarations */
@@ -35,6 +36,12 @@ struct FsConfig {
     std::string rpc_port;
 };
 
+enum class RelativizeStatus {
+    internal,
+    external,
+    fd_unknown,
+    fd_not_a_dir
+};
 
 class PreloadContext {
     private:
@@ -45,6 +52,8 @@ class PreloadContext {
     std::shared_ptr<Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
+    std::string cwd_;
+    std::vector<std::string> mountdir_components_;
     std::string mountdir_;
     std::string daemon_addr_str_;
     bool initialized_;
@@ -62,13 +71,21 @@ class PreloadContext {
     std::shared_ptr<spdlog::logger> log() const;
 
     void mountdir(const std::string& path);
-    std::string mountdir() const;
+    const std::string& mountdir() const;
+    const std::vector<std::string>& mountdir_components() const;
 
     void daemon_addr_str(const std::string& path);
     const std::string& daemon_addr_str() const;
 
-    bool relativize_path(std::string& path) const;
+    void cwd(const std::string& path);
+    const std::string& cwd() const;
 
+    RelativizeStatus relativize_fd_path(int dirfd,
+                                        const char * raw_path,
+                                        std::string& relative_path,
+                                        bool resolve_last_link = true) const;
+
+    bool relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link = true) const;
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
     void distributor(std::shared_ptr<Distributor> distributor);

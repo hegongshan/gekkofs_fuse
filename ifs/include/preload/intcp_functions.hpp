@@ -22,6 +22,9 @@ extern "C" {
 struct dirent* intcp_readdir(DIR* dirp);
 weak_alias(intcp_readdir, readdir)
 
+int intcp_dirfd(DIR* dirp);
+weak_alias(intcp_dirfd, dirfd)
+
 int intcp_closedir(DIR* dirp);
 weak_alias(intcp_closedir, closedir)
 
@@ -31,6 +34,19 @@ strong_alias(intcp_fread, fread_unlocked)
 size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream);
 strong_alias(intcp_fwrite, fwrite)
 strong_alias(intcp_fwrite, fwrite_unlocked)
+
+int intcp_open(const char* path, int flags, ...);
+strong_alias(intcp_open, open)
+strong_alias(intcp_open, __open_2)
+int intcp_open64(const char* path, int flags, ...);
+strong_alias(intcp_open64, open64)
+strong_alias(intcp_open64, __open64_2)
+int intcp_openat(int dirfd, const char *cpath, int flags, ...);
+strong_alias(intcp_openat, openat)
+strong_alias(intcp_openat, __openat_2)
+int intcp_openat64(int dirfd, const char *path, int flags, ...);
+strong_alias(intcp_openat64, openat64)
+strong_alias(intcp_openat64, __openat64_2)
 
 #endif // IFS_INTCP_FUNCTIONS_HPP
 

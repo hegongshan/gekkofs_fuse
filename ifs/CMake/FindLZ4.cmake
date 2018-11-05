@@ -1,10 +1,10 @@
-# Finds liblz4.
+
+# - Find Lz4
+# Find the lz4 compression library and includes
 #
-# This module defines:
-# LZ4_FOUND
-# LZ4_INCLUDE_DIR
-# LZ4_LIBRARY
-#
+# LZ4_FOUND - True if lz4 found.
+# LZ4_LIBRARIES - List of libraries when using lz4.
+# LZ4_INCLUDE_DIR - where to find lz4.h, etc.
 
 find_path(LZ4_INCLUDE_DIR
     NAMES lz4.h

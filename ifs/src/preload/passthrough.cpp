@@ -35,6 +35,13 @@ void* libc_setvbuf;
 
 void* libc_putc;
 void* libc_fputc;
+void* libc_fputs;
+void* libc_getc;
+void* libc_fgetc;
+void* libc_fgets;
+void* libc_ungetc;
+
+void* libc_fseek;
 
 void* libc_mkdir;
 void* libc_mkdirat;
@@ -87,12 +94,26 @@ void* libc_dup;
 void* libc_dup2;
 void* libc_dup3;
 
+void* libc_dirfd;
 void* libc_opendir;
 void* libc_fdopendir;
 void* libc_readdir;
 void* libc_closedir;
 
+void* libc_chmod;
+void* libc_fchmod;
+void* libc_fchmodat;
+
 void* libc_chdir;
+void* libc_fchdir;
+
+void* libc_getcwd;
+void* libc_get_current_dir_name;
+
+void* libc_link;
+void* libc_linkat;
+void* libc_symlink;
+void* libc_symlinkat;
 
 void* libc_realpath;
 
@@ -127,6 +148,13 @@ void init_passthrough_() {
 
     libc_putc = dlsym(libc, "putc");
     libc_fputc = dlsym(libc, "fputc");
+    libc_fputs = dlsym(libc, "fputs");
+    libc_getc = dlsym(libc, "getc");
+    libc_fgetc = dlsym(libc, "fgetc");
+    libc_fgets = dlsym(libc, "fgets");
+    libc_ungetc = dlsym(libc, "ungetc");
+
+    libc_fseek = dlsym(libc, "fseek");
 
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");
@@ -179,12 +207,26 @@ void init_passthrough_() {
     libc_dup2 = dlsym(libc, "dup2");
     libc_dup3 = dlsym(libc, "dup3");
 
+    libc_dirfd = dlsym(libc, "dirfd");
     libc_opendir = dlsym(libc, "opendir");
     libc_fdopendir = dlsym(libc, "fdopendir");
     libc_readdir = dlsym(libc, "readdir");
     libc_closedir = dlsym(libc, "closedir");
 
+    libc_chmod = dlsym(libc, "chmod");
+    libc_fchmod = dlsym(libc, "fchmod");
+    libc_fchmodat = dlsym(libc, "fchmodat");
+
     libc_chdir = dlsym(libc, "chdir");
+    libc_fchdir = dlsym(libc, "fchdir");
+
+    libc_getcwd = dlsym(libc, "getcwd");
+    libc_get_current_dir_name = dlsym(libc, "get_current_dir_name");
+
+    libc_link = dlsym(libc, "link");
+    libc_linkat = dlsym(libc, "linkat");
+    libc_symlink = dlsym(libc, "symlink");
+    libc_symlinkat = dlsym(libc, "symlinkat");
 
     libc_realpath = dlsym(libc, "realpath");
 
