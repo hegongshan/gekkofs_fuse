@@ -1,6 +1,7 @@
 #include <vector>
 #include <string>
 #include <sys/stat.h>
+#include <limits.h>
 #include <cassert>
 
 #include "global/path_util.hpp"
@@ -141,14 +142,14 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
                 if (!resolve_last_link && end == path.size()) {
                     continue;
                 }
-                char link_resolved[PATH_MAX_LEN];
-                if (LIBC_FUNC(realpath, resolved.c_str(), link_resolved) == nullptr) {
+                auto link_resolved = std::unique_ptr<char[]>(new char[PATH_MAX]);
+                if (LIBC_FUNC(realpath, resolved.c_str(), link_resolved.get()) == nullptr) {
                     CTX->log()->error("{}() Failed to get realpath for link '{}'. Error: {}", __func__, resolved, strerror(errno));
                     resolved.append(path, end, std::string::npos);
                     return false;
                 }
                 // substituute resolved with new link path
-                resolved = link_resolved;
+                resolved = link_resolved.get();
                 matched_components = path_match_components(resolved, resolved_components, mnt_components);
                 // set matched counter to value coherent with the new path
                 last_slash_pos = resolved.find_last_of(PSP);
