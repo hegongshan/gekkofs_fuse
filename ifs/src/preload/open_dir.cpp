@@ -11,7 +11,6 @@ OpenDir::DirEntry::DirEntry(const std::string& name, const FileType type):
 
 OpenDir::OpenDir(const std::string& path) :
     OpenFile(path, 0, FileType::directory) {
-    pos_ = 0;
     is_dirent_valid = false;
 }
 
