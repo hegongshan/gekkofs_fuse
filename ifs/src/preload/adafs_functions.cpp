@@ -12,7 +12,6 @@ using namespace std;
 
 int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
-    int err = 0;
 
     if(flags & O_PATH){
         CTX->log()->error("{}() `O_PATH` flag is not supported", __func__);
@@ -27,9 +26,8 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     bool exists = true;
-    struct stat st;
-    err = adafs_stat(path, &st);
-    if(err) {
+    auto md = adafs_metadata(path);
+    if (!md) {
         if(errno == ENOENT) {
             exists = false;
         } else {
@@ -77,21 +75,22 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         if ((mode & S_IXUSR) || (mode & S_IXGRP) || (mode & S_IXOTH))
             mask = mask & X_OK;
 
-        if( ! ((mask & md.mode()) == mask)) {
+        if( ! ((mask & md->mode()) == mask)) {
             errno = EACCES;
             return -1;
         }
 #endif
 
-        if(S_ISDIR(st.st_mode)) {
+        if(S_ISDIR(md->mode())) {
             return adafs_opendir(path);
         }
 
+
         /*** Regular file exists ***/
-        assert(S_ISREG(st.st_mode));
+        assert(S_ISREG(md->mode()));
 
         if( (flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY)) ) {
-            if(adafs_truncate(path, st.st_size, 0)) {
+            if(adafs_truncate(path, md->size(), 0)) {
                 CTX->log()->error("{}() error truncating file", __func__);
                 return -1;
             }
@@ -109,15 +108,14 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
     //file type must be either regular file or directory
     assert(S_ISREG(mode) || S_ISDIR(mode));
 
-    struct stat st;
     auto p_comp = dirname(path);
-    auto ret = adafs_stat(p_comp, &st);
-    if(ret != 0) {
+    auto md = adafs_metadata(p_comp);
+    if (!md) {
         CTX->log()->debug("{}() parent component does not exists: '{}'", __func__, p_comp);
         errno = ENOENT;
         return -1;
     }
-    if(!S_ISDIR(st.st_mode)) {
+    if (!S_ISDIR(md->mode())) {
         CTX->log()->debug("{}() parent component is not a direcotory: '{}'", __func__, p_comp);
         errno = ENOTDIR;
         return -1;
@@ -132,11 +130,12 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
  */
 int adafs_rm_node(const std::string& path) {
     init_ld_env_if_needed();
-    struct stat node_metadentry{};
-    auto err = adafs_stat(path, &node_metadentry);
-    if (err != 0)
+    auto md = adafs_metadata(path);
+    if (!md) {
         return -1;
-    return rpc_send_rm_node(path, node_metadentry.st_size == 0);
+    }
+    bool has_data = S_ISREG(md->mode()) && (md->size() != 0);
+    return rpc_send_rm_node(path, !has_data);
 }
 
 int adafs_access(const std::string& path, const int mask) {
@@ -154,14 +153,21 @@ int adafs_access(const std::string& path, const int mask) {
 
 int adafs_stat(const string& path, struct stat* buf) {
     init_ld_env_if_needed();
+    auto md = adafs_metadata(path);
+    if (!md) {
+        return -1;
+    }
+    metadata_to_stat(path, *md, *buf);
+    return 0;
+}
+
+std::shared_ptr<Metadata> adafs_metadata(const string& path) {
     std::string attr;
     auto err = rpc_send_stat(path, attr);
     if (err) {
-        return err;
+        return nullptr;
     }
-    Metadata md(attr);
-    metadata_to_stat(path, md, *buf);
-    return err;
+    return make_shared<Metadata>(attr);
 }
 
 int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& realfs_buf) {
@@ -274,18 +280,19 @@ int adafs_truncate(const std::string& path, off_t length) {
         return -1;
     }
 
-    struct stat st;
-    if(adafs_stat(path, &st)) {
+    auto md = adafs_metadata(path);
+    if (!md) {
         return -1;
     }
 
-    if(length > st.st_size) {
+    auto size = md->size();
+    if(static_cast<unsigned long>(length) > size) {
         CTX->log()->debug("{}() length is greater then file size: {} > {}",
-               __func__, length, st.st_size);
+               __func__, length, size);
         errno = EINVAL;
         return -1;
     }
-    return adafs_truncate(path, st.st_size, length);
+    return adafs_truncate(path, size, length);
 }
 
 int adafs_dup(const int oldfd) {
@@ -361,11 +368,11 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 int adafs_opendir(const std::string& path) {
     init_ld_env_if_needed();
 
-    struct stat st;
-    if(adafs_stat(path, &st)) {
+    auto md = adafs_metadata(path);
+    if (!md) {
         return -1;
     }
-    if(!(st.st_mode & S_IFDIR)) {
+    if (!S_ISDIR(md->mode())) {
         CTX->log()->debug("{}() path is not a directory", __func__);
         errno = ENOTDIR;
         return -1;
