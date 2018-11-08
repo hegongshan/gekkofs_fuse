@@ -54,11 +54,18 @@ int adafs_dup(int oldfd);
 
 int adafs_dup2(int oldfd, int newfd);
 
-ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset);
 
+ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file,
+                     const char * buf, size_t count, off64_t offset);
+ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset);
+ssize_t adafs_write(int fd, const void * buf, size_t count);
+ssize_t adafs_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
+ssize_t adafs_writev(int fd, const struct iovec * iov, int iovcnt);
+
+ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, off64_t offset);
+ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset);
 ssize_t adafs_read(int fd, void* buf, size_t count);
 
-ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset);
 
 int adafs_opendir(const std::string& path);
 
