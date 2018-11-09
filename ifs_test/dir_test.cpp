@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error opening topdir: " << std::strerror(errno) << std::endl;
         return -1;
     }
-    
+
     // Read and write should be impossible on directories
     char buff;
     ret = read(fd, &buff, 1);
