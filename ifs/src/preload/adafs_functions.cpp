@@ -459,12 +459,19 @@ int adafs_opendir(const std::string& path) {
 
 int adafs_rmdir(const std::string& path) {
     init_ld_env_if_needed();
-#if defined(DO_LOOKUP)
-    auto err = rpc_send_access(path, F_OK);
-    if(err != 0){
-        return err;
+
+    auto md = adafs_metadata(path);
+    if (!md) {
+        CTX->log()->debug("{}() path does not exists: '{}'", __func__, path);
+        errno = ENOENT;
+        return -1;
     }
-#endif
+    if (!S_ISDIR(md->mode())) {
+        CTX->log()->debug("{}() path is not a directory", __func__);
+        errno = ENOTDIR;
+        return -1;
+    }
+
     auto open_dir = std::make_shared<OpenDir>(path);
     rpc_send_get_dirents(*open_dir);
     if(open_dir->size() != 0){
