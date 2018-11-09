@@ -54,6 +54,17 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // Remove nonexisting directory
+    ret = rmdir(nonexisting.c_str());
+    if (ret == 0) {
+        std::cerr << "Succeded on removing nonexisitng directory" << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (errno != ENOENT) {     
+        std::cerr << "Wrong error number on removing nonexisitng directory: " << std::strerror(errno) << std::endl;
+        return EXIT_FAILURE;
+    }
+
     // Close nonexisting directory
     ret = closedir(NULL);
     if(ret != -1 || errno != EINVAL){
@@ -171,6 +182,17 @@ int main(int argc, char* argv[]) {
         found_dirents.insert(std::make_pair(d->d_name, (d->d_type == DT_DIR)));
     }
     assert(found_dirents  == expected_dirents);
+
+    // Remove file through rmdir should reise error
+    ret = rmdir(file_a.c_str());
+    if (ret == 0) {
+        std::cerr << "ERROR: Succeded on removing file through rmdir function" << std::endl;
+        return EXIT_FAILURE;
+    }
+    if (errno != ENOTDIR) {     
+        std::cerr << "ERROR: Wrong error number on removing file through rmdir function: " << std::strerror(errno) << std::endl;
+        return EXIT_FAILURE;
+    }
 
     if(closedir(dirstream) != 0){
         std::cerr << "Error closing topdir" << std::strerror(errno) << std::endl;
