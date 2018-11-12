@@ -199,7 +199,7 @@ fi
 # get Mercury
 clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "v1.0.0rc1"  "--recurse-submodules" &
 # get Argobots
-clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215d6862f527775387418f7f6" "-b dev-fifo-wait" &
+wgetdeps "argobots" "https://github.com/pmodels/argobots/archive/v1.0rc1.tar.gz" &
 # get Margo
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "2676c8cf61874c4378ed699e3ca056636a4e152b" &
 # get rocksdb
