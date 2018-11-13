@@ -1,12 +1,10 @@
 #include "preload/rpc/ld_rpc_management.hpp"
+#include "global/rpc/rpc_types.hpp"
 #include <global/configure.hpp>
 #include <preload/preload_util.hpp>
 #include <boost/type_traits/is_pointer.hpp> // see https://github.com/boostorg/tokenizer/issues/9
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
-extern "C" {
-#include <margo.h>
-}
 
 void send_minimal_ipc(const hg_id_t minimal_id) {
 

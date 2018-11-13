@@ -2,9 +2,7 @@
 #ifndef IFS_MARGO_IPC_HPP
 #define IFS_MARGO_IPC_HPP
 
-#include <preload/preload.hpp>
-#include <global/rpc/rpc_types.hpp>
-
+#include <margo.h>
 
 void send_minimal_ipc(const hg_id_t minimal_id);
 
