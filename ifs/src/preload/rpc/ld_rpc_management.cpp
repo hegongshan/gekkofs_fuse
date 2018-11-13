@@ -1,6 +1,7 @@
 #include "preload/rpc/ld_rpc_management.hpp"
 #include <global/configure.hpp>
 #include <preload/preload_util.hpp>
+#include <boost/type_traits/is_pointer.hpp> // see https://github.com/boostorg/tokenizer/issues/9
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 extern "C" {
@@ -101,10 +102,10 @@ bool ipc_send_get_fs_config() {
             CTX->fs_conf()->gid = out.gid;
             CTX->fs_conf()->host_id = out.host_id;
             CTX->fs_conf()->host_size = out.host_size;
-            CTX->fs_conf()->rpc_port = to_string(RPC_PORT);
+            CTX->fs_conf()->rpc_port = std::to_string(RPC_PORT);
 
             // split comma separated host string and create a hosts map
-            string hosts_raw = out.hosts_raw;
+            std::string hosts_raw = out.hosts_raw;
             std::map<uint64_t, std::string> hostmap;
             boost::char_separator<char> sep(",");
             boost::tokenizer<boost::char_separator<char>> tok(hosts_raw, sep);

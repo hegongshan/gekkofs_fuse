@@ -5,8 +5,6 @@
 #include <preload/preload.hpp>
 #include <global/rpc/rpc_types.hpp>
 
-using namespace std;
-
 
 void send_minimal_ipc(const hg_id_t minimal_id);
 

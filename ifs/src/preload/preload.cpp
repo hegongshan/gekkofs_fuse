@@ -168,10 +168,10 @@ void log_prog_name() {
     std::ifstream cmdline("/proc/self/cmdline");
     if (!cmdline.is_open()) {
         CTX->log()->error("Unable to open cmdline file");
-        throw runtime_error("Unable to open cmdline file");
+        throw std::runtime_error("Unable to open cmdline file");
     }
     if(!getline(cmdline, line)) {
-        throw runtime_error("Unable to read cmdline file");
+        throw std::runtime_error("Unable to read cmdline file");
     }
     CTX->log()->info("Command to itercept: '{}'", line);
     cmdline.close();
@@ -188,7 +188,7 @@ void init_preload() {
     init_cwd();
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
-        cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
+        std::cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << std::endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {
