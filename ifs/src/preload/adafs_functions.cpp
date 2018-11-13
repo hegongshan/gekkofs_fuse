@@ -3,6 +3,7 @@
 #include <global/configure.hpp>
 #include <global/path_util.hpp>
 #include <preload/preload.hpp>
+#include "preload/preload_util.hpp"
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>

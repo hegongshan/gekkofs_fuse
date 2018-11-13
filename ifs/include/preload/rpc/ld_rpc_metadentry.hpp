@@ -2,12 +2,14 @@
 #ifndef IFS_PRELOAD_C_METADENTRY_HPP
 #define IFS_PRELOAD_C_METADENTRY_HPP
 
-#include <preload/preload.hpp>
-#include <preload/preload_util.hpp>
-#include <global/rpc/rpc_types.hpp>
-#include <preload/open_dir.hpp>
-#include <global/metadata.hpp>
-#include <iostream>
+#include <margo.h>
+#include <string>
+
+/* Forward declaration */
+struct MetadentryUpdateFlags;
+class OpenDir;
+class Metadata;
+
 
 inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_struct, const char* func);
 
