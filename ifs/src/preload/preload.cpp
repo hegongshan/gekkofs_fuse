@@ -6,7 +6,7 @@
 #include <preload/resolve.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/distributor.hpp>
-#include <preload/margo_ipc.hpp>
+#include <preload/rpc/ld_rpc_management.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/preload_util.hpp>
