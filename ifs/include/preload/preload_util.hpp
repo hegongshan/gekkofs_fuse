@@ -45,8 +45,6 @@ extern hg_id_t rpc_get_dirents_id;
 
 // function definitions
 
-bool is_fs_path(const char* path);
-
 int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
 
 int get_daemon_pid();

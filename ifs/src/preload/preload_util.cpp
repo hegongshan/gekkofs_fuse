@@ -17,10 +17,6 @@ using namespace std;
 // rpc address cache
 std::unique_ptr<std::unordered_map<uint64_t, hg_addr_t>> rpc_addresses;
 
-bool is_fs_path(const char* path) {
-    return strstr(path, CTX->mountdir().c_str()) == path;
-}
-
 /**
  * Converts the Metadata object into a stat struct, which is needed by Linux
  * @param path
