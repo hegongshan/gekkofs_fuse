@@ -20,7 +20,6 @@ set(PRELOAD_HEADERS
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
     ../../include/global/global_func.hpp
-    ../../include/global/rpc/ipc_types.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp

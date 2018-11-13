@@ -2,7 +2,7 @@
 #include <daemon/adafs_daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <global/rpc/rpc_utils.hpp>
-#include <global/rpc/ipc_types.hpp>
+#include "global/rpc/rpc_types.hpp"
 
 
 using namespace std;
