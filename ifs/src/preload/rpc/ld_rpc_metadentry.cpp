@@ -9,16 +9,9 @@
 
 using namespace std;
 
-inline hg_return_t margo_forward_timed_wrap(hg_handle_t& handle, void* in_struct) {
-    hg_return_t ret = HG_OTHER_ERROR;
-
-    for (int i = 0; i < RPC_TRIES; ++i) {
-        ret = margo_forward_timed(handle, in_struct, RPC_TIMEOUT);
-        if (ret == HG_SUCCESS) {
-            break;
-        }
-    }
-    return ret;
+static inline hg_return_t
+margo_forward_timed_wrap(const hg_handle_t& handle, void* in_struct) {
+    return margo_forward_timed(handle, in_struct, RPC_TIMEOUT);
 }
 
 int rpc_send_mk_node(const std::string& path, const mode_t mode) {
