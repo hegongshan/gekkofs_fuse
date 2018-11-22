@@ -5,11 +5,15 @@
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 
+
+namespace rpc_send {
+
+
 /**
  * Gets fs configuration information from the running daemon and transfers it to the memory of the library
  * @return
  */
-bool rpc_send_get_fs_config() {
+bool get_fs_config() {
     hg_handle_t handle;
     rpc_config_in_t in{};
     rpc_config_out_t out{};
@@ -86,4 +90,7 @@ bool rpc_send_get_fs_config() {
     margo_free_output(handle, &out);
     margo_destroy(handle);
     return true;
+}
+
+
 }

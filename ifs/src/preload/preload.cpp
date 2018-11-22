@@ -112,7 +112,7 @@ void init_ld_environment_() {
         CTX->log()->error("{}() Unable to initialize Margo RPC client.", __func__);
         exit(EXIT_FAILURE);
     }
-    if (!rpc_send_get_fs_config()) {
+    if (!rpc_send::get_fs_config()) {
         CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through RPC.", __func__);
         exit(EXIT_FAILURE);
     }

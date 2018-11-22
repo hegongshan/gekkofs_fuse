@@ -7,6 +7,8 @@
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_types.hpp>
 
+namespace rpc_send  {
+
 using namespace std;
 
 static inline hg_return_t
@@ -14,7 +16,7 @@ margo_forward_timed_wrap(const hg_handle_t& handle, void* in_struct) {
     return margo_forward_timed(handle, in_struct, RPC_TIMEOUT);
 }
 
-int rpc_send_mk_node(const std::string& path, const mode_t mode) {
+int mk_node(const std::string& path, const mode_t mode) {
     hg_handle_t handle;
     rpc_mk_node_in_t in{};
     rpc_err_out_t out{};
@@ -54,7 +56,7 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     return err;
 }
 
-int rpc_send_access(const std::string& path, const int mask) {
+int access(const std::string& path, const int mask) {
     hg_handle_t handle;
     rpc_access_in_t in{};
     rpc_err_out_t out{};
@@ -101,7 +103,7 @@ int rpc_send_access(const std::string& path, const int mask) {
     return err;
 }
 
-int rpc_send_stat(const std::string& path, string& attr) {
+int stat(const std::string& path, string& attr) {
     hg_handle_t handle;
     rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
@@ -148,7 +150,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     return err;
 }
 
-int rpc_send_decr_size(const std::string& path, size_t length) {
+int decr_size(const std::string& path, size_t length) {
     hg_handle_t handle;
     rpc_trunc_in_t in{};
     int err = 0;
@@ -196,7 +198,7 @@ int rpc_send_decr_size(const std::string& path, size_t length) {
     return err;
 }
 
-int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only) {
+int rm_node(const std::string& path, const bool remove_metadentry_only) {
     hg_return_t ret;
     int err = 0; // assume we succeed
     // if metadentry should only removed only, send only 1 rpc to remove the metadata
@@ -264,7 +266,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
 }
 
 
-int rpc_send_update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
+int update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
     hg_handle_t handle;
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
@@ -321,7 +323,7 @@ int rpc_send_update_metadentry(const string& path, const Metadata& md, const Met
     return err;
 }
 
-int rpc_send_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
+int update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
                                     off64_t& ret_size) {
     hg_handle_t handle;
     rpc_update_metadentry_size_in_t in{};
@@ -368,7 +370,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
     return err;
 }
 
-int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
+int get_metadentry_size(const std::string& path, off64_t& ret_size) {
     hg_handle_t handle;
     rpc_path_only_in_t in{};
     rpc_get_metadentry_size_out_t out{};
@@ -411,7 +413,7 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 /**
  * Sends an RPC request to a specific node to push all chunks that belong to him
  */
-void rpc_send_get_dirents(OpenDir& open_dir){
+void get_dirents(OpenDir& open_dir){
     CTX->log()->trace("{}() called", __func__);
     auto const root_dir = open_dir.path();
     auto const targets = CTX->distributor()->locate_directory_metadata(root_dir);
@@ -501,3 +503,5 @@ void rpc_send_get_dirents(OpenDir& open_dir){
         margo_destroy(rpc_handles[target_host]);
     }
 }
+
+} //end namespace rpc_send
