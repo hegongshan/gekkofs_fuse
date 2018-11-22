@@ -35,13 +35,13 @@ margo_instance_id ld_margo_rpc_id;
 
 
 /**
- * Registers a margo instance with all used RPC, differentiating between IPC and RPC client
- * Note that the rpc tags are redundant for rpc and ipc ids
+ * Registers a margo instance with all used RPC
+ * Note that the rpc tags are redundant for rpc
  * @param mid
  * @param mode
  */
 void register_client_rpcs(margo_instance_id mid) {
-    rpc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t,
+    rpc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, rpc_config_in_t, rpc_config_out_t,
                                    NULL);
     rpc_mk_node_id = MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, NULL);
     rpc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
@@ -109,11 +109,11 @@ bool init_margo_client(const std::string& na_plugin) {
 void init_ld_environment_() {
     //use rpc_addresses here to avoid "static initialization order problem"
     if (!init_margo_client(RPC_PROTOCOL)) {
-        CTX->log()->error("{}() Unable to initialize Margo IPC client.", __func__);
+        CTX->log()->error("{}() Unable to initialize Margo RPC client.", __func__);
         exit(EXIT_FAILURE);
     }
-    if (!ipc_send_get_fs_config()) {
-        CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through IPC.", __func__);
+    if (!rpc_send_get_fs_config()) {
+        CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through RPC.", __func__);
         exit(EXIT_FAILURE);
     }
 

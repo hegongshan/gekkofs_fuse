@@ -9,10 +9,10 @@
  * Gets fs configuration information from the running daemon and transfers it to the memory of the library
  * @return
  */
-bool ipc_send_get_fs_config() {
+bool rpc_send_get_fs_config() {
     hg_handle_t handle;
-    ipc_config_in_t in{};
-    ipc_config_out_t out{};
+    rpc_config_in_t in{};
+    rpc_config_out_t out{};
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
     auto local_addr = get_local_addr();
@@ -26,7 +26,7 @@ bool ipc_send_get_fs_config() {
         CTX->log()->error("{}() creating handle for failed", __func__);
         return false;
     }
-    CTX->log()->debug("{}() About to send get config IPC to daemon", __func__);
+    CTX->log()->debug("{}() About to send get config RPC to daemon", __func__);
     int send_ret = HG_FALSE;
     for (int i = 0; i < RPC_TRIES; ++i) {
         send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);

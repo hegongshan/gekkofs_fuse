@@ -55,7 +55,7 @@
  * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
  */
 #define DAEMON_IO_XSTREAMS 8
-// Number of threads used for RPC and IPC handlers at the daemon
+// Number of threads used for RPC handlers at the daemon
 #define DAEMON_RPC_HANDLER_XSTREAMS 8
 #define RPC_PORT 4433
 #define RPC_TRIES 3

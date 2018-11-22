@@ -8,7 +8,7 @@ extern "C" {
 
 /* visible API for RPC operations */
 
-DECLARE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_fs_config)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
 

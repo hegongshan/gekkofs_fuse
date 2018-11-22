@@ -1,8 +1,8 @@
 
-#ifndef IFS_MARGO_IPC_HPP
-#define IFS_MARGO_IPC_HPP
+#ifndef IFS_MARGO_RPC_MANAGMENT_HPP
+#define IFS_MARGO_RPC_MANAGMENT_HPP
 
 
-bool ipc_send_get_fs_config();
+bool rpc_send_get_fs_config();
 
-#endif //IFS_MARGO_IPC_HPP
+#endif //IFS_MARGO_RPC_NANAGMENT_HPP

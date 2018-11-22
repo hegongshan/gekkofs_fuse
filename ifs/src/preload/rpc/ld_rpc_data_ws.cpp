@@ -51,7 +51,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     vector<hg_handle_t> rpc_handles(target_n);
     vector<margo_request> rpc_waiters(target_n);
     vector<rpc_write_data_in_t> rpc_in(target_n);
-    // register local target buffer for bulk access for IPC and RPC margo instance
+    // register local target buffer for bulk access for margo instance
     auto bulk_buf = const_cast<void*>(buf);
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(write_size);
@@ -159,7 +159,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     vector<hg_handle_t> rpc_handles(target_n);
     vector<margo_request> rpc_waiters(target_n);
     vector<rpc_read_data_in_t> rpc_in(target_n);
-    // register local target buffer for bulk access for IPC and RPC margo instance
+    // register local target buffer for bulk access for margo instance
     auto bulk_buf = buf;
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(read_size);
