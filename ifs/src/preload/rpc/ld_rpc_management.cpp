@@ -5,48 +5,6 @@
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
 
-void send_minimal_ipc(const hg_id_t minimal_id) {
-
-    hg_handle_t handle;
-    rpc_minimal_in_t in{};
-    rpc_minimal_out_t out{};
-
-    printf("minimal RPC is running...\n");
-
-    /* create handle */
-    auto local_addr = get_local_addr();
-    if (local_addr == HG_ADDR_NULL) {
-        CTX->log()->error("{}() Unable to lookup local addr", __func__);
-        return;
-    }
-    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
-    if (ret != HG_SUCCESS) {
-        margo_addr_free(ld_margo_rpc_id, local_addr);
-        CTX->log()->error("{}() creating handle for failed", __func__);
-        return;
-    }
-
-    /* Send rpc. Note that we are also transmitting the bulk handle in the
-     * input struct.  It was set above.
-     */
-    in.input = 42;
-    printf("About to send RPC\n");
-    margo_forward(handle, &in);
-    printf("Waiting for response\n");
-    /* decode response */
-    ret = margo_get_output(handle, &out);
-    assert(ret == HG_SUCCESS);
-
-    printf("Got response ret: %d\n", out.output);
-
-    /* clean up resources consumed by this rpc */
-    margo_addr_free(ld_margo_rpc_id, local_addr);
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
-
-    printf("minimal RPC is done.\n");
-}
-
 /**
  * Gets fs configuration information from the running daemon and transfers it to the memory of the library
  * @return

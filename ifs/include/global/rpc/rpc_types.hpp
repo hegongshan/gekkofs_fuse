@@ -9,9 +9,6 @@ extern "C" {
 
 /* visible API for RPC data types used in RPCS */
 
-MERCURY_GEN_PROC(rpc_minimal_in_t, ((int32_t) (input)))
-
-MERCURY_GEN_PROC(rpc_minimal_out_t, ((int32_t) (output)))
 // misc generic rpc types
 MERCURY_GEN_PROC(rpc_err_out_t, ((hg_int32_t) (err)))
 
