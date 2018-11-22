@@ -7,20 +7,7 @@
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_types.hpp>
 
-#include <chrono>
-
 using namespace std;
-using ns = chrono::nanoseconds;
-using get_time = chrono::steady_clock;
-
-inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_struct, const char* func) {
-    auto start_t = get_time::now();
-    auto ret = margo_forward_timed_wrap(handle, in_struct);
-    auto diff_count = chrono::duration_cast<ns>(get_time::now() - start_t).count();
-    if (((diff_count) / 1000000.) > MARGO_FORWARD_TIMER_THRESHOLD)
-        CTX->log()->info("{}() rpc_time: {} ms", func, ((diff_count) / 1000000.));
-    return ret;
-}
 
 inline hg_return_t margo_forward_timed_wrap(hg_handle_t& handle, void* in_struct) {
     hg_return_t ret = HG_OTHER_ERROR;
@@ -51,11 +38,7 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     }
     // Send rpc
     CTX->log()->debug("{}() About to send RPC ...", __func__);
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret == HG_SUCCESS) {
         CTX->log()->trace("{}() Waiting for response", __func__);
@@ -94,11 +77,7 @@ int rpc_send_access(const std::string& path, const int mask) {
     }
     // Send rpc
     CTX->log()->debug("{}() About to send RPC ...", __func__);
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() timed out");
@@ -143,11 +122,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
         return -1;
     }
     // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
@@ -195,11 +170,7 @@ int rpc_send_decr_size(const std::string& path, size_t length) {
     }
 
     // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() timed out", __func__);
@@ -333,11 +304,7 @@ int rpc_send_update_metadentry(const string& path, const Metadata& md, const Met
         return -1;
     }
     // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret == HG_SUCCESS) {
         CTX->log()->trace("{}() Waiting for response", __func__);
@@ -383,11 +350,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
         return -1;
     }
     // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret == HG_SUCCESS) {
         CTX->log()->trace("{}() Waiting for response", __func__);
@@ -427,11 +390,7 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
         return -1;
     }
     // Send rpc
-#if defined(MARGO_FORWARD_TIMER)
-    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
-#else
     ret = margo_forward_timed_wrap(handle, &in);
-#endif
     // Get response
     if (ret == HG_SUCCESS) {
         CTX->log()->trace("{}() Waiting for response", __func__);
