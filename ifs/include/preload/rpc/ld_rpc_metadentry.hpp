@@ -2,7 +2,6 @@
 #ifndef IFS_PRELOAD_C_METADENTRY_HPP
 #define IFS_PRELOAD_C_METADENTRY_HPP
 
-#include <margo.h>
 #include <string>
 
 /* Forward declaration */
