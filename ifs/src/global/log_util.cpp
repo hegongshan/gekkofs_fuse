@@ -3,7 +3,8 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <exception>
 #include <vector>
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
+#include <list>
 
 using namespace std;
 
@@ -12,7 +13,7 @@ spdlog::level::level_enum get_spdlog_level(string level_str) {
     auto level = strtoul(level_str.c_str(), &parse_end, 10);
     if (parse_end != (level_str.c_str() + level_str.size())) {
         // no conversion could be performed. Must be a string then
-        boost::algorithm::to_lower(level_str);
+        ::transform(level_str.begin(), level_str.end(), level_str.begin(), ::tolower);
         if (level_str == "off"s)
             return spdlog::level::off;
         else if (level_str == "critical"s)
