@@ -25,8 +25,8 @@ optional arguments:
     --mdtestonly    executes only mdtest tests (default both are run)
     --ioronly       executes only ior tests (default both are run)
     -v              verbose output
-    --hostfile      hostfile to give to MPI
-    --host          comma separated list of hosts to give to MPI
+    --hostfile      hostfile to give to MPI (mutually exclusive with --host)
+    --host          comma separated list of hosts to give to MPI (mutually exclusive with --hostfile)
     -n              mdtest+ior: number of processes used with mpiexec ${HOSTS} --map-by node (defaults to 1)
     -i              mdtest+iornumber of iterations in each experiment (defaults to 3)
     -I              mdtest: number of items created per process (defaults to 1000)
@@ -112,7 +112,7 @@ case ${key} in
     shift # past argument
     shift # past value
     ;;
-    --hosts)
+    --host)
     HOSTS="--host $2"
     shift # past argument
     shift # past value
@@ -211,6 +211,7 @@ echo "IOR_NO_RANDOM: ${IOR_NO_RANDOM}"
 echo "IOR_NO_STRIDE: ${IOR_NO_STRIDE}"
 echo "IOR_NO_FPP: ${IOR_NO_FPP}"
 echo "IOR_NO_SHARED: ${IOR_NO_SHARED}"
+echo "HOSTS: ${HOSTS}"
 
 fi #VERBOSE
 
