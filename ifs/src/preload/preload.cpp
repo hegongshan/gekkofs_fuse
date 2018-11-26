@@ -4,10 +4,9 @@
 #include <global/configure.hpp>
 #include <preload/preload.hpp>
 #include <preload/resolve.hpp>
-#include <global/rpc/ipc_types.hpp>
 #include <global/rpc/distributor.hpp>
-#include <preload/margo_ipc.hpp>
-#include <preload/rpc/ld_rpc_data_ws.hpp>
+#include "global/rpc/rpc_types.hpp"
+#include <preload/rpc/ld_rpc_management.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/preload_util.hpp>
 
@@ -18,7 +17,6 @@ static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
 // RPC IDs
 hg_id_t rpc_config_id;
-hg_id_t rpc_minimal_id;
 hg_id_t rpc_mk_node_id;
 hg_id_t rpc_access_id;
 hg_id_t rpc_stat_id;
@@ -36,15 +34,14 @@ margo_instance_id ld_margo_rpc_id;
 
 
 /**
- * Registers a margo instance with all used RPC, differentiating between IPC and RPC client
- * Note that the rpc tags are redundant for rpc and ipc ids
+ * Registers a margo instance with all used RPC
+ * Note that the rpc tags are redundant for rpc
  * @param mid
  * @param mode
  */
 void register_client_rpcs(margo_instance_id mid) {
-    rpc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, ipc_config_in_t, ipc_config_out_t,
+    rpc_config_id = MARGO_REGISTER(mid, hg_tag::fs_config, rpc_config_in_t, rpc_config_out_t,
                                    NULL);
-    rpc_minimal_id = MARGO_REGISTER(mid, hg_tag::minimal, rpc_minimal_in_t, rpc_minimal_out_t, NULL);
     rpc_mk_node_id = MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, NULL);
     rpc_access_id = MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, NULL);
     rpc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, NULL);
@@ -111,11 +108,11 @@ bool init_margo_client(const std::string& na_plugin) {
 void init_ld_environment_() {
     //use rpc_addresses here to avoid "static initialization order problem"
     if (!init_margo_client(RPC_PROTOCOL)) {
-        CTX->log()->error("{}() Unable to initialize Margo IPC client.", __func__);
+        CTX->log()->error("{}() Unable to initialize Margo RPC client.", __func__);
         exit(EXIT_FAILURE);
     }
-    if (!ipc_send_get_fs_config()) {
-        CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through IPC.", __func__);
+    if (!rpc_send::get_fs_config()) {
+        CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through RPC.", __func__);
         exit(EXIT_FAILURE);
     }
 
@@ -169,10 +166,10 @@ void log_prog_name() {
     std::ifstream cmdline("/proc/self/cmdline");
     if (!cmdline.is_open()) {
         CTX->log()->error("Unable to open cmdline file");
-        throw runtime_error("Unable to open cmdline file");
+        throw std::runtime_error("Unable to open cmdline file");
     }
     if(!getline(cmdline, line)) {
-        throw runtime_error("Unable to read cmdline file");
+        throw std::runtime_error("Unable to read cmdline file");
     }
     CTX->log()->info("Command to itercept: '{}'", line);
     cmdline.close();
@@ -189,7 +186,7 @@ void init_preload() {
     init_cwd();
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
-        cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
+        std::cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << std::endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {

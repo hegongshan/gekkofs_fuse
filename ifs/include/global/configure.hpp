@@ -55,16 +55,12 @@
  * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
  */
 #define DAEMON_IO_XSTREAMS 8
-// Number of threads used for RPC and IPC handlers at the daemon
+// Number of threads used for RPC handlers at the daemon
 #define DAEMON_RPC_HANDLER_XSTREAMS 8
 #define RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds
 #define RPC_TIMEOUT 180000
-// enables timing of sending rpcs
-//#define MARGO_FORWARD_TIMER
-// sets the threshold in milliseconds when a log entry should be created
-#define MARGO_FORWARD_TIMER_THRESHOLD 1000
 
 //size of preallocated buffer to hold directory entries in rpc call
 #define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega

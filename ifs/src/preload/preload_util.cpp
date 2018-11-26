@@ -17,10 +17,6 @@ using namespace std;
 // rpc address cache
 std::unique_ptr<std::unordered_map<uint64_t, hg_addr_t>> rpc_addresses;
 
-bool is_fs_path(const char* path) {
-    return strstr(path, CTX->mountdir().c_str()) == path;
-}
-
 /**
  * Converts the Metadata object into a stat struct, which is needed by Linux
  * @param path
@@ -174,8 +170,6 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
 }
 
 hg_addr_t get_local_addr() {
-    //TODO check if we need to use here the HOSTNAME_SUFFIX
-    //auto local_uri = RPC_PROTOCOL + "://"s + get_my_hostname() + ":"s + std::to_string(RPC_PORT);
     auto daemon_addr = CTX->daemon_addr_str();
     auto last_separator = daemon_addr.find_last_of(';');
     if (last_separator != std::string::npos) {

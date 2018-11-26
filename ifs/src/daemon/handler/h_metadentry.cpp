@@ -8,31 +8,6 @@
 
 using namespace std;
 
-static hg_return_t rpc_minimal(hg_handle_t handle) {
-    rpc_minimal_in_t in{};
-    rpc_minimal_out_t out{};
-    // Get input
-    auto ret = margo_get_input(handle, &in);
-    assert(ret == HG_SUCCESS);
-
-    ADAFS_DATA->spdlogger()->debug("Got simple RPC with input {}", in.input);
-
-    // Create output and send it
-    out.output = in.input * 2;
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.output);
-    auto hret = margo_respond(handle, &out);
-    assert(hret == HG_SUCCESS);
-
-    // Destroy handle when finished
-    margo_free_input(handle, &in);
-    margo_destroy(handle);
-    ADAFS_DATA->spdlogger()->debug("Done with minimal rpc handler!");
-
-    return HG_SUCCESS;
-}
-
-DEFINE_MARGO_RPC_HANDLER(rpc_minimal)
-
 static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     rpc_mk_node_in_t in{};
     rpc_err_out_t out{};

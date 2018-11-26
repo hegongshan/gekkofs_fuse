@@ -11,7 +11,6 @@ private:
 
     // Margo IDs. They can also be used to retrieve the Mercury classes and contexts that were created at init time
     margo_instance_id server_rpc_mid_;
-    margo_instance_id server_ipc_mid_;
 
     // Argobots I/O pools and execution streams
     ABT_pool io_pool_;
@@ -34,10 +33,6 @@ public:
     margo_instance* server_rpc_mid();
 
     void server_rpc_mid(margo_instance* server_rpc_mid);
-
-    margo_instance* server_ipc_mid();
-
-    void server_ipc_mid(margo_instance* server_ipc_mid);
 
     ABT_pool io_pool() const;
 

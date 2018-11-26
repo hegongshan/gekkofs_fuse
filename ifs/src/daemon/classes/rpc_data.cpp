@@ -13,14 +13,6 @@ void RPCData::server_rpc_mid(margo_instance* server_rpc_mid) {
     RPCData::server_rpc_mid_ = server_rpc_mid;
 }
 
-margo_instance* RPCData::server_ipc_mid() {
-    return server_ipc_mid_;
-}
-
-void RPCData::server_ipc_mid(margo_instance* server_ipc_mid) {
-    RPCData::server_ipc_mid_ = server_ipc_mid;
-}
-
 ABT_pool RPCData::io_pool() const {
     return io_pool_;
 }

@@ -29,7 +29,6 @@ struct MetadentryUpdateFlags {
 extern margo_instance_id ld_margo_rpc_id;
 // RPC IDs
 extern hg_id_t rpc_config_id;
-extern hg_id_t rpc_minimal_id;
 extern hg_id_t rpc_mk_node_id;
 extern hg_id_t rpc_stat_id;
 extern hg_id_t rpc_access_id;
@@ -44,8 +43,6 @@ extern hg_id_t rpc_trunc_data_id;
 extern hg_id_t rpc_get_dirents_id;
 
 // function definitions
-
-bool is_fs_path(const char* path);
 
 int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
 

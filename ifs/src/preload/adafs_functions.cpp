@@ -3,6 +3,7 @@
 #include <global/configure.hpp>
 #include <global/path_util.hpp>
 #include <preload/preload.hpp>
+#include "preload/preload_util.hpp"
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
@@ -120,7 +121,7 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
         errno = ENOTDIR;
         return -1;
     }
-    return rpc_send_mk_node(path, mode);
+    return rpc_send::mk_node(path, mode);
 }
 
 /**
@@ -135,7 +136,7 @@ int adafs_rm_node(const std::string& path) {
         return -1;
     }
     bool has_data = S_ISREG(md->mode()) && (md->size() != 0);
-    return rpc_send_rm_node(path, !has_data);
+    return rpc_send::rm_node(path, !has_data);
 }
 
 int adafs_access(const std::string& path, const int mask) {
@@ -145,9 +146,9 @@ int adafs_access(const std::string& path, const int mask) {
     return 0;
 #endif
 #if defined(CHECK_ACCESS)
-    return rpc_send_access(path, mask);
+    return rpc_send::access(path, mask);
 #else
-    return rpc_send_access(path, F_OK); // Only check for file exists
+    return rpc_send::access(path, F_OK); // Only check for file exists
 #endif
 }
 
@@ -163,7 +164,7 @@ int adafs_stat(const string& path, struct stat* buf) {
 
 std::shared_ptr<Metadata> adafs_metadata(const string& path) {
     std::string attr;
-    auto err = rpc_send_stat(path, attr);
+    auto err = rpc_send::stat(path, attr);
     if (err) {
         return nullptr;
     }
@@ -173,7 +174,7 @@ std::shared_ptr<Metadata> adafs_metadata(const string& path) {
 int adafs_statfs(const string& path, struct statfs* adafs_buf, struct statfs& realfs_buf) {
     init_ld_env_if_needed();
     // Check that file path exists
-    auto ret = rpc_send_access(path, F_OK);
+    auto ret = rpc_send::access(path, F_OK);
     // Valid fs error
     if (ret > 0) {
         errno = ret;
@@ -221,7 +222,7 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
             break;
         case SEEK_END: {
             off64_t file_size;
-            auto err = rpc_send_get_metadentry_size(adafs_fd->path(), file_size);
+            auto err = rpc_send::get_metadentry_size(adafs_fd->path(), file_size);
             if (err < 0) {
                 errno = err; // Negative numbers are explicitly for error codes
                 return -1;
@@ -252,12 +253,12 @@ int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
         return 0;
     }
 
-    if (rpc_send_decr_size(path, new_size)) {
+    if (rpc_send::decr_size(path, new_size)) {
         CTX->log()->debug("{}() failed to decrease size", __func__);
         return -1;
     }
 
-    if(rpc_send_trunc_data(path, old_size, new_size)){
+    if(rpc_send::trunc_data(path, old_size, new_size)){
         CTX->log()->debug("{}() failed to truncate data", __func__);
         return -1;
     }
@@ -317,14 +318,14 @@ ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file, const char * buf, size_t co
     ssize_t ret = 0;
     long updated_size = 0;
 
-    ret = rpc_send_update_metadentry_size(*path, count, offset, append_flag, updated_size);
+    ret = rpc_send::update_metadentry_size(*path, count, offset, append_flag, updated_size);
     if (ret != 0) {
         CTX->log()->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
         return ret; // ERR
     }
-    ret = rpc_send_write(*path, buf, append_flag, offset, count, updated_size);
+    ret = rpc_send::write(*path, buf, append_flag, offset, count, updated_size);
     if (ret < 0) {
-        CTX->log()->warn("{}() rpc_send_write failed with ret {}", __func__, ret);
+        CTX->log()->warn("{}() rpc_send::write failed with ret {}", __func__, ret);
     }
     return ret; // return written size or -1 as error
 }
@@ -413,9 +414,9 @@ ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, of
 #if defined(ZERO_BUFFER_BEFORE_READ)
     memset(buf, 0, sizeof(char)*count);
 #endif
-    auto ret = rpc_send_read(file->path(), buf, offset, count);
+    auto ret = rpc_send::read(file->path(), buf, offset, count);
     if (ret < 0) {
-        CTX->log()->warn("{}() rpc_send_read failed with ret {}", __func__, ret);
+        CTX->log()->warn("{}() rpc_send::read failed with ret {}", __func__, ret);
     }
     // XXX check that we don't try to read past end of the file
     return ret; // return read size or -1 as error
@@ -453,7 +454,7 @@ int adafs_opendir(const std::string& path) {
     }
 
     auto open_dir = std::make_shared<OpenDir>(path);
-    rpc_send_get_dirents(*open_dir);
+    rpc_send::get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);
 }
 
@@ -473,12 +474,12 @@ int adafs_rmdir(const std::string& path) {
     }
 
     auto open_dir = std::make_shared<OpenDir>(path);
-    rpc_send_get_dirents(*open_dir);
+    rpc_send::get_dirents(*open_dir);
     if(open_dir->size() != 0){
         errno = ENOTEMPTY;
         return -1;
     }
-    return rpc_send_rm_node(path, true);
+    return rpc_send::rm_node(path, true);
 }
 
 struct dirent * adafs_readdir(int fd){

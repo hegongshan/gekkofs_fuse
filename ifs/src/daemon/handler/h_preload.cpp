@@ -1,19 +1,18 @@
 
 #include <daemon/adafs_daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
-#include <global/rpc/rpc_utils.hpp>
-#include <global/rpc/ipc_types.hpp>
+#include "global/rpc/rpc_types.hpp"
 
 
 using namespace std;
 
-static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
-    ipc_config_in_t in{};
-    ipc_config_out_t out{};
+static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
+    rpc_config_in_t in{};
+    rpc_config_out_t out{};
 
     auto ret = margo_get_input(handle, &in);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() Got config IPC", __func__);
+    ADAFS_DATA->spdlogger()->debug("{}() Got config RPC", __func__);
 
     // get fs config
     out.mountdir = ADAFS_DATA->mountdir().c_str();
@@ -43,4 +42,4 @@ static hg_return_t ipc_srv_fs_config(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(ipc_srv_fs_config)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_fs_config)

@@ -5,8 +5,7 @@
 
 // These constexpr set the RPC's identity and which handler the receiver end should use
 namespace hg_tag {
-    constexpr auto fs_config = "ipc_srv_fs_config";
-    constexpr auto minimal = "rpc_minimal";
+    constexpr auto fs_config = "rpc_srv_fs_config";
     constexpr auto create = "rpc_srv_mk_node";
     constexpr auto access = "rpc_srv_access";
     constexpr auto stat = "rpc_srv_stat";

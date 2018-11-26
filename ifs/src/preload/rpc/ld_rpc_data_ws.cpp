@@ -1,11 +1,15 @@
 #include <global/configure.hpp>
 #include <preload/preload_util.hpp>
 #include <preload/rpc/ld_rpc_data_ws.hpp>
-#include <global/rpc/rpc_utils.hpp>
+#include "global/rpc/rpc_types.hpp"
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
 
 #include <unordered_set>
+
+
+namespace rpc_send {
+
 
 using namespace std;
 
@@ -15,7 +19,7 @@ using namespace std;
 /**
  * Sends an RPC request to a specific node to pull all chunks that belong to him
  */
-ssize_t rpc_send_write(const string& path, const void* buf, const bool append_flag, const off64_t in_offset,
+ssize_t write(const string& path, const void* buf, const bool append_flag, const off64_t in_offset,
                        const size_t write_size, const int64_t updated_metadentry_size) {
     assert(write_size > 0);
     // Calculate chunkid boundaries and numbers so that daemons know in which interval to look for chunks
@@ -51,7 +55,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
     vector<hg_handle_t> rpc_handles(target_n);
     vector<margo_request> rpc_waiters(target_n);
     vector<rpc_write_data_in_t> rpc_in(target_n);
-    // register local target buffer for bulk access for IPC and RPC margo instance
+    // register local target buffer for bulk access for margo instance
     auto bulk_buf = const_cast<void*>(buf);
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(write_size);
@@ -129,7 +133,7 @@ ssize_t rpc_send_write(const string& path, const void* buf, const bool append_fl
 /**
  * Sends an RPC request to a specific node to push all chunks that belong to him
  */
-ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
+ssize_t read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
     // Calculate chunkid boundaries and numbers so that daemons know in which interval to look for chunks
     auto chnk_start = chnk_id_for_offset(offset, CHUNKSIZE); // first chunk number
     auto chnk_end = chnk_id_for_offset((offset + read_size - 1), CHUNKSIZE);
@@ -159,7 +163,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     vector<hg_handle_t> rpc_handles(target_n);
     vector<margo_request> rpc_waiters(target_n);
     vector<rpc_read_data_in_t> rpc_in(target_n);
-    // register local target buffer for bulk access for IPC and RPC margo instance
+    // register local target buffer for bulk access for margo instance
     auto bulk_buf = buf;
     hg_bulk_t rpc_bulk_handle = nullptr;
     auto size = make_shared<size_t>(read_size);
@@ -234,7 +238,7 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     return (err < 0) ? err : out_size;
 }
 
-int rpc_send_trunc_data(const std::string& path, size_t current_size, size_t new_size) {
+int trunc_data(const std::string& path, size_t current_size, size_t new_size) {
     assert(current_size > new_size);
     hg_return_t ret;
     rpc_trunc_in_t in;
@@ -314,3 +318,6 @@ int rpc_send_trunc_data(const std::string& path, size_t current_size, size_t new
     }
     return 0;
 }
+
+
+} // end namespace rpc_send
