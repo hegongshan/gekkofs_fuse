@@ -8,8 +8,6 @@ This is a file system.
 ### Debian/Ubuntu - Dependencies
 
 - Upgrade your gcc to version at least 4.8 to get C++11 support.
-- Install gflags. First, try: `sudo apt-get install libgflags-dev` If this doesn't work and you're using Ubuntu, here's
-a nice tutorial: (http://askubuntu.com/questions/312173/installing-gflags-12-04)
 - Install snappy. This is usually as easy as: `sudo apt-get install libsnappy-dev`
 - Install zlib. Try: `sudo apt-get install zlib1g-dev`
 - Install bzip2: `sudo apt-get install libbz2-dev`
@@ -18,17 +16,6 @@ a nice tutorial: (http://askubuntu.com/questions/312173/installing-gflags-12-04)
 
 ### CentOS/Red Hat - Dependencies
 - Upgrade your gcc to version at least 4.8 to get C++11 support: yum install gcc48-c++
-- Install gflags:
-
-```bash
-    git clone https://github.com/gflags/gflags.git
-    cd gflags
-    git checkout v2.0
-    ./configure && make && sudo make install
-```
-__Notice:__ Once installed, please add the include path for gflags to your CPATH environment variable and the lib path
-to LIBRARY_PATH. If installed with default settings, the include path will be /usr/local/include and the lib path will
-be /usr/local/lib.
 - Install snappy:
     `sudo yum install snappy snappy-devel`
 - Install zlib:

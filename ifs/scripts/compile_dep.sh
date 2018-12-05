@@ -171,14 +171,6 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     ../configure --prefix=${INSTALL}
     make -j${CORES}
     make install
-    # compile gflags
-    echo "############################################################ Installing:  gflags"
-    CURR=${SOURCE}/gflags
-    prepare_build_dir ${CURR}
-    cd ${CURR}/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
-    make -j${CORES}
-    make install
     # compile zstd
     echo "############################################################ Installing:  zstd"
     CURR=${SOURCE}/zstd/build/cmake

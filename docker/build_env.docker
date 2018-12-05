@@ -32,7 +32,6 @@ RUN yum -y -q update  && yum -y -q install \
 	# RocksDB
 	which \
 	snappy-devel \
-	gflags-devel \
 	libzstd-devel \
 	lz4-devel \
 	bzip2-devel \
@@ -86,7 +85,6 @@ RUN yum -y -q update  && yum -y -q install \
 	# RocksDB
 	which \
 	snappy-devel \
-	gflags-devel \
 	libzstd-devel \
 	lz4-devel \
 	bzip2-devel \
