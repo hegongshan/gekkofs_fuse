@@ -17,7 +17,7 @@ bool is_absolute_path(const std::string& path) {
 }
 
 bool has_trailing_slash(const std::string& path) {
-    return path.back() == PSP;
+    return (!path.empty()) && (path.back() == PSP);
 }
 
 /* Add path prefix to a given C string.
