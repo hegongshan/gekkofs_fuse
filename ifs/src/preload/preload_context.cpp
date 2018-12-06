@@ -60,7 +60,7 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
                                                     bool resolve_last_link) const {
 
     // Relativize path should be called only after the library constructor has been executed
-    assert(initialized_);
+    assert(interception_enabled_);
     // If we run the constructor we also already setup the mountdir
     assert(!mountdir_.empty());
 
@@ -100,7 +100,7 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
 
 bool PreloadContext::relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link) const {
     // Relativize path should be called only after the library constructor has been executed
-    assert(initialized_);
+    assert(interception_enabled_);
     // If we run the constructor we also already setup the mountdir
     assert(!mountdir_.empty());
 
@@ -136,10 +136,15 @@ const std::shared_ptr<FsConfig>& PreloadContext::fs_conf() const {
     return fs_conf_;
 }
 
-void PreloadContext::initialized(const bool& flag) {
-    initialized_ = flag;
+void PreloadContext::enable_interception() {
+    interception_enabled_ = true;
 }
 
-bool PreloadContext::initialized() const {
-    return initialized_;
+void PreloadContext::disable_interception() {
+    interception_enabled_ = false;
 }
+
+bool PreloadContext::interception_enabled() const {
+    return interception_enabled_;
+}
+

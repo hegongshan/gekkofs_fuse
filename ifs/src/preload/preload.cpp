@@ -203,7 +203,7 @@ void init_preload() {
     } else {
         CTX->log()->info("{}() mountdir '{}' loaded", __func__, CTX->mountdir());
     }
-    CTX->initialized(true);
+    CTX->enable_interception();
     CTX->log()->debug("{}() exit", __func__);
 }
 
@@ -211,6 +211,7 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    CTX->disable_interception();
     if (ld_margo_rpc_id == nullptr) {
         CTX->log()->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
         return;

@@ -55,7 +55,7 @@ class PreloadContext {
     std::vector<std::string> mountdir_components_;
     std::string mountdir_;
     std::string daemon_addr_str_;
-    bool initialized_;
+    bool interception_enabled_;
 
     public:
     static PreloadContext* getInstance() {
@@ -91,8 +91,9 @@ class PreloadContext {
     std::shared_ptr<Distributor> distributor() const;
     const std::shared_ptr<FsConfig>& fs_conf() const;
 
-    void initialized(const bool& flag);
-    bool initialized() const;
+    void enable_interception();
+    void disable_interception();
+    bool interception_enabled() const;
 };
 
 
