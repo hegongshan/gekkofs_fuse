@@ -564,7 +564,7 @@ int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
         return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
     }
 
-    if(cpath == nullptr || cpath[0] == '\0') {
+    if (cpath[0] == '\0') {
         CTX->log()->error("{}() path is invalid", __func__);
         errno = EINVAL;
         return -1;
@@ -589,7 +589,7 @@ int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
         path.append(dir->path());
         path.push_back(PSP);
         path.append(cpath);
-        if(!resolve_path(path.c_str(), resolved)) {
+        if (!resolve_path(path, resolved)) {
             return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
         }
     } else {
@@ -655,7 +655,7 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
         return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
     }
 
-    if(cpath == nullptr || cpath[0] == '\0') {
+    if (cpath[0] == '\0') {
         CTX->log()->error("{}() path is invalid", __func__);
         errno = EINVAL;
         return -1;
@@ -781,7 +781,7 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
         return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
     }
 
-    if(cpath == nullptr || cpath[0] == '\0') {
+    if (cpath[0] == '\0') {
         CTX->log()->error("{}() path is invalid", __func__);
         errno = EINVAL;
         return -1;
@@ -1303,7 +1303,7 @@ int fchmodat(int dirfd, const char* cpath, mode_t mode, int flags) noexcept {
         return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
     }
 
-    if(cpath == nullptr || cpath[0] == '\0') {
+    if (cpath[0] == '\0') {
         CTX->log()->error("{}() path is invalid", __func__);
         errno = EINVAL;
         return -1;
@@ -1356,7 +1356,7 @@ int chdir(const char* path) noexcept {
     bool internal = CTX->relativize_path(path, rel_path);
     if (internal) {
         //path falls in our namespace
-        struct stat st;
+        struct stat st{};
         if(adafs_stat(rel_path, &st) != 0) {
             CTX->log()->error("{}() path does not exists", __func__);
             errno = ENOENT;
