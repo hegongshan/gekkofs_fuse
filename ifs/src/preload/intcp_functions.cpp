@@ -201,7 +201,7 @@ size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
             if (ret > 0) {
                 return ret / size;
             }
-            return ret;
+            return static_cast<size_t>(ret);
         }
     }
     return (reinterpret_cast<decltype(&fread)>(libc_fread))(ptr, size, nmemb, stream);
@@ -218,7 +218,7 @@ size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
                 // Update offset in file descriptor in the file map
                 return ret / size;
             }
-            return ret;
+            return static_cast<size_t>(ret);
         }
     }
     return (reinterpret_cast<decltype(&fwrite)>(libc_fwrite))(ptr, size, nmemb, stream);
@@ -443,10 +443,10 @@ char* fgets(char* s, int size, FILE* stream) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() [fd: {}, size: {}]", __func__, fd, size);
-            auto ret = adafs_read(fd, s, size - 1);
+            auto ret = adafs_read(fd, s, static_cast<size_t>(size - 1));
             CTX->log()->debug("{}() read {} bytes", __func__, ret);
             if(ret > 0) {
-                char* nl_ptr = static_cast<char*>(memchr(s, '\n', size - 1));
+                char* nl_ptr = static_cast<char*>(memchr(s, '\n', static_cast<size_t>(size - 1)));
                 assert((nl_ptr - s) < size);
                 if(nl_ptr != nullptr) {
                     CTX->log()->debug("{}() found new line char at {}", __func__, (nl_ptr - s));
@@ -1123,7 +1123,7 @@ int fcntl(int fd, int cmd, ...) {
                     va_end (ap);
                     CTX->log()->trace("{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]", __func__, fd, (flags & FD_CLOEXEC));
                     CTX->file_map()->get(fd)
-                        ->set_flag(OpenFile_flags::cloexec, (flags & FD_CLOEXEC));
+                            ->set_flag(OpenFile_flags::cloexec, static_cast<bool>(flags & FD_CLOEXEC));
                     return 0;
                 }
                 default:
@@ -1471,9 +1471,8 @@ int linkat(int olddirfd, const char *oldpath,
         int newdirfd, const char *newpath, int flags) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called [olddirfd: '{}', oldpath: '{}',\
-                newdirfd: '{}', newpath: '{}', flags: '{}']",
-                __func__, olddirfd, oldpath, newdirfd, newpath, flags);
+        CTX->log()->trace("{}() called [olddirfd: '{}', oldpath: '{}' newdirfd: '{}', newpath: '{}', flags: '{}']",
+                          __func__, olddirfd, oldpath, newdirfd, newpath, flags);
         CTX->log()->error("{}() not implemented", __func__);
         errno = ENOTSUP;
         return -1;
