@@ -1038,7 +1038,7 @@ off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
 int fsync(int fd) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {}, path '{}'", __func__, fd, CTX->file_map()->get(fd)->path());
+        CTX->log()->trace("{}() called with fd '{}'", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
         }
@@ -1049,7 +1049,7 @@ int fsync(int fd) {
 int fdatasync(int fd) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {}, path '{}'", __func__, fd, CTX->file_map()->get(fd)->path());
+        CTX->log()->trace("{}() called with fd '{}'", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
         }
