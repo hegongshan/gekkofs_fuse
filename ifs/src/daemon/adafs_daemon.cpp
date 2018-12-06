@@ -348,18 +348,6 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    if (vm.count("mountdir")) {
-        ADAFS_DATA->mountdir(vm["mountdir"].as<string>());
-    }
-    if (vm.count("rootdir")) {
-        ADAFS_DATA->rootdir(vm["rootdir"].as<string>());
-    }
-    if (vm.count("metadir")) {
-        ADAFS_DATA->metadir(vm["metadir"].as<string>());
-    } else if (vm.count("rootdir")) {
-        ADAFS_DATA->metadir(vm["rootdir"].as<string>());
-    }
-
     // parse host parameters
     vector<string> hosts{};
     if (vm.count("hostfile")) {
@@ -427,10 +415,25 @@ int main(int argc, const char* argv[]) {
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
 
-    // Make sure directory structure exists
-    bfs::create_directories(ADAFS_DATA->metadir());
+    assert(vm.count("mountdir"));
+    auto mountdir = vm["mountdir"].as<string>();
     // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
-    bfs::create_directories(ADAFS_DATA->mountdir());
+    bfs::create_directories(mountdir);
+    ADAFS_DATA->mountdir(bfs::canonical(mountdir).native());
+    
+    assert(vm.count("rootdir"));
+    auto rootdir = vm["rootdir"].as<string>(); 
+    bfs::create_directories(rootdir);
+    ADAFS_DATA->rootdir(bfs::canonical(rootdir).native());
+    
+    if (vm.count("metadir")) {
+        auto metadir = vm["metadir"].as<string>();
+        bfs::create_directories(metadir);
+        ADAFS_DATA->metadir(bfs::canonical(metadir).native()); 
+    } else {
+        // use rootdir as metadata dir
+        ADAFS_DATA->metadir(ADAFS_DATA->rootdir());
+    }
 
     if (init_environment()) {
         signal(SIGINT, shutdown_handler);
