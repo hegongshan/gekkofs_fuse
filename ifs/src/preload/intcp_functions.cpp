@@ -514,7 +514,7 @@ int creat64(const char* path, mode_t mode) {
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
 
-int mkdir(const char* path, mode_t mode) __THROW {
+int mkdir(const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(mkdir, path, mode);
@@ -529,7 +529,7 @@ int mkdir(const char* path, mode_t mode) __THROW {
     return ret;
 }
 
-int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
+int mkdirat(int dirfd, const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path '{}', mode {}, dirfd {}", __func__, path, mode, dirfd);
@@ -545,7 +545,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
 }
 
 
-int unlink(const char* path) __THROW {
+int unlink(const char* path) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(unlink, path);
@@ -558,7 +558,7 @@ int unlink(const char* path) __THROW {
     return adafs_rm_node(rel_path);
 }
 
-int unlinkat(int dirfd, const char *cpath, int flags) {
+int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
@@ -605,7 +605,7 @@ int unlinkat(int dirfd, const char *cpath, int flags) {
     }
 }
 
-int rmdir(const char* path) __THROW {
+int rmdir(const char* path) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(rmdir, path);
@@ -636,7 +636,7 @@ int remove(const char* path) {
    return unlink(path);
 }
 
-int access(const char* path, int mask) __THROW {
+int access(const char* path, int mask) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(access, path, mask);
@@ -649,7 +649,7 @@ int access(const char* path, int mask) __THROW {
     return adafs_access(rel_path, mask);
 }
 
-int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
+int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
@@ -696,7 +696,7 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
 }
 
 
-int stat(const char* path, struct stat* buf) __THROW {
+int stat(const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(stat, path, buf);
@@ -709,7 +709,7 @@ int stat(const char* path, struct stat* buf) __THROW {
     return adafs_stat(rel_path, buf);
 }
 
-int fstat(int fd, struct stat* buf) __THROW {
+int fstat(int fd, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -721,7 +721,7 @@ int fstat(int fd, struct stat* buf) __THROW {
     return LIBC_FUNC(fstat, fd, buf);
 }
 
-int lstat(const char* path, struct stat* buf) __THROW {
+int lstat(const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(lstat, path, buf);
@@ -735,7 +735,7 @@ int lstat(const char* path, struct stat* buf) __THROW {
     return adafs_stat(rel_path, buf);
 }
 
-int __xstat(int ver, const char* path, struct stat* buf) __THROW {
+int __xstat(int ver, const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__xstat, ver, path, buf);
@@ -748,7 +748,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     return adafs_stat(rel_path, buf);
 }
 
-int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
+int __xstat64(int ver, const char* path, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__xstat64, ver, path, buf);
@@ -763,7 +763,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     return -1;
 }
 
-int __fxstat(int ver, int fd, struct stat* buf) __THROW {
+int __fxstat(int ver, int fd, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -775,7 +775,7 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     return LIBC_FUNC(__fxstat, ver, fd, buf);
 }
 
-int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int flags) {
+int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flags) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
@@ -829,7 +829,7 @@ int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int fl
     return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
 }
 
-int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {
+int __fxstatat64(int ver, int dirfd, const char* path, struct stat64* buf, int flags) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__fxstatat64, ver, dirfd, path, buf, flags);
@@ -840,7 +840,7 @@ int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int
     return -1;
 }
 
-int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
+int __fxstat64(int ver, int fd, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__fxstat64, ver, fd, buf);
@@ -851,7 +851,7 @@ int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     return -1;
 }
 
-int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
+int __lxstat(int ver, const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__lxstat, ver, path, buf);
@@ -864,7 +864,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     return adafs_stat(rel_path, buf);
 }
 
-int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
+int __lxstat64(int ver, const char* path, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(__lxstat64, ver, path, buf);
@@ -875,7 +875,7 @@ int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     return -1;
 }
 
-int statfs(const char* path, struct statfs* buf) __THROW {
+int statfs(const char* path, struct statfs* buf) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(statfs, path, buf);
@@ -896,7 +896,7 @@ int statfs(const char* path, struct statfs* buf) __THROW {
     return adafs_statfs(rel_path, buf, realfs);
 }
 
-int fstatfs(int fd, struct statfs* buf) {
+int fstatfs(int fd, struct statfs* buf) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -1006,7 +1006,7 @@ ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
     return (reinterpret_cast<decltype(&pread64)>(libc_pread64))(fd, buf, count, offset);
 }
 
-off_t lseek(int fd, off_t offset, int whence) __THROW {
+off_t lseek(int fd, off_t offset, int whence) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
@@ -1024,7 +1024,8 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
 }
 
 #undef lseek64
-off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
+
+off64_t lseek64(int fd, off64_t offset, int whence) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
@@ -1057,7 +1058,7 @@ int fdatasync(int fd) {
     return (reinterpret_cast<decltype(&fdatasync)>(libc_fdatasync))(fd);
 }
 
-int truncate(const char* path, off_t length) {
+int truncate(const char* path, off_t length) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(truncate, path, length);
@@ -1071,7 +1072,7 @@ int truncate(const char* path, off_t length) {
     return adafs_truncate(rel_path, length);
 }
 
-int ftruncate(int fd, off_t length) {
+int ftruncate(int fd, off_t length) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called  [fd: {}, offset: {}]", __func__, fd, length);
@@ -1136,7 +1137,7 @@ int fcntl(int fd, int cmd, ...) {
     return (reinterpret_cast<decltype(&fcntl)>(libc_fcntl))(fd, cmd, arg);
 }
 
-int dup(int oldfd) __THROW {
+int dup(int oldfd) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with oldfd {}", __func__, oldfd);
@@ -1147,7 +1148,7 @@ int dup(int oldfd) __THROW {
     return (reinterpret_cast<decltype(&dup)>(libc_dup))(oldfd);
 }
 
-int dup2(int oldfd, int newfd) __THROW {
+int dup2(int oldfd, int newfd) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with oldfd {} newfd {}", __func__, oldfd, newfd);
@@ -1158,7 +1159,7 @@ int dup2(int oldfd, int newfd) __THROW {
     return (reinterpret_cast<decltype(&dup2)>(libc_dup2))(oldfd, newfd);
 }
 
-int dup3(int oldfd, int newfd, int flags) __THROW {
+int dup3(int oldfd, int newfd, int flags) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         if (CTX->file_map()->exist(oldfd)) {
@@ -1267,7 +1268,7 @@ int intcp_closedir(DIR* dirp) {
     return LIBC_FUNC(closedir, dirp);
 }
 
-int chmod(const char *path, mode_t mode) {
+int chmod(const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(chmod, path, mode);
@@ -1283,7 +1284,7 @@ int chmod(const char *path, mode_t mode) {
     return -1;
 }
 
-int fchmod(int fd, mode_t mode) {
+int fchmod(int fd, mode_t mode) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called  [fd: {}, mode: {}]", __func__, fd, mode);
@@ -1296,7 +1297,7 @@ int fchmod(int fd, mode_t mode) {
     return LIBC_FUNC(fchmod, fd, mode);
 }
 
-int fchmodat(int dirfd, const char *cpath, mode_t mode, int flags) {
+int fchmodat(int dirfd, const char* cpath, mode_t mode, int flags) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
@@ -1344,7 +1345,7 @@ int fchmodat(int dirfd, const char *cpath, mode_t mode, int flags) {
     return LIBC_FUNC(fchmodat, dirfd, resolved.c_str(), mode, flags);
 }
 
-int chdir(const char* path){
+int chdir(const char* path) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(chdir, path);
@@ -1382,7 +1383,7 @@ int chdir(const char* path){
     return 0;
 }
 
-int fchdir(int fd) {
+int fchdir(int fd) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(fchdir, fd);
@@ -1420,7 +1421,7 @@ int fchdir(int fd) {
     return 0;
 }
 
-char *getcwd(char *buf, size_t size) {
+char* getcwd(char* buf, size_t size) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(getcwd, buf, size);
@@ -1444,7 +1445,7 @@ char *getcwd(char *buf, size_t size) {
     return buf;
 }
 
-char *get_current_dir_name(void) {
+char* get_current_dir_name() noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return (reinterpret_cast<decltype(&get_current_dir_name)>(libc_dup3))();
@@ -1455,7 +1456,7 @@ char *get_current_dir_name(void) {
 }
 
 
-int link(const char *oldpath, const char *newpath) {
+int link(const char* oldpath, const char* newpath) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
@@ -1468,7 +1469,7 @@ int link(const char *oldpath, const char *newpath) {
 }
 
 int linkat(int olddirfd, const char *oldpath,
-        int newdirfd, const char *newpath, int flags) {
+           int newdirfd, const char* newpath, int flags) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called [olddirfd: '{}', oldpath: '{}' newdirfd: '{}', newpath: '{}', flags: '{}']",
@@ -1480,7 +1481,7 @@ int linkat(int olddirfd, const char *oldpath,
     return LIBC_FUNC(linkat, olddirfd, oldpath, newdirfd, newpath, flags);
 }
 
-int symlink(const char *oldpath, const char *newpath) {
+int symlink(const char* oldpath, const char* newpath) noexcept {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
         return LIBC_FUNC(symlink, oldpath, newpath);
@@ -1502,7 +1503,7 @@ int symlink(const char *oldpath, const char *newpath) {
     return LIBC_FUNC(symlink, rel_oldpath.c_str(), rel_newpath.c_str());
 }
 
-int symlinkat(const char *oldpath, int fd, const char *newpath) {
+int symlinkat(const char* oldpath, int fd, const char* newpath) noexcept {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
