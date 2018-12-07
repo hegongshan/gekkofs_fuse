@@ -289,8 +289,6 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
-echo "########## Applying allow init option path"
-git apply ${PATCH_DIR}/margo_allow_init_options.patch
 ./prepare.sh
 cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"

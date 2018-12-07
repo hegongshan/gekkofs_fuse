@@ -160,7 +160,11 @@ bool init_rpc_server() {
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init_info(protocol_port.c_str(), MARGO_SERVER_MODE, &hg_options, 1, DAEMON_RPC_HANDLER_XSTREAMS);
+    auto mid = margo_init_opt(protocol_port.c_str(),
+                              MARGO_SERVER_MODE,
+                              &hg_options,
+                              HG_TRUE,
+                              DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;
