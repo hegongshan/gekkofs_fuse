@@ -289,6 +289,8 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
+echo "########## Applying margo handle cache fix"
+git apply ${PATCH_DIR}/handle_cache.patch
 ./prepare.sh
 cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"

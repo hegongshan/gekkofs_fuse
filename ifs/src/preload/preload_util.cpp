@@ -1,12 +1,8 @@
 #include <preload/preload_util.hpp>
-#include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/global_func.hpp>
 
 #include <fstream>
-#include <iterator>
-#include <memory>
-#include <unordered_map>
 #include <sstream>
 #include <csignal>
 #include <random>
@@ -210,8 +206,14 @@ bool lookup_all_hosts() {
     ::shuffle(hosts.begin(), hosts.end(), g); // Shuffle hosts vector
     // lookup addresses and put abstract server addresses into rpc_addresses
     for (auto& host : hosts) {
-        auto hostname = CTX->fs_conf()->hosts.at(host);
-        auto uri = get_uri_from_hostname(hostname);
+        string uri{};
+        // If local use address provided by daemon in order to use automatic shared memory routing
+        if (host == CTX->fs_conf()->host_id) {
+            uri = CTX->daemon_addr_str();
+        } else {
+            auto hostname = CTX->fs_conf()->hosts.at(host);
+            uri = get_uri_from_hostname(hostname);
+        }
         auto remote_addr = margo_addr_lookup_retry(uri);
         if (remote_addr == HG_ADDR_NULL) {
             CTX->log()->error("{}() Failed to lookup address {}", __func__, uri);
@@ -263,7 +265,11 @@ margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient, hg_handle_t& 
         CTX->log()->error("{}() server address not resolvable for host id {}", __func__, recipient);
         return HG_OTHER_ERROR;
     }
-    ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
+    // TODO The following is a work around until https://xgitlab.cels.anl.gov/sds/margo/issues/47 is fixed
+    if (recipient == CTX->fs_conf()->host_id)
+        ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
+    else
+        ret = margo_create_cache(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() creating handle FAILED", __func__);
         return HG_OTHER_ERROR;
