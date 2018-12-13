@@ -813,7 +813,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) noexcept {
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path, false)) {
-        return LIBC_FUNC(__lxstat, ver, path, buf);
+        return LIBC_FUNC(__lxstat, ver, rel_path.c_str(), buf);
     }
     return adafs_stat(rel_path, buf);
 }
