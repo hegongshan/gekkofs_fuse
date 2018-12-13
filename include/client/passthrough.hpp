@@ -115,6 +115,8 @@ extern void* libc_link;
 extern void* libc_linkat;
 extern void* libc_symlinkat;
 
+extern void* libc_readlinkat;
+
 extern void* libc_realpath;
 
 void init_passthrough_if_needed();

@@ -52,6 +52,10 @@ strong_alias(intcp_symlink, symlink)
 strong_alias(intcp_symlink, __symlink)
 int intcp_symlinkat(const char* oldname, int newfd, const char* newname) noexcept;
 strong_alias(intcp_symlinkat, symlinkat)
+ssize_t intcp_readlink(const char * cpath, char * buf, size_t bufsize) noexcept;
+strong_alias(intcp_readlink, readlink)
+ssize_t intcp_readlinkat(int dirfd, const char * cpath, char * buf, size_t bufsize) noexcept;
+strong_alias(intcp_readlinkat, readlinkat)
 
 int intcp_statvfs(const char *path, struct statvfs *buf) noexcept;
 strong_alias(intcp_statvfs, statvfs)

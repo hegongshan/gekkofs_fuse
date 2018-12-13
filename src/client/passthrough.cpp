@@ -116,6 +116,8 @@ void* libc_link;
 void* libc_linkat;
 void* libc_symlinkat;
 
+void* libc_readlinkat;
+
 void* libc_realpath;
 
 
@@ -229,6 +231,8 @@ void init_passthrough_() {
     libc_link = dlsym(libc, "link");
     libc_linkat = dlsym(libc, "linkat");
     libc_symlinkat = dlsym(libc, "symlinkat");
+
+    libc_readlinkat = dlsym(libc, "readlinkat");
 
     libc_realpath = dlsym(libc, "realpath");
 

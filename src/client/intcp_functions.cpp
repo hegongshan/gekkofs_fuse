@@ -1474,6 +1474,47 @@ int intcp_symlinkat(const char* oldname, int newdfd, const char* newname) noexce
     }
 }
 
+ssize_t intcp_readlink(const char * cpath, char * buf, size_t bufsize) noexcept {
+    return intcp_readlinkat(AT_FDCWD, cpath, buf, bufsize);
+}
+
+ssize_t intcp_readlinkat(int dirfd, const char * cpath, char * buf, size_t bufsize) noexcept {
+    init_passthrough_if_needed();
+    if(!CTX->interception_enabled()) {
+        return LIBC_FUNC(readlinkat, dirfd, cpath, buf, bufsize);
+    }
+
+    CTX->log()->trace("{}() called with path '{}' dirfd {}, bufsize {}",
+                      __func__, cpath, dirfd, bufsize);
+
+    std::string resolved;
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
+            return LIBC_FUNC(readlinkat, dirfd, cpath, buf, bufsize);
+
+        case RelativizeStatus::external:
+            return LIBC_FUNC(readlinkat, dirfd, cpath, buf, bufsize);
+
+        case RelativizeStatus::fd_not_a_dir:
+            errno = ENOTDIR;
+            return -1;
+
+        case RelativizeStatus::internal:
+#ifdef HAS_SYMLINKS
+            return adafs_readlink(resolved, buf, bufsize);
+#else
+            CTX->log()->warn("{}() symlink not supported", __func__);
+            errno = EINVAL;
+            return -1;
+#endif
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
+            return -1;
+    }
+}
+
 char *realpath(const char *path, char *resolved_path) {
     init_passthrough_if_needed();
     if(!CTX->interception_enabled()) {
