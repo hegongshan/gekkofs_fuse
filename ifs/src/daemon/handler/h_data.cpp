@@ -504,3 +504,27 @@ static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_trunc_data)
+
+static hg_return_t rpc_srv_chunk_stat(hg_handle_t handle) {
+    ADAFS_DATA->spdlogger()->trace("{}() called", __func__);
+
+    rpc_chunk_stat_out_t out{};
+    // Get input
+    auto chk_stat = ADAFS_DATA->storage()->chunk_stat();
+    // Create output and send it
+    out.chunk_size = chk_stat.chunk_size;
+    out.chunk_total = chk_stat.chunk_total;
+    out.chunk_free = chk_stat.chunk_free;
+    auto hret = margo_respond(handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+    }
+
+    // Destroy handle when finished
+    margo_destroy(handle);
+    return hret;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_chunk_stat)
+
+

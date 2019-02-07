@@ -48,6 +48,11 @@ int intcp_openat64(int dirfd, const char *path, int flags, ...);
 strong_alias(intcp_openat64, openat64)
 strong_alias(intcp_openat64, __openat64_2)
 
+int intcp_statvfs(const char *path, struct statvfs *buf) noexcept;
+strong_alias(intcp_statvfs, statvfs)
+int intcp_fstatvfs(int fd, struct statvfs *buf) noexcept;
+strong_alias(intcp_fstatvfs, fstatvfs)
+
 #endif // IFS_INTCP_FUNCTIONS_HPP
 
 } // extern C
