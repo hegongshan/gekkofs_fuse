@@ -191,7 +191,7 @@ fi
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     # No need to get libfabric for mogon2 as it is already installed
     if [[ ("${CLUSTER}" != "mogon2") ]]; then
-        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.6.2/libfabric-1.6.2.tar.gz" &
+        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.7.0/libfabric-1.7.0.tar.gz" &
     fi
 fi
 # get Mercury
