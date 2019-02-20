@@ -261,11 +261,7 @@ margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient, hg_handle_t& 
         CTX->log()->error("{}() server address not resolvable for host id {}", __func__, recipient);
         return HG_OTHER_ERROR;
     }
-    // TODO The following is a work around until https://xgitlab.cels.anl.gov/sds/margo/issues/47 is fixed
-    if (recipient == CTX->fs_conf()->host_id)
-        ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
-    else
-        ret = margo_create_cache(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
+    ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() creating handle FAILED", __func__);
         return HG_OTHER_ERROR;
