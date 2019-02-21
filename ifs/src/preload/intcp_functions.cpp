@@ -31,7 +31,7 @@ int intcp_open(const char* path, int flags, ...) {
         mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
-    if (!CTX->initialized()) {
+    if (!CTX->interception_enabled()) {
         return LIBC_FUNC(open, path, flags, mode);
     }
 
@@ -68,7 +68,7 @@ int intcp_openat(int dirfd, const char *cpath, int flags, ...) {
         va_end(vl);
     }
 
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
     }
 
@@ -140,7 +140,7 @@ inline FILE* fd_to_file(const int fd){
 
 FILE* fopen(const char* path, const char* fmode) {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(fopen, path, fmode);
     }
     CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
@@ -180,7 +180,7 @@ FILE* fopen(const char* path, const char* fmode) {
 
 FILE* fopen64(const char* path, const char* fmode) {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(fopen64, path, fmode);
     }
     CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
@@ -193,7 +193,7 @@ FILE* fopen64(const char* path, const char* fmode) {
 
 size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -209,7 +209,7 @@ size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
 size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -226,7 +226,7 @@ size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
 int fclose(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             // No call to the daemon is required
@@ -239,7 +239,7 @@ int fclose(FILE *stream) {
 
 int fileno(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -251,7 +251,7 @@ int fileno(FILE *stream) {
 
 void clearerr(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -264,7 +264,7 @@ void clearerr(FILE *stream) {
 
 int feof(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -277,7 +277,7 @@ int feof(FILE *stream) {
 
 int ferror(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -290,7 +290,7 @@ int ferror(FILE *stream) {
 
 int fflush(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -302,7 +302,7 @@ int fflush(FILE *stream) {
 
 int fpurge(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -314,7 +314,7 @@ int fpurge(FILE *stream) {
 
 void __fpurge(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -326,7 +326,7 @@ void __fpurge(FILE *stream) {
 
 void setbuf(FILE *stream, char *buf) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -338,7 +338,7 @@ void setbuf(FILE *stream, char *buf) {
 
 void setbuffer(FILE *stream, char *buf, size_t size) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -350,7 +350,7 @@ void setbuffer(FILE *stream, char *buf, size_t size) {
 
 void setlinebuf(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -362,7 +362,7 @@ void setlinebuf(FILE *stream) {
 
 int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called on fd {}", __func__, fd);
@@ -374,7 +374,7 @@ int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
 
 int putc(int c, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -387,7 +387,7 @@ int putc(int c, FILE *stream) {
 
 int fputc(int c, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -400,7 +400,7 @@ int fputc(int c, FILE *stream) {
 
 int fputs(const char *s, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -413,7 +413,7 @@ int fputs(const char *s, FILE *stream) {
 
 int getc(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -426,7 +426,7 @@ int getc(FILE *stream) {
 
 int fgetc(FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -439,7 +439,7 @@ int fgetc(FILE *stream) {
 
 char* fgets(char* s, int size, FILE* stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() [fd: {}, size: {}]", __func__, fd, size);
@@ -465,7 +465,7 @@ char* fgets(char* s, int size, FILE* stream) {
 
 int ungetc(int c, FILE *stream) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -478,7 +478,7 @@ int ungetc(int c, FILE *stream) {
 
 int fseek(FILE *stream, long offset, int whence) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && (stream != nullptr)) {
+    if(CTX->interception_enabled() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called [fd: {}, offset: {}, whence: {}");
@@ -498,7 +498,7 @@ int fseek(FILE *stream, long offset, int whence) {
 
 int creat(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
     }
     return open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
@@ -508,7 +508,7 @@ int creat(const char* path, mode_t mode) {
 
 int creat64(const char* path, mode_t mode) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
     }
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
@@ -516,7 +516,7 @@ int creat64(const char* path, mode_t mode) {
 
 int mkdir(const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(mkdir, path, mode);
     }
     CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
@@ -531,7 +531,7 @@ int mkdir(const char* path, mode_t mode) noexcept {
 
 int mkdirat(int dirfd, const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with path '{}', mode {}, dirfd {}", __func__, path, mode, dirfd);
         std::string rel_path;
         if (CTX->relativize_path(path, rel_path)) {
@@ -547,7 +547,7 @@ int mkdirat(int dirfd, const char* path, mode_t mode) noexcept {
 
 int unlink(const char* path) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(unlink, path);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -560,7 +560,7 @@ int unlink(const char* path) noexcept {
 
 int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
     }
 
@@ -607,7 +607,7 @@ int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
 
 int rmdir(const char* path) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(rmdir, path);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -620,7 +620,7 @@ int rmdir(const char* path) noexcept {
 
 int close(int fd) {
     init_passthrough_if_needed();
-    if(CTX->initialized() && CTX->file_map()->exist(fd)) {
+    if(CTX->interception_enabled() && CTX->file_map()->exist(fd)) {
         // No call to the daemon is required
         CTX->file_map()->remove(fd);
         return 0;
@@ -638,7 +638,7 @@ int remove(const char* path) {
 
 int access(const char* path, int mask) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(access, path, mask);
     }
     CTX->log()->trace("{}() called path '{}', mask {}", __func__, path, mask);
@@ -651,7 +651,7 @@ int access(const char* path, int mask) noexcept {
 
 int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
     }
 
@@ -698,7 +698,7 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
 
 int stat(const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(stat, path, buf);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -711,7 +711,7 @@ int stat(const char* path, struct stat* buf) noexcept {
 
 int fstat(int fd, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             auto path = CTX->file_map()->get(fd)->path();
@@ -723,7 +723,7 @@ int fstat(int fd, struct stat* buf) noexcept {
 
 int lstat(const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(lstat, path, buf);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -737,7 +737,7 @@ int lstat(const char* path, struct stat* buf) noexcept {
 
 int __xstat(int ver, const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__xstat, ver, path, buf);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -750,7 +750,7 @@ int __xstat(int ver, const char* path, struct stat* buf) noexcept {
 
 int __xstat64(int ver, const char* path, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__xstat64, ver, path, buf);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -765,7 +765,7 @@ int __xstat64(int ver, const char* path, struct stat64* buf) noexcept {
 
 int __fxstat(int ver, int fd, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             auto path = CTX->file_map()->get(fd)->path();
@@ -777,7 +777,7 @@ int __fxstat(int ver, int fd, struct stat* buf) noexcept {
 
 int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flags) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
     }
 
@@ -831,7 +831,7 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
 
 int __fxstatat64(int ver, int dirfd, const char* path, struct stat64* buf, int flags) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__fxstatat64, ver, dirfd, path, buf, flags);
     }
 
@@ -842,7 +842,7 @@ int __fxstatat64(int ver, int dirfd, const char* path, struct stat64* buf, int f
 
 int __fxstat64(int ver, int fd, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__fxstat64, ver, fd, buf);
     }
 
@@ -853,7 +853,7 @@ int __fxstat64(int ver, int fd, struct stat64* buf) noexcept {
 
 int __lxstat(int ver, const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__lxstat, ver, path, buf);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -866,7 +866,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) noexcept {
 
 int __lxstat64(int ver, const char* path, struct stat64* buf) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(__lxstat64, ver, path, buf);
     }
 
@@ -878,7 +878,7 @@ int __lxstat64(int ver, const char* path, struct stat64* buf) noexcept {
 int intcp_statvfs(const char *path, struct statvfs *buf) noexcept {
     init_passthrough_if_needed();
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(statvfs, path, buf);
     }
     std::string rel_path;
@@ -890,7 +890,7 @@ int intcp_statvfs(const char *path, struct statvfs *buf) noexcept {
 
 int intcp_fstatvfs(int fd, struct statvfs *buf) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_statvfs(buf);
@@ -901,7 +901,7 @@ int intcp_fstatvfs(int fd, struct statvfs *buf) noexcept {
 
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_write(fd, buf, count);
@@ -912,7 +912,7 @@ ssize_t write(int fd, const void* buf, size_t count) {
 
 ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_pwrite_ws(fd, buf, count, offset);
@@ -923,7 +923,7 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset) {
 
 ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_pwrite_ws(fd, buf, count, offset);
@@ -934,7 +934,7 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
 
 ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_writev(fd, iov, iovcnt);
@@ -945,7 +945,7 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
 
 ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->error("{}() NOT SUPPORTED", __func__);
@@ -958,7 +958,7 @@ ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
 
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}, count {}", __func__, fd, count);
         if (CTX->file_map()->exist(fd)) {
             auto ret = adafs_read(fd, buf, count);
@@ -971,7 +971,7 @@ ssize_t read(int fd, void* buf, size_t count) {
 
 ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_pread_ws(fd, buf, count, offset);
@@ -982,7 +982,7 @@ ssize_t pread(int fd, void* buf, size_t count, off_t offset) {
 
 ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return adafs_pread_ws(fd, buf, count, offset);
@@ -993,7 +993,7 @@ ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
 
 off_t lseek(int fd, off_t offset, int whence) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
         if (CTX->file_map()->exist(fd)) {
             auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
@@ -1012,7 +1012,7 @@ off_t lseek(int fd, off_t offset, int whence) noexcept {
 
 off64_t lseek64(int fd, off64_t offset, int whence) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
         if (CTX->file_map()->exist(fd)) {
             return adafs_lseek(fd, offset, whence);
@@ -1023,7 +1023,7 @@ off64_t lseek64(int fd, off64_t offset, int whence) noexcept {
 
 int fsync(int fd) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd '{}'", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
@@ -1034,7 +1034,7 @@ int fsync(int fd) {
 
 int fdatasync(int fd) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd '{}'", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
@@ -1045,7 +1045,7 @@ int fdatasync(int fd) {
 
 int truncate(const char* path, off_t length) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(truncate, path, length);
     }
     CTX->log()->trace("{}() called with path: {}, offset: {}", __func__,
@@ -1059,7 +1059,7 @@ int truncate(const char* path, off_t length) noexcept {
 
 int ftruncate(int fd, off_t length) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called  [fd: {}, offset: {}]", __func__, fd, length);
         if (CTX->file_map()->exist(fd)) {
             auto path = CTX->file_map()->get(fd)->path();
@@ -1078,7 +1078,7 @@ int fcntl(int fd, int cmd, ...) {
     arg = va_arg (ap, void *);
     va_end (ap);
 
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             switch(cmd) {
@@ -1124,7 +1124,7 @@ int fcntl(int fd, int cmd, ...) {
 
 int dup(int oldfd) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with oldfd {}", __func__, oldfd);
         if (CTX->file_map()->exist(oldfd)) {
             return adafs_dup(oldfd);
@@ -1135,7 +1135,7 @@ int dup(int oldfd) noexcept {
 
 int dup2(int oldfd, int newfd) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with oldfd {} newfd {}", __func__, oldfd, newfd);
         if (CTX->file_map()->exist(oldfd)) {
             return adafs_dup2(oldfd, newfd);
@@ -1146,7 +1146,7 @@ int dup2(int oldfd, int newfd) noexcept {
 
 int dup3(int oldfd, int newfd, int flags) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         if (CTX->file_map()->exist(oldfd)) {
             // TODO implement O_CLOEXEC flag first which is used with fcntl(2)
             // It is in glibc since kernel 2.9. So maybe not that important :)
@@ -1172,7 +1172,7 @@ inline DIR* fd_to_dirp(const int fd){
 
 int intcp_dirfd(DIR *dirp) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         if(dirp == nullptr){
             errno = EINVAL;
             return -1;
@@ -1187,7 +1187,7 @@ int intcp_dirfd(DIR *dirp) {
 
 DIR* opendir(const char* path){
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(opendir, path);
     }
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
@@ -1205,7 +1205,7 @@ DIR* opendir(const char* path){
 
 DIR* fdopendir(int fd){
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             auto open_file = CTX->file_map()->get(fd);
@@ -1223,7 +1223,7 @@ DIR* fdopendir(int fd){
 
 struct dirent* intcp_readdir(DIR* dirp){
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         if(dirp == nullptr){
             errno = EINVAL;
             return nullptr;
@@ -1238,7 +1238,7 @@ struct dirent* intcp_readdir(DIR* dirp){
 
 int intcp_closedir(DIR* dirp) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         if(dirp == nullptr){
             errno = EINVAL;
             return -1;
@@ -1255,7 +1255,7 @@ int intcp_closedir(DIR* dirp) {
 
 int chmod(const char* path, mode_t mode) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(chmod, path, mode);
     }
 
@@ -1271,7 +1271,7 @@ int chmod(const char* path, mode_t mode) noexcept {
 
 int fchmod(int fd, mode_t mode) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called  [fd: {}, mode: {}]", __func__, fd, mode);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->warn("{}() operation not supported", __func__);
@@ -1284,7 +1284,7 @@ int fchmod(int fd, mode_t mode) noexcept {
 
 int fchmodat(int dirfd, const char* cpath, mode_t mode, int flags) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
     }
 
@@ -1332,7 +1332,7 @@ int fchmodat(int dirfd, const char* cpath, mode_t mode, int flags) noexcept {
 
 int chdir(const char* path) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(chdir, path);
     }
 
@@ -1370,7 +1370,7 @@ int chdir(const char* path) noexcept {
 
 int fchdir(int fd) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(fchdir, fd);
     }
     CTX->log()->trace("{}() called with fd {}", __func__, fd);
@@ -1408,7 +1408,7 @@ int fchdir(int fd) noexcept {
 
 char* getcwd(char* buf, size_t size) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(getcwd, buf, size);
     }
     CTX->log()->trace("{}() called with size {}", __func__, size);
@@ -1432,7 +1432,7 @@ char* getcwd(char* buf, size_t size) noexcept {
 
 char* get_current_dir_name() noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return (reinterpret_cast<decltype(&get_current_dir_name)>(libc_dup3))();
     }
     CTX->log()->error("{}() not implemented", __func__);
@@ -1443,7 +1443,7 @@ char* get_current_dir_name() noexcept {
 
 int link(const char* oldpath, const char* newpath) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
                __func__, oldpath, newpath);
         CTX->log()->error("{}() not implemented", __func__);
@@ -1456,7 +1456,7 @@ int link(const char* oldpath, const char* newpath) noexcept {
 int linkat(int olddirfd, const char *oldpath,
            int newdirfd, const char* newpath, int flags) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called [olddirfd: '{}', oldpath: '{}' newdirfd: '{}', newpath: '{}', flags: '{}']",
                           __func__, olddirfd, oldpath, newdirfd, newpath, flags);
         CTX->log()->error("{}() not implemented", __func__);
@@ -1468,7 +1468,7 @@ int linkat(int olddirfd, const char *oldpath,
 
 int symlink(const char* oldpath, const char* newpath) noexcept {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(symlink, oldpath, newpath);
     }
     CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
@@ -1490,7 +1490,7 @@ int symlink(const char* oldpath, const char* newpath) noexcept {
 
 int symlinkat(const char* oldpath, int fd, const char* newpath) noexcept {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
+    if(CTX->interception_enabled()) {
         CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
                __func__, oldpath, newpath);
         CTX->log()->error("{}() not implemented", __func__);
@@ -1502,7 +1502,7 @@ int symlinkat(const char* oldpath, int fd, const char* newpath) noexcept {
 
 char *realpath(const char *path, char *resolved_path) {
     init_passthrough_if_needed();
-    if(!CTX->initialized()) {
+    if(!CTX->interception_enabled()) {
         return LIBC_FUNC(realpath, path, resolved_path);
     }
 
