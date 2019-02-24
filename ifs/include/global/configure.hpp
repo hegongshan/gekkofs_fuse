@@ -19,7 +19,6 @@
 #define MDATA_USE_GID false
 #define MDATA_USE_LINK_CNT false
 #define MDATA_USE_BLOCKS false
-#define MDATA_USE_SIZE true // XXX to be added in ADAFS_DATA. currently on by default
 
 // should permissions be checked when access() is called or discarded (disabled by default)
 //#define CHECK_ACCESS
