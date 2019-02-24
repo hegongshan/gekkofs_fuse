@@ -33,11 +33,7 @@
 //#define ZERO_BUFFER_BEFORE_READ
 
 // Write-ahead logging of rocksdb
-//#define KV_WOL
-// Optimize Key-Value store. Eventually, different modes will be available for different workloads. TODO
-//#define KV_OPTIMIZE
-// Optimize Key-Value store for tmpfs/ramdisk usage
-//#define KV_OPTIMIZE_RAMDISK
+#define KV_WOL false
 
 // Buffer size for Rocksdb. A high number means that all entries are held in memory.
 // However, when full the application blocks until **all** entries are flushed to disk.

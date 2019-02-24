@@ -16,10 +16,7 @@ MetadataDB::MetadataDB(const std::string& path): path(path) {
     options.create_if_missing = true;
     options.merge_operator.reset(new MetadataMergeOperator);
     MetadataDB::optimize_rocksdb_options(options);
-
-#if !defined(KV_WOL)
-    write_opts.disableWAL = true;
-#endif
+    write_opts.disableWAL = !(KV_WOL);
     rdb::DB * rdb_ptr;
     auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
     if (!s.ok()) {
@@ -178,48 +175,6 @@ void MetadataDB::iterate_all() {
 
 void MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
     options.max_successive_merges = 128;
-
-#if defined(KV_OPTIMIZE_RAMDISK)
-    // as described at https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
-    // use mmap read
-    options.allow_mmap_reads = true;
-    // disable block cache, enable blook filters and reduce the delta encoding restart interval
-    rocksdb::BlockBasedTableOptions table_options{};
-    table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, true));
-    table_options.no_block_cache = true;
-    table_options.block_restart_interval = 4;
-    options.table_factory.reset(NewBlockBasedTableFactory(table_options));
-    // enable lightweight compression (snappy or lz4). We use lz4 for now
-    options.compression = rocksdb::CompressionType::kLZ4Compression;
-    // set up compression more aggressively and allocate more threads for flush and compaction
-    options.level0_file_num_compaction_trigger = 1;
-    options.max_background_flushes = 8;
-    options.max_background_compactions = 8;
-    options.max_subcompactions = 4;
-    // keep all the files open
-    options.max_open_files = -1;
-#elif defined(KV_OPTIMIZE)
-    // rocksdb::BlockBasedTableOptions block_options{};
-    // block_options.block_size = 16384 * 2;
-    // options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(block_options));
-    // experimental settings
-    // options.write_buffer_size = 512;
-    // options.max_write_buffer_number = 16;
-    // options.min_write_buffer_number_to_merge = 4;
-    // These 4 below have the most impact
-    options.max_bytes_for_level_base = 2048;
-    options.max_bytes_for_level_multiplier = 10;
-    options.target_file_size_base = 256;
-    options.target_file_size_multiplier = 1;
-
-    options.max_background_flushes = 1;
-    options.max_background_compactions = 48;
-    options.level0_file_num_compaction_trigger = 1;
-    options.level0_slowdown_writes_trigger = 48;
-    options.level0_stop_writes_trigger = 56;
-    // options.arena_block_size = 1024 * 8;
-    // options.compression = rocksdb::kNoCompression; // doesnt do anything
-#endif
 
 #if defined(KV_WRITE_BUFFER)
     // write_buffer_size is multiplied by the write_buffer_number to get the amount of data hold in memory.
