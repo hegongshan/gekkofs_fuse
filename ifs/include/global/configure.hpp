@@ -9,8 +9,6 @@
 // Daemon path to auxiliary files
 #define DAEMON_AUX_PATH "/tmp"
 
-// If ACM time should be considered
-#define ACMtime //unused
 // XXX Should blocksize and chunksize be merged?
 #define BLOCKSIZE 524288 // in bytes 512KB
 #define CHUNKSIZE 524288 // in bytes 512KB
