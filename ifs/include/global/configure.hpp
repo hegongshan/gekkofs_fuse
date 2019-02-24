@@ -9,8 +9,6 @@
 // Daemon path to auxiliary files
 #define DAEMON_AUX_PATH "/tmp"
 
-// XXX Should blocksize and chunksize be merged?
-#define BLOCKSIZE 524288 // in bytes 512KB
 #define CHUNKSIZE 524288 // in bytes 512KB
 
 // What metadata is used TODO this has to be parametrized or put into a configuration file
