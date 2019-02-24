@@ -72,44 +72,32 @@ int intcp_openat(int dirfd, const char *cpath, int flags, ...) {
         return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
     }
 
-    if(cpath == nullptr || cpath[0] == '\0') {
-        CTX->log()->error("{}() path is invalid", __func__);
-        errno = EINVAL;
-        return -1;
-    }
+    CTX->log()->trace("{}() called with fd: {}, path: {}, flags: {}, mode: {}",
+                      __func__, dirfd, cpath, flags, mode);
 
-    CTX->log()->trace("{}() called with fd: {}, path: {}, flags: {}, mode: {}", __func__, dirfd, cpath, flags, mode);
+    //TODO handle NO_FOLLOW flag
 
     std::string resolved;
-
-    if((cpath[0] == PSP) || (dirfd == AT_FDCWD)) {
-        // cpath is absolute or relative to CWD
-        if (CTX->relativize_path(cpath, resolved)) {
-            return adafs_open(resolved, mode, flags);
-        }
-    } else {
-        // cpath is relative
-        if(!(CTX->file_map()->exist(dirfd))) {
-            //TODO relative cpath could still lead to our FS
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
-        }
 
-        auto dir = CTX->file_map()->get_dir(dirfd);
-        if(dir == nullptr) {
-            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+        case RelativizeStatus::external:
+            return LIBC_FUNC(openat, dirfd, resolved.c_str(), flags, mode);
+
+        case RelativizeStatus::fd_not_a_dir:
             errno = ENOTDIR;
             return -1;
-        }
 
-        std::string path = CTX->mountdir();
-        path.append(dir->path());
-        path.push_back(PSP);
-        path.append(cpath);
-        if(resolve_path(path, resolved)) {
+        case RelativizeStatus::internal:
             return adafs_open(resolved, mode, flags);
-        }
+
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
+            return -1;
     }
-    return LIBC_FUNC(openat, dirfd, resolved.c_str(), flags, mode);
 }
 
 int intcp_openat64(int dirfd, const char *path, int flags, ...) {
@@ -564,44 +552,37 @@ int unlinkat(int dirfd, const char* cpath, int flags) noexcept {
         return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
     }
 
-    if (cpath[0] == '\0') {
-        CTX->log()->error("{}() path is invalid", __func__);
-        errno = EINVAL;
-        return -1;
-    }
-
     CTX->log()->trace("{}() called with path '{}' dirfd {}, flags {}", __func__, cpath, dirfd, flags);
 
-    std::string resolved;
-
-    if(cpath[0] != PSP) {
-        if(!(CTX->file_map()->exist(dirfd))) {
-            //TODO relative cpath could still lead to our FS
-            return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
-        }
-        auto dir = CTX->file_map()->get_dir(dirfd);
-        if(dir == nullptr) {
-            CTX->log()->error("{}() dirfd is not a directory ", __func__);
-            errno = ENOTDIR;
-            return -1;
-        }
-        std::string path = CTX->mountdir();
-        path.append(dir->path());
-        path.push_back(PSP);
-        path.append(cpath);
-        if (!resolve_path(path, resolved)) {
-            return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
-        }
-    } else {
-        if (!CTX->relativize_path(cpath, resolved)) {
-            return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
-        }
+    if ((flags & ~AT_REMOVEDIR) != 0) {
+        CTX->log()->error("{}() Flags unknown: {}", __func__, flags);
+        return -EINVAL;
     }
 
-    if(flags & AT_REMOVEDIR) {
-        return adafs_rmdir(resolved);
-    } else {
-        return adafs_rm_node(resolved);
+    std::string resolved;
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
+            return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
+
+        case RelativizeStatus::external:
+            return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
+
+        case RelativizeStatus::fd_not_a_dir:
+            errno = ENOTDIR;
+            return -1;
+
+        case RelativizeStatus::internal:
+            if(flags & AT_REMOVEDIR) {
+                return adafs_rmdir(resolved);
+            } else {
+                return adafs_rm_node(resolved);
+            }
+
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
+            return -1;
     }
 }
 
@@ -655,44 +636,32 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
         return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
     }
 
-    if (cpath[0] == '\0') {
-        CTX->log()->error("{}() path is invalid", __func__);
-        errno = EINVAL;
-        return -1;
-    }
-
     CTX->log()->trace("{}() called path '{}', mode {}, dirfd {}, flags {}", __func__, cpath, mode, dirfd, flags);
 
+    //TODO handle the AT_EACCESS flag
+
     std::string resolved;
-
-    if((cpath[0] == PSP) || (dirfd == AT_FDCWD)) {
-        // cpath is absolute or relative to CWD
-        if (CTX->relativize_path(cpath, resolved)) {
-            return adafs_access(resolved, mode);
-        }
-    } else {
-        // cpath is relative
-        if(!(CTX->file_map()->exist(dirfd))) {
-            //TODO relative cpath could still lead to our FS
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved,
+                                           !(flags & AT_SYMLINK_NOFOLLOW));
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
-        }
 
-        auto dir = CTX->file_map()->get_dir(dirfd);
-        if(dir == nullptr) {
-            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+        case RelativizeStatus::external:
+            return LIBC_FUNC(faccessat, dirfd, resolved.c_str(), mode, flags);
+
+        case RelativizeStatus::fd_not_a_dir:
             errno = ENOTDIR;
             return -1;
-        }
 
-        std::string path = CTX->mountdir();
-        path.append(dir->path());
-        path.push_back(PSP);
-        path.append(cpath);
-        if(resolve_path(path, resolved)) {
+        case RelativizeStatus::internal:
             return adafs_access(resolved, mode);
-        }
+
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
+            return -1;
     }
-    return LIBC_FUNC(faccessat, dirfd, resolved.c_str(), mode, flags);
 }
 
 
@@ -781,13 +750,8 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
         return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
     }
 
-    if (cpath[0] == '\0') {
-        CTX->log()->error("{}() path is invalid", __func__);
-        errno = EINVAL;
-        return -1;
-    }
-
-    CTX->log()->trace("{}() called with path '{}' and fd {}", __func__, cpath, dirfd);
+    CTX->log()->trace("{}() called with path '{}' and fd {}",
+                       __func__, cpath, dirfd);
 
     if(flags & AT_EMPTY_PATH) {
         CTX->log()->error("{}() AT_EMPTY_PATH flag not supported", __func__);
@@ -796,37 +760,27 @@ int __fxstatat(int ver, int dirfd, const char* cpath, struct stat* buf, int flag
     }
 
     std::string resolved;
-
-    if(cpath[0] != PSP) {
-        // cpath is relative
-        //TODO handle the case in which dirfd is AT_FDCWD
-        if(!(CTX->file_map()->exist(dirfd))) {
-            //TODO relative cpath could still lead to our FS
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved,
+                                           !(flags & AT_SYMLINK_NOFOLLOW));
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
-        }
 
-        auto dir = CTX->file_map()->get_dir(dirfd);
-        if(dir == nullptr) {
-            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+        case RelativizeStatus::external:
+            return LIBC_FUNC(__fxstatat, ver, dirfd, resolved.c_str(), buf, flags);
+
+        case RelativizeStatus::fd_not_a_dir:
             errno = ENOTDIR;
             return -1;
-        }
 
-        std::string path = CTX->mountdir();
-        path.append(dir->path());
-        path.push_back(PSP);
-        path.append(cpath);
-        if(resolve_path(path, resolved)) {
+        case RelativizeStatus::internal:
             return adafs_stat(resolved, buf);
-        }
-    } else {
-        // Path is absolute
 
-        if (CTX->relativize_path(cpath, resolved)) {
-            return adafs_stat(resolved, buf);
-        }
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
+            return -1;
     }
-    return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
 }
 
 int __fxstatat64(int ver, int dirfd, const char* path, struct stat64* buf, int flags) noexcept {
@@ -1288,46 +1242,32 @@ int fchmodat(int dirfd, const char* cpath, mode_t mode, int flags) noexcept {
         return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
     }
 
-    if (cpath[0] == '\0') {
-        CTX->log()->error("{}() path is invalid", __func__);
-        errno = EINVAL;
-        return -1;
-    }
-
     CTX->log()->trace("{}() called path '{}', mode {}, dirfd {}, flags {}", __func__, cpath, mode, dirfd, flags);
 
     std::string resolved;
-
-    if(cpath[0] != PSP) {
-        if(!(CTX->file_map()->exist(dirfd))) {
-            //TODO relative cpath could still lead to our FS
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved,
+                                           !(flags & AT_SYMLINK_NOFOLLOW));
+    switch(rstatus) {
+        case RelativizeStatus::fd_unknown:
             return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
-        }
 
-        auto dir = CTX->file_map()->get_dir(dirfd);
-        if(dir == nullptr) {
-            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+        case RelativizeStatus::external:
+            return LIBC_FUNC(fchmodat, dirfd, resolved.c_str(), mode, flags);
+
+        case RelativizeStatus::fd_not_a_dir:
             errno = ENOTDIR;
             return -1;
-        }
 
-        std::string path = CTX->mountdir();
-        path.append(dir->path());
-        path.push_back(PSP);
-        path.append(cpath);
-        if(resolve_path(path, resolved)) {
+        case RelativizeStatus::internal:
             CTX->log()->warn("{}() operation not supported", __func__);
             errno = ENOTSUP;
             return -1;
-        }
-    } else {
-        if (CTX->relativize_path(cpath, resolved)) {
-            CTX->log()->warn("{}() operation not supported", __func__);
-            errno = ENOTSUP;
+
+        default:
+            CTX->log()->error("{}() relativize status unknown: {}", __func__);
+            errno = EINVAL;
             return -1;
-        }
     }
-    return LIBC_FUNC(fchmodat, dirfd, resolved.c_str(), mode, flags);
 }
 
 int chdir(const char* path) noexcept {
