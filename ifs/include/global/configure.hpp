@@ -63,9 +63,6 @@
 //size of preallocated buffer to hold directory entries in rpc call
 #define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega
 
-// Debug configurations
-//#define RPC_TEST //unused
-
 // environment prefixes
 #define ENV_PREFIX "ADAFS_"
 
