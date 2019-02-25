@@ -29,7 +29,7 @@ int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& a
     attr.st_uid = CTX->fs_conf()->uid;
     attr.st_gid = CTX->fs_conf()->gid;
     attr.st_rdev = 0;
-    attr.st_blksize = BLOCKSIZE;
+    attr.st_blksize = CHUNKSIZE;
     attr.st_blocks = 0;
 
     memset(&attr.st_atim, 0, sizeof(timespec));

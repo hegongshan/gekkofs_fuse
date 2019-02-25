@@ -9,10 +9,6 @@
 // Daemon path to auxiliary files
 #define DAEMON_AUX_PATH "/tmp"
 
-// If ACM time should be considered
-#define ACMtime //unused
-// XXX Should blocksize and chunksize be merged?
-#define BLOCKSIZE 524288 // in bytes 512KB
 #define CHUNKSIZE 524288 // in bytes 512KB
 
 // What metadata is used TODO this has to be parametrized or put into a configuration file
@@ -23,7 +19,6 @@
 #define MDATA_USE_GID false
 #define MDATA_USE_LINK_CNT false
 #define MDATA_USE_BLOCKS false
-#define MDATA_USE_SIZE true // XXX to be added in ADAFS_DATA. currently on by default
 
 // should permissions be checked when access() is called or discarded (disabled by default)
 //#define CHECK_ACCESS
@@ -38,11 +33,7 @@
 //#define ZERO_BUFFER_BEFORE_READ
 
 // Write-ahead logging of rocksdb
-//#define KV_WOL
-// Optimize Key-Value store. Eventually, different modes will be available for different workloads. TODO
-//#define KV_OPTIMIZE
-// Optimize Key-Value store for tmpfs/ramdisk usage
-//#define KV_OPTIMIZE_RAMDISK
+#define KV_WOL false
 
 // Buffer size for Rocksdb. A high number means that all entries are held in memory.
 // However, when full the application blocks until **all** entries are flushed to disk.
@@ -64,9 +55,6 @@
 
 //size of preallocated buffer to hold directory entries in rpc call
 #define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega
-
-// Debug configurations
-//#define RPC_TEST //unused
 
 // environment prefixes
 #define ENV_PREFIX "ADAFS_"
