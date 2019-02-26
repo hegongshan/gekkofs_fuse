@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import argparse
 import time
 
@@ -28,7 +29,7 @@ def check_dependencies():
     if pssh_path != '':
         PSSH_PATH = pssh_path
         return
-    print '[ERR] parallel-ssh/pssh executable cannot be found. Please add it to the parameter list'
+    print('[ERR] parallel-ssh/pssh executable cannot be found. Please add it to the parameter list')
     exit(1)
 
 
@@ -64,39 +65,39 @@ def shutdown_system(daemon_pid_path, nodelist, sigkill):
     else:
         cmd_str = '%s "pkill -SIGTERM --pidfile \"%s\""' % (pssh, daemon_pid_path)
     if PRETEND:
-        print 'Pretending: %s' % cmd_str
+        print('Pretending: {}'.format(cmd_str))
     else:
-        print 'Running: %s' % cmd_str
+        print('Running: {}'.format(cmd_str))
         pssh_ret = util.exec_shell(cmd_str, True)
         err = False
         for line in pssh_ret:
             if 'FAILURE' in line.strip()[:30]:
                 err = True
-                print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
-                      (line[line.find('FAILURE'):].strip().split(' ')[1])
-                print line
+                print('------------------------- ERROR pssh -- Host "{}" -------------------------'.format(\
+                      line[line.find('FAILURE'):].strip().split(' ')[1]))
+                print(line)
         if not err:
             if sigkill:
-                print 'pssh daemon launch successfully executed. FS daemons have been force killed ...'
+                print('pssh daemon launch successfully executed. FS daemons have been force killed ...')
                 exit(1)
             else:
-                print 'pssh daemon launch successfully executed. Checking for FS shutdown errors ...\n'
+                print('pssh daemon launch successfully executed. Checking for FS shutdown errors ...\n')
         else:
-            print '[ERR] with pssh. Aborting...'
+            print('[ERR] with pssh. Aborting...')
             exit(1)
 
     if not PRETEND:
-        print 'Give it some time (%d second) to finish up ...' % WAITTIME
+        print('Give it some time ({} second) to finish up ...'.format(WAITTIME))
         for i in range(WAITTIME):
-            print '%d\r' % (WAITTIME - i),
+            print('{}\r'.format(WAITTIME - i))
             time.sleep(1)
-    print 'Checking logs ...\n'
+    print('Checking logs ...\n')
 
     cmd_chk_str = '%s "tail -4 /tmp/adafs_daemon.log"' % pssh
     if PRETEND:
-        print 'Pretending: %s' % cmd_chk_str
+        print('Pretending: {}'.format(cmd_chk_str))
     else:
-        print 'Running: %s' % cmd_chk_str
+        print('Running: {}'.format(cmd_chk_str))
         pssh_ret = util.exec_shell(cmd_chk_str, True)
         err = False
         fs_err = False
@@ -105,21 +106,21 @@ def shutdown_system(daemon_pid_path, nodelist, sigkill):
                 continue
             if 'Failure' in line.strip()[:30]:
                 err = True
-                print '------------------------- ERROR pssh -- Host "%s" -------------------------' % \
-                      (line[line.find('FAILURE'):].strip().split(' ')[1])
-                print line
+                print('------------------------- ERROR pssh -- Host "{}" -------------------------'.format(\
+                      line[line.find('FAILURE'):].strip().split(' ')[1]))
+                print(line)
             else:
                 # check for errors in log
                 if not 'All services shut down.' in line[line.strip().find('\n') + 1:]:
                     fs_err = True
-                    print '------------------------- WARN pssh -- Host "%s" -------------------------' % \
-                          (line.strip().split(' ')[3].split('\n')[0])
-                    print '%s' % line[line.find('\n') + 1:]
+                    print('------------------------- WARN pssh -- Host "{}" -------------------------'.format(\
+                          line.strip().split(' ')[3].split('\n')[0]))
+                    print('{}'.format(line[line.find('\n') + 1:]))
 
         if not err and not fs_err:
-            print 'pssh logging check successfully executed. Looks prime.'
+            print('pssh logging check successfully executed. Looks prime.')
         else:
-            print '[WARN] while checking fs logs. Something might went wrong when shutting down'
+            print('[WARN] while checking fs logs. Something might went wrong when shutting down')
             exit(1)
 
 
@@ -160,4 +161,4 @@ Defaults to /tmp/hostfile_pssh''')
     WAITTIME = 5
     shutdown_system(args.daemonpidpath, args.nodelist, args.sigkill)
 
-    print '\nNothing left to do; exiting. :)'
+    print('\nNothing left to do; exiting. :)')

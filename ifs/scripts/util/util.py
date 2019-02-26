@@ -4,6 +4,7 @@
 # Marc-Andre Vef
 # Version 0.2 (06/19/2015)
 
+from __future__ import print_function
 import collections
 import shutil
 import sys
@@ -24,8 +25,8 @@ def create_dir(path):
         if not os.path.exists(path):
             os.makedirs(path)
     except OSError as e:
-        print 'Error: Output directory could not be created.'
-        print e.strerror
+        print('Error: Output directory could not be created.')
+        print(e.strerror)
         sys.exit(1)
 
 
@@ -34,8 +35,8 @@ def rm_rf(path):
     try:
         shutil.rmtree(path)
     except shutil.Error as e:
-        print 'Warning: Could not delete path %s' % path
-        print e.strerror
+        print('Warning: Could not delete path {}'.format(path))
+        print(e.strerror)
 
 
 def rm_file(path):
@@ -43,8 +44,8 @@ def rm_file(path):
     try:
         os.remove(path)
     except OSError as e:
-        print 'Warning: Could not delete file %s' % path
-        print e.strerror
+        print('Warning: Could not delete file {}'.format(path))
+        print(e.strerror)
 
 
 def tprint(toprint, nobreak=False):
@@ -57,9 +58,9 @@ def tprint(toprint, nobreak=False):
     """
     curr_time = time.strftime('[%H:%M:%S]')
     if nobreak:
-        print '%s\t%s' % (curr_time, toprint),
+        print('{}\t{}'.format(curr_time, toprint))
     else:
-        print '%s\t%s' % (curr_time, toprint)
+        print('{}\t{}'.format(curr_time, toprint))
 
 
 def exec_shell(cmd, suppress_output=False):
@@ -92,8 +93,8 @@ def exec_shell(cmd, suppress_output=False):
         out_tuple = collections.namedtuple('shell_out', ['err', 'output'])
         return out_tuple(err=stderr.strip(), output=shell_out.strip())
     except OSError as e:
-        print 'ERR when executing shell command'
-        print e.strerror
+        print('ERR when executing shell command')
+        print(e.strerror)
 
 
 def check_shell_out(msg):
@@ -135,7 +136,7 @@ def create_pssh_hostfile(hostfile, hostfile_pssh):
                 with open(hostfile_pssh, 'a') as wf:
                     wf.write(line.strip().split(' ')[0] + '\n')
     except IOError as e:
-        print 'ERR while creating pssh compatible hostfile'
-        print e.strerror
+        print('ERR while creating pssh compatible hostfile')
+        print(e.strerror)
         return False
     return True
