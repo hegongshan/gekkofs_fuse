@@ -15,7 +15,7 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release
             CACHE STRING "Choose the type of build: Debug Release Memcheck" FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
-message("* Current build type is : ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # Compiler flags for various cmake build types
 set(WARNINGS_FLAGS "-Wall -Wextra --pedantic -Wno-unused-parameter")
