@@ -46,12 +46,12 @@ ENV	CC		"/opt/rh/devtoolset-7/root/usr/bin/gcc"
 ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++"
 
 # Download dependencies source
-COPY ifs/scripts/dl_dep.sh		$SCRIPTS_PATH/
+COPY scripts/dl_dep.sh		$SCRIPTS_PATH/
 RUN /bin/bash $SCRIPTS_PATH/dl_dep.sh $DEPS_SRC_PATH all
 
 # Compile dependencies
-COPY ifs/scripts/compile_dep.sh $SCRIPTS_PATH/
-COPY ifs/scripts/patches		$SCRIPTS_PATH/patches
+COPY scripts/compile_dep.sh $SCRIPTS_PATH/
+COPY scripts/patches        $SCRIPTS_PATH/patches
 RUN /bin/bash $SCRIPTS_PATH/compile_dep.sh $DEPS_SRC_PATH $INSTALL_PATH
 
 

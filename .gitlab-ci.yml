@@ -27,10 +27,10 @@ compile dependencies:
   script:
    # Folder of built dependencies is cached and marked with the ID of the commit from which have been built.
    # If the download and compile script have been modified the cache gets invalidated and dependencies will be built again.
-   - ( [ -f "${DEPS_COMMIT}" ] && git diff --quiet "`cat ${DEPS_COMMIT}`" -- ifs/scripts/dl_dep.sh ifs/scripts/compile_dep.sh ) || (
+   - ( [ -f "${DEPS_COMMIT}" ] && git diff --quiet "`cat ${DEPS_COMMIT}`" -- scripts/dl_dep.sh scripts/compile_dep.sh ) || (
            rm -f ${DEPS_COMMIT} &&
-           ifs/scripts/dl_dep.sh ${DEPS_SRC_PATH} -n ofi &&
-           ifs/scripts/compile_dep.sh -n ofi ${DEPS_SRC_PATH} ${DEPS_INSTALL_PATH} &&
+           scripts/dl_dep.sh ${DEPS_SRC_PATH} -n ofi &&
+           scripts/compile_dep.sh -n ofi ${DEPS_SRC_PATH} ${DEPS_INSTALL_PATH} &&
            echo "${CI_COMMIT_SHA}" > "${DEPS_COMMIT}"
      )
   artifacts:
