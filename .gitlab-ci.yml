@@ -9,7 +9,7 @@ variables:
   DEPS_INSTALL_PATH: "${CI_PROJECT_DIR}/deps/build"
   DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/build/gks_deps_commit"
   BUILD_PATH:        "${CI_PROJECT_DIR}/ifs/build"
-  TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/ifs_test/build"
+  TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
   # Configuration variables
   ADAFS_LOG_LEVEL:   "100"
@@ -72,7 +72,7 @@ test wr:
     - mkdir -p "${LOG_PATH}"
     - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/ifs_test_wr
+    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_wr
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -83,7 +83,7 @@ test directories:
     - mkdir -p "${LOG_PATH}"
     - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/ifs_test_dir
+    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_dir
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -94,7 +94,7 @@ test truncate:
     - mkdir -p "${LOG_PATH}"
     - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/ifs_test_truncate
+    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -105,7 +105,7 @@ test path resolution:
     - mkdir -p "${LOG_PATH}"
     - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/ifs_test_path_resolution
+    - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_path_resolution
   artifacts:
     paths:
      - "${LOG_PATH}"
