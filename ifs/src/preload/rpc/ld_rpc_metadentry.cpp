@@ -49,7 +49,7 @@ int mk_node(const std::string& path, const mode_t mode) {
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out", __func__);
         errno = EBUSY;
     }
     margo_destroy(handle);
@@ -75,7 +75,7 @@ int access(const std::string& path, const int mask) {
     ret = margo_forward_timed_wrap(handle, &in);
     // Get response
     if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() timed out");
+        CTX->log()->error("{}() timed out", __func__);
         errno = EBUSY;
         margo_destroy(handle);
         return -1;
@@ -121,7 +121,7 @@ int stat(const std::string& path, string& attr) {
     // Get response
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
-        CTX->log()->error("{}() timed out");
+        CTX->log()->error("{}() timed out", __func__);
         margo_destroy(handle);
         return -1;
     }
@@ -315,7 +315,7 @@ int update_metadentry(const string& path, const Metadata& md, const MetadentryUp
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out", __func__);
         errno = EBUSY;
     }
 
@@ -363,7 +363,7 @@ int update_metadentry_size(const string& path, const size_t size, const off64_t 
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out", __func__);
         errno = EBUSY;
     }
     margo_destroy(handle);
@@ -403,7 +403,7 @@ int get_metadentry_size(const std::string& path, off64_t& ret_size) {
         /* clean up resources consumed by this rpc */
         margo_free_output(handle, &out);
     } else {
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->warn("{}() timed out", __func__);
         errno = EBUSY;
     }
     margo_destroy(handle);
