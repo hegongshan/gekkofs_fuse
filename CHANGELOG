@@ -1,1 +1,5 @@
-2018-03-06 Moved adafs version 0.1 and 0.2 to archive
+============
+v 0.3.1
+============
+Marc Vef:
+ 2018-03-04 Read-write process improved, adafs version to 0.3.1 with improved Filemap
