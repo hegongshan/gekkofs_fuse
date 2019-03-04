@@ -24,11 +24,6 @@ void create_metadentry(const std::string& path, Metadata& md) {
         if (ADAFS_DATA->ctime_state())
             md.ctime(time);
     }
-    if (ADAFS_DATA->uid_state())
-        md.uid(getuid());
-    if (ADAFS_DATA->gid_state())
-        md.gid(getgid());
-
     ADAFS_DATA->mdb()->put(path, md.serialize());
 }
 
@@ -73,13 +68,7 @@ size_t get_metadentry_size(const string& path) {
  * @return the updated size
  */
 void update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append) {
-#ifdef LOG_TRACE
-    ADAFS_DATA->mdb()->iterate_all();
-#endif
     ADAFS_DATA->mdb()->increase_size(path, io_size + offset, append);
-#ifdef LOG_TRACE
-    ADAFS_DATA->mdb()->iterate_all();
-#endif
 }
 
 void update_metadentry(const string& path, Metadata& md) {

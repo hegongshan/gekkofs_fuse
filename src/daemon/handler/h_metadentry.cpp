@@ -171,10 +171,6 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
         Metadata md = get_metadentry(in.path);
         if (in.block_flag == HG_TRUE)
             md.blocks(in.blocks);
-        if (in.uid_flag == HG_TRUE)
-            md.uid(in.uid);
-        if (in.gid_flag == HG_TRUE)
-            md.gid(in.gid);
         if (in.nlink_flag == HG_TRUE)
             md.link_count(in.nlink);
         if (in.size_flag == HG_TRUE)

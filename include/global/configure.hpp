@@ -15,8 +15,6 @@
 #define MDATA_USE_ATIME false
 #define MDATA_USE_MTIME false
 #define MDATA_USE_CTIME false
-#define MDATA_USE_UID false
-#define MDATA_USE_GID false
 #define MDATA_USE_LINK_CNT false
 #define MDATA_USE_BLOCKS false
 

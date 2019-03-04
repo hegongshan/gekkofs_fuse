@@ -229,8 +229,6 @@ int update_metadentry(const string& path, const Metadata& md, const MetadentryUp
     in.path = path.c_str();
     in.size = md_flags.size ? md.size() : 0;
     in.nlink = md_flags.link_count ? md.link_count() : 0;
-    in.gid = md_flags.gid ? md.gid() : 0;
-    in.uid = md_flags.uid ? md.uid() : 0;
     in.blocks = md_flags.blocks ? md.blocks() : 0;
     in.atime = md_flags.atime ? md.atime() : 0;
     in.mtime = md_flags.mtime ? md.mtime() : 0;
@@ -238,8 +236,6 @@ int update_metadentry(const string& path, const Metadata& md, const MetadentryUp
     // add data flags
     in.size_flag = bool_to_merc_bool(md_flags.size);
     in.nlink_flag = bool_to_merc_bool(md_flags.link_count);
-    in.gid_flag = bool_to_merc_bool(md_flags.gid);
-    in.uid_flag = bool_to_merc_bool(md_flags.uid);
     in.block_flag = bool_to_merc_bool(md_flags.blocks);
     in.atime_flag = bool_to_merc_bool(md_flags.atime);
     in.mtime_flag = bool_to_merc_bool(md_flags.mtime);

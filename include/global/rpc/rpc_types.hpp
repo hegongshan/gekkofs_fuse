@@ -41,8 +41,6 @@ MERCURY_GEN_PROC(rpc_update_metadentry_in_t,
 ((hg_int64_t) (ctime))\
 ((hg_bool_t) (nlink_flag))\
 ((hg_bool_t) (mode_flag))\
-((hg_bool_t) (uid_flag))\
-((hg_bool_t) (gid_flag))\
 ((hg_bool_t) (size_flag))\
 ((hg_bool_t) (block_flag))\
 ((hg_bool_t) (atime_flag))\
@@ -100,8 +98,6 @@ MERCURY_GEN_PROC(rpc_config_out_t, ((hg_const_string_t) (mountdir))
 ((hg_bool_t) (atime_state)) \
 ((hg_bool_t) (mtime_state)) \
 ((hg_bool_t) (ctime_state)) \
-((hg_bool_t) (uid_state)) \
-((hg_bool_t) (gid_state)) \
 ((hg_bool_t) (link_cnt_state)) \
 ((hg_bool_t) (blocks_state)) \
 ((hg_uint32_t) (uid)) \

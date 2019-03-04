@@ -67,8 +67,6 @@ bool init_environment() {
     ADAFS_DATA->atime_state(MDATA_USE_ATIME);
     ADAFS_DATA->mtime_state(MDATA_USE_MTIME);
     ADAFS_DATA->ctime_state(MDATA_USE_CTIME);
-    ADAFS_DATA->uid_state(MDATA_USE_UID);
-    ADAFS_DATA->gid_state(MDATA_USE_GID);
     ADAFS_DATA->link_cnt_state(MDATA_USE_LINK_CNT);
     ADAFS_DATA->blocks_state(MDATA_USE_BLOCKS);
     // Create metadentry for root directory

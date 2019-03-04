@@ -158,22 +158,6 @@ void FsData::ctime_state(bool ctime_state) {
     FsData::ctime_state_ = ctime_state;
 }
 
-bool FsData::uid_state() const {
-    return uid_state_;
-}
-
-void FsData::uid_state(bool uid_state) {
-    FsData::uid_state_ = uid_state;
-}
-
-bool FsData::gid_state() const {
-    return gid_state_;
-}
-
-void FsData::gid_state(bool gid_state) {
-    FsData::gid_state_ = gid_state;
-}
-
 bool FsData::link_cnt_state() const {
     return link_cnt_state_;
 }
