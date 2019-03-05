@@ -7,7 +7,7 @@ stages:
 variables:
   DEPS_SRC_PATH:     "${CI_PROJECT_DIR}/deps/src"
   DEPS_INSTALL_PATH: "${CI_PROJECT_DIR}/deps/build"
-  DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/build/gks_deps_commit"
+  DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/build/gkfs_deps_commit"
   BUILD_PATH:        "${CI_PROJECT_DIR}/build"
   TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
