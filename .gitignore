@@ -82,8 +82,8 @@ playground
 # python stuff
 *.pyc
 
-ifs/\.hidden_playground/
+.hidden_playground/
 
 test/build/
 
-ifs/build/
+build/
