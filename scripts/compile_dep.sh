@@ -202,7 +202,7 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     cd ${CURR}
     ./prepare
     cd ${CURR}/build
-    CFLAGS=-w ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
+    CFLAGS="${CFLAGS} -w" ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
     make -j${CORES}
     make install
 fi
@@ -291,7 +291,7 @@ prepare_build_dir ${CURR}
 cd ${CURR}
 ./prepare.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"
+../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="${CFLAGS} -Wall -O3"
 make -j${CORES}
 make install
 [ "${PERFORM_TEST}" ] && make check
