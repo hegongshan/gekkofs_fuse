@@ -24,18 +24,18 @@ set(PRELOAD_HEADERS
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp
     ../../include/global/chunk_calc_util.hpp
-    ../../include/preload/preload_context.hpp
-    ../../include/preload/adafs_functions.hpp
-    ../../include/preload/intcp_functions.hpp
-    ../../include/preload/open_file_map.hpp
-    ../../include/preload/open_dir.hpp
-    ../../include/preload/passthrough.hpp
-    ../../include/preload/preload.hpp
-    ../../include/preload/resolve.hpp
-    ../../include/preload/preload_util.hpp
-    ../../include/preload/rpc/ld_rpc_management.hpp
-    ../../include/preload/rpc/ld_rpc_data_ws.hpp
-    ../../include/preload/rpc/ld_rpc_metadentry.hpp
+    ../../include/client/preload_context.hpp
+    ../../include/client/adafs_functions.hpp
+    ../../include/client/intcp_functions.hpp
+    ../../include/client/open_file_map.hpp
+    ../../include/client/open_dir.hpp
+    ../../include/client/passthrough.hpp
+    ../../include/client/preload.hpp
+    ../../include/client/resolve.hpp
+    ../../include/client/preload_util.hpp
+    ../../include/client/rpc/ld_rpc_management.hpp
+    ../../include/client/rpc/ld_rpc_data_ws.hpp
+    ../../include/client/rpc/ld_rpc_metadentry.hpp
     )
 
 add_library(adafs_preload_client SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})

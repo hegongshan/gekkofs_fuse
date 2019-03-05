@@ -6,12 +6,12 @@
 #include <sys/uio.h>
 #include <sys/unistd.h>
 
-#include <preload/preload.hpp>
-#include <preload/resolve.hpp>
-#include <preload/passthrough.hpp>
-#include <preload/adafs_functions.hpp>
-#include <preload/intcp_functions.hpp>
-#include <preload/open_dir.hpp>
+#include <client/preload.hpp>
+#include <client/resolve.hpp>
+#include <client/passthrough.hpp>
+#include <client/adafs_functions.hpp>
+#include <client/intcp_functions.hpp>
+#include <client/open_dir.hpp>
 #include <global/path_util.hpp>
 
 

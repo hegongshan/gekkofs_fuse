@@ -1,9 +1,9 @@
 #include <fcntl.h>
 
 #include <global/global_defs.hpp>
-#include <preload/open_file_map.hpp>
-#include <preload/open_dir.hpp>
-#include <preload/preload.hpp>
+#include <client/open_file_map.hpp>
+#include <client/open_dir.hpp>
+#include <client/preload.hpp>
 
 using namespace std;
 

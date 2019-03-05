@@ -1,7 +1,7 @@
 /**
  * All intercepted functions are mapped to a different function pointer prefixing <libc_>
  */
-#include <preload/passthrough.hpp>
+#include <client/passthrough.hpp>
 
 #include <iostream>
 #include <pthread.h>

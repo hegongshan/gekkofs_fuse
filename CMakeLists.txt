@@ -115,4 +115,4 @@ add_subdirectory(src/global)
 # Daemon
 add_subdirectory(src/daemon)
 # Client library
-add_subdirectory(src/preload)
+add_subdirectory(src/client)

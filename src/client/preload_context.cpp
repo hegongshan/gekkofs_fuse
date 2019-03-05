@@ -1,8 +1,8 @@
-#include <preload/preload_context.hpp>
+#include <client/preload_context.hpp>
 
-#include <preload/open_file_map.hpp>
-#include <preload/open_dir.hpp>
-#include <preload/resolve.hpp>
+#include <client/open_file_map.hpp>
+#include <client/open_dir.hpp>
+#include <client/resolve.hpp>
 #include <global/path_util.hpp>
 #include <cassert>
 
