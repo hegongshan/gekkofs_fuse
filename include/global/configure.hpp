@@ -18,12 +18,6 @@
 #define MDATA_USE_LINK_CNT false
 #define MDATA_USE_BLOCKS false
 
-// should permissions be checked when access() is called or discarded (disabled by default)
-//#define CHECK_ACCESS
-// If access permissions should be checked while opening a file (disabled by default)
-//#define CHECK_ACCESS_DURING_OPEN
-// If disabled, a file or directory is always presumed to be there (even if it is not). No check is executed (enabled by default)
-#define DO_LOOKUP
 /*
  * Zero buffer before read. This is relevant if sparse files are used.
  * If buffer is not zeroed, sparse regions contain invalid data.

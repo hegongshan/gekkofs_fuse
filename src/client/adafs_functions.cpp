@@ -68,21 +68,6 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
             return -1;
         }
 
-#if defined(CHECK_ACCESS_DURING_OPEN)
-        auto mask = F_OK; // F_OK == 0
-        if ((mode & S_IRUSR) || (mode & S_IRGRP) || (mode & S_IROTH))
-            mask = mask & R_OK;
-        if ((mode & S_IWUSR) || (mode & S_IWGRP) || (mode & S_IWOTH))
-            mask = mask & W_OK;
-        if ((mode & S_IXUSR) || (mode & S_IXGRP) || (mode & S_IXOTH))
-            mask = mask & X_OK;
-
-        if( ! ((mask & md->mode()) == mask)) {
-            errno = EACCES;
-            return -1;
-        }
-#endif
-
         if(S_ISDIR(md->mode())) {
             return adafs_opendir(path);
         }
