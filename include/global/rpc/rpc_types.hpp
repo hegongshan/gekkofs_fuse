@@ -17,10 +17,6 @@ MERCURY_GEN_PROC(rpc_mk_node_in_t,
                  ((hg_const_string_t) (path))\
 ((uint32_t) (mode)))
 
-MERCURY_GEN_PROC(rpc_access_in_t,
-                 ((hg_const_string_t) (path))\
-((int32_t) (mask)))
-
 MERCURY_GEN_PROC(rpc_path_only_in_t, ((hg_const_string_t) (path)))
 
 MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))

@@ -142,15 +142,12 @@ int adafs_rm_node(const std::string& path) {
 
 int adafs_access(const std::string& path, const int mask) {
     init_ld_env_if_needed();
-#if !defined(DO_LOOKUP)
-    // object is assumed to be existing, even though it might not
+    auto md = adafs_metadata(path);
+    if (!md) {
+        errno = ENOENT;
+        return -1;
+    }
     return 0;
-#endif
-#if defined(CHECK_ACCESS)
-    return rpc_send::access(path, mask);
-#else
-    return rpc_send::access(path, F_OK); // Only check for file exists
-#endif
 }
 
 int adafs_stat(const string& path, struct stat* buf) {

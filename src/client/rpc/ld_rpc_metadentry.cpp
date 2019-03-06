@@ -56,53 +56,6 @@ int mk_node(const std::string& path, const mode_t mode) {
     return err;
 }
 
-int access(const std::string& path, const int mask) {
-    hg_handle_t handle;
-    rpc_access_in_t in{};
-    rpc_err_out_t out{};
-    int err = 0;
-    // fill in
-    in.path = path.c_str();
-    in.mask = mask;
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_access_id, path, handle);
-    if (ret != HG_SUCCESS) {
-        errno = EBUSY;
-        return -1;
-    }
-    // Send rpc
-    CTX->log()->debug("{}() About to send RPC ...", __func__);
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() timed out", __func__);
-        errno = EBUSY;
-        margo_destroy(handle);
-        return -1;
-    }
-
-    ret = margo_get_output(handle, &out);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() while getting rpc output", __func__);
-        errno = EBUSY;
-        margo_destroy(handle);
-        return -1;
-    }
-
-    CTX->log()->debug("{}() Got response with error: {}", __func__, out.err);
-
-    if(out.err != 0){
-        //In case of error out.err contains the
-        //corresponding value of errno
-        errno = out.err;
-        err = -1;
-    }
-
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
-    return err;
-}
-
 int stat(const std::string& path, string& attr) {
     hg_handle_t handle;
     rpc_path_only_in_t in{};
