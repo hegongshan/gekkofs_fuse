@@ -38,7 +38,7 @@ This is a file system.
 
 ## Clone and compile direct ADA-FS dependencies
 
-- Go to the subfolder `ifs/scripts` and first clone all dependencies projects. You can choose the according na_plugin
+- Go to the `scripts` folder and first clone all dependencies projects. You can choose the according na_plugin
 (execute the script for help):
 
 ```bash
@@ -119,7 +119,7 @@ Shut it down by gracefully killing the process.
  
 ### Startup and shutdown scripts
 
-The scripts are located in `ifs/scripts/{startup_adafs.py, shutdown_adafs.py}`. Use the -h argument for their usage.
+The scripts are located in `scripts/{startup_adafs.py, shutdown_adafs.py}`. Use the -h argument for their usage.
 
 ## Miscellaneous
 

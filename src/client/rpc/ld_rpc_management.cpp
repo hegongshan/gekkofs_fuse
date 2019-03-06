@@ -1,6 +1,6 @@
-#include "preload/rpc/ld_rpc_management.hpp"
+#include "client/rpc/ld_rpc_management.hpp"
 #include "global/rpc/rpc_types.hpp"
-#include <preload/preload_util.hpp>
+#include <client/preload_util.hpp>
 #include <boost/type_traits/is_pointer.hpp> // see https://github.com/boostorg/tokenizer/issues/9
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>

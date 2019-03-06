@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-project(ifs)
+project(GekkoFS)
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
     message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
@@ -115,4 +115,4 @@ add_subdirectory(src/global)
 # Daemon
 add_subdirectory(src/daemon)
 # Client library
-add_subdirectory(src/preload)
+add_subdirectory(src/client)

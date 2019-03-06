@@ -5,8 +5,8 @@
 #include <cassert>
 
 #include "global/path_util.hpp"
-#include "preload/passthrough.hpp"
-#include "preload/preload.hpp"
+#include "client/passthrough.hpp"
+#include "client/preload.hpp"
 
 /* Match components in path
  *

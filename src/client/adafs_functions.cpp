@@ -3,12 +3,12 @@
 
 #include <global/configure.hpp>
 #include <global/path_util.hpp>
-#include <preload/preload.hpp>
-#include "preload/preload_util.hpp"
-#include <preload/adafs_functions.hpp>
-#include <preload/rpc/ld_rpc_metadentry.hpp>
-#include <preload/rpc/ld_rpc_data_ws.hpp>
-#include <preload/open_dir.hpp>
+#include <client/preload.hpp>
+#include "client/preload_util.hpp"
+#include <client/adafs_functions.hpp>
+#include <client/rpc/ld_rpc_metadentry.hpp>
+#include <client/rpc/ld_rpc_data_ws.hpp>
+#include <client/open_dir.hpp>
 
 using namespace std;
 

@@ -2,13 +2,13 @@
 #include <global/path_util.hpp>
 #include <global/global_defs.hpp>
 #include <global/configure.hpp>
-#include <preload/preload.hpp>
-#include <preload/resolve.hpp>
+#include <client/preload.hpp>
+#include <client/resolve.hpp>
 #include <global/rpc/distributor.hpp>
 #include "global/rpc/rpc_types.hpp"
-#include <preload/rpc/ld_rpc_management.hpp>
-#include <preload/passthrough.hpp>
-#include <preload/preload_util.hpp>
+#include <client/rpc/ld_rpc_management.hpp>
+#include <client/passthrough.hpp>
+#include <client/preload_util.hpp>
 
 #include <fstream>
 

@@ -1,7 +1,7 @@
 #ifndef IFS_ADAFS_FUNCTIONS_HPP
 #define IFS_ADAFS_FUNCTIONS_HPP
 
-#include <preload/open_file_map.hpp>
+#include <client/open_file_map.hpp>
 #include <global/metadata.hpp>
 
 std::shared_ptr<Metadata> adafs_metadata(const std::string& path);
