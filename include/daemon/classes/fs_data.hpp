@@ -51,8 +51,6 @@ private:
     bool atime_state_;
     bool mtime_state_;
     bool ctime_state_;
-    bool uid_state_;
-    bool gid_state_;
     bool link_cnt_state_;
     bool blocks_state_;
 
@@ -145,14 +143,6 @@ public:
     bool ctime_state() const;
 
     void ctime_state(bool ctime_state);
-
-    bool uid_state() const;
-
-    void uid_state(bool uid_state);
-
-    bool gid_state() const;
-
-    void gid_state(bool gid_state);
 
     bool link_cnt_state() const;
 

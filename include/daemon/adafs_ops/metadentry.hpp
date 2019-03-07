@@ -21,8 +21,6 @@ void update_metadentry_size(const std::string& path, size_t io_size, off_t offse
 
 void update_metadentry(const std::string& path, Metadata& md);
 
-int check_access_mask(const std::string& path, int mask);
-
 std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir);
 
 #endif //IFS_METADENTRY_HPP

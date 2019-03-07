@@ -15,8 +15,6 @@ Metadata::Metadata(const mode_t mode) :
     atime_(),
     mtime_(),
     ctime_(),
-    uid_(),
-    gid_(),
     mode_(mode),
     link_count_(0),
     size_(0),
@@ -59,18 +57,6 @@ Metadata::Metadata(const std::string& binary_str) {
         assert(read > 0);
         ptr += read;
     }
-    if (MDATA_USE_UID) {
-        assert(*ptr == MSP);
-        uid_ = static_cast<uid_t>(std::stoul(++ptr, &read));
-        assert(read > 0);
-        ptr += read;
-    }
-    if (MDATA_USE_GID) {
-        assert(*ptr == MSP);
-        gid_ = static_cast<gid_t>(std::stoul(++ptr, &read));
-        assert(read > 0);
-        ptr += read;
-    }
     if (MDATA_USE_LINK_CNT) {
         assert(*ptr == MSP);
         link_count_ = static_cast<nlink_t>(std::stoul(++ptr, &read));
@@ -105,14 +91,6 @@ std::string Metadata::serialize() const
     if (MDATA_USE_CTIME) {
         s += MSP;
         s += fmt::format_int(ctime_).c_str();
-    }
-    if (MDATA_USE_UID) {
-        s += MSP;
-        s += fmt::format_int(uid_).c_str();
-    }
-    if (MDATA_USE_GID) {
-        s += MSP;
-        s += fmt::format_int(gid_).c_str();
     }
     if (MDATA_USE_LINK_CNT) {
         s += MSP;
@@ -168,22 +146,6 @@ time_t Metadata::ctime() const {
 
 void Metadata::ctime(time_t ctime_) {
     Metadata::ctime_ = ctime_;
-}
-
-uid_t Metadata::uid() const {
-    return uid_;
-}
-
-void Metadata::uid(uid_t uid_) {
-    Metadata::uid_ = uid_;
-}
-
-gid_t Metadata::gid() const {
-    return gid_;
-}
-
-void Metadata::gid(gid_t gid_) {
-    Metadata::gid_ = gid_;
 }
 
 mode_t Metadata::mode() const {

@@ -14,8 +14,6 @@ namespace rpc_send {
 
 int mk_node(const std::string& path, mode_t mode);
 
-int access(const std::string& path, int mask);
-
 int stat(const std::string& path, std::string& attr);
 
 int rm_node(const std::string& path, const bool remove_metadentry_only);

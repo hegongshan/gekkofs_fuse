@@ -13,8 +13,6 @@ private:
     time_t atime_;         // access time. gets updated on file access unless mounted with noatime
     time_t mtime_;         // modify time. gets updated when file content is modified.
     time_t ctime_;         // change time. gets updated when the file attributes are changed AND when file content is modified.
-    uid_t uid_;
-    gid_t gid_;
     mode_t mode_;
     nlink_t link_count_;   // number of names for this inode (hardlinks)
     size_t size_;          // size_ in bytes, might be computed instead of stored
@@ -38,10 +36,6 @@ public:
     void mtime(time_t mtime_);
     time_t ctime() const;
     void ctime(time_t ctime_);
-    uid_t uid() const;
-    void uid(uid_t uid_);
-    gid_t gid() const;
-    void gid(gid_t gid_);
     mode_t mode() const;
     void mode(mode_t mode_);
     nlink_t link_count() const;

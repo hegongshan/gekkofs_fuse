@@ -67,8 +67,6 @@ bool init_environment() {
     ADAFS_DATA->atime_state(MDATA_USE_ATIME);
     ADAFS_DATA->mtime_state(MDATA_USE_MTIME);
     ADAFS_DATA->ctime_state(MDATA_USE_CTIME);
-    ADAFS_DATA->uid_state(MDATA_USE_UID);
-    ADAFS_DATA->gid_state(MDATA_USE_GID);
     ADAFS_DATA->link_cnt_state(MDATA_USE_LINK_CNT);
     ADAFS_DATA->blocks_state(MDATA_USE_BLOCKS);
     // Create metadentry for root directory
@@ -211,7 +209,6 @@ bool init_rpc_server() {
 void register_server_rpcs(margo_instance_id mid) {
     MARGO_REGISTER(mid, hg_tag::fs_config, rpc_config_in_t, rpc_config_out_t, rpc_srv_fs_config);
     MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
-    MARGO_REGISTER(mid, hg_tag::access, rpc_access_in_t, rpc_err_out_t, rpc_srv_access);
     MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
     MARGO_REGISTER(mid, hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
     MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_rm_node);

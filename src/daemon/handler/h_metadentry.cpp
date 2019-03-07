@@ -41,33 +41,6 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
 
-static hg_return_t rpc_srv_access(hg_handle_t handle) {
-    rpc_access_in_t in{};
-    rpc_err_out_t out{};
-
-    auto ret = margo_get_input(handle, &in);
-    if (ret != HG_SUCCESS)
-        ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
-    assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
-                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
-    // access metadentry
-    out.err = check_access_mask(in.path, in.mask);
-
-    ADAFS_DATA->spdlogger()->debug("{}() Sending output err {}", __func__, out.err);
-    auto hret = margo_respond(handle, &out);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
-    }
-
-    // Destroy handle when finished
-    margo_free_input(handle, &in);
-    margo_destroy(handle);
-    return HG_SUCCESS;
-}
-
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_access)
-
 static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
@@ -198,10 +171,6 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
         Metadata md = get_metadentry(in.path);
         if (in.block_flag == HG_TRUE)
             md.blocks(in.blocks);
-        if (in.uid_flag == HG_TRUE)
-            md.uid(in.uid);
-        if (in.gid_flag == HG_TRUE)
-            md.gid(in.gid);
         if (in.nlink_flag == HG_TRUE)
             md.link_count(in.nlink);
         if (in.size_flag == HG_TRUE)

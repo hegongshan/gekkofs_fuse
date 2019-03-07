@@ -37,6 +37,18 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    /* Access nonexisting file */
+    ret = access(p.c_str(), F_OK);
+    if(ret == 0){
+        cerr << "ERROR: succeeded on accessing non-existing file" << endl;
+        return -1;
+    };
+
+    if(errno != ENOENT){
+        cerr << "ERROR: wrong error number while accessing non-existing file: " << errno << endl;
+        return -1;
+    }
+
     /* Stat nonexisting file */
     ret = stat(p.c_str(), &st);
     if(ret == 0){
@@ -66,6 +78,13 @@ int main(int argc, char* argv[]) {
         cerr << "Error closing file" << endl;
         return -1;
     }
+
+    /* Access existing file */
+    ret = access(p.c_str(), F_OK);
+    if(ret != 0){
+        cerr << "ERROR: Failed to access file: "  << strerror(errno) << endl;
+        return -1;
+    };
 
     /* Check file size */
     ret = stat(p.c_str(), &st);

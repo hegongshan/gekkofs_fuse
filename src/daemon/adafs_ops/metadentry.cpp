@@ -24,11 +24,6 @@ void create_metadentry(const std::string& path, Metadata& md) {
         if (ADAFS_DATA->ctime_state())
             md.ctime(time);
     }
-    if (ADAFS_DATA->uid_state())
-        md.uid(getuid());
-    if (ADAFS_DATA->gid_state())
-        md.gid(getgid());
-
     ADAFS_DATA->mdb()->put(path, md.serialize());
 }
 
@@ -73,67 +68,11 @@ size_t get_metadentry_size(const string& path) {
  * @return the updated size
  */
 void update_metadentry_size(const string& path, size_t io_size, off64_t offset, bool append) {
-#ifdef LOG_TRACE
-    ADAFS_DATA->mdb()->iterate_all();
-#endif
     ADAFS_DATA->mdb()->increase_size(path, io_size + offset, append);
-#ifdef LOG_TRACE
-    ADAFS_DATA->mdb()->iterate_all();
-#endif
 }
 
 void update_metadentry(const string& path, Metadata& md) {
     ADAFS_DATA->mdb()->update(path, path, md.serialize());
-}
-
-/**
- * @param path of the object whose permissions are checked
- * @param mask single bit mask to check against
- * @return errno
- */
-int check_access_mask(const string& path, const int mask) {
-    try {
-        Metadata md = get_metadentry(path);
-        /*
-         * if only check if file exists is wanted, return success.
-         * According to POSIX (access(2)) the mask is either the value F_OK,
-         * or a mask consisting of the bitwise OR of one or more of R_OK, W_OK, and X_OK.
-         */
-        if (mask == F_OK)
-            return 0;
-
-        // root user is a god
-        if (ADAFS_DATA->uid_state() && md.uid() == 0)
-            return 0;
-
-        // We do not check for the actual user here, because the cluster batchsystem should take care of it
-        // check user leftmost 3 bits for rwx in md->mode
-        if (ADAFS_DATA->uid_state()) {
-            // Because mode comes only with the first 3 bits used, the user bits have to be shifted to the right to compare
-            if ((mask & md.mode() >> 6) == static_cast<unsigned int>(mask))
-                return 0;
-            else
-                return EACCES;
-        }
-
-        // check group middle 3 bits for rwx in md->mode
-        if (ADAFS_DATA->gid_state()) {
-            if ((mask & md.mode() >> 3) == static_cast<unsigned int>(mask))
-                return 0;
-            else
-                return EACCES;
-        }
-
-        // check other rightmost 3 bits for rwx in md->mode.
-        // Because they are the rightmost bits they don't need to be shifted
-        if ((mask & md.mode()) == static_cast<unsigned int>(mask)) {
-            return 0;
-        }
-
-    } catch (const NotFoundException& e) {
-        return ENOENT;
-    }
-    return EACCES;
 }
 
 std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir){

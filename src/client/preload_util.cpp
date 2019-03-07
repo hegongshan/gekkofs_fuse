@@ -48,12 +48,6 @@ int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& a
     if (CTX->fs_conf()->ctime_state) {
         attr.st_ctim.tv_sec = md.ctime();
     }
-    if (CTX->fs_conf()->uid_state) {
-        attr.st_uid = md.uid();
-    }
-    if (CTX->fs_conf()->gid_state) {
-        attr.st_gid = md.gid();
-    }
     if (CTX->fs_conf()->link_cnt_state) {
         attr.st_nlink = md.link_count();
     }
