@@ -129,6 +129,24 @@ void init_ld_environment_() {
     auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->fs_conf()->host_id, CTX->fs_conf()->host_size);
     CTX->distributor(simple_hash_dist);
 
+    try {
+        if (!CTX->fs_conf()->lookup_file.empty()) {
+            auto endpoints = load_lookup_file(CTX->fs_conf()->lookup_file);
+            if (endpoints.size() != CTX->fs_conf()->host_size) {
+                CTX->log()->error("{}() Number of endpoints ({}) found in the lookup file,"
+                                  "do not match total number of hosts ({})",
+                                  __func__, endpoints.size(), CTX->fs_conf()->host_size);
+                exit(EXIT_FAILURE);
+            }
+            CTX->fs_conf()->endpoints = endpoints;
+        }
+    } catch (const std::exception& e) {
+        CTX->log()->error("{}() Unable to load lookup file '{}' with error: {}",
+                          __func__, CTX->fs_conf()->lookup_file, e.what());
+        exit(EXIT_FAILURE);
+    }
+
+
     if (!read_system_hostfile()) {
         CTX->log()->error("{}() Unable to read system hostfile /etc/hosts for address mapping.", __func__);
         exit(EXIT_FAILURE);

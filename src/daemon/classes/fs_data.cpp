@@ -134,6 +134,14 @@ void FsData::rpc_port(std::string rpc_port) {
     FsData::rpc_port_ = rpc_port;
 }
 
+const std::string& FsData::lookup_file() const {
+    return lookup_file_;
+}
+
+void FsData::lookup_file(const std::string& lookup_file) {
+    lookup_file_ = lookup_file;
+}
+
 bool FsData::atime_state() const {
     return atime_state_;
 }

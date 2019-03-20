@@ -34,4 +34,7 @@ void register_daemon_proc();
 
 bool deregister_daemon_proc();
 
+void populate_lookup_file();
+void destroy_lookup_file();
+
 #endif //IFS_ADAFS_DAEMON_HPP

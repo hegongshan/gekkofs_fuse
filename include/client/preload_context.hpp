@@ -28,9 +28,11 @@ struct FsConfig {
     // rpc infos
     std::map<uint64_t, std::string> hosts;
     std::map<std::string, std::string> sys_hostfile;
+    std::unordered_map<std::string, std::string> endpoints;
     uint64_t host_id; // my host number
     size_t host_size;
     std::string rpc_port;
+    std::string lookup_file;
 };
 
 enum class RelativizeStatus {

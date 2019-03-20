@@ -104,7 +104,9 @@ MERCURY_GEN_PROC(rpc_config_out_t, ((hg_const_string_t) (mountdir))
 ((hg_uint32_t) (gid)) \
 ((hg_const_string_t) (hosts_raw)) \
 ((hg_uint64_t) (host_id)) \
-((hg_uint64_t) (host_size)))
+        ((hg_uint64_t) (host_size)) \
+        ((hg_const_string_t) (lookup_file))
+)
 
 
 MERCURY_GEN_PROC(rpc_chunk_stat_in_t,

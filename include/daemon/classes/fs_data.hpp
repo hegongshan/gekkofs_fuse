@@ -39,6 +39,7 @@ private:
     uint64_t host_id_; // my host number
     size_t host_size_;
     std::string rpc_port_;
+    std::string lookup_file_;
 
     // Database
     std::shared_ptr<MetadataDB> mdb_;
@@ -131,6 +132,10 @@ public:
     std::string rpc_port() const;
 
     void rpc_port(std::string rpc_port);
+
+    const std::string& lookup_file() const;
+
+    void lookup_file(const std::string& lookup_file);
 
     bool atime_state() const;
 

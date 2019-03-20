@@ -7,6 +7,7 @@
 // third party libs
 #include <string>
 #include <iostream>
+#include <unordered_map>
 
 extern "C" {
 #include <margo.h>
@@ -47,6 +48,8 @@ extern hg_id_t rpc_chunk_stat_id;
 int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
 
 int get_daemon_pid();
+
+std::unordered_map<std::string, std::string> load_lookup_file(const std::string& lfpath);
 
 bool read_system_hostfile();
 

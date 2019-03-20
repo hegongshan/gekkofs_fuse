@@ -87,6 +87,16 @@ bool init_environment() {
         return false;
     }
 
+    try {
+        if (!ADAFS_DATA->lookup_file().empty()) {
+            populate_lookup_file();
+        }
+    } catch (const std::exception& e ) {
+        cout << "ERROR: failed to populate lookup file: " << e.what() << endl;
+        ADAFS_DATA->spdlogger()->error("{}() failed to populate lookup file: {}", __func__, e.what());
+        return false;
+    }
+
     ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
     return true;
 }
@@ -109,6 +119,10 @@ void destroy_enviroment() {
         ADAFS_DATA->spdlogger()->warn("{}() Unable to clean up auxiliary files", __func__);
     else
         ADAFS_DATA->spdlogger()->debug("{}() Cleaning auxiliary files successful", __func__);
+
+    if (!ADAFS_DATA->lookup_file().empty()) {
+        destroy_lookup_file();
+    }
 
     if (RPC_DATA->server_rpc_mid() != nullptr) {
         margo_finalize(RPC_DATA->server_rpc_mid());
@@ -269,6 +283,16 @@ bool deregister_daemon_proc() {
     return bfs::remove(daemon_pid_path());
 }
 
+void populate_lookup_file() {
+    ofstream lfstream(ADAFS_DATA->lookup_file(), ios::out | ios::app);
+    lfstream <<
+        get_my_hostname(true) + " "s + RPC_DATA->self_addr_str() << std::endl;
+}
+
+void destroy_lookup_file() {
+    std::remove(ADAFS_DATA->lookup_file().c_str());
+}
+
 void shutdown_handler(int dummy) {
     shutdown_please.notify_all();
 }
@@ -314,7 +338,8 @@ int main(int argc, const char* argv[]) {
             ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
             ("metadir,i", po::value<string>(), "ADA-FS metadata directory, if not set rootdir is used for metadata ")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
-            ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants");
+            ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
+            ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
@@ -390,6 +415,11 @@ int main(int argc, const char* argv[]) {
         hosts_raw = hostname;
         ADAFS_DATA->host_id(0);
     }
+
+    if (vm.count("lookup-file")) {
+        ADAFS_DATA->lookup_file(vm["lookup-file"].as<string>());
+    }
+
     ADAFS_DATA->hosts(hostmap);
     ADAFS_DATA->host_size(hostmap.size());
     ADAFS_DATA->rpc_port(fmt::format_int(RPC_PORT).str());

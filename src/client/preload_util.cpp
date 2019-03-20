@@ -112,6 +112,30 @@ int get_daemon_pid() {
     return adafs_daemon_pid;
 }
 
+unordered_map<string, string> load_lookup_file(const std::string& lfpath) {
+    CTX->log()->debug("{}() Loading lookup file: '{}'",
+                      __func__, lfpath);
+    ifstream lf(lfpath);
+    lf.exceptions(ifstream::badbit);
+
+    unordered_map<string, string> endpoints_map;
+    string line;
+    string hostname;
+    string endpoint;
+    string::size_type delim_pos;
+    while (getline(lf, line)) {
+        delim_pos = line.find(" ", delim_pos = 0);
+        if(delim_pos == string::npos) {
+            throw runtime_error(fmt::format("Failed to parse line in lookup file: '{}'", line));
+        }
+        hostname = line.substr(0, delim_pos);
+        endpoint = line.substr(delim_pos + 1);
+        CTX->log()->trace("{}() endpoint loaded: '{}' '{}'", __func__, hostname, endpoint);
+        endpoints_map.insert(make_pair(hostname, endpoint));
+    }
+    return endpoints_map;
+}
+
 /**
  * Read /etc/hosts and put hostname - ip association into a map in fs config.
  * We are working with hostnames but some network layers (such as Omnipath) does not look into /etc/hosts.
@@ -174,6 +198,10 @@ hg_addr_t get_local_addr() {
  * This URI is to be used for margo lookup function.
  */
 std::string get_uri_from_hostname(const std::string& hostname) {
+    if (!CTX->fs_conf()->endpoints.empty()) {
+        return CTX->fs_conf()->endpoints.at(hostname);
+    }
+
     auto host = hostname + HOSTNAME_SUFFIX;
     // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
     if (CTX->fs_conf()->sys_hostfile.count(host) == 1) {
