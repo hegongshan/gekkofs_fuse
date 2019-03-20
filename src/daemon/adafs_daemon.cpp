@@ -241,30 +241,13 @@ bool register_daemon_proc() {
     auto pid_file = daemon_pid_path();
     // check if a pid file exists from another adafs_daemon
     if (bfs::exists(pid_file)) {
-        // check if another daemon is still running
-        ifstream ifs(pid_file, ::ifstream::in);
-        if (ifs) {
-            string running_pid;
-            // first line is pid of daemon
-            if (getline(ifs, running_pid) && !running_pid.empty()) {
-                // check if pid is running and kill it
-                if (kill(::stoi(running_pid), 0) == 0) {
-                    ADAFS_DATA->spdlogger()->warn("{}() Daemon with pid {} is already running. Proceed to force kill",
-                                                  __func__, running_pid);
-                    kill(::stoi(running_pid), SIGKILL);
-                    sleep(1);
-                    if (kill(::stoi(running_pid), 0) == 0) {
-                        ADAFS_DATA->spdlogger()->error("{}() Running daemon with pid {} cannot be killed. Exiting ...",
-                                                       __func__, running_pid);
-                        ifs.close();
-                        return false;
-                    } else
-                        ADAFS_DATA->spdlogger()->info("{}() Kill successful", __func__);
-                }
-            }
-        }
-        ifs.close();
+        cerr << "Pid file already exists, probably another daemon is already running." << endl;
+        ADAFS_DATA->spdlogger()->error("{}() Pid file already exists, "
+                                       " probably another daemon is already running. \"{}\"",
+                                       __func__, pid_file);
+        return false;
     }
+
     auto my_pid = getpid();
     if (my_pid == -1) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to get pid", __func__);
