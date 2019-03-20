@@ -405,16 +405,16 @@ int main(int argc, const char* argv[]) {
     // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
     bfs::create_directories(mountdir);
     ADAFS_DATA->mountdir(bfs::canonical(mountdir).native());
-    
+
     assert(vm.count("rootdir"));
-    auto rootdir = vm["rootdir"].as<string>(); 
+    auto rootdir = vm["rootdir"].as<string>();
     bfs::create_directories(rootdir);
     ADAFS_DATA->rootdir(bfs::canonical(rootdir).native());
-    
+
     if (vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
         bfs::create_directories(metadir);
-        ADAFS_DATA->metadir(bfs::canonical(metadir).native()); 
+        ADAFS_DATA->metadir(bfs::canonical(metadir).native());
     } else {
         // use rootdir as metadata dir
         ADAFS_DATA->metadir(ADAFS_DATA->rootdir());
