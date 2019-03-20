@@ -78,9 +78,12 @@ bool init_environment() {
         return false;
     }
 
-    // Register daemon to system
-    if (!register_daemon_proc()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
+    try {
+        // Register daemon to system
+        register_daemon_proc();
+    } catch (const std::exception& e ) {
+        cout << "ERROR: failed to register daemon process: " << e.what() << endl;
+        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system: {}", __func__, e.what());
         return false;
     }
 
@@ -231,41 +234,35 @@ void register_server_rpcs(margo_instance_id mid) {
  * This will create a file with additional information for clients started on the same node.
  * @return
  */
-bool register_daemon_proc() {
+void register_daemon_proc() {
     auto daemon_aux_path = DAEMON_AUX_PATH;
     if (!bfs::exists(daemon_aux_path) && !bfs::create_directories(daemon_aux_path)) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to create adafs auxiliary directory in {}", __func__,
-                                       daemon_aux_path);
-        return false;
+        throw runtime_error(fmt::format("Unable to create adafs auxiliary directory in {}", daemon_aux_path));
     }
+
     auto pid_file = daemon_pid_path();
     // check if a pid file exists from another adafs_daemon
     if (bfs::exists(pid_file)) {
-        cerr << "Pid file already exists, probably another daemon is already running." << endl;
-        ADAFS_DATA->spdlogger()->error("{}() Pid file already exists, "
-                                       " probably another daemon is already running. \"{}\"",
-                                       __func__, pid_file);
-        return false;
+        throw runtime_error(
+                fmt::format("Pid file already exists, "
+                            "probably another daemon is still running. pid file: '{}'",
+                            pid_file));
     }
 
     auto my_pid = getpid();
     if (my_pid == -1) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to get pid", __func__);
-        return false;
+        throw runtime_error("Unable to get process ID");
     }
+
     ofstream ofs(pid_file, ::ofstream::trunc);
-    if (ofs) {
-        ofs << to_string(my_pid) << std::endl;
-        ofs << RPC_DATA->self_addr_str() << std::endl;
-        ofs << ADAFS_DATA->mountdir() << std::endl;
-    } else {
-        cerr << "Unable to create daemon pid file at " << pid_file << endl;
-        ADAFS_DATA->spdlogger()->error("{}() Unable to create daemon pid file at {}. No permissions?", __func__,
-                                       pid_file);
-        return false;
+    if (!ofs) {
+        throw runtime_error(
+                fmt::format("Unable to create daemon pid file: '{}'", pid_file));
     }
+    ofs << to_string(my_pid) << std::endl;
+    ofs << RPC_DATA->self_addr_str() << std::endl;
+    ofs << ADAFS_DATA->mountdir() << std::endl;
     ofs.close();
-    return true;
 }
 
 bool deregister_daemon_proc() {

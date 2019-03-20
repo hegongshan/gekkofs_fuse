@@ -30,7 +30,7 @@ bool init_rpc_server();
 
 void register_server_rpcs(margo_instance_id mid);
 
-bool register_daemon_proc();
+void register_daemon_proc();
 
 bool deregister_daemon_proc();
 
