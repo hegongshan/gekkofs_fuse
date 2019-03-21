@@ -184,12 +184,7 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
 }
 
 hg_addr_t get_local_addr() {
-    auto daemon_addr = CTX->daemon_addr_str();
-    auto last_separator = daemon_addr.find_last_of(';');
-    if (last_separator != std::string::npos) {
-        daemon_addr.erase(0, ++last_separator);
-    }
-    return margo_addr_lookup_retry(daemon_addr);
+    return margo_addr_lookup_retry(CTX->daemon_addr_str());
 }
 
 /*
