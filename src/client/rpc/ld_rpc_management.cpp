@@ -70,7 +70,9 @@ bool get_fs_config() {
     CTX->fs_conf()->host_id = out.host_id;
     CTX->fs_conf()->host_size = out.host_size;
     CTX->fs_conf()->lookup_file = out.lookup_file;
-    CTX->fs_conf()->rpc_port = std::to_string(RPC_PORT);
+    CTX->fs_conf()->rpc_port = out.rpc_port;
+
+    CTX->log()->debug("RPC port: {}", out.rpc_port);
 
     // split comma separated host string and create a hosts map
     std::string hosts_raw = out.hosts_raw;

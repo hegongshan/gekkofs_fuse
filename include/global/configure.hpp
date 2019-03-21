@@ -40,7 +40,7 @@
 #define DAEMON_IO_XSTREAMS 8
 // Number of threads used for RPC handlers at the daemon
 #define DAEMON_RPC_HANDLER_XSTREAMS 8
-#define RPC_PORT 4433
+#define DEFAULT_RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds
 #define RPC_TIMEOUT 180000

@@ -164,7 +164,7 @@ bool init_io_tasklet_pool() {
 }
 
 bool init_rpc_server() {
-    auto protocol_port = RPC_PROTOCOL + "://"s + get_my_hostname(false) + ":"s + to_string(RPC_PORT);
+    auto protocol_port = fmt::format("{}://{}:{}", RPC_PROTOCOL, get_my_hostname(false), ADAFS_DATA->rpc_port());
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
@@ -337,6 +337,7 @@ int main(int argc, const char* argv[]) {
             ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
             ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
             ("metadir,i", po::value<string>(), "ADA-FS metadata directory, if not set rootdir is used for metadata ")
+            ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
             ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)");
@@ -354,6 +355,8 @@ int main(int argc, const char* argv[]) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+
+    ADAFS_DATA->rpc_port(vm["port"].as<unsigned int>());
 
     // parse host parameters
     vector<string> hosts{};
@@ -422,7 +425,6 @@ int main(int argc, const char* argv[]) {
 
     ADAFS_DATA->hosts(hostmap);
     ADAFS_DATA->host_size(hostmap.size());
-    ADAFS_DATA->rpc_port(fmt::format_int(RPC_PORT).str());
     ADAFS_DATA->hosts_raw(hosts_raw);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);

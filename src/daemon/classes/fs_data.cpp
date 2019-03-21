@@ -126,11 +126,11 @@ void FsData::host_size(size_t host_size) {
     FsData::host_size_ = host_size;
 }
 
-std::string FsData::rpc_port() const {
+unsigned int FsData::rpc_port() const {
     return rpc_port_;
 }
 
-void FsData::rpc_port(std::string rpc_port) {
+void FsData::rpc_port(unsigned int rpc_port) {
     FsData::rpc_port_ = rpc_port;
 }
 

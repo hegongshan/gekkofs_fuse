@@ -38,7 +38,7 @@ private:
     std::map<uint64_t, std::string> hosts_;
     uint64_t host_id_; // my host number
     size_t host_size_;
-    std::string rpc_port_;
+    unsigned int rpc_port_;
     std::string lookup_file_;
 
     // Database
@@ -129,9 +129,9 @@ public:
 
     void host_size(size_t host_size);
 
-    std::string rpc_port() const;
+    unsigned int rpc_port() const;
 
-    void rpc_port(std::string rpc_port);
+    void rpc_port(unsigned int rpc_port);
 
     const std::string& lookup_file() const;
 
