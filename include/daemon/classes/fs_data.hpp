@@ -39,6 +39,7 @@ private:
     uint64_t host_id_; // my host number
     size_t host_size_;
     unsigned int rpc_port_;
+    std::string rpc_addr_;
     std::string lookup_file_;
 
     // Database
@@ -133,6 +134,10 @@ public:
 
     void rpc_port(unsigned int rpc_port);
 
+    const std::string& rpc_addr() const;
+
+    void rpc_addr(const std::string& addr);
+    
     const std::string& lookup_file() const;
 
     void lookup_file(const std::string& lookup_file);

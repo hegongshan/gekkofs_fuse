@@ -164,7 +164,7 @@ bool init_io_tasklet_pool() {
 }
 
 bool init_rpc_server() {
-    auto protocol_port = fmt::format("{}://{}:{}", RPC_PROTOCOL, get_my_hostname(false), ADAFS_DATA->rpc_port());
+    auto protocol_port = fmt::format("{}://{}:{}", RPC_PROTOCOL, ADAFS_DATA->rpc_addr(), ADAFS_DATA->rpc_port());
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
@@ -337,6 +337,7 @@ int main(int argc, const char* argv[]) {
             ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
             ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
             ("metadir,i", po::value<string>(), "ADA-FS metadata directory, if not set rootdir is used for metadata ")
+            ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
             ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
@@ -356,6 +357,11 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
+    if (vm.count("listen")) {
+        ADAFS_DATA->rpc_addr(vm["listen"].as<string>());
+    } else {
+        ADAFS_DATA->rpc_addr(get_my_hostname(true) + HOSTNAME_SUFFIX);
+    }
     ADAFS_DATA->rpc_port(vm["port"].as<unsigned int>());
 
     // parse host parameters

@@ -134,6 +134,14 @@ void FsData::rpc_port(unsigned int rpc_port) {
     FsData::rpc_port_ = rpc_port;
 }
 
+const std::string& FsData::rpc_addr() const {
+    return rpc_addr_;
+}
+
+void FsData::rpc_addr(const std::string& addr) {
+    rpc_addr_ = addr;
+}
+
 const std::string& FsData::lookup_file() const {
     return lookup_file_;
 }
