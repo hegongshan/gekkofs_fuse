@@ -129,9 +129,6 @@ Metadata and actual data will be stored at the `<fs_data_path>`. The path where 
 Run the application with the preload library: `LD_PRELOAD=<path>/build/lib/libiointer.so ./application`. In the case of
 an MPI application use the `{mpirun, mpiexec} -x` argument.
  
-Please consult `configure_public.hpp` for log locations and verbosity, etc. `include/configure.hpp` contains file system
-specific configurations normal user should not be needed to modify.
-
 ### Logging
 To enable logging the following environment variables are used:
 ADAFS_PRELOAD_LOG_PATH="<path/to/file>" to set the path to the logging file of the client library.

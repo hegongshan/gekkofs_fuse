@@ -39,6 +39,7 @@ private:
     uint64_t host_id_; // my host number
     size_t host_size_;
     unsigned int rpc_port_;
+    std::string hostname_suffix_;
     std::string rpc_addr_;
     std::string lookup_file_;
 
@@ -129,6 +130,10 @@ public:
     size_t host_size() const;
 
     void host_size(size_t host_size);
+
+    const std::string& hostname_suffix() const;
+
+    void hostname_suffix(const std::string& suffix);
 
     unsigned int rpc_port() const;
 

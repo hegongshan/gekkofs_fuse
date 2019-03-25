@@ -154,7 +154,7 @@ bool read_system_hostfile() {
         std::istringstream iss(line);
         std::vector<string> tmp_list((istream_iterator<string>(iss)), istream_iterator<string>());
         for (unsigned int i = 1; i < tmp_list.size(); i++) {
-            if (tmp_list[i].find(HOSTNAME_SUFFIX) != string::npos)
+            if (tmp_list[i].find(CTX->fs_conf()->hostname_suffix) != string::npos)
                 sys_hostfile.insert(make_pair(tmp_list[i], tmp_list[0]));
         }
     }
@@ -197,7 +197,7 @@ std::string get_uri_from_hostname(const std::string& hostname) {
         return CTX->fs_conf()->endpoints.at(hostname);
     }
 
-    auto host = hostname + HOSTNAME_SUFFIX;
+    auto host = hostname + CTX->fs_conf()->hostname_suffix;
     // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
     if (CTX->fs_conf()->sys_hostfile.count(host) == 1) {
         host = CTX->fs_conf()->sys_hostfile.at(host);

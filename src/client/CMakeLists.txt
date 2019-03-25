@@ -16,7 +16,6 @@ set(PRELOAD_SRC
     ../global/path_util.cpp
     )
 set(PRELOAD_HEADERS
-    ../../configure_public.hpp
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
     ../../include/global/global_func.hpp

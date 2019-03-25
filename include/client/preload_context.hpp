@@ -31,6 +31,7 @@ struct FsConfig {
     std::unordered_map<std::string, std::string> endpoints;
     uint64_t host_id; // my host number
     size_t host_size;
+    std::string hostname_suffix;
     unsigned int rpc_port;
     std::string lookup_file;
 };

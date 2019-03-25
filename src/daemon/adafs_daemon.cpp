@@ -341,6 +341,7 @@ int main(int argc, const char* argv[]) {
             ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
+            ("hostname-suffix,s", po::value<string>()->default_value(""), "Suffix that is added to each given host. Consult /etc/hosts for allowed suffixes")
             ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -357,10 +358,12 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
+    ADAFS_DATA->hostname_suffix(vm["hostname-suffix"].as<string>());
+
     if (vm.count("listen")) {
         ADAFS_DATA->rpc_addr(vm["listen"].as<string>());
     } else {
-        ADAFS_DATA->rpc_addr(get_my_hostname(true) + HOSTNAME_SUFFIX);
+        ADAFS_DATA->rpc_addr(get_my_hostname(true) + ADAFS_DATA->hostname_suffix());
     }
     ADAFS_DATA->rpc_port(vm["port"].as<unsigned int>());
 

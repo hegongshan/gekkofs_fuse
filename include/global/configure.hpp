@@ -4,8 +4,6 @@
 #ifndef FS_CONFIGURE_H
 #define FS_CONFIGURE_H
 
-#include "../../configure_public.hpp"
-
 // Daemon path to auxiliary files
 #define DAEMON_AUX_PATH "/tmp"
 

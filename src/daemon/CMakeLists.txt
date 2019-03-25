@@ -14,7 +14,6 @@ set(DAEMON_SRC
     handler/h_preload.cpp
     )
 set(DAEMON_HEADERS
-    ../../configure_public.hpp
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
     ../../include/global/global_func.hpp

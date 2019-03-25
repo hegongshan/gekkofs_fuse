@@ -126,6 +126,14 @@ void FsData::host_size(size_t host_size) {
     FsData::host_size_ = host_size;
 }
 
+const std::string& FsData::hostname_suffix() const {
+    return hostname_suffix_;
+}
+
+void FsData::hostname_suffix(const std::string& suffix) {
+    hostname_suffix_ = suffix;
+}
+
 unsigned int FsData::rpc_port() const {
     return rpc_port_;
 }

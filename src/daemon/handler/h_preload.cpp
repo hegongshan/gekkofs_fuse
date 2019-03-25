@@ -28,6 +28,7 @@ static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
     out.host_id = static_cast<hg_uint64_t>(ADAFS_DATA->host_id());
     out.host_size = static_cast<hg_uint64_t>(ADAFS_DATA->host_size());
     out.rpc_port = ADAFS_DATA->rpc_port();
+    out.hostname_suffix = ADAFS_DATA->hostname_suffix().c_str();
     out.lookup_file = ADAFS_DATA->lookup_file().c_str();
     ADAFS_DATA->spdlogger()->debug("{}() Sending output configs back to library", __func__);
     auto hret = margo_respond(handle, &out);
