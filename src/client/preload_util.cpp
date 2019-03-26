@@ -1,5 +1,6 @@
 #include <client/preload_util.hpp>
 #include <global/rpc/distributor.hpp>
+#include <global/rpc/rpc_utils.hpp>
 #include <global/global_func.hpp>
 
 #include <fstream>
@@ -136,33 +137,6 @@ unordered_map<string, string> load_lookup_file(const std::string& lfpath) {
     return endpoints_map;
 }
 
-/**
- * Read /etc/hosts and put hostname - ip association into a map in fs config.
- * We are working with hostnames but some network layers (such as Omnipath) does not look into /etc/hosts.
- * Hence, we have to store the mapping ourselves.
- * @return success
- */
-bool read_system_hostfile() {
-    ifstream hostfile("/etc/hosts");
-    if (!hostfile.is_open())
-        return false;
-    string line;
-    map<string, string> sys_hostfile;
-    while (getline(hostfile, line)) {
-        if (line.empty() || line == "\n" || line.at(0) == '#')
-            continue;
-        std::istringstream iss(line);
-        std::vector<string> tmp_list((istream_iterator<string>(iss)), istream_iterator<string>());
-        for (unsigned int i = 1; i < tmp_list.size(); i++) {
-            if (tmp_list[i].find(CTX->fs_conf()->hostname_suffix) != string::npos)
-                sys_hostfile.insert(make_pair(tmp_list[i], tmp_list[0]));
-        }
-    }
-    CTX->fs_conf()->sys_hostfile = sys_hostfile;
-    CTX->log()->info("{}() /etc/hosts successfully mapped into ADA-FS", __func__);
-    return true;
-}
-
 hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
     // try to look up 3 times before erroring out
     hg_return_t ret;
@@ -197,11 +171,7 @@ std::string get_uri_from_hostname(const std::string& hostname) {
         return CTX->fs_conf()->endpoints.at(hostname);
     }
 
-    auto host = hostname + CTX->fs_conf()->hostname_suffix;
-    // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
-    if (CTX->fs_conf()->sys_hostfile.count(host) == 1) {
-        host = CTX->fs_conf()->sys_hostfile.at(host);
-    }
+    auto host = get_host_by_name(hostname + CTX->fs_conf()->hostname_suffix);
     return fmt::format("{}://{}:{}", RPC_PROTOCOL, host, CTX->fs_conf()->rpc_port);
 }
 

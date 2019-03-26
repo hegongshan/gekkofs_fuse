@@ -1,6 +1,10 @@
 
 #include <global/rpc/rpc_utils.hpp>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <system_error>
 
 using namespace std;
 
@@ -32,6 +36,43 @@ std::string get_my_hostname(bool short_hostname) {
         return hostname_s;
     } else
         return ""s;
+}
+
+
+string get_host_by_name(const string & hostname) {
+    int err = 0;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_flags = (AI_V4MAPPED | AI_ADDRCONFIG);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_RAW;
+
+    struct addrinfo * addr = nullptr;
+
+    err = getaddrinfo(
+                hostname.c_str(),
+                nullptr,
+                &hints,
+                &addr
+          );
+    if(err) {
+        throw runtime_error("Error getting address info for '"
+                            + hostname + "': " + gai_strerror(err));
+    }
+
+    char addr_str[INET6_ADDRSTRLEN];
+
+    err = getnameinfo(
+            addr->ai_addr, addr->ai_addrlen,
+            addr_str,  INET6_ADDRSTRLEN,
+            nullptr, 0,
+            (NI_NUMERICHOST | NI_NOFQDN)
+          );
+    if (err) {
+        throw runtime_error("Error on getnameinfo(): "s + gai_strerror(err));
+    }
+    freeaddrinfo(addr);
+    return addr_str;
 }
 
 /**

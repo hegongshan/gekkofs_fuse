@@ -51,6 +51,8 @@ hg_bool_t bool_to_merc_bool(bool state);
 
 std::string get_my_hostname(bool short_hostname = false);
 
+std::string get_host_by_name(const std::string & hostname);
+
 bool is_handle_sm(margo_instance_id mid, const hg_addr_t& addr);
 
 #endif //IFS_RPC_UTILS_HPP

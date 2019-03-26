@@ -51,8 +51,6 @@ int get_daemon_pid();
 
 std::unordered_map<std::string, std::string> load_lookup_file(const std::string& lfpath);
 
-bool read_system_hostfile();
-
 hg_addr_t get_local_addr();
 
 bool lookup_all_hosts();
