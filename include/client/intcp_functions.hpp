@@ -47,6 +47,15 @@ strong_alias(intcp_openat, __openat_2)
 int intcp_openat64(int dirfd, const char *path, int flags, ...);
 strong_alias(intcp_openat64, openat64)
 strong_alias(intcp_openat64, __openat64_2)
+int intcp_symlink(const char* oldname, const char* newname) noexcept;
+strong_alias(intcp_symlink, symlink)
+strong_alias(intcp_symlink, __symlink)
+int intcp_symlinkat(const char* oldname, int newfd, const char* newname) noexcept;
+strong_alias(intcp_symlinkat, symlinkat)
+ssize_t intcp_readlink(const char * cpath, char * buf, size_t bufsize) noexcept;
+strong_alias(intcp_readlink, readlink)
+ssize_t intcp_readlinkat(int dirfd, const char * cpath, char * buf, size_t bufsize) noexcept;
+strong_alias(intcp_readlinkat, readlinkat)
 
 int intcp_statvfs(const char *path, struct statvfs *buf) noexcept;
 strong_alias(intcp_statvfs, statvfs)

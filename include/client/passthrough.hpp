@@ -113,8 +113,9 @@ extern void* libc_get_current_dir_name;
 
 extern void* libc_link;
 extern void* libc_linkat;
-extern void* libc_symlink;
 extern void* libc_symlinkat;
+
+extern void* libc_readlinkat;
 
 extern void* libc_realpath;
 
