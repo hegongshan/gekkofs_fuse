@@ -1,5 +1,5 @@
 
-#include <daemon/adafs_daemon.hpp>
+#include <daemon/main.hpp>
 #include <global/log_util.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/rpc_utils.hpp>

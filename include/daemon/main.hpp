@@ -1,6 +1,5 @@
-
-#ifndef IFS_ADAFS_DAEMON_HPP
-#define IFS_ADAFS_DAEMON_HPP
+#ifndef GKFS_DAEMON_MAIN_HPP
+#define GKFS_DAEMON_MAIN_HPP
 
 // std libs
 #include <string>
@@ -37,4 +36,4 @@ bool deregister_daemon_proc();
 void populate_lookup_file();
 void destroy_lookup_file();
 
-#endif //IFS_ADAFS_DAEMON_HPP
+#endif // GKFS_DAEMON_MAIN_HPP

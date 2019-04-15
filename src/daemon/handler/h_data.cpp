@@ -4,7 +4,7 @@
 #include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
-#include <daemon/adafs_daemon.hpp>
+#include <daemon/main.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 
 
