@@ -1,4 +1,4 @@
-# ADA-FS
+# GekkoFS
 This is a file system.
 
 # Dependencies
@@ -36,7 +36,7 @@ This is a file system.
 
 # Usage
 
-## Clone and compile direct ADA-FS dependencies
+## Clone and compile direct GekkoFS dependencies
 
 - Go to the `scripts` folder and first clone all dependencies projects. You can choose the according na_plugin
 (execute the script for help):
@@ -46,7 +46,7 @@ usage: dl_dep.sh [-h] [-n <NAPLUGIN>] [-c <CLUSTER>]
                     source_path
  	
 
-This script gets all ADA-FS dependency sources (excluding the fs itself)
+This script gets all GekkoFS dependency sources (excluding the fs itself)
  
 positional arguments:
         source_path              path where the dependency downloads are put
@@ -69,7 +69,7 @@ usage: compile_dep.sh [-h] [-n <NAPLUGIN>] [-c <CLUSTER>] [-j <COMPILE_CORES>]
                       source_path install_path
 	
  
-This script compiles all ADA-FS dependencies (excluding the fs itself)
+This script compiles all GekkoFS dependencies (excluding the fs itself)
  
 positional arguments:
     source_path 	path to the cloned dependencies path from clone_dep.sh
@@ -89,7 +89,7 @@ optional arguments:
                 defaults to number of available cores
 ```
 
-## Compile ADA-FS
+## Compile GekkoFS
 You need to decide what Mercury NA plugin you want to use. The following NA plugins are available, although only BMI is considered stable at the moment.
  - `ofi+tcp` for using the libfabric plugin with TCP
  - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (not threadsafe. Do not use.)
@@ -105,7 +105,7 @@ cmake -DADAFS_DEPS_INSTALL=<path> -DCMAKE_BUILD_TYPE={Release, Debug}} ..
 make
 ```
 
-## Run ADA-FS
+## Run GekkoFS
 
 First on each node a daemon has to be started. This can be done in two ways using the `adafs_daemon` binary directly or
 the corresponding startup and shutdown scripts. The latter is recommended for cluster usage. It requires pssh (or

@@ -258,7 +258,7 @@ void register_daemon_proc() {
     }
 
     auto pid_file = daemon_pid_path();
-    // check if a pid file exists from another adafs_daemon
+    // check if a pid file exists from another daemon
     if (bfs::exists(pid_file)) {
         throw runtime_error(
                 fmt::format("Pid file already exists, "
