@@ -218,7 +218,7 @@ void init_preload() {
     init_cwd();
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
-        std::cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << std::endl;
+        std::cerr << "GekkoFS daemon not running or mountdir could not be loaded. Check logs for more details" << std::endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {

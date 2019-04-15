@@ -73,7 +73,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
 
     # clean root and metadata dir if needed
     if cleanroot:
-        cmd_rm_str = '%s "rm -rf %s/* %s/* && truncate -s 0 /tmp/adafs_daemon.log /tmp/adafs_preload.log"' % (pssh, rootdir, metadir)
+        cmd_rm_str = '%s "rm -rf %s/* %s/* && truncate -s 0 /tmp/gkfs_daemon.log /tmp/gkfs_preload.log"' % (pssh, rootdir, metadir)
         if PRETEND:
             print('Pretending: {}'.format(cmd_rm_str))
         else:
@@ -95,18 +95,18 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
     # Start deamons
     if nodefile:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hostfile %s > /tmp/gkfs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hostfile %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hostfile %s > /tmp/gkfs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     else:
         if len(numactl) == 0:
-            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup %s -r %s -i %s -m %s --hosts %s > /tmp/gkfs_daemon.log 2>&1 &"' \
                       % (pssh, daemon_path, rootdir, metadir, mountdir, nodelist)
         else:
-            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hosts %s > /tmp/adafs_daemon.log 2>&1 &"' \
+            cmd_str = '%s "nohup numactl %s %s -r %s -i %s -m %s --hosts %s > /tmp/gkfs_daemon.log 2>&1 &"' \
                       % (pssh, numactl, daemon_path, rootdir, metadir, mountdir, nodelist)
 
     if PRETEND:
@@ -134,7 +134,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
             time.sleep(1)
 
     # Check adafs logs for errors
-    cmd_chk_str = '%s "head -5 /tmp/adafs_daemon.log"' % pssh
+    cmd_chk_str = '%s "head -5 /tmp/gkfs_daemon.log"' % pssh
     if PRETEND:
         print('Pretending: {}'.format(cmd_chk_str))
     else:

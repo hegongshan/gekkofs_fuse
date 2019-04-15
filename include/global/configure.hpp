@@ -50,8 +50,8 @@
 #define ENV_PREFIX "GKFS_"
 
 // Log
-#define DEFAULT_PRELOAD_LOG_PATH "/tmp/adafs_preload.log"
-#define DEFAULT_DAEMON_LOG_PATH "/tmp/adafs_daemon.log"
+#define DEFAULT_PRELOAD_LOG_PATH "/tmp/gkfs_preload.log"
+#define DEFAULT_DAEMON_LOG_PATH "/tmp/gkfs_daemon.log"
 
 #define DEFAULT_PRELOAD_LOG_LEVEL 4 // info
 #define DEFAULT_DAEMON_LOG_LEVEL 4 // info

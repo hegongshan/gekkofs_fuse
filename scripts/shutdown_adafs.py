@@ -93,7 +93,7 @@ def shutdown_system(daemon_pid_path, nodelist, sigkill):
             time.sleep(1)
     print('Checking logs ...\n')
 
-    cmd_chk_str = '%s "tail -4 /tmp/adafs_daemon.log"' % pssh
+    cmd_chk_str = '%s "tail -4 /tmp/gkfs_daemon.log"' % pssh
     if PRETEND:
         print('Pretending: {}'.format(cmd_chk_str))
     else:
