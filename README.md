@@ -131,7 +131,7 @@ an MPI application use the `{mpirun, mpiexec} -x` argument.
  
 ### Logging
 To enable logging the following environment variables are used:
-ADAFS_PRELOAD_LOG_PATH="<path/to/file>" to set the path to the logging file of the client library.
-ADAFS_DAEMON_LOG_PATH="<path/to/file>" to set the path to the logging file of the daemon.
-ADAFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace} to set the trace level verbosity.
+GKFS_PRELOAD_LOG_PATH="<path/to/file>" to set the path to the logging file of the client library.
+GKFS_DAEMON_LOG_PATH="<path/to/file>" to set the path to the logging file of the daemon.
+GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace} to set the trace level verbosity.
 Numbers from 0-6 may also be used where as 0 is off and 6 represents trace.

@@ -47,7 +47,7 @@
 #define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega
 
 // environment prefixes
-#define ENV_PREFIX "ADAFS_"
+#define ENV_PREFIX "GKFS_"
 
 // Log
 #define DEFAULT_PRELOAD_LOG_PATH "/tmp/adafs_preload.log"

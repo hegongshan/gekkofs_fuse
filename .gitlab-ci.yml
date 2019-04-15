@@ -12,9 +12,9 @@ variables:
   TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
   # Configuration variables
-  ADAFS_LOG_LEVEL:   "100"
-  ADAFS_DAEMON_LOG_PATH:  "${CI_PROJECT_DIR}/logs/daemon.log"
-  ADAFS_PRELOAD_LOG_PATH: "${CI_PROJECT_DIR}/logs/preload.log"
+  GKFS_LOG_LEVEL:   "100"
+  GKFS_DAEMON_LOG_PATH:  "${CI_PROJECT_DIR}/logs/daemon.log"
+  GKFS_PRELOAD_LOG_PATH: "${CI_PROJECT_DIR}/logs/preload.log"
 
 image: gekkofs/gekkofs:build_env
 
