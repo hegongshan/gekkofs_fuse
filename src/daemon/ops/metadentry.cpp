@@ -1,5 +1,5 @@
 
-#include <daemon/adafs_ops/metadentry.hpp>
+#include <daemon/ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 

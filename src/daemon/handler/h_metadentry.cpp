@@ -4,7 +4,7 @@
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/backend/metadata/db.hpp>
 
-#include <daemon/adafs_ops/metadentry.hpp>
+#include <daemon/ops/metadentry.hpp>
 
 using namespace std;
 
