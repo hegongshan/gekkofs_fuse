@@ -70,7 +70,7 @@ test wr:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
+    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
     - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_wr
   artifacts:
@@ -81,7 +81,7 @@ test directories:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
+    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
     - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_dir
   artifacts:
@@ -92,7 +92,7 @@ test truncate:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
+    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
     - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
   artifacts:
@@ -103,7 +103,7 @@ test path resolution:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/adafs_daemon --mount /tmp/mountdir --root /tmp/adafs_root &
+    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
     - LD_PRELOAD=${BUILD_PATH}/lib/libadafs_preload_client.so ${TESTS_BUILD_PATH}/gkfs_test_path_resolution
   artifacts:

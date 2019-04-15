@@ -26,8 +26,8 @@ set(DAEMON_HEADERS
     ../../include/daemon/classes/rpc_data.hpp
     ../../include/daemon/handler/rpc_defs.hpp
     )
-add_executable(adafs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
-target_link_libraries(adafs_daemon
+add_executable(gkfs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
+target_link_libraries(gkfs_daemon
     # internal libs
     metadata
     metadata_db
@@ -46,7 +46,7 @@ target_link_libraries(adafs_daemon
     Threads::Threads
     )
 
-target_include_directories(adafs_daemon
+target_include_directories(gkfs_daemon
     PRIVATE
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}

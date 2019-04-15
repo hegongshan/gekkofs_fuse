@@ -107,13 +107,13 @@ make
 
 ## Run GekkoFS
 
-First on each node a daemon has to be started. This can be done in two ways using the `adafs_daemon` binary directly or
+First on each node a daemon has to be started. This can be done in two ways using the `gkfs_daemon` binary directly or
 the corresponding startup and shutdown scripts. The latter is recommended for cluster usage. It requires pssh (or
 parallel-ssh) with python2.
 
 ### Start and shut down daemon directly
 
-`./build/bin/adafs_daemon -r <fs_data_path> -m <pseudo_mount_dir_path> --hosts <hosts_comma_separated>`
+`./build/bin/gkfs_daemon -r <fs_data_path> -m <pseudo_mount_dir_path> --hosts <hosts_comma_separated>`
  
 Shut it down by gracefully killing the process.
  
