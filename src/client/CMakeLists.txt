@@ -37,9 +37,9 @@ set(PRELOAD_HEADERS
     ../../include/client/rpc/ld_rpc_metadentry.hpp
     )
 
-add_library(adafs_preload_client SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
+add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
-target_link_libraries(adafs_preload_client
+target_link_libraries(gkfs_intercept
     # internal
     metadata
     distributor
@@ -53,7 +53,7 @@ target_link_libraries(adafs_preload_client
     Threads::Threads
 )
 
-target_include_directories(adafs_preload_client
+target_include_directories(gkfs_intercept
     PRIVATE
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
