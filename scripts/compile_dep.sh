@@ -141,8 +141,6 @@ else
     echo "No cluster configuration set."
 fi
 
-#LOG=/tmp/adafs_install.log
-#echo "" &> $LOG
 USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"

@@ -5,7 +5,6 @@
 #include <string>
 #include <spdlog/spdlog.h>
 
-// adafs config
 #include <global/configure.hpp>
 #include <global/global_defs.hpp>
 // margo
@@ -14,7 +13,6 @@ extern "C" {
 #include <mercury.h>
 #include <margo.h>
 }
-// adafs
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/classes/rpc_data.hpp>
 

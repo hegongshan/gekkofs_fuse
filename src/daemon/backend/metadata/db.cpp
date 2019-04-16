@@ -169,7 +169,6 @@ void MetadataDB::iterate_all() {
     for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
         key = iter->key().ToString();
         val = iter->value().ToString();
-        //TODO ADAFS_DATA->spdlogger()->trace("key '{}' value '{}'", key, val);
     }
 }
 
