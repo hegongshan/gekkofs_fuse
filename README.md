@@ -97,11 +97,9 @@ You need to decide what Mercury NA plugin you want to use. The following NA plug
  - `cci+verbs` for using the cci plugin with Infiniband verbs
  - `bmi+tcp` for using the bmi plugin with the tcp protocol 
 
-In addition you can add a specific directory where all dependencies are located, i.e., headers and libraries. This can
-be done by using `-DADAFS_DEPS_INSTALL=<path>`. If the variable is not set this path points to `/usr/local`.
 ```bash
 mkdir build && cd build
-cmake -DADAFS_DEPS_INSTALL=<path> -DCMAKE_BUILD_TYPE={Release, Debug}} ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 

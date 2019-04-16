@@ -1,11 +1,9 @@
 find_library(Snappy_LIBRARY
         NAMES snappy
-        HINTS ${ADAFS_DEPS_INSTALL}
 )
 
 find_path(Snappy_INCLUDE_DIR
     NAMES snappy.h
-    HINTS ${ADAFS_DEPS_INSTALL}
 )
 
 set(Snappy_LIBRARIES ${Snappy_LIBRARY})
