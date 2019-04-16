@@ -5,8 +5,12 @@
 #include <cassert>
 
 #include "global/path_util.hpp"
+#include "global/configure.hpp"
 #include "client/passthrough.hpp"
 #include "client/preload.hpp"
+
+
+constexpr static const char * ENV_NAME_CWD = ENV_PREFIX "CWD";
 
 /* Match components in path
  *
@@ -206,7 +210,7 @@ void set_sys_cwd(const std::string& path) {
 
 void set_env_cwd(const std::string& path) {
     CTX->log()->debug("{}() to '{}'", __func__, path);
-    if(setenv("ADAFS_CWD", path.c_str(), 1)) {
+    if(setenv(ENV_NAME_CWD, path.c_str(), 1)) {
         CTX->log()->error("{}() failed to set environment current working directory: {}",
                 __func__, std::strerror(errno));
         throw std::system_error(errno,
@@ -217,7 +221,7 @@ void set_env_cwd(const std::string& path) {
 
 void unset_env_cwd() {
     CTX->log()->debug("{}()", __func__);
-    if(unsetenv("ADAFS_CWD")) {
+    if(unsetenv(ENV_NAME_CWD)) {
         CTX->log()->error("{}() failed to unset environment current working directory: {}",
                 __func__, std::strerror(errno));
         throw std::system_error(errno,
@@ -227,7 +231,7 @@ void unset_env_cwd() {
 }
 
 void init_cwd() {
-    const char* env_cwd = std::getenv("ADAFS_CWD");
+    const char* env_cwd = std::getenv(ENV_NAME_CWD);
     if (env_cwd != nullptr) {
         CTX->cwd(env_cwd);
     } else {
