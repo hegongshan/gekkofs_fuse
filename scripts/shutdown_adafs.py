@@ -34,11 +34,11 @@ def check_dependencies():
 
 
 def shutdown_system(daemon_pid_path, nodelist, sigkill):
-    """Shuts down ADAFS on specified nodes.
+    """Shuts down GekkoFS on specified nodes.
 
     Args:
         daemon_pid_path (str): Path to daemon pid file
-        nodelist (str): Comma-separated list of nodes where adafs is launched on
+        nodelist (str): Comma-separated list of nodes where daemons need to be launched
         sigkill (bool): If true force kills daemons
     """
     global PSSH_PATH
@@ -126,7 +126,7 @@ def shutdown_system(daemon_pid_path, nodelist, sigkill):
 
 if __name__ == "__main__":
     # Init parser
-    parser = argparse.ArgumentParser(description='This script stops adafs on multiple nodes',
+    parser = argparse.ArgumentParser(description='This script stops GekkoFS on multiple nodes',
                                      formatter_class=argparse.RawTextHelpFormatter)
     # positional arguments
     parser.add_argument('daemonpidpath', type=str,
@@ -137,9 +137,9 @@ if __name__ == "__main__":
 
     # optional arguments
     parser.add_argument('-p', '--pretend', action='store_true',
-                        help='Output adafs launch command and do not actually execute it')
+                        help='Output launch command and do not actually execute it')
     parser.add_argument('-9', '--sigkill', action='store_true',
-                        help='Force kill adafs_daemons')
+                        help='Force kill daemons')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
     parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',

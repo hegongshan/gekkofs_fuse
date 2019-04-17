@@ -168,7 +168,7 @@ int OpenFileMap::dup2(const int oldfd, const int newfd) {
 }
 
 /**
- * Generate new file descriptor index to be used as an fd within one process in ADA-FS
+ * Generate new file descriptor index to be used as an fd within one process
  * @return fd_idx
  */
 int OpenFileMap::generate_fd_idx() {

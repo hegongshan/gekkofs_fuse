@@ -78,7 +78,7 @@ help_msg() {
 
         usage_short
     echo "
-This script gets all ADA-FS dependency sources (excluding the fs itself)
+This script gets all GekkoFS dependency sources (excluding the fs itself)
 
 positional arguments:
         source_path              path where the dependency downloads are put

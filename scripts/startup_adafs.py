@@ -34,14 +34,14 @@ def check_dependencies():
 
 
 def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, numactl):
-    """Initializes ADAFS on specified nodes.
+    """Initializes GekkoFS on specified nodes.
 
     Args:
         daemon_path (str): Path to daemon executable
         rootdir (str): Path to root directory for fs data
         metadir (str): Path to metadata directory where metadata is stored
-        mountdir (str): Path to mount directory where adafs is used in
-        nodelist (str): Comma-separated list of nodes where adafs is launched on
+        mountdir (str): Path to mount directory where is used in
+        nodelist (str): Comma-separated list of nodes where daemons need to be launched
         cleanroot (bool): if True, root and metadir is cleaned before daemon init
         numactl (str): numactl arguments for daemon init
     """
@@ -124,7 +124,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
         if not err:
             print('pssh daemon launch successfully executed. Checking for FS startup errors ...\n')
         else:
-            print('[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!')
+            print('[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan daemons!')
             exit(1)
 
     if not PRETEND:
@@ -133,7 +133,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
             print('{}\r'.format(WAITTIME - i)),
             time.sleep(1)
 
-    # Check adafs logs for errors
+    # Check logs for errors
     cmd_chk_str = '%s "head -5 /tmp/gkfs_daemon.log"' % pssh
     if PRETEND:
         print('Pretending: {}'.format(cmd_chk_str))
@@ -160,13 +160,13 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
         if not err and not fs_err:
             print('pssh logging check successfully executed. Looks prime.')
         else:
-            print('[ERR] while checking fs logs. Aborting. Please run shutdown_adafs.py to shut down orphan adafs daemons!')
+            print('[ERR] while checking fs logs. Aborting. Please run shutdown_adafs.py to shut down orphan daemons!')
             exit(1)
 
 
 if __name__ == "__main__":
     # Init parser
-    parser = argparse.ArgumentParser(description='This script launches adafs on multiple nodes',
+    parser = argparse.ArgumentParser(description='This script launches GekkoFS on multiple nodes',
                                      formatter_class=argparse.RawTextHelpFormatter)
     # positional arguments
     parser.add_argument('daemonpath', type=str,
@@ -184,15 +184,15 @@ or a path to a nodefile (one node per line)''')
                         help='''Path to separate metadir directory where metadata is stored. 
 If not set, rootdir will be used instead.''')
     parser.add_argument('-p', '--pretend', action='store_true',
-                        help='Output adafs launch command and do not actually execute it')
+                        help='Output launch command and do not actually execute it')
     parser.add_argument('-P', '--pssh', metavar='<PSSH_PATH>', type=str, default='',
                         help='Path to parallel-ssh/pssh. Defaults to /usr/bin/{parallel-ssh,pssh}')
     parser.add_argument('-J', '--jobid', metavar='<JOBID>', type=str, default='',
                         help='Jobid for cluster batch system. Used for a unique hostfile used for pssh.')
     parser.add_argument('-c', '--cleanroot', action='store_true',
-                        help='Removes contents of root and metadata directory before starting ADA-FS Daemon. Be careful!')
+                        help='Removes contents of root and metadata directory before starting daemon. Be careful!')
     parser.add_argument('-n', '--numactl', metavar='<numactl_args>', type=str, default='',
-                        help='If adafs daemon should be pinned to certain cores, set numactl arguments here.')
+                        help='If daemon should be pinned to certain cores, set numactl arguments here.')
     parser.add_argument('-H', '--pssh_hostfile', metavar='<pssh_hostfile>', type=str, default='/tmp/hostfile_pssh',
                         help='''This script creates a hostfile to pass to MPI. This variable defines the path. 
 Defaults to /tmp/hostfile_pssh''')

@@ -11,7 +11,7 @@ help_msg() {
 
 	usage_short
     echo "
-This script compiles all ADA-FS dependencies (excluding the fs itself)
+This script compiles all GekkoFS dependencies (excluding the fs itself)
 
 positional arguments:
     source_path 	path to the cloned dependencies path from clone_dep.sh
@@ -213,9 +213,9 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     prepare_build_dir ${CURR}
     cd ${CURR}
     # patch hanging issue
-    echo "########## ADA-FS injection: Applying cci hanging patch"
+    echo "########## Patch injection: Applying cci hanging patch"
     git apply ${PATCH_DIR}/cci_hang_final.patch
-    echo "########## ADA-FS injection: Disabling cci debug mode/devel mode entirely"
+    echo "########## Patch injection: Disabling cci debug mode/devel mode entirely"
     git apply ${PATCH_DIR}/cci_remove_devel_mode.patch
     ./autogen.pl
     cd ${CURR}/build
@@ -225,7 +225,7 @@ else
     ../configure --prefix=${INSTALL} LIBS="-lpthread"
 fi
 
-    echo "########## ADA-FS injection: Replacing any remaining CFLAGS with '-g -O2' that are added by cci although debug mode is disabled with '-O3'"
+    echo "########## Patch injection: Replacing any remaining CFLAGS with '-g -O2' that are added by cci although debug mode is disabled with '-O3'"
     find . -type f -exec sed -i 's/-g -O2/-O3/g' {} \;
     make -j${CORES}
     make install

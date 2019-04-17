@@ -78,15 +78,15 @@ int get_daemon_pid() {
         if (getline(ifs, adafs_daemon_pid_s) && !adafs_daemon_pid_s.empty())
             adafs_daemon_pid = ::stoi(adafs_daemon_pid_s);
         else {
-            cerr << "ADA-FS daemon pid not found. Daemon not running?" << endl;
+            cerr << "GekkoFS daemon pid not found. Daemon not running?" << endl;
             CTX->log()->error("{}() Unable to read daemon pid from pid file", __func__);
             ifs.close();
             return -1;
         }
         // check that daemon is running
         if (kill(adafs_daemon_pid, 0) != 0) {
-            cerr << "ADA-FS daemon process with pid " << adafs_daemon_pid << " not found. Daemon not running?" << endl;
-            CTX->log()->error("{}() ADA-FS daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
+            cerr << "GekkoFS daemon process with pid " << adafs_daemon_pid << " not found. Daemon not running?" << endl;
+            CTX->log()->error("{}() daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
             ifs.close();
             return -1;
         }
@@ -95,7 +95,7 @@ int get_daemon_pid() {
         if (getline(ifs, daemon_addr) && !daemon_addr.empty()) {
             CTX->daemon_addr_str(daemon_addr);
         } else {
-            CTX->log()->error("{}() ADA-FS daemon pid file contains no daemon address. Exiting ...", __func__);
+            CTX->log()->error("{}() daemon pid file contains no daemon address. Exiting ...", __func__);
             ifs.close();
             return -1;
         }
@@ -103,13 +103,13 @@ int get_daemon_pid() {
         if (getline(ifs, mountdir) && !mountdir.empty()) {
             CTX->mountdir(mountdir);
         } else {
-            CTX->log()->error("{}() ADA-FS daemon pid file contains no mountdir path. Exiting ...", __func__);
+            CTX->log()->error("{}() daemon pid file contains no mountdir path. Exiting ...", __func__);
             ifs.close();
             return -1;
         }
     } else {
-        cerr << "No permission to open pid file at " << daemon_pid_path()
-             << " or ADA-FS daemon pid file not found. Daemon not running?" << endl;
+        cerr << "Failed to to open pid file at '" << daemon_pid_path()
+             << "'. Daemon not running?" << endl;
         CTX->log()->error(
                 "{}() Failed to open pid file '{}'. Error: {}",
                 __func__, daemon_pid_path(), std::strerror(errno));

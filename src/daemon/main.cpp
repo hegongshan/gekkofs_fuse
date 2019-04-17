@@ -132,7 +132,7 @@ void destroy_enviroment() {
     ADAFS_DATA->spdlogger()->info("{}() Closing DB...", __func__);
     ADAFS_DATA->close_mdb();
 
-    ADAFS_DATA->spdlogger()->info("All services shut down. ADA-FS shutdown complete.");
+    ADAFS_DATA->spdlogger()->info("Shutdown complete");
 }
 
 bool init_io_tasklet_pool() {
@@ -338,8 +338,8 @@ int main(int argc, const char* argv[]) {
     desc.add_options()
             ("help,h", "Help message")
             ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
-            ("rootdir,r", po::value<string>()->required(), "ADA-FS data directory")
-            ("metadir,i", po::value<string>(), "ADA-FS metadata directory, if not set rootdir is used for metadata ")
+            ("rootdir,r", po::value<string>()->required(), "data directory")
+            ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
             ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
             ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
