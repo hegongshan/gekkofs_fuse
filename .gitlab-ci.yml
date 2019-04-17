@@ -9,8 +9,10 @@ variables:
   DEPS_INSTALL_PATH: "${CI_PROJECT_DIR}/deps/build"
   DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/build/gkfs_deps_commit"
   BUILD_PATH:        "${CI_PROJECT_DIR}/build"
+  INSTALL_PATH:      "${CI_PROJECT_DIR}/install"
   TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
+  LD_LIBRARY_PATH:   "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
   GKFS_LOG_LEVEL:   "100"
   GKFS_DAEMON_LOG_PATH:  "${CI_PROJECT_DIR}/logs/daemon.log"
@@ -48,11 +50,12 @@ compile GekkoFS:
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
-      ..
-    - make -j$(nproc)
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
+      ${CI_PROJECT_DIR}
+    - make -j$(nproc) install
   artifacts:
     paths:
-     - ${BUILD_PATH}
+     - ${INSTALL_PATH}
 
 compile tests:
   stage: build
@@ -70,9 +73,9 @@ test wr:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_wr
+    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_wr
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -81,9 +84,9 @@ test directories:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_dir
+    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_dir
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -92,9 +95,9 @@ test truncate:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
+    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
   artifacts:
     paths:
      - "${LOG_PATH}"
@@ -103,9 +106,9 @@ test path resolution:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
-    - ${BUILD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
-    - LD_PRELOAD=${BUILD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_path_resolution
+    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_path_resolution
   artifacts:
     paths:
      - "${LOG_PATH}"

@@ -52,3 +52,7 @@ target_include_directories(gkfs_daemon
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )
+
+install(TARGETS gkfs_daemon
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

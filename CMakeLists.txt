@@ -16,6 +16,8 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release
             CACHE STRING "Choose the type of build: Debug Release Memcheck" FORCE)
@@ -68,8 +70,6 @@ configure_file(include/version.hpp.in include/version.hpp)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
@@ -156,6 +156,8 @@ include_directories(
     ${INCLUDE_DIR}
     ${CMAKE_BINARY_DIR}/include
 )
+
+include(GNUInstallDirs)
 
 # Global components
 add_subdirectory(src/global)
