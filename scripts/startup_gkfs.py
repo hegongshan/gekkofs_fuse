@@ -124,7 +124,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
         if not err:
             print('pssh daemon launch successfully executed. Checking for FS startup errors ...\n')
         else:
-            print('[ERR] with pssh. Aborting. Please run shutdown_adafs.py to shut down orphan daemons!')
+            print('[ERR] with pssh. Aborting. Please run shutdown_gkfs.py to shut down orphan daemons!')
             exit(1)
 
     if not PRETEND:
@@ -160,7 +160,7 @@ def init_system(daemon_path, rootdir, metadir, mountdir, nodelist, cleanroot, nu
         if not err and not fs_err:
             print('pssh logging check successfully executed. Looks prime.')
         else:
-            print('[ERR] while checking fs logs. Aborting. Please run shutdown_adafs.py to shut down orphan daemons!')
+            print('[ERR] while checking fs logs. Aborting. Please run shutdown_gkfs.py to shut down orphan daemons!')
             exit(1)
 
 

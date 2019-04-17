@@ -117,7 +117,7 @@ Shut it down by gracefully killing the process.
  
 ### Startup and shutdown scripts
 
-The scripts are located in `scripts/{startup_adafs.py, shutdown_adafs.py}`. Use the -h argument for their usage.
+The scripts are located in `scripts/{startup_gkfs.py, shutdown_gkfs.py}`. Use the -h argument for their usage.
 
 ## Miscellaneous
 
