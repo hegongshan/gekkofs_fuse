@@ -1,5 +1,6 @@
 
 #include <daemon/main.hpp>
+#include "version.hpp"
 #include <global/log_util.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/rpc_utils.hpp>
@@ -345,13 +346,25 @@ int main(int argc, const char* argv[]) {
             ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
             ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
             ("hostname-suffix,s", po::value<string>()->default_value(""), "Suffix that is added to each given host. Consult /etc/hosts for allowed suffixes")
-            ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)");
+            ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)")
+            ("version,h", "print version and exit");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
     if (vm.count("help")) {
         cout << desc << "\n";
         return 1;
+    }
+
+    if (vm.count("version")) {
+        cout << GKFS_VERSION_STRING << endl;
+#ifndef NDEBUG
+        cout << "Debug: ON" << endl;
+#else
+        cout << "Debug: OFF" << endl;
+#endif
+        cout << "RPC protocol: " << RPC_PROTOCOL << endl;
+        return 0;
     }
 
     try {

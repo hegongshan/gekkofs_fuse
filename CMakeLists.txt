@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.6)
-project(GekkoFS)
+
+project(
+    GekkoFS
+    VERSION 0.3.1
+)
+
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
     message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
@@ -24,6 +29,41 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${WARNINGS_FLAGS} -g -O0")
 set(CMAKE_CXX_FLAGS_MEMCHECK "${WARNINGS_FLAGS} -g -O0 -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_MAINTAINER "${WARNINGS_FLAGS} -g -O0 -pg -no-pie")
 mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
+
+# Project version
+set(GIT_VERSION_FOUND FALSE)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+    find_package(Git)
+    if(Git_FOUND)
+        execute_process(COMMAND /bin/bash -c "${GIT_EXECUTABLE} describe --tags --match='v*.*.*' --long --dirty"
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE GIT_RET
+                        OUTPUT_VARIABLE GIT_VERSION
+                        ERROR_VARIABLE GIT_ERR
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        )
+        if("${GIT_RET}" STREQUAL "0")
+            string(REGEX MATCH
+                   "^v([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)-(.*)$"
+                   DROP ${GIT_VERSION})
+            set(PROJECT_VERSION_MAJOR ${CMAKE_MATCH_1})
+            set(PROJECT_VERSION_MINOR ${CMAKE_MATCH_2})
+            set(PROJECT_VERSION_PATCH ${CMAKE_MATCH_3})
+            set(GKFS_COMMIT_GAP ${CMAKE_MATCH_4})
+            set(GKFS_COMMIT_HASH ${CMAKE_MATCH_5})
+            set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}-snapshot+${GKFS_COMMIT_GAP}-${GKFS_COMMIT_HASH}")
+            set(GIT_VERSION_FOUND TRUE)
+        else()
+            message(WARNING "Failed to run `git describe`: [${GIT_RET}] '${GIT_ERR}'")
+        endif()
+    endif()
+endif()
+message(STATUS "Project version: ${PROJECT_VERSION}")
+set(GKFS_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(GKFS_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(GKFS_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(GKFS_VERSION_STRING ${PROJECT_VERSION})
+configure_file(include/version.hpp.in include/version.hpp)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
@@ -114,6 +154,7 @@ set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 # define include directories that are relevant for all targets
 include_directories(
     ${INCLUDE_DIR}
+    ${CMAKE_BINARY_DIR}/include
 )
 
 # Global components
