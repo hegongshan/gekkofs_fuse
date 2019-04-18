@@ -139,14 +139,14 @@ add_library(spdlog INTERFACE)
 # we cannot use target_include_directories with CMake < 3.11
 set_target_properties(spdlog
     PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/extern"
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
 )
 
 add_library(fmt INTERFACE)
 # we cannot use target_include_directories with CMake < 3.11
 set_target_properties(fmt
     PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/extern/spdlog"
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external/spdlog"
 )
 
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
