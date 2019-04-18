@@ -201,7 +201,7 @@ wgetdeps "argobots" "https://github.com/pmodels/argobots/archive/v1.0rc1.tar.gz"
 # get Margo
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "ad09e1e445a9275b24036e465bee3b4b75f0fb17" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.18.3.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.0.1.tar.gz" &
 
 # Wait for all download to be completed
 wait
