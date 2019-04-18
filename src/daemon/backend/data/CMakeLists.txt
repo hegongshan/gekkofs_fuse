@@ -5,7 +5,6 @@ target_sources(storage
     ${INCLUDE_DIR}/daemon/backend/data/chunk_storage.hpp
     PRIVATE
     ${INCLUDE_DIR}/global/path_util.hpp
-    ${INCLUDE_DIR}/extern/spdlog/spdlog.h
     ${CMAKE_CURRENT_LIST_DIR}/chunk_storage.cpp
     )
 
