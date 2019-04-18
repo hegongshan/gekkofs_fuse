@@ -364,6 +364,7 @@ int main(int argc, const char* argv[]) {
         cout << "Debug: OFF" << endl;
 #endif
         cout << "RPC protocol: " << RPC_PROTOCOL << endl;
+        cout << "Chunk size: " << CHUNKSIZE << " bytes" << endl;
         return 0;
     }
 
