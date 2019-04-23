@@ -1,7 +1,3 @@
-//
-// Created by evie on 11/15/17.
-//
-
 #ifndef IFS_PASSTHROUGH_HPP
 #define IFS_PASSTHROUGH_HPP
 
