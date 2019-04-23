@@ -2,119 +2,117 @@
 #define IFS_PASSTHROUGH_HPP
 
 
+#define LIBC_FUNC_NAME(FNAME) libc_##FNAME
+
 #define LIBC_FUNC(FNAME, ...) \
     ((reinterpret_cast<decltype(&FNAME)>(libc_##FNAME))(__VA_ARGS__))
 
-// function pointer for preloading
-extern void* libc;
 
-extern void* libc_open;
-extern void* libc_openat;
+extern void* LIBC_FUNC_NAME(open);
+extern void* LIBC_FUNC_NAME(openat);
 
-extern void* libc_fopen;
-extern void* libc_fopen64;
-extern void* libc_fread;
-extern void* libc_fwrite;
-extern void* libc_fclose;
-extern void* libc_clearerr;
-extern void* libc_feof;
-extern void* libc_ferror;
-extern void* libc_fileno;
-extern void* libc_fflush;
-extern void* libc_fpurge;
-extern void* libc___fpurge;
+extern void* LIBC_FUNC_NAME(fopen);
+extern void* LIBC_FUNC_NAME(fopen64);
+extern void* LIBC_FUNC_NAME(fread);
+extern void* LIBC_FUNC_NAME(fwrite);
+extern void* LIBC_FUNC_NAME(fclose);
+extern void* LIBC_FUNC_NAME(clearerr);
+extern void* LIBC_FUNC_NAME(feof);
+extern void* LIBC_FUNC_NAME(ferror);
+extern void* LIBC_FUNC_NAME(fileno);
+extern void* LIBC_FUNC_NAME(fflush);
+extern void* LIBC_FUNC_NAME(__fpurge);
 
-extern void* libc_setbuf;
-extern void* libc_setbuffer;
-extern void* libc_setlinebuf;
-extern void* libc_setvbuf;
+extern void* LIBC_FUNC_NAME(setbuf);
+extern void* LIBC_FUNC_NAME(setbuffer);
+extern void* LIBC_FUNC_NAME(setlinebuf);
+extern void* LIBC_FUNC_NAME(setvbuf);
 
-extern void* libc_putc;
-extern void* libc_fputc;
-extern void* libc_fputs;
-extern void* libc_getc;
-extern void* libc_fgetc;
-extern void* libc_fgets;
-extern void* libc_ungetc;
+extern void* LIBC_FUNC_NAME(putc);
+extern void* LIBC_FUNC_NAME(fputc);
+extern void* LIBC_FUNC_NAME(fputs);
+extern void* LIBC_FUNC_NAME(getc);
+extern void* LIBC_FUNC_NAME(fgetc);
+extern void* LIBC_FUNC_NAME(fgets);
+extern void* LIBC_FUNC_NAME(ungetc);
 
-extern void* libc_fseek;
+extern void* LIBC_FUNC_NAME(fseek);
 
-extern void* libc_mkdir;
-extern void* libc_mkdirat;
-extern void* libc_unlink;
-extern void* libc_unlinkat;
-extern void* libc_rmdir;
+extern void* LIBC_FUNC_NAME(mkdir);
+extern void* LIBC_FUNC_NAME(mkdirat);
+extern void* LIBC_FUNC_NAME(unlink);
+extern void* LIBC_FUNC_NAME(unlinkat);
+extern void* LIBC_FUNC_NAME(rmdir);
 
-extern void* libc_close;
+extern void* LIBC_FUNC_NAME(close);
 
-extern void* libc_access;
-extern void* libc_faccessat;
+extern void* LIBC_FUNC_NAME(access);
+extern void* LIBC_FUNC_NAME(faccessat);
 
-extern void* libc_stat;
-extern void* libc_fstat;
-extern void* libc_lstat;
-extern void* libc___xstat;
-extern void* libc___xstat64;
-extern void* libc___fxstat;
-extern void* libc___fxstat64;
-extern void* libc___fxstatat;
-extern void* libc___fxstatat64;
-extern void* libc___lxstat;
-extern void* libc___lxstat64;
+extern void* LIBC_FUNC_NAME(__xstat);
+extern void* LIBC_FUNC_NAME(__xstat64);
+extern void* LIBC_FUNC_NAME(__fxstat);
+extern void* LIBC_FUNC_NAME(__fxstat64);
+extern void* LIBC_FUNC_NAME(__fxstatat);
+extern void* LIBC_FUNC_NAME(__fxstatat64);
+extern void* LIBC_FUNC_NAME(__lxstat);
+extern void* LIBC_FUNC_NAME(__lxstat64);
 
-extern void* libc_statfs;
-extern void* libc_fstatfs;
-extern void* libc_statvfs;
-extern void* libc_fstatvfs;
+extern void* LIBC_FUNC_NAME(statfs);
+extern void* LIBC_FUNC_NAME(fstatfs);
+extern void* LIBC_FUNC_NAME(statvfs);
+extern void* LIBC_FUNC_NAME(fstatvfs);
 
-extern void* libc_write;
-extern void* libc_pwrite;
-extern void* libc_pwrite64;
-extern void* libc_writev;
+extern void* LIBC_FUNC_NAME(write);
+extern void* LIBC_FUNC_NAME(pwrite);
+extern void* LIBC_FUNC_NAME(pwrite64);
+extern void* LIBC_FUNC_NAME(writev);
 
-extern void* libc_read;
-extern void* libc_pread;
-extern void* libc_pread64;
-extern void* libc_readv;
+extern void* LIBC_FUNC_NAME(read);
+extern void* LIBC_FUNC_NAME(pread);
+extern void* LIBC_FUNC_NAME(pread64);
+extern void* LIBC_FUNC_NAME(readv);
 
-extern void* libc_lseek;
-extern void* libc_lseek64;
-extern void* libc_fsync;
-extern void* libc_fdatasync;
+extern void* LIBC_FUNC_NAME(lseek);
+extern void* LIBC_FUNC_NAME(lseek64);
+extern void* LIBC_FUNC_NAME(fsync);
+extern void* LIBC_FUNC_NAME(fdatasync);
 
-extern void* libc_truncate;
-extern void* libc_ftruncate;
+extern void* LIBC_FUNC_NAME(truncate);
+extern void* LIBC_FUNC_NAME(ftruncate);
 
-extern void* libc_fcntl;
+extern void* LIBC_FUNC_NAME(fcntl);
 
-extern void* libc_dup;
-extern void* libc_dup2;
-extern void* libc_dup3;
+extern void* LIBC_FUNC_NAME(dup);
+extern void* LIBC_FUNC_NAME(dup2);
+extern void* LIBC_FUNC_NAME(dup3);
 
-extern void* libc_dirfd;
-extern void* libc_opendir;
-extern void* libc_fdopendir;
-extern void* libc_readdir;
-extern void* libc_closedir;
+extern void* LIBC_FUNC_NAME(dirfd);
+extern void* LIBC_FUNC_NAME(opendir);
+extern void* LIBC_FUNC_NAME(fdopendir);
+extern void* LIBC_FUNC_NAME(readdir);
+extern void* LIBC_FUNC_NAME(closedir);
 
-extern void* libc_chmod;
-extern void* libc_fchmod;
-extern void* libc_fchmodat;
+extern void* LIBC_FUNC_NAME(chmod);
+extern void* LIBC_FUNC_NAME(fchmod);
+extern void* LIBC_FUNC_NAME(fchmodat);
 
-extern void* libc_chdir;
-extern void* libc_fchdir;
+extern void* LIBC_FUNC_NAME(chdir);
+extern void* LIBC_FUNC_NAME(fchdir);
 
-extern void* libc_getcwd;
-extern void* libc_get_current_dir_name;
+extern void* LIBC_FUNC_NAME(getcwd);
+extern void* LIBC_FUNC_NAME(get_current_dir_name);
 
-extern void* libc_link;
-extern void* libc_linkat;
-extern void* libc_symlinkat;
+extern void* LIBC_FUNC_NAME(link);
+extern void* LIBC_FUNC_NAME(linkat);
+extern void* LIBC_FUNC_NAME(symlinkat);
 
-extern void* libc_readlinkat;
+extern void* LIBC_FUNC_NAME(readlinkat);
 
-extern void* libc_realpath;
+extern void* LIBC_FUNC_NAME(realpath);
+
 
 void init_passthrough_if_needed();
+
 
 #endif //IFS_PASSTHROUGH_HPP

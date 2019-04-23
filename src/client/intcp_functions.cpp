@@ -288,18 +288,6 @@ int fflush(FILE *stream) {
     return (reinterpret_cast<decltype(&fflush)>(libc_fflush))(stream);
 }
 
-int fpurge(FILE *stream) {
-    init_passthrough_if_needed();
-    if(CTX->interception_enabled() && (stream != nullptr)) {
-        auto fd = file_to_fd(stream);
-        if(CTX->file_map()->exist(fd)) {
-            CTX->log()->trace("{}() called on fd {}", __func__, fd);
-            return 0;
-        }
-    }
-    return (reinterpret_cast<decltype(&fpurge)>(libc_fpurge))(stream);
-}
-
 void __fpurge(FILE *stream) {
     init_passthrough_if_needed();
     if(CTX->interception_enabled() && (stream != nullptr)) {
@@ -664,44 +652,6 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) noexcept {
     }
 }
 
-
-int stat(const char* path, struct stat* buf) noexcept {
-    init_passthrough_if_needed();
-    if(!CTX->interception_enabled()) {
-        return LIBC_FUNC(stat, path, buf);
-    }
-    CTX->log()->trace("{}() called with path '{}'", __func__, path);
-    std::string rel_path;
-    if (!CTX->relativize_path(path, rel_path)) {
-        return LIBC_FUNC(stat, rel_path.c_str(), buf);
-    }
-    return adafs_stat(rel_path, buf);
-}
-
-int fstat(int fd, struct stat* buf) noexcept {
-    init_passthrough_if_needed();
-    if(CTX->interception_enabled()) {
-        CTX->log()->trace("{}() called with fd {}", __func__, fd);
-        if (CTX->file_map()->exist(fd)) {
-            auto path = CTX->file_map()->get(fd)->path();
-            return adafs_stat(path, buf);
-        }
-    }
-    return LIBC_FUNC(fstat, fd, buf);
-}
-
-int lstat(const char* path, struct stat* buf) noexcept {
-    init_passthrough_if_needed();
-    if(!CTX->interception_enabled()) {
-        return LIBC_FUNC(lstat, path, buf);
-    }
-    CTX->log()->trace("{}() called with path '{}'", __func__, path);
-    std::string rel_path;
-    if (!CTX->relativize_path(path, rel_path, false)) {
-        return LIBC_FUNC(lstat, rel_path.c_str(), buf);
-    }
-    return adafs_stat(rel_path, buf, false);
-}
 
 int __xstat(int ver, const char* path, struct stat* buf) noexcept {
     init_passthrough_if_needed();
