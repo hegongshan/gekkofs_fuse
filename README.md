@@ -135,7 +135,7 @@ GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace} to set the trace level v
 Numbers from 0-6 may also be used where as 0 is off and 6 represents trace.
 
 
-### Acknoledgment
+### Acknowledgment
 
 This software was partially supported by the EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
 
