@@ -23,10 +23,23 @@
 #include <client/rpc/ld_rpc_data_ws.hpp>
 #include <client/open_dir.hpp>
 
+#include <dirent.h>
+
+
+#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
+#define __ALIGN_KERNEL(x, a)		    __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+#define ALIGN(x, a)                     __ALIGN_KERNEL((x), (a))
+
+struct linux_dirent {
+    unsigned long	d_ino;
+    unsigned long	d_off;
+    unsigned short	d_reclen;
+    char		d_name[1];
+};
+
 using namespace std;
 
 int adafs_open(const std::string& path, mode_t mode, int flags) {
-    init_ld_env_if_needed();
 
     if(flags & O_PATH){
         CTX->log()->error("{}() `O_PATH` flag is not supported", __func__);
@@ -112,7 +125,6 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 }
 
 int adafs_mk_node(const std::string& path, mode_t mode) {
-    init_ld_env_if_needed();
 
     //file type must be set
     switch (mode & S_IFMT) {
@@ -156,7 +168,6 @@ int adafs_mk_node(const std::string& path, mode_t mode) {
  * @return
  */
 int adafs_rm_node(const std::string& path) {
-    init_ld_env_if_needed();
     auto md = adafs_metadata(path);
     if (!md) {
         return -1;
@@ -166,7 +177,6 @@ int adafs_rm_node(const std::string& path) {
 }
 
 int adafs_access(const std::string& path, const int mask, bool follow_links) {
-    init_ld_env_if_needed();
     auto md = adafs_metadata(path, follow_links);
     if (!md) {
         errno = ENOENT;
@@ -176,7 +186,6 @@ int adafs_access(const std::string& path, const int mask, bool follow_links) {
 }
 
 int adafs_stat(const string& path, struct stat* buf, bool follow_links) {
-    init_ld_env_if_needed();
     auto md = adafs_metadata(path, follow_links);
     if (!md) {
         return -1;
@@ -207,7 +216,6 @@ std::shared_ptr<Metadata> adafs_metadata(const string& path, bool follow_links) 
 }
 
 int adafs_statfs(struct statfs* buf) {
-    init_ld_env_if_needed();
     CTX->log()->trace("{}() called", __func__);
     auto blk_stat = rpc_send::chunk_stat();
     buf->f_type = 0;
@@ -244,20 +252,21 @@ int adafs_statvfs(struct statvfs* buf) {
 }
 
 off64_t adafs_lseek(int fd, off64_t offset, int whence) {
-    init_ld_env_if_needed();
     return adafs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
 off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
-    init_ld_env_if_needed();
     switch (whence) {
         case SEEK_SET:
+            CTX->log()->debug("{}() whence is SEEK_SET", __func__);
             adafs_fd->pos(offset);
             break;
         case SEEK_CUR:
+            CTX->log()->debug("{}() whence is SEEK_CUR", __func__);
             adafs_fd->pos(adafs_fd->pos() + offset);
             break;
         case SEEK_END: {
+            CTX->log()->debug("{}() whence is SEEK_END", __func__);
             off64_t file_size;
             auto err = rpc_send::get_metadentry_size(adafs_fd->path(), file_size);
             if (err < 0) {
@@ -268,14 +277,17 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
             break;
         }
         case SEEK_DATA:
+            CTX->log()->warn("{}() SEEK_DATA whence is not supported", __func__);
             // We do not support this whence yet
             errno = EINVAL;
             return -1;
         case SEEK_HOLE:
+            CTX->log()->warn("{}() SEEK_HOLE whence is not supported", __func__);
             // We do not support this whence yet
             errno = EINVAL;
             return -1;
         default:
+            CTX->log()->warn("{}() unknown whence {}", __func__, whence);
             errno = EINVAL;
             return -1;
     }
@@ -311,7 +323,6 @@ int adafs_truncate(const std::string& path, off_t length) {
      * adafs_trunc_data, some more data could have been added to the file and the
      * length increased.
      */
-    init_ld_env_if_needed();
     if(length < 0) {
         CTX->log()->debug("{}() length is negative: {}", __func__, length);
         errno = EINVAL;
@@ -341,7 +352,6 @@ int adafs_dup2(const int oldfd, const int newfd) {
 }
 
 ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file, const char * buf, size_t count, off64_t offset) {
-    init_ld_env_if_needed();
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         CTX->log()->warn("{}() cannot read from directory", __func__);
@@ -367,7 +377,6 @@ ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file, const char * buf, size_t co
 }
 
 ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
-    init_ld_env_if_needed();
     auto file = CTX->file_map()->get(fd);
     return adafs_pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
 }
@@ -391,7 +400,6 @@ ssize_t adafs_write(int fd, const void * buf, size_t count) {
 }
 
 ssize_t adafs_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset) {
-    init_ld_env_if_needed();
     CTX->log()->trace("{}() called with fd {}, op num {}, offset {}",
                       __func__, fd, iovcnt, offset);
 
@@ -438,7 +446,6 @@ ssize_t adafs_writev(int fd, const struct iovec * iov, int iovcnt) {
 }
 
 ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, off64_t offset) {
-    init_ld_env_if_needed();
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         CTX->log()->warn("{}() cannot read from directory", __func__);
@@ -459,7 +466,6 @@ ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, of
 }
 
 ssize_t adafs_read(int fd, void* buf, size_t count) {
-    init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     auto pos = adafs_fd->pos(); //retrieve the current offset
     auto ret = adafs_pread(adafs_fd, reinterpret_cast<char*>(buf), count, pos);
@@ -471,13 +477,11 @@ ssize_t adafs_read(int fd, void* buf, size_t count) {
 }
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
-    init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     return adafs_pread(adafs_fd, reinterpret_cast<char*>(buf), count, offset);
 }
 
 int adafs_opendir(const std::string& path) {
-    init_ld_env_if_needed();
 
     auto md = adafs_metadata(path);
     if (!md) {
@@ -495,8 +499,6 @@ int adafs_opendir(const std::string& path) {
 }
 
 int adafs_rmdir(const std::string& path) {
-    init_ld_env_if_needed();
-
     auto md = adafs_metadata(path);
     if (!md) {
         CTX->log()->debug("{}() path does not exists: '{}'", __func__, path);
@@ -518,18 +520,56 @@ int adafs_rmdir(const std::string& path) {
     return rpc_send::rm_node(path, true);
 }
 
-struct dirent * adafs_readdir(int fd){
-    init_ld_env_if_needed();
-    CTX->log()->trace("{}() called on fd: {}", __func__, fd);
-    auto open_file = CTX->file_map()->get(fd);
-    assert(open_file != nullptr);
-    auto open_dir = static_pointer_cast<OpenDir>(open_file);
-    if(!open_dir){
+
+int getdents(unsigned int fd,
+             struct linux_dirent *dirp,
+             unsigned int count) {
+    CTX->log()->trace("{}() called on fd: {}, count {}", __func__, fd, count);
+    auto open_dir = CTX->file_map()->get_dir(fd);
+    if(open_dir == nullptr){
         //Cast did not succeeded: open_file is a regular file
         errno = EBADF;
-        return nullptr;
+        return -1;
     }
-    return open_dir->readdir();
+
+    auto pos = open_dir->pos();
+    if (pos >= open_dir->size()) {
+        return 0;
+    }
+
+    unsigned int written = 0;
+    struct linux_dirent * current_dirp = nullptr;
+    while(pos < open_dir->size()) {
+        DirEntry de = open_dir->getdent(pos);
+        auto total_size = ALIGN(offsetof(struct linux_dirent, d_name) +
+                de.name().size() + 3, sizeof(long));
+        if (total_size > (count - written)) {
+            //no enough space left on user buffer to insert next dirent
+            break;
+        }
+        current_dirp = reinterpret_cast<struct linux_dirent *>(
+                        reinterpret_cast<char*>(dirp) + written);
+        current_dirp->d_ino = std::hash<std::string>()(
+                open_dir->path() + "/" + de.name());
+
+        current_dirp->d_reclen = total_size;
+
+        *(reinterpret_cast<char*>(current_dirp) + total_size - 1) =
+            ((de.type() == FileType::regular)? DT_REG : DT_DIR);
+
+        CTX->log()->trace("{}() name {}: {}", __func__, pos, de.name());
+        std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());
+        ++pos;
+        current_dirp->d_off = pos;
+        written += total_size;
+    }
+
+    if (written == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    open_dir->pos(pos);
+    return written;
 }
 
 #ifdef HAS_SYMLINKS

@@ -20,8 +20,8 @@
 #include <global/rpc/distributor.hpp>
 #include "global/rpc/rpc_types.hpp"
 #include <client/rpc/ld_rpc_management.hpp>
-#include <client/passthrough.hpp>
 #include <client/preload_util.hpp>
+#include <client/intercept.hpp>
 
 #include <fstream>
 
@@ -224,7 +224,6 @@ void log_prog_name() {
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
-    init_passthrough_if_needed();
     init_logging();
     CTX->log()->debug("Initialized logging subsystem");
     log_prog_name();
@@ -237,14 +236,17 @@ void init_preload() {
     } else {
         CTX->log()->info("{}() mountdir '{}' loaded", __func__, CTX->mountdir());
     }
+    init_ld_env_if_needed();
     CTX->enable_interception();
     CTX->log()->debug("{}() exit", __func__);
+    start_interception();
 }
 
 /**
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    stop_interception();
     CTX->disable_interception();
     if (ld_margo_rpc_id == nullptr) {
         CTX->log()->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
