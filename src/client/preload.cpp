@@ -128,9 +128,6 @@ bool init_margo_client(const std::string& na_plugin) {
         return false;
     }
     register_client_rpcs(ld_margo_rpc_id);
-#ifdef MARGODIAG
-    margo_diag_start(ld_margo_rpc_id);
-#endif
     return true;
 }
 
@@ -252,10 +249,6 @@ void destroy_preload() {
         CTX->log()->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
         return;
     }
-#ifdef MARGODIAG
-    std::cout << "\n####################\n\nMargo RPC client stats: " << std::endl;
-    margo_diag_dump(ld_margo_rpc_id, "-", 0);
-#endif
     cleanup_addresses();
     CTX->log()->debug("{}() About to finalize the margo RPC client", __func__);
     // XXX Sometimes this hangs on the cluster. Investigate.

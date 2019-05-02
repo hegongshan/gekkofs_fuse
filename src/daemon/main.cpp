@@ -119,10 +119,6 @@ bool init_environment() {
  * Destroys the margo, argobots, and mercury environments
  */
 void destroy_enviroment() {
-#ifdef MARGODIAG
-    cout << "\n####################\n\nMargo RPC server stats: " << endl;
-    margo_diag_dump(RPC_DATA->server_rpc_mid(), "-", 0);
-#endif
     bfs::remove_all(ADAFS_DATA->mountdir());
     for (unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
         ABT_xstream_join(RPC_DATA->io_streams().at(i));
@@ -198,9 +194,6 @@ bool init_rpc_server() {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;
     }
-#ifdef MARGODIAG
-    margo_diag_start(mid);
-#endif
     // Figure out what address this server is listening on (must be freed when finished)
     auto hret = margo_addr_self(mid, &addr_self);
     if (hret != HG_SUCCESS) {
