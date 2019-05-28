@@ -195,7 +195,7 @@ wgetdeps "argobots" "https://github.com/pmodels/argobots/archive/v1.0rc1.tar.gz"
 # get Margo
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "ad09e1e445a9275b24036e465bee3b4b75f0fb17" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.0.1.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.1.2.tar.gz" &
 # get syscall_intercept
 clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" &
 
