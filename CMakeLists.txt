@@ -100,7 +100,6 @@ set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
    "ofi+tcp"
    "ofi+verbs"
    "ofi+psm2"
-   "cci+verbs"
 )
 message(STATUS "RPC protocol: '${RPC_PROTOCOL}'")
 

@@ -55,7 +55,7 @@ positional arguments:
 optional arguments:
         -h, --help              shows this help message and exits
         -n <NAPLUGIN>, --na <NAPLUGIN>
-                                network layer that is used for communication. Valid: {bmi,cci,ofi,all}
+                                network layer that is used for communication. Valid: {bmi,ofi,all}
                                 defaults to 'all'
         -c <CLUSTER>, --cluster <CLUSTER>
                                 additional configurations for specific compute clusters
@@ -79,7 +79,7 @@ positional arguments:
 optional arguments:
     -h, --help      shows this help message and exits
     -n <NAPLUGIN>, --na <NAPLUGIN>
-                network layer that is used for communication. Valid: {bmi,cci,ofi,all}
+                network layer that is used for communication. Valid: {bmi,ofi,all}
                 defaults to 'all'
     -c <CLUSTER>, --cluster <CLUSTER>
                 additional configurations for specific compute clusters
@@ -94,7 +94,6 @@ You need to decide what Mercury NA plugin you want to use. The following NA plug
  - `ofi+tcp` for using the libfabric plugin with TCP
  - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (not threadsafe. Do not use.)
  - `ofi+psm2` for using the libfabric plugin with Intel Omni-Path
- - `cci+verbs` for using the cci plugin with Infiniband verbs
  - `bmi+tcp` for using the bmi plugin with the tcp protocol 
 
 ```bash

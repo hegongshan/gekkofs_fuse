@@ -87,7 +87,7 @@ positional arguments:
 optional arguments:
         -h, --help              shows this help message and exits
         -n <NAPLUGIN>, --na <NAPLUGIN>
-                                network layer that is used for communication. Valid: {bmi,cci,ofi,all}
+                                network layer that is used for communication. Valid: {bmi,ofi,all}
                                 defaults to 'all'
         -c <CLUSTER>, --cluster <CLUSTER>
                                 additional configurations for specific compute clusters
@@ -141,7 +141,7 @@ if [ "${NA_LAYER}" == "" ]; then
 fi
 
 # sanity checks
-if [[ ( "${NA_LAYER}" == "cci" ) || ( "${NA_LAYER}" == "bmi" ) || ( "${NA_LAYER}" == "ofi" ) || ( "${NA_LAYER}" == "all" ) ]]; then
+if [[ ( "${NA_LAYER}" == "bmi" ) || ( "${NA_LAYER}" == "ofi" ) || ( "${NA_LAYER}" == "all" ) ]]; then
 	echo NAPLUGIN = "${NA_LAYER}"
 else
     echo "No valid plugin selected"
@@ -166,8 +166,6 @@ mkdir -p ${SOURCE}
 
 # get cluster dependencies
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "mogon2" ) || ( "${CLUSTER}" == "fh2" ) ]]; then
-    # get libtool for cci
-    wgetdeps "libtool" "https://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz" &
     # get zstd for fast compression in rocksdb
     wgetdeps "zstd" "https://github.com/facebook/zstd/archive/v1.3.2.tar.gz" &
     # get zlib for rocksdb
@@ -182,10 +180,6 @@ fi
 # get BMI
 if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "all" ]; then
     clonedeps "bmi" "http://git.mcs.anl.gov/bmi.git" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
-fi
-# get CCI
-if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "cci" "https://github.com/CCI/cci" "58fd58ea2aa60c116c2b77c5653ae36d854d78f2" &
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then

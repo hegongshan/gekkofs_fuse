@@ -21,7 +21,7 @@ positional arguments:
 optional arguments:
     -h, --help      shows this help message and exits
     -n <NAPLUGIN>, --na <NAPLUGIN>
-                network layer that is used for communication. Valid: {bmi,cci,ofi,all}
+                network layer that is used for communication. Valid: {bmi,ofi,all}
                 defaults to 'all'
     -c <CLUSTER>, --cluster <CLUSTER>
                 additional configurations for specific compute clusters
@@ -122,7 +122,7 @@ Input must be numeric and greater than 0."
 		echo CORES    = "${CORES}"
 	fi
 fi
-if [ "${NA_LAYER}" == "cci" ] || [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
+if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
 	echo NAPLUGIN = "${NA_LAYER}"
 else
     echo "No valid plugin selected"
@@ -142,7 +142,6 @@ else
 fi
 
 USE_BMI="-DNA_USE_BMI:BOOL=OFF"
-USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
 CMAKE=`find_cmake`
@@ -161,14 +160,6 @@ export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL}/lib:${INSTALL}/lib64"
 
 # Set cluster dependencies first
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
-    # get libtool
-    echo "############################################################ Installing:  libtool"
-    CURR=${SOURCE}/libtool
-    prepare_build_dir ${CURR}
-    cd ${CURR}/build
-    ../configure --prefix=${INSTALL}
-    make -j${CORES}
-    make install
     # compile zstd
     echo "############################################################ Installing:  zstd"
     CURR=${SOURCE}/zstd/build/cmake
@@ -205,33 +196,6 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     make install
 fi
 
-if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
-    USE_CCI="-DNA_USE_CCI:BOOL=ON"
-    echo "############################################################ Installing:  CCI"
-    # CCI
-    CURR=${SOURCE}/cci
-    prepare_build_dir ${CURR}
-    cd ${CURR}
-    # patch hanging issue
-    echo "########## Patch injection: Applying cci hanging patch"
-    git apply ${PATCH_DIR}/cci_hang_final.patch
-    echo "########## Patch injection: Disabling cci debug mode/devel mode entirely"
-    git apply ${PATCH_DIR}/cci_remove_devel_mode.patch
-    ./autogen.pl
-    cd ${CURR}/build
-if [[ ("${CLUSTER}" == "mogon1") || ("${CLUSTER}" == "fh2") ]]; then
-    ../configure --with-verbs --prefix=${INSTALL} LIBS="-lpthread"
-else
-    ../configure --prefix=${INSTALL} LIBS="-lpthread"
-fi
-
-    echo "########## Patch injection: Replacing any remaining CFLAGS with '-g -O2' that are added by cci although debug mode is disabled with '-O3'"
-    find . -type f -exec sed -i 's/-g -O2/-O3/g' {} \;
-    make -j${CORES}
-    make install
-    [ "${PERFORM_TEST}" ] && make check
-fi
-
 if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     USE_OFI="-DNA_USE_OFI:BOOL=ON"
     # Mogon2 already has libfabric installed in a version that Mercury supports.
@@ -264,7 +228,7 @@ $CMAKE \
     -DMERCURY_USE_EAGER_BULK:BOOL=ON \
     -DBUILD_SHARED_LIBS:BOOL=ON \
     -DCMAKE_INSTALL_PREFIX=${INSTALL} \
-    ${USE_BMI} ${USE_CCI} ${USE_OFI} \
+    ${USE_BMI} ${USE_OFI} \
     ..
 make -j${CORES}
 make install

@@ -256,7 +256,6 @@ void destroy_preload() {
     cleanup_addresses();
     CTX->log()->debug("{}() About to finalize the margo RPC client", __func__);
     // XXX Sometimes this hangs on the cluster. Investigate.
-    // Might been solved in margo 0.3. It is not an issue with Omnipath for sure. Maybe CCI only issue.
     margo_finalize(ld_margo_rpc_id);
     CTX->log()->debug("{}() Shut down Margo RPC client successful", __func__);
     CTX->log()->info("All services shut down. Client shutdown complete.");
