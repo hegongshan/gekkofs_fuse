@@ -97,6 +97,8 @@ ssize_t write(const string& path, const void* buf, const bool append_flag, const
         rpc_in[i].bulk_handle = rpc_bulk_handle;
         margo_create_wrap_helper(rpc_write_data_id, target, rpc_handles[i]);
         // Send RPC
+        CTX->log()->trace("{}() host: {}, path: {}, chunks: {}, size: {}, offset: {}", __func__,
+                           target, path, rpc_in[i].chunk_n, total_chunk_size, rpc_in[i].offset);
         ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
         if (ret != HG_SUCCESS) {
             CTX->log()->error("{}() Unable to send non-blocking rpc for path {} and recipient {}", __func__, path,
