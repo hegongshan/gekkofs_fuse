@@ -101,7 +101,6 @@ void init_environment() {
     }
 
     // Register daemon to system
-    ADAFS_DATA->spdlogger()->debug("{}() Creating daemon pid file", __func__);
     try {
         register_daemon_proc();
     } catch (const std::exception& e ) {
@@ -264,6 +263,8 @@ void register_daemon_proc() {
     }
 
     auto pid_file = daemon_pid_path();
+    ADAFS_DATA->spdlogger()->debug("{}() Creating pid file: '{}'",
+                                    __func__, pid_file);
     // check if a pid file exists from another daemon
     if (bfs::exists(pid_file)) {
         throw runtime_error(
