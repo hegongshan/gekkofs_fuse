@@ -39,6 +39,9 @@ RUN yum -y -q update  && yum -y -q install \
 	devtoolset-8-gcc \
 	devtoolset-8-gcc-c++ \
 	libuuid-devel \
+	# syscall_intercept
+	capstone \
+	capstone-devel \
 && yum -y -q clean all
 
 # Enable gcc/g++ 8.x
@@ -92,6 +95,9 @@ RUN yum -y -q update  && yum -y -q install \
 	devtoolset-8-gcc \
 	devtoolset-8-gcc-c++ \
 	libuuid-devel \
+	# syscall_intercept
+	capstone \
+	capstone-devel \
 && yum -y -q clean all
 
 
