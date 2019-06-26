@@ -43,16 +43,16 @@ bool get_fs_config() {
         CTX->log()->error("{}() creating handle for failed", __func__);
         return false;
     }
-    CTX->log()->debug("{}() About to send get config RPC to daemon", __func__);
-    int send_ret = HG_FALSE;
+    CTX->log()->debug("{}() Forwarding request", __func__);
     for (int i = 0; i < RPC_TRIES; ++i) {
-        send_ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
-        if (send_ret == HG_SUCCESS) {
+        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        if (ret == HG_SUCCESS) {
             break;
         }
+        CTX->log()->warn("{}() Failed to forward request. Error: {}. Attempt {}/{}", __func__, HG_Error_to_string(ret), i+1, RPC_TRIES);
     }
-    if (send_ret != HG_SUCCESS) {
-        CTX->log()->warn("{}() timed out", __func__);
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() Failed to forward request. Giving up after {} attempts", __func__, RPC_TRIES);
         margo_destroy(handle);
         return false;
     }
