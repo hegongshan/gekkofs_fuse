@@ -55,7 +55,7 @@
 #define DEFAULT_RPC_PORT 4433
 #define RPC_TRIES 3
 // rpc timeout to try again in milliseconds
-#define RPC_TIMEOUT 180000
+#define RPC_TIMEOUT 3000
 
 //size of preallocated buffer to hold directory entries in rpc call
 #define RPC_DIRENTS_BUFF_SIZE (8 * 1024 * 1024) // 8 mega
