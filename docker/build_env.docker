@@ -36,14 +36,14 @@ RUN yum -y -q update  && yum -y -q install \
 	lz4-devel \
 	bzip2-devel \
 	# ada-fs requires C++ 14
-	devtoolset-7-gcc \
-	devtoolset-7-gcc-c++ \
+	devtoolset-8-gcc \
+	devtoolset-8-gcc-c++ \
 	libuuid-devel \
 && yum -y -q clean all
 
-# Enable gcc/g++ 7.x
-ENV	CC		"/opt/rh/devtoolset-7/root/usr/bin/gcc"
-ENV	CXX		"/opt/rh/devtoolset-7/root/usr/bin/g++"
+# Enable gcc/g++ 8.x
+ENV	CC		"/opt/rh/devtoolset-8/root/usr/bin/gcc"
+ENV	CXX		"/opt/rh/devtoolset-8/root/usr/bin/g++"
 
 # Download dependencies source
 COPY scripts/dl_dep.sh		$SCRIPTS_PATH/
@@ -95,7 +95,7 @@ RUN yum -y -q update  && yum -y -q install \
 && yum -y -q clean all
 
 
-# Enable gcc/g++ 7.x
+# Enable gcc/g++ 8.x
 ENV	CC		"/opt/rh/devtoolset-8/root/usr/bin/gcc"
 ENV	CXX		"/opt/rh/devtoolset-8/root/usr/bin/g++"
 
