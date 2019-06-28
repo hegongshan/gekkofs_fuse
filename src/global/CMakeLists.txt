@@ -19,6 +19,15 @@ target_link_libraries(log_util
     spdlog
     )
 
+add_library(env_util STATIC)
+set_property(TARGET env_util PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_sources(env_util
+    PUBLIC
+    ${INCLUDE_DIR}/global/env_util.hpp
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/env_util.cpp
+    )
+
 add_library(metadata STATIC)
 set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(metadata

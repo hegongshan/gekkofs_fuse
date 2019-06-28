@@ -45,6 +45,7 @@ target_link_libraries(gkfs_intercept
     metadata
     distributor
     log_util
+    env_util
     # external
     Syscall_intercept::Syscall_intercept
     dl

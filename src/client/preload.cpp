@@ -12,6 +12,7 @@
 */
 
 #include <global/log_util.hpp>
+#include <global/env_util.hpp>
 #include <global/path_util.hpp>
 #include <global/global_defs.hpp>
 #include <global/configure.hpp>
@@ -182,22 +183,18 @@ void init_ld_env_if_needed() {
 }
 
 void init_logging() {
-    std::string path = DEFAULT_PRELOAD_LOG_PATH;
-    // Try to get log path from env variable
-    std::string env_key = ENV_PREFIX;
-    env_key += "PRELOAD_LOG_PATH";
-    char* env_log_path = getenv(env_key.c_str());
-    if (env_log_path != nullptr) {
-        path = env_log_path;
+    std::string path;
+    try {
+        path = gkfs::get_env_own("PRELOAD_LOG_PATH");
+    } catch (const std::exception& e) {
+        path = DEFAULT_PRELOAD_LOG_PATH;
     }
 
-    spdlog::level::level_enum level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
-    // Try to get log path from env variable
-    std::string env_level_key = ENV_PREFIX;
-    env_level_key += "LOG_LEVEL";
-    char* env_level = getenv(env_level_key.c_str());
-    if (env_level != nullptr) {
-        level = get_spdlog_level(env_level);
+    spdlog::level::level_enum level;
+    try {
+        level = get_spdlog_level(gkfs::get_env_own("LOG_LEVEL"));
+    } catch (const std::exception& e) {
+        level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
     }
 
     auto logger_names = std::vector<std::string> {"main"};
