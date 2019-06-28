@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <regex>
 #include <csignal>
 #include <random>
 #include <sys/sysmacros.h>
@@ -132,28 +133,32 @@ int get_daemon_pid() {
     return adafs_daemon_pid;
 }
 
-unordered_map<string, string> load_lookup_file(const std::string& lfpath) {
-    CTX->log()->debug("{}() Loading lookup file: '{}'",
-                      __func__, lfpath);
+map<string, string> load_lookup_file(const std::string& lfpath) {
+    CTX->log()->debug("{}() Loading lookup file: '{}'", __func__, lfpath);
     ifstream lf(lfpath);
-    lf.exceptions(ifstream::badbit);
-
-    unordered_map<string, string> endpoints_map;
-    string line;
-    string hostname;
-    string endpoint;
-    string::size_type delim_pos;
-    while (getline(lf, line)) {
-        delim_pos = line.find(" ", delim_pos = 0);
-        if(delim_pos == string::npos) {
-            throw runtime_error(fmt::format("Failed to parse line in lookup file: '{}'", line));
-        }
-        hostname = line.substr(0, delim_pos);
-        endpoint = line.substr(delim_pos + 1);
-        CTX->log()->trace("{}() endpoint loaded: '{}' '{}'", __func__, hostname, endpoint);
-        endpoints_map.insert(make_pair(hostname, endpoint));
+    if (!lf) {
+        throw runtime_error(fmt::format("Failed to open lookup file '{}': {}",
+                            lfpath, strerror(errno)));
     }
-    return endpoints_map;
+    map<string, string> hostmap;
+    const regex line_re("^(\\S+)\\s+(\\S+)$",
+                        regex::ECMAScript | regex::optimize);
+    string line;
+    string host;
+    string uri;
+    std::smatch match;
+    while (getline(lf, line)) {
+        if (!regex_match(line, match, line_re)) {
+            spdlog::error("{}() Unrecognized line format: [path: '{}', line: '{}']",
+                          __func__, lfpath, line);
+            throw runtime_error(
+                    fmt::format("unrecognized line format: '{}'", line));
+        }
+        host = match[1];
+        uri = match[2];
+        hostmap.emplace(host, uri);
+    }
+    return hostmap;
 }
 
 hg_addr_t margo_addr_lookup_retry(const std::string& uri) {

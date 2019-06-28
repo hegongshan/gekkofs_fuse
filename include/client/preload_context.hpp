@@ -40,7 +40,7 @@ struct FsConfig {
 
     // rpc infos
     std::map<uint64_t, std::string> hosts;
-    std::unordered_map<std::string, std::string> endpoints;
+    std::map<std::string, std::string> endpoints;
     uint64_t host_id; // my host number
     size_t host_size;
     std::string hostname_suffix;
