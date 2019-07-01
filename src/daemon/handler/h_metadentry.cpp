@@ -29,8 +29,7 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
-                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got RPC with path {}", __func__, in.path);
     Metadata md(in.mode);
     try {
         // create metadentry
@@ -309,8 +308,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
     ADAFS_DATA->spdlogger()->debug(
-            "{}() Got dirents RPC (local {}) with path {}", __func__,
-            (hgi->context_id == ADAFS_DATA->host_id()), in.path);
+            "{}() Got dirents RPC with path {}", __func__, in.path);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
 
     //Get directory entries from local DB
@@ -391,8 +389,7 @@ static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     if (ret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     }
-    ADAFS_DATA->spdlogger()->debug("{}() Got RPC (from local {}) with path {}", __func__,
-                                   (margo_get_info(handle)->context_id == ADAFS_DATA->host_id()), in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got RPC with path {}", __func__, in.path);
 
     try {
         Metadata md = {LINK_MODE, in.target_path};
