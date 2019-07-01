@@ -82,6 +82,8 @@ MERCURY_GEN_PROC(rpc_mk_symlink_in_t,
 MERCURY_GEN_PROC(rpc_read_data_in_t,
                  ((hg_const_string_t) (path))\
 ((int64_t) (offset))\
+    ((hg_uint64_t) (host_id))\
+    ((hg_uint64_t) (host_size))\
 ((hg_uint64_t) (chunk_n))\
 ((hg_uint64_t) (chunk_start))\
 ((hg_uint64_t) (chunk_end))\
@@ -95,6 +97,8 @@ MERCURY_GEN_PROC(rpc_data_out_t,
 MERCURY_GEN_PROC(rpc_write_data_in_t,
                  ((hg_const_string_t) (path))\
 ((int64_t) (offset))\
+    ((hg_uint64_t) (host_id))\
+    ((hg_uint64_t) (host_size))\
 ((hg_uint64_t) (chunk_n))\
 ((hg_uint64_t) (chunk_start))\
 ((hg_uint64_t) (chunk_end))\

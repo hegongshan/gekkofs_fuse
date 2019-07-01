@@ -160,6 +160,10 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
+    auto const host_id = in.host_id;
+    auto const host_size = in.host_size;
+    SimpleHashDistributor distributor(host_id, host_size);
+
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
     vector<uint64_t> chnk_ids_host(in.chunk_n);
@@ -194,7 +198,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (ADAFS_DATA->distributor()->locate_data(in.path, chnk_id_file) != ADAFS_DATA->host_id())
+        if (distributor.locate_data(in.path, chnk_id_file) != host_id)
             continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
@@ -227,7 +231,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
                 transfer_size = chnk_size_left_host;
             ADAFS_DATA->spdlogger()->trace(
                     "{}() BULK_TRANSFER hostid {} file {} chnkid {} total_Csize {} Csize_left {} origin offset {} local offset {} transfersize {}",
-                    __func__, ADAFS_DATA->host_id(), in.path, chnk_id_file, in.total_chunk_size, chnk_size_left_host,
+                    __func__, host_id, in.path, chnk_id_file, in.total_chunk_size, chnk_size_left_host,
                     origin_offset, local_offset, transfer_size);
             // RDMA the data to here
             ret = margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, origin_offset,
@@ -353,6 +357,10 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
+    auto const host_id = in.host_id;
+    auto const host_size = in.host_size;
+    SimpleHashDistributor distributor(host_id, host_size);
+    
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
     vector<uint64_t> chnk_ids_host(in.chunk_n);
@@ -379,7 +387,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (ADAFS_DATA->distributor()->locate_data(in.path, chnk_id_file) != ADAFS_DATA->host_id())
+        if (distributor.locate_data(in.path, chnk_id_file) != host_id)
             continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host

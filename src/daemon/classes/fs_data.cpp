@@ -75,14 +75,6 @@ void FsData::storage(const std::shared_ptr<ChunkStorage>& storage) {
     storage_ = storage;
 }
 
-void FsData::distributor(std::shared_ptr<Distributor> d) {
-    distributor_ = d;
-}
-
-std::shared_ptr<Distributor> FsData::distributor() const {
-    return distributor_;
-}
-
 const std::string& FsData::rootdir() const {
     return rootdir_;
 }

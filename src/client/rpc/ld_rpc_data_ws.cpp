@@ -89,6 +89,8 @@ ssize_t write(const string& path, const void* buf, const bool append_flag, const
             total_chunk_size -= chnk_rpad(offset + write_size, CHUNKSIZE);
         // Fill RPC input
         rpc_in[i].path = path.c_str();
+        rpc_in[i].host_id = target;
+        rpc_in[i].host_size = CTX->fs_conf()->host_size;
         rpc_in[i].offset = chnk_lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
@@ -199,6 +201,8 @@ ssize_t read(const string& path, void* buf, const off64_t offset, const size_t r
 
         // Fill RPC input
         rpc_in[i].path = path.c_str();
+        rpc_in[i].host_id = target;
+        rpc_in[i].host_size = CTX->fs_conf()->host_size;
         rpc_in[i].offset = chnk_lpad(offset, CHUNKSIZE);// first offset in targets is the chunk with a potential offset
         rpc_in[i].chunk_n = target_chnks[target].size(); // number of chunks handled by that destination
         rpc_in[i].chunk_start = chnk_start; // chunk start id of this write
