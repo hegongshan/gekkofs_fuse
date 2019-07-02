@@ -18,9 +18,6 @@
 #define RPC_PROTOCOL "@RPC_PROTOCOL@"
 #cmakedefine01 USE_SHM
 
-// Daemon path to auxiliary files
-#define DAEMON_AUX_PATH "/tmp"
-
 #define CHUNKSIZE 524288 // in bytes 512KB
 
 // What metadata is used

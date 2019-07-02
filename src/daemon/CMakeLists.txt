@@ -3,7 +3,6 @@ add_subdirectory(backend/data)
 
 set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
-    ../global/global_func.cpp
     ../global/path_util.cpp
     main.cpp
     ops/metadentry.cpp
@@ -17,7 +16,6 @@ set(DAEMON_HEADERS
     ../../include/version.hpp
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
-    ../../include/global/global_func.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp

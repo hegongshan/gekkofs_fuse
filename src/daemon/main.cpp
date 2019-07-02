@@ -31,7 +31,6 @@
 #include <csignal>
 
 #include <condition_variable>
-#include <global/global_func.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
@@ -95,14 +94,6 @@ void init_environment() {
         throw runtime_error("Failed to write root metadentry to KV store: "s + e.what());
     }
 
-    // Register daemon to system
-    try {
-        register_daemon_proc();
-    } catch (const std::exception& e ) {
-        ADAFS_DATA->spdlogger()->error("Failed to register the daemon process to the system: {}", __func__, e.what());
-        throw;
-    }
-
     try {
         if (!ADAFS_DATA->lookup_file().empty()) {
             populate_lookup_file();
@@ -125,10 +116,6 @@ void destroy_enviroment() {
     for (unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
         ABT_xstream_join(RPC_DATA->io_streams().at(i));
         ABT_xstream_free(&RPC_DATA->io_streams().at(i));
-    }
-    ADAFS_DATA->spdlogger()->debug("{}() Removing pid file", __func__);
-    if (!deregister_daemon_proc()) {
-        ADAFS_DATA->spdlogger()->warn("{}() Failed to remove pid file", __func__);
     }
 
     if (!ADAFS_DATA->lookup_file().empty()) {
@@ -246,53 +233,10 @@ void register_server_rpcs(margo_instance_id mid) {
     MARGO_REGISTER(mid, hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
 }
 
-/**
- * Registers the daemon process to the system.
- * This will create a file with additional information for clients started on the same node.
- * @return
- */
-void register_daemon_proc() {
-    auto daemon_aux_path = DAEMON_AUX_PATH;
-    if (!bfs::exists(daemon_aux_path) && !bfs::create_directories(daemon_aux_path)) {
-        throw runtime_error(fmt::format("Unable to create adafs auxiliary directory in {}", daemon_aux_path));
-    }
-
-    auto pid_file = daemon_pid_path();
-    ADAFS_DATA->spdlogger()->debug("{}() Creating pid file: '{}'",
-                                    __func__, pid_file);
-    // check if a pid file exists from another daemon
-    if (bfs::exists(pid_file)) {
-        throw runtime_error(
-                fmt::format("Pid file already exists, "
-                            "probably another daemon is still running. pid file: '{}'",
-                            pid_file));
-    }
-
-    auto my_pid = getpid();
-    if (my_pid == -1) {
-        throw runtime_error("Unable to get process ID");
-    }
-
-    ofstream ofs(pid_file, ::ofstream::trunc);
-    if (!ofs) {
-        throw runtime_error(
-                fmt::format("Unable to create daemon pid file: '{}'", pid_file));
-    }
-    ofs << to_string(my_pid) << std::endl;
-    ofs << RPC_DATA->self_addr_str() << std::endl;
-    ofs << ADAFS_DATA->mountdir() << std::endl;
-    ofs.close();
-}
-
-bool deregister_daemon_proc() {
-    return bfs::remove(daemon_pid_path());
-}
-
 void populate_lookup_file() {
     ADAFS_DATA->spdlogger()->debug("{}() Populating lookup file: '{}'", __func__, ADAFS_DATA->lookup_file());
     ofstream lfstream(ADAFS_DATA->lookup_file(), ios::out | ios::app);
-    lfstream <<
-        get_my_hostname(true) + " "s + RPC_DATA->self_addr_str() << std::endl;
+    lfstream << fmt::format("{} {}", get_my_hostname(true), RPC_DATA->self_addr_str()) << std::endl;
 }
 
 void destroy_lookup_file() {

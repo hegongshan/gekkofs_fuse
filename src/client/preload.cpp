@@ -26,6 +26,8 @@
 
 #include <fstream>
 
+using namespace std;
+//
 // thread to initialize the whole margo shazaam only once per process
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
@@ -48,9 +50,15 @@ hg_id_t rpc_chunk_stat_id;
 margo_instance_id ld_margo_rpc_id;
 
 
+static inline void exit_error_msg(int errcode, const string& msg) {
+    CTX->log()->error(msg);
+    cerr << "GekkoFS error: " << msg << endl;
+    exit(errcode);
+}
+
 /**
  * Registers a margo instance with all used RPC
- * Note that the rpc tags are redundant for rpc
+ * Note that the r(pc tags are redundant for rpc
  * @param mid
  * @param mode
  */
@@ -145,41 +153,26 @@ bool init_margo_client(const std::string& na_plugin) {
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
 void init_ld_environment_() {
+
     //use rpc_addresses here to avoid "static initialization order problem"
     if (!init_margo_client(RPC_PROTOCOL)) {
-        CTX->log()->error("{}() Unable to initialize Margo RPC client.", __func__);
-        exit(EXIT_FAILURE);
+        exit_error_msg(EXIT_FAILURE, "Unable to initializa Margo RPC client");
     }
-    if (!rpc_send::get_fs_config()) {
-        CTX->log()->error("{}() Unable to fetch file system configurations from daemon process through RPC.", __func__);
-        exit(EXIT_FAILURE);
+
+    try {
+        load_hosts();
+    } catch (const std::exception& e) {
+        exit_error_msg(EXIT_FAILURE, "Failed to load hosts addresses: "s + e.what());
     }
 
     /* Setup distributor */
-    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->fs_conf()->host_id, CTX->fs_conf()->host_size);
+    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->local_host_id(), CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
 
-    try {
-        if (!CTX->fs_conf()->lookup_file.empty()) {
-            auto endpoints = load_lookup_file(CTX->fs_conf()->lookup_file);
-            if (endpoints.size() != CTX->fs_conf()->host_size) {
-                CTX->log()->error("{}() Number of endpoints ({}) found in the lookup file,"
-                                  "do not match total number of hosts ({})",
-                                  __func__, endpoints.size(), CTX->fs_conf()->host_size);
-                exit(EXIT_FAILURE);
-            }
-            CTX->fs_conf()->endpoints = endpoints;
-        }
-    } catch (const std::exception& e) {
-        CTX->log()->error("{}() Unable to load lookup file '{}' with error: {}",
-                          __func__, CTX->fs_conf()->lookup_file, e.what());
-        exit(EXIT_FAILURE);
+    if (!rpc_send::get_fs_config()) {
+        exit_error_msg(EXIT_FAILURE, "Unable to fetch file system configurations from daemon process through RPC.");
     }
 
-    if (!lookup_all_hosts()) {
-        CTX->log()->error("{}() Unable to lookup all host RPC addresses.", __func__);
-        exit(EXIT_FAILURE);
-    }
     CTX->log()->info("{}() Environment initialization successful.", __func__);
 }
 
@@ -232,13 +225,6 @@ void init_preload() {
     log_prog_name();
     init_cwd();
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
-    if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
-        std::cerr << "GekkoFS daemon not running or mountdir could not be loaded. Check logs for more details" << std::endl;
-        CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
-        exit(EXIT_FAILURE);
-    } else {
-        CTX->log()->info("{}() mountdir '{}' loaded", __func__, CTX->mountdir());
-    }
     init_ld_env_if_needed();
     CTX->enable_interception();
     CTX->log()->debug("{}() exit", __func__);

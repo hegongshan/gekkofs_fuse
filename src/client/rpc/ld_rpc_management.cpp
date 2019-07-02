@@ -30,14 +30,8 @@ bool get_fs_config() {
     hg_handle_t handle;
     rpc_config_out_t out{};
     // fill in
-    auto local_addr = get_local_addr();
-    if (local_addr == HG_ADDR_NULL) {
-        CTX->log()->error("{}() Unable to lookup local addr", __func__);
-        return false;
-    }
-    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
+    auto ret = margo_create(ld_margo_rpc_id, CTX->hosts().at(CTX->local_host_id()), rpc_config_id, &handle);
     if (ret != HG_SUCCESS) {
-        margo_addr_free(ld_margo_rpc_id, local_addr);
         CTX->log()->error("{}() creating handle for failed", __func__);
         return false;
     }
@@ -64,12 +58,9 @@ bool get_fs_config() {
         return false;
     }
 
-    if (!CTX->mountdir().empty() && CTX->mountdir() != out.mountdir) {
-        CTX->log()->warn(
-                "{}() fs_conf mountdir {} and received out.mountdir {} mismatch detected! Using received mountdir",
-                __func__, CTX->mountdir(), out.mountdir);
-        CTX->mountdir(out.mountdir);
-    }
+    CTX->mountdir(out.mountdir);
+    CTX->log()->info("Mountdir: '{}'", CTX->mountdir());
+
     CTX->fs_conf()->rootdir = out.rootdir;
     CTX->fs_conf()->atime_state = out.atime_state;
     CTX->fs_conf()->mtime_state = out.mtime_state;
@@ -78,27 +69,10 @@ bool get_fs_config() {
     CTX->fs_conf()->blocks_state = out.blocks_state;
     CTX->fs_conf()->uid = out.uid;
     CTX->fs_conf()->gid = out.gid;
-    CTX->fs_conf()->host_id = out.host_id;
-    CTX->fs_conf()->host_size = out.host_size;
-    CTX->fs_conf()->lookup_file = out.lookup_file;
-    CTX->fs_conf()->rpc_port = out.rpc_port;
 
-    CTX->log()->debug("RPC port: {}", out.rpc_port);
-
-    // split comma separated host string and create a hosts map
-    std::string hosts_raw = out.hosts_raw;
-    std::map<uint64_t, std::string> hostmap;
-    boost::char_separator<char> sep(",");
-    boost::tokenizer<boost::char_separator<char>> tok(hosts_raw, sep);
-    uint64_t i = 0;
-    for (auto&& s : tok) {
-        hostmap[i++] = s;
-    }
-    CTX->fs_conf()->hosts = hostmap;
     CTX->log()->debug("{}() Got response with mountdir {}", __func__, out.mountdir);
 
     /* clean up resources consumed by this rpc */
-    margo_addr_free(ld_margo_rpc_id, local_addr);
     margo_free_output(handle, &out);
     margo_destroy(handle);
     return true;

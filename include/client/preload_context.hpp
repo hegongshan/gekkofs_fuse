@@ -16,6 +16,7 @@
 
 #include <spdlog/spdlog.h>
 #include <map>
+#include <mercury.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -38,13 +39,6 @@ struct FsConfig {
 
     std::string rootdir;
 
-    // rpc infos
-    std::map<uint64_t, std::string> hosts;
-    std::map<std::string, std::string> endpoints;
-    uint64_t host_id; // my host number
-    size_t host_size;
-    unsigned int rpc_port;
-    std::string lookup_file;
 };
 
 enum class RelativizeStatus {
@@ -66,7 +60,10 @@ class PreloadContext {
     std::string cwd_;
     std::vector<std::string> mountdir_components_;
     std::string mountdir_;
-    std::string daemon_addr_str_;
+
+    std::vector<hg_addr_t> hosts_;
+    uint64_t local_host_id_;
+
     bool interception_enabled_;
 
     public:
@@ -85,11 +82,14 @@ class PreloadContext {
     const std::string& mountdir() const;
     const std::vector<std::string>& mountdir_components() const;
 
-    void daemon_addr_str(const std::string& path);
-    const std::string& daemon_addr_str() const;
-
     void cwd(const std::string& path);
     const std::string& cwd() const;
+
+    const std::vector<hg_addr_t>& hosts() const;
+    void hosts(const std::vector<hg_addr_t>& addrs);
+
+    uint64_t local_host_id() const;
+    void local_host_id(uint64_t id);
 
     RelativizeStatus relativize_fd_path(int dirfd,
                                         const char * raw_path,

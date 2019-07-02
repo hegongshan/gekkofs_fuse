@@ -40,10 +40,6 @@ void init_rpc_server(const std::string& protocol);
 
 void register_server_rpcs(margo_instance_id mid);
 
-void register_daemon_proc();
-
-bool deregister_daemon_proc();
-
 void populate_lookup_file();
 void destroy_lookup_file();
 

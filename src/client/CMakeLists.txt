@@ -12,13 +12,11 @@ set(PRELOAD_SRC
     rpc/ld_rpc_data_ws.cpp
     rpc/ld_rpc_metadentry.cpp
     ../global/rpc/rpc_utils.cpp
-    ../global/global_func.cpp
     ../global/path_util.cpp
     )
 set(PRELOAD_HEADERS
     ../../include/global/configure.hpp
     ../../include/global/global_defs.hpp
-    ../../include/global/global_func.hpp
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp

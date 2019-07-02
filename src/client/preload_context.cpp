@@ -44,16 +44,6 @@ const std::string& PreloadContext::mountdir() const {
     return mountdir_;
 }
 
-void PreloadContext::daemon_addr_str(const std::string& addr) {
-    assert(!addr.empty());
-    daemon_addr_str_ = addr;
-}
-
-const std::string& PreloadContext::daemon_addr_str() const {
-    assert(!daemon_addr_str_.empty());
-    return daemon_addr_str_;
-}
-
 const std::vector<std::string>& PreloadContext::mountdir_components() const {
     return mountdir_components_;
 }
@@ -65,6 +55,22 @@ void PreloadContext::cwd(const std::string& path) {
 
 const std::string& PreloadContext::cwd() const {
     return cwd_;
+}
+
+const std::vector<hg_addr_t>& PreloadContext::hosts() const {
+    return hosts_;
+}
+
+void PreloadContext::hosts(const std::vector<hg_addr_t>& addrs) {
+    hosts_ = addrs;
+}
+
+uint64_t PreloadContext::local_host_id() const {
+    return local_host_id_;
+}
+
+void PreloadContext::local_host_id(uint64_t id) {
+    local_host_id_ = id;
 }
 
 RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,

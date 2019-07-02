@@ -65,17 +65,14 @@ extern hg_id_t rpc_mk_symlink_id;
 
 int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
 
-int get_daemon_pid();
-
-std::map<std::string, std::string> load_lookup_file(const std::string& lfpath);
+std::vector<std::pair<std::string, std::string>> load_hosts_file(const std::string& lfpath);
 
 hg_addr_t get_local_addr();
 
+void load_hosts();
 bool lookup_all_hosts();
 
 void cleanup_addresses();
-
-bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
 hg_return margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient,
                                    hg_handle_t& handle);

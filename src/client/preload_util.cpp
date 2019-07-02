@@ -14,7 +14,7 @@
 #include <client/preload_util.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_utils.hpp>
-#include <global/global_func.hpp>
+#include <global/env_util.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -24,9 +24,6 @@
 #include <sys/sysmacros.h>
 
 using namespace std;
-
-// rpc address cache
-std::unique_ptr<std::unordered_map<uint64_t, hg_addr_t>> rpc_addresses;
 
 /**
  * Converts the Metadata object into a stat struct, which is needed by Linux
@@ -78,69 +75,14 @@ int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& a
     return 0;
 }
 
-/**
- * @return daemon pid. If not running @return -1.
- * Loads set deamon mountdir set in daemon.pid file
- */
-int get_daemon_pid() {
-    ifstream ifs(daemon_pid_path(), ::ifstream::in);
-    int adafs_daemon_pid = -1;
-    string mountdir;
-    if (ifs) {
-        string adafs_daemon_pid_s;
-        // first line is pid
-        if (getline(ifs, adafs_daemon_pid_s) && !adafs_daemon_pid_s.empty())
-            adafs_daemon_pid = ::stoi(adafs_daemon_pid_s);
-        else {
-            cerr << "GekkoFS daemon pid not found. Daemon not running?" << endl;
-            CTX->log()->error("{}() Unable to read daemon pid from pid file", __func__);
-            ifs.close();
-            return -1;
-        }
-        // check that daemon is running
-        if (kill(adafs_daemon_pid, 0) != 0) {
-            cerr << "GekkoFS daemon process with pid " << adafs_daemon_pid << " not found. Daemon not running?" << endl;
-            CTX->log()->error("{}() daemon pid {} not found. Daemon not running?", __func__, adafs_daemon_pid);
-            ifs.close();
-            return -1;
-        }
-        // second line is mountdir
-        std::string daemon_addr;
-        if (getline(ifs, daemon_addr) && !daemon_addr.empty()) {
-            CTX->daemon_addr_str(daemon_addr);
-        } else {
-            CTX->log()->error("{}() daemon pid file contains no daemon address. Exiting ...", __func__);
-            ifs.close();
-            return -1;
-        }
-        // second line is mountdir
-        if (getline(ifs, mountdir) && !mountdir.empty()) {
-            CTX->mountdir(mountdir);
-        } else {
-            CTX->log()->error("{}() daemon pid file contains no mountdir path. Exiting ...", __func__);
-            ifs.close();
-            return -1;
-        }
-    } else {
-        cerr << "Failed to to open pid file at '" << daemon_pid_path()
-             << "'. Daemon not running?" << endl;
-        CTX->log()->error(
-                "{}() Failed to open pid file '{}'. Error: {}",
-                __func__, daemon_pid_path(), std::strerror(errno));
-    }
-    ifs.close();
-
-    return adafs_daemon_pid;
-}
-
-map<string, string> load_lookup_file(const std::string& lfpath) {
-    CTX->log()->debug("{}() Loading lookup file: '{}'", __func__, lfpath);
+vector<pair<string, string>> load_hosts_file(const std::string& lfpath) {
+    CTX->log()->debug("{}() Loading hosts file: '{}'", __func__, lfpath);
     ifstream lf(lfpath);
     if (!lf) {
-        throw runtime_error(fmt::format("Failed to open lookup file '{}': {}",
+        throw runtime_error(fmt::format("Failed to open hosts file '{}': {}",
                             lfpath, strerror(errno)));
     }
-    map<string, string> hostmap;
+    vector<pair<string, string>> hosts;
     const regex line_re("^(\\S+)\\s+(\\S+)$",
                         regex::ECMAScript | regex::optimize);
     string line;
@@ -156,12 +98,13 @@ map<string, string> load_lookup_file(const std::string& lfpath) {
         }
         host = match[1];
         uri = match[2];
-        hostmap.emplace(host, uri);
+        hosts.emplace_back(host, uri);
     }
-    return hostmap;
+    return hosts;
 }
 
 hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
+    CTX->log()->debug("{}() Lookink up address '{}'", __func__, uri);
     // try to look up 3 times before erroring out
     hg_return_t ret;
     hg_addr_t remote_addr = HG_ADDR_NULL;
@@ -170,109 +113,92 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
     do {
         ret = margo_addr_lookup(ld_margo_rpc_id, uri.c_str(), &remote_addr);
         if (ret == HG_SUCCESS) {
-            break;
+            return remote_addr;
         }
-        CTX->log()->warn("{}() Failed to lookup address {}. Attempts [{}/3]", __func__, uri, attempts + 1);
+        CTX->log()->warn("{}() Failed to lookup address '{}'. Attempts [{}/3]", __func__, uri, attempts + 1);
         // Wait a random amount of time and try again
         ::mt19937 g(rd()); // seed the random generator
         ::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
         ::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
     } while (++attempts < 3);
-    return remote_addr;
+    throw runtime_error(
+            fmt::format("Failed to lookup address '{}', error: {}", uri, HG_Error_to_string(ret)));
 }
 
-hg_addr_t get_local_addr() {
-    return margo_addr_lookup_retry(CTX->daemon_addr_str());
-}
-
-/*
- * Get the URI of a given hostname.
- *
- * This URI is to be used for margo lookup function.
- */
-std::string get_uri_from_hostname(const std::string& hostname) {
-    if (!CTX->fs_conf()->endpoints.empty()) {
-        return CTX->fs_conf()->endpoints.at(hostname);
+void load_hosts() {
+    string hosts_file;
+    try {
+        hosts_file = gkfs::get_env_own("HOSTS_FILE");
+    } catch (const exception& e) {
+        auto emsg = fmt::format("Failed to get hosts-file path"
+                          " from environment: {}", e.what());
+        throw runtime_error(emsg);
     }
 
-    auto host = get_host_by_name(hostname);
-    return fmt::format("{}://{}:{}", RPC_PROTOCOL, host, CTX->fs_conf()->rpc_port);
-}
+    vector<pair<string, string>> hosts;
+    try {
+        hosts = load_hosts_file(hosts_file);
+    } catch (const exception& e) {
+        auto emsg = fmt::format("Failed to load hosts file: {}", e.what());
+        throw runtime_error(emsg);
+    }
 
-bool lookup_all_hosts() {
-    rpc_addresses = std::make_unique<std::unordered_map<uint64_t, hg_addr_t>>();
-    vector<uint64_t> hosts(CTX->fs_conf()->host_size);
+    if (hosts.size() == 0) {
+        throw runtime_error(fmt::format("Host file empty: '{}'", hosts_file));
+    }
+
+    CTX->log()->debug("{}() Hosts pool size: {}", __func__, hosts.size());
+
+    auto local_hostname = get_my_hostname(true);
+    bool local_host_found = false;
+    vector<hg_addr_t> addrs(hosts.size());
+
+    vector<uint64_t> host_ids(hosts.size());
     // populate vector with [0, ..., host_size - 1]
-    ::iota(::begin(hosts), ::end(hosts), 0);
+    ::iota(::begin(host_ids), ::end(host_ids), 0);
     /*
      * Shuffle hosts to balance addr lookups to all hosts
-     * Too many concurrent lookups send to same host could overwhelm the server, returning error when addr lookup
+     * Too many concurrent lookups send to same host
+     * could overwhelm the server,
+     * returning error when addr lookup
      */
     ::random_device rd; // obtain a random number from hardware
     ::mt19937 g(rd()); // seed the random generator
-    ::shuffle(hosts.begin(), hosts.end(), g); // Shuffle hosts vector
-    // lookup addresses and put abstract server addresses into rpc_addresses
-    for (auto& host : hosts) {
-        string uri{};
-        // If local use address provided by daemon in order to use automatic shared memory routing
-        if (host == CTX->fs_conf()->host_id) {
-            uri = CTX->daemon_addr_str();
-        } else {
-            auto hostname = CTX->fs_conf()->hosts.at(host);
-            uri = get_uri_from_hostname(hostname);
+    ::shuffle(host_ids.begin(), host_ids.end(), g); // Shuffle hosts vector
+    // lookup addresses and put abstract server addresses into rpc_addressesre
+
+    for (const auto& id: host_ids) {
+        const auto& hostname = hosts.at(id).first;
+        const auto& uri = hosts.at(id).second;
+        auto addr = margo_addr_lookup_retry(uri);
+        addrs.at(id) = addr;
+
+        if (!local_host_found && hostname == local_hostname) {
+            CTX->log()->debug("{}() Found local host: {}", __func__, hostname);
+            CTX->local_host_id(id);
+            local_host_found = true;
         }
-        auto remote_addr = margo_addr_lookup_retry(uri);
-        if (remote_addr == HG_ADDR_NULL) {
-            CTX->log()->error("{}() Failed to lookup address {}", __func__, uri);
-            return false;
-        }
-        CTX->log()->trace("{}() Successful address lookup for '{}'", __func__, uri);
-        rpc_addresses->insert(make_pair(host, remote_addr));
     }
-    return true;
+
+    if (!local_host_found) {
+        CTX->log()->warn("{}() Failed to find local host."
+                            "Fallback: use host id '0' as local host");
+        CTX->local_host_id(0);
+    }
+    CTX->hosts(addrs);
 }
 
 void cleanup_addresses() {
-    CTX->log()->debug("{}() Freeing Margo RPC svr addresses ...", __func__);
-    for (const auto& e : *rpc_addresses) {
-        CTX->log()->info("{}() Trying to free hostid {}", __func__, e.first);
-        if (margo_addr_free(ld_margo_rpc_id, e.second) != HG_SUCCESS) {
-            CTX->log()->warn("{}() Unable to free RPC client's svr address: {}.", __func__, e.first);
-        }
+    for (auto& addr: CTX->hosts()) {
+        margo_addr_free(ld_margo_rpc_id, addr);
     }
 }
 
-/**
- * Retrieve abstract svr address handle for hostid
- * @param hostid
- * @param svr_addr
- * @return
- */
-bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    auto address_lookup = rpc_addresses->find(hostid);
-    auto found = address_lookup != rpc_addresses->end();
-    if (found) {
-        svr_addr = address_lookup->second;
-        CTX->log()->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
-        return true;
-    } else {
-        // not found, unexpected host.
-        // This should not happen because all addresses are looked when the environment is initialized.
-        CTX->log()->error("{}() Unexpected host id {}. Not found in RPC address cache", __func__, hostid);
-        assert(found && "Unexpected host id for rpc address lookup. ID was not found in RPC address cache.");
-    }
-    return false;
-}
+
 
 hg_return
 margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient, hg_handle_t& handle) {
-    hg_return_t ret;
-    hg_addr_t svr_addr = HG_ADDR_NULL;
-    if (!get_addr_by_hostid(recipient, svr_addr)) {
-        CTX->log()->error("{}() server address not resolvable for host id {}", __func__, recipient);
-        return HG_OTHER_ERROR;
-    }
-    ret = margo_create(ld_margo_rpc_id, svr_addr, rpc_id, &handle);
+    auto ret = margo_create(ld_margo_rpc_id, CTX->hosts().at(recipient), rpc_id, &handle);
     if (ret != HG_SUCCESS) {
         CTX->log()->error("{}() creating handle FAILED", __func__);
         return HG_OTHER_ERROR;
