@@ -80,7 +80,6 @@ bool get_fs_config() {
     CTX->fs_conf()->gid = out.gid;
     CTX->fs_conf()->host_id = out.host_id;
     CTX->fs_conf()->host_size = out.host_size;
-    CTX->fs_conf()->hostname_suffix = out.hostname_suffix;
     CTX->fs_conf()->lookup_file = out.lookup_file;
     CTX->fs_conf()->rpc_port = out.rpc_port;
 

@@ -195,7 +195,7 @@ std::string get_uri_from_hostname(const std::string& hostname) {
         return CTX->fs_conf()->endpoints.at(hostname);
     }
 
-    auto host = get_host_by_name(hostname + CTX->fs_conf()->hostname_suffix);
+    auto host = get_host_by_name(hostname);
     return fmt::format("{}://{}:{}", RPC_PROTOCOL, host, CTX->fs_conf()->rpc_port);
 }
 
