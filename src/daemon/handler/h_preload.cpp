@@ -20,11 +20,8 @@
 using namespace std;
 
 static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
-    rpc_config_in_t in{};
     rpc_config_out_t out{};
 
-    auto ret = margo_get_input(handle, &in);
-    assert(ret == HG_SUCCESS);
     ADAFS_DATA->spdlogger()->debug("{}() Got config RPC", __func__);
 
     // get fs config
@@ -51,7 +48,6 @@ static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
     }
 
     // Destroy handle when finished
-    margo_free_input(handle, &in);
     margo_destroy(handle);
     return HG_SUCCESS;
 }

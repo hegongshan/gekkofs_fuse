@@ -115,7 +115,6 @@ MERCURY_GEN_PROC(rpc_get_dirents_out_t,
         ((hg_size_t) (dirents_size))
 )
 
-MERCURY_GEN_PROC(rpc_config_in_t, ((hg_int32_t) (dummy))) // XXX remove that.
 
 MERCURY_GEN_PROC(rpc_config_out_t, ((hg_const_string_t) (mountdir))
         ((hg_const_string_t) (rootdir)) \

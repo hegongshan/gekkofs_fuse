@@ -28,10 +28,8 @@ namespace rpc_send {
  */
 bool get_fs_config() {
     hg_handle_t handle;
-    rpc_config_in_t in{};
     rpc_config_out_t out{};
     // fill in
-    in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
     auto local_addr = get_local_addr();
     if (local_addr == HG_ADDR_NULL) {
         CTX->log()->error("{}() Unable to lookup local addr", __func__);
@@ -45,7 +43,7 @@ bool get_fs_config() {
     }
     CTX->log()->debug("{}() Forwarding request", __func__);
     for (int i = 0; i < RPC_TRIES; ++i) {
-        ret = margo_forward_timed(handle, &in, RPC_TIMEOUT);
+        ret = margo_forward_timed(handle, nullptr, RPC_TIMEOUT);
         if (ret == HG_SUCCESS) {
             break;
         }
