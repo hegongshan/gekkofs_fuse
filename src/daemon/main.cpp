@@ -29,7 +29,7 @@
 #include <iostream>
 #include <fstream>
 #include <csignal>
-
+#include <unistd.h>
 #include <condition_variable>
 
 using namespace std;
@@ -412,8 +412,11 @@ int main(int argc, const char* argv[]) {
 
     assert(vm.count("rootdir"));
     auto rootdir = vm["rootdir"].as<string>();
-    bfs::create_directories(rootdir);
-    ADAFS_DATA->rootdir(bfs::canonical(rootdir).native());
+    auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
+    ADAFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
+                                  __func__, rootdir_path.native());
+    bfs::create_directories(rootdir_path);
+    ADAFS_DATA->rootdir(rootdir_path.native());
 
     if (vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
