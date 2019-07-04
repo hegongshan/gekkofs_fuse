@@ -46,7 +46,7 @@ private:
     std::string metadir_;
 
     std::string bind_addr_;
-    std::string lookup_file_;
+    std::string hosts_file_;
 
     // Database
     std::shared_ptr<MetadataDB> mdb_;
@@ -114,9 +114,9 @@ public:
 
     void bind_addr(const std::string& addr);
 
-    const std::string& lookup_file() const;
+    const std::string& hosts_file() const;
 
-    void lookup_file(const std::string& lookup_file);
+    void hosts_file(const std::string& lookup_file);
 
     bool atime_state() const;
 

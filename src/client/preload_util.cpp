@@ -130,9 +130,10 @@ void load_hosts() {
     try {
         hosts_file = gkfs::get_env_own("HOSTS_FILE");
     } catch (const exception& e) {
-        auto emsg = fmt::format("Failed to get hosts-file path"
-                          " from environment: {}", e.what());
-        throw runtime_error(emsg);
+        CTX->log()->info("{}() Failed to get hosts file path"
+                         " from environment, using default: '{}'",
+                         __func__, DEFAULT_HOSTS_FILE);
+        hosts_file = DEFAULT_HOSTS_FILE;
     }
 
     vector<pair<string, string>> hosts;

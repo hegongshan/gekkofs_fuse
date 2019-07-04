@@ -15,6 +15,7 @@
 #include <daemon/main.hpp>
 #include "version.hpp"
 #include <global/log_util.hpp>
+#include <global/env_util.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <daemon/handler/rpc_defs.hpp>
@@ -94,13 +95,8 @@ void init_environment() {
         throw runtime_error("Failed to write root metadentry to KV store: "s + e.what());
     }
 
-    try {
-        if (!ADAFS_DATA->lookup_file().empty()) {
-            populate_lookup_file();
-        }
-    } catch (const std::exception& e ) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to populate lookup file: {}", __func__, e.what());
-        throw;
+    if (!ADAFS_DATA->hosts_file().empty()) {
+        populate_hosts_file();
     }
 
     ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
@@ -111,16 +107,21 @@ void init_environment() {
  */
 void destroy_enviroment() {
     ADAFS_DATA->spdlogger()->debug("{}() Removing mount directory", __func__);
-    bfs::remove_all(ADAFS_DATA->mountdir());
+    boost::system::error_code ecode;
+    bfs::remove_all(ADAFS_DATA->mountdir(), ecode);
     ADAFS_DATA->spdlogger()->debug("{}() Freeing I/O executions streams", __func__);
     for (unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
         ABT_xstream_join(RPC_DATA->io_streams().at(i));
         ABT_xstream_free(&RPC_DATA->io_streams().at(i));
     }
 
-    if (!ADAFS_DATA->lookup_file().empty()) {
-        ADAFS_DATA->spdlogger()->debug("{}() Removing lookup file", __func__);
-        destroy_lookup_file();
+    if (!ADAFS_DATA->hosts_file().empty()) {
+        ADAFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
+        try {
+            destroy_hosts_file();
+        } catch (const bfs::filesystem_error& e) {
+            ADAFS_DATA->spdlogger()->debug("{}() hosts file not found", __func__);
+        }
     }
 
     if (RPC_DATA->server_rpc_mid() != nullptr) {
@@ -233,14 +234,24 @@ void register_server_rpcs(margo_instance_id mid) {
     MARGO_REGISTER(mid, hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
 }
 
-void populate_lookup_file() {
-    ADAFS_DATA->spdlogger()->debug("{}() Populating lookup file: '{}'", __func__, ADAFS_DATA->lookup_file());
-    ofstream lfstream(ADAFS_DATA->lookup_file(), ios::out | ios::app);
+void populate_hosts_file() {
+    const auto& hosts_file = ADAFS_DATA->hosts_file();
+    ADAFS_DATA->spdlogger()->debug("{}() Populating hosts file: '{}'", __func__, hosts_file);
+    ofstream lfstream(hosts_file, ios::out | ios::app);
+    if (!lfstream) {
+        throw runtime_error(
+                fmt::format("Failed to open hosts file '{}': {}", hosts_file, strerror(errno)));
+    }
     lfstream << fmt::format("{} {}", get_my_hostname(true), RPC_DATA->self_addr_str()) << std::endl;
+    if (!lfstream) {
+        throw runtime_error(
+                fmt::format("Failed to write on hosts file '{}': {}", hosts_file, strerror(errno)));
+    }
+    lfstream.close();
 }
 
-void destroy_lookup_file() {
-    std::remove(ADAFS_DATA->lookup_file().c_str());
+void destroy_hosts_file() {
+    std::remove(ADAFS_DATA->hosts_file().c_str());
 }
 
 void shutdown_handler(int dummy) {
@@ -289,7 +300,9 @@ int main(int argc, const char* argv[]) {
             ("rootdir,r", po::value<string>()->required(), "data directory")
             ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
             ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
-            ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)")
+            ("hosts-file,H", po::value<string>(),
+                             "Shared file used by deamons to register their "
+                             "enpoints. (default './gkfs_hosts.txt')")
             ("version,h", "print version and exit");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -332,9 +345,17 @@ int main(int argc, const char* argv[]) {
 
     ADAFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
 
-    if (vm.count("lookup-file")) {
-        ADAFS_DATA->lookup_file(vm["lookup-file"].as<string>());
+    string hosts_file;
+    if (vm.count("hosts-file")) {
+        hosts_file = vm["hosts-file"].as<string>();
+    } else {
+        try {
+            hosts_file = gkfs::get_env_own("HOSTS_FILE");
+        } catch (const exception& e) {
+            hosts_file = DEFAULT_HOSTS_FILE;
+        }
     }
+    ADAFS_DATA->hosts_file(hosts_file);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
 
@@ -363,8 +384,12 @@ int main(int argc, const char* argv[]) {
 
     try {
         init_environment();
-    } catch (const std::exception & e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize environment: {}", __func__, e.what());
+    } catch (const std::exception& e) {
+        auto emsg = fmt::format("Failed to initialize environment: {}", e.what());
+        ADAFS_DATA->spdlogger()->error(emsg);
+        cerr << emsg << endl;
+        destroy_enviroment();
+        exit(EXIT_FAILURE);
     }
 
     signal(SIGINT, shutdown_handler);

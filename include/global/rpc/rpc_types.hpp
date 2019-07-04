@@ -125,7 +125,6 @@ MERCURY_GEN_PROC(rpc_config_out_t, ((hg_const_string_t) (mountdir))
 ((hg_bool_t) (blocks_state)) \
 ((hg_uint32_t) (uid)) \
 ((hg_uint32_t) (gid)) \
-        ((hg_const_string_t) (lookup_file))
 )
 
 

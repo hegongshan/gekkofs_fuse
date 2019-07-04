@@ -33,6 +33,7 @@ target_link_libraries(gkfs_daemon
     storage
     distributor
     log_util
+    env_util
     spdlog
     # margo libs
     ${ABT_LIBRARIES}

@@ -103,12 +103,12 @@ void FsData::bind_addr(const std::string& addr) {
     bind_addr_ = addr;
 }
 
-const std::string& FsData::lookup_file() const {
-    return lookup_file_;
+const std::string& FsData::hosts_file() const {
+    return hosts_file_;
 }
 
-void FsData::lookup_file(const std::string& lookup_file) {
-    lookup_file_ = lookup_file;
+void FsData::hosts_file(const std::string& lookup_file) {
+    hosts_file_ = lookup_file;
 }
 
 bool FsData::atime_state() const {
