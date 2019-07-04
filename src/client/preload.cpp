@@ -212,6 +212,7 @@ void log_prog_name() {
     if(!getline(cmdline, line)) {
         throw std::runtime_error("Unable to read cmdline file");
     }
+    std::replace(line.begin(), line.end(), '\0', ' ');
     CTX->log()->info("Command to itercept: '{}'", line);
     cmdline.close();
 }
