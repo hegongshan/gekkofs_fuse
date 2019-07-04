@@ -95,20 +95,12 @@ void FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
 }
 
-unsigned int FsData::rpc_port() const {
-    return rpc_port_;
+const std::string& FsData::bind_addr() const {
+    return bind_addr_;
 }
 
-void FsData::rpc_port(unsigned int rpc_port) {
-    FsData::rpc_port_ = rpc_port;
-}
-
-const std::string& FsData::rpc_addr() const {
-    return rpc_addr_;
-}
-
-void FsData::rpc_addr(const std::string& addr) {
-    rpc_addr_ = addr;
+void FsData::bind_addr(const std::string& addr) {
+    bind_addr_ = addr;
 }
 
 const std::string& FsData::lookup_file() const {

@@ -62,10 +62,10 @@ void init_environment() {
     }
 
     // Init margo for RPC
-    auto protocol_port = fmt::format("{}://{}:{}", RPC_PROTOCOL, ADAFS_DATA->rpc_addr(), ADAFS_DATA->rpc_port());
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'", __func__, protocol_port);
+    ADAFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'",
+                                   __func__, ADAFS_DATA->bind_addr());
     try {
-        init_rpc_server(protocol_port);
+        init_rpc_server(ADAFS_DATA->bind_addr());
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to initialize RPC server: {}", __func__, e.what());
         throw;
@@ -289,7 +289,6 @@ int main(int argc, const char* argv[]) {
             ("rootdir,r", po::value<string>()->required(), "data directory")
             ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
             ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
-            ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
             ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)")
             ("version,h", "print version and exit");
     po::variables_map vm;
@@ -324,12 +323,14 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
+    string addr;
     if (vm.count("listen")) {
-        ADAFS_DATA->rpc_addr(vm["listen"].as<string>());
+        addr = vm["listen"].as<string>();
     } else {
-        ADAFS_DATA->rpc_addr(get_my_hostname(true));
+        addr = get_my_hostname(true);
     }
-    ADAFS_DATA->rpc_port(vm["port"].as<unsigned int>());
+
+    ADAFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
 
     if (vm.count("lookup-file")) {
         ADAFS_DATA->lookup_file(vm["lookup-file"].as<string>());

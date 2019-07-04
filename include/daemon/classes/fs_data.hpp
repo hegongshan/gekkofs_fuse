@@ -45,8 +45,7 @@ private:
     std::string mountdir_;
     std::string metadir_;
 
-    unsigned int rpc_port_;
-    std::string rpc_addr_;
+    std::string bind_addr_;
     std::string lookup_file_;
 
     // Database
@@ -111,13 +110,9 @@ public:
 
     void storage(const std::shared_ptr<ChunkStorage>& storage);
 
-    unsigned int rpc_port() const;
+    const std::string& bind_addr() const;
 
-    void rpc_port(unsigned int rpc_port);
-
-    const std::string& rpc_addr() const;
-
-    void rpc_addr(const std::string& addr);
+    void bind_addr(const std::string& addr);
 
     const std::string& lookup_file() const;
 

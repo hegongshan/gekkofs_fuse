@@ -34,7 +34,6 @@ static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
     out.blocks_state = static_cast<hg_bool_t>(ADAFS_DATA->blocks_state());
     out.uid = getuid();
     out.gid = getgid();
-    out.rpc_port = ADAFS_DATA->rpc_port();
     out.lookup_file = ADAFS_DATA->lookup_file().c_str();
     ADAFS_DATA->spdlogger()->debug("{}() Sending output configs back to library", __func__);
     auto hret = margo_respond(handle, &out);
