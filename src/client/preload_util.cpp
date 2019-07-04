@@ -148,7 +148,7 @@ void load_hosts() {
         throw runtime_error(fmt::format("Host file empty: '{}'", hosts_file));
     }
 
-    CTX->log()->debug("{}() Hosts pool size: {}", __func__, hosts.size());
+    CTX->log()->info("{}() Hosts pool size: {}", __func__, hosts.size());
 
     auto local_hostname = get_my_hostname(true);
     bool local_host_found = false;
