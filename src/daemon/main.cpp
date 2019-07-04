@@ -290,8 +290,6 @@ int main(int argc, const char* argv[]) {
             ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
             ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
             ("port,p", po::value<unsigned int>()->default_value(DEFAULT_RPC_PORT), "Port to bind the server on. Default: 4433")
-            ("hostfile", po::value<string>(), "Path to the hosts_file for all fs participants")
-            ("hosts,h", po::value<string>(), "Comma separated list of hosts_ for all fs participants")
             ("lookup-file,k", po::value<string>(), "Shared file used by deamons to register their enpoints. (Needs to be on a shared filesystem)")
             ("version,h", "print version and exit");
     po::variables_map vm;
@@ -333,74 +331,9 @@ int main(int argc, const char* argv[]) {
     }
     ADAFS_DATA->rpc_port(vm["port"].as<unsigned int>());
 
-    // parse host parameters
-    vector<string> hosts{};
-    if (vm.count("hostfile")) {
-        auto host_path = vm["hostfile"].as<string>();
-        fstream host_file(host_path);
-        if (host_file.is_open()) {
-            for (string line; getline(host_file, line);) {
-                if (line.at(0) != '#') {
-                    auto subline = line.substr(0, line.find(' '));
-                    hosts.push_back(subline);
-                }
-            }
-        } else {
-            cerr << "Hostfile path does not exist. Exiting ..." << endl;
-            ADAFS_DATA->spdlogger()->error("{}() Hostfile path does not exist. Exiting ...", __func__);
-            assert(host_file.is_open());
-        }
-    } else if (vm.count("hosts")) {
-        // split comma separated host string
-        boost::char_separator<char> sep(",");
-        boost::tokenizer<boost::char_separator<char>> tok(vm["hosts"].as<string>(), sep);
-        for (auto&& s : tok) {
-            hosts.push_back(s);
-        }
-    }
-    // convert host parameters into datastructures
-    std::map<uint64_t, std::string> hostmap;
-    auto hosts_raw = ""s;
-    if (!hosts.empty()) {
-        auto i = static_cast<uint64_t>(0);
-        auto found_hostname = false;
-        auto hostname = get_my_hostname(true);
-        if (hostname.empty()) {
-            cerr << "Unable to read the machine's hostname" << endl;
-            ADAFS_DATA->spdlogger()->error("{}() Unable to read the machine's hostname", __func__);
-            assert(!hostname.empty());
-        }
-        for (auto&& host : hosts) {
-            hostmap[i] = host;
-            hosts_raw += host + ","s;
-            if (hostname == host) {
-                ADAFS_DATA->host_id(i);
-                found_hostname = true;
-            }
-            i++;
-        }
-        if (!found_hostname) {
-            ADAFS_DATA->spdlogger()->error("{}() Hostname was not found in given parameters. Exiting ...", __func__);
-            cerr << "Hostname was not found in given parameters. Exiting ..." << endl;
-            assert(found_hostname);
-        }
-        hosts_raw = hosts_raw.substr(0, hosts_raw.size() - 1);
-    } else {
-        // single node mode
-        ADAFS_DATA->spdlogger()->info("{}() Single node mode set to self", __func__);
-        auto hostname = get_my_hostname(false);
-        hostmap[0] = hostname;
-        hosts_raw = hostname;
-        ADAFS_DATA->host_id(0);
-    }
-
     if (vm.count("lookup-file")) {
         ADAFS_DATA->lookup_file(vm["lookup-file"].as<string>());
     }
-
-    ADAFS_DATA->hosts(hostmap);
-    ADAFS_DATA->host_size(hostmap.size());
-    ADAFS_DATA->hosts_raw(hosts_raw);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
 

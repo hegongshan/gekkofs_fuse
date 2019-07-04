@@ -45,11 +45,6 @@ private:
     std::string mountdir_;
     std::string metadir_;
 
-    // hosts_
-    std::string hosts_raw_; // raw hosts string, given when daemon is started. Used to give it to fs client
-    std::map<uint64_t, std::string> hosts_;
-    uint64_t host_id_; // my host number
-    size_t host_size_;
     unsigned int rpc_port_;
     std::string rpc_addr_;
     std::string lookup_file_;
@@ -75,10 +70,6 @@ public:
     FsData(FsData const&) = delete;
 
     void operator=(FsData const&) = delete;
-
-    // Utility member functions
-
-    bool is_local_op(size_t recipient);
 
     // getter/setter
 
@@ -120,22 +111,6 @@ public:
 
     void storage(const std::shared_ptr<ChunkStorage>& storage);
 
-    const std::string& hosts_raw() const;
-
-    void hosts_raw(const std::string& hosts_raw);
-
-    const std::map<uint64_t, std::string>& hosts() const;
-
-    void hosts(const std::map<uint64_t, std::string>& hosts);
-
-    const uint64_t& host_id() const;
-
-    void host_id(const uint64_t& host_id);
-
-    size_t host_size() const;
-
-    void host_size(size_t host_size);
-
     unsigned int rpc_port() const;
 
     void rpc_port(unsigned int rpc_port);
@@ -143,7 +118,7 @@ public:
     const std::string& rpc_addr() const;
 
     void rpc_addr(const std::string& addr);
-    
+
     const std::string& lookup_file() const;
 
     void lookup_file(const std::string& lookup_file);

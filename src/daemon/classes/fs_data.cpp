@@ -17,10 +17,6 @@
 #include <daemon/backend/metadata/db.hpp>
 
 
-bool FsData::is_local_op(const size_t recipient) {
-    return recipient == host_id_;
-}
-
 // getter/setter
 
 const std::unordered_map<std::string, std::string>& FsData::hashmap() const {
@@ -97,38 +93,6 @@ const std::string& FsData::metadir() const {
 
 void FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
-}
-
-const std::string& FsData::hosts_raw() const {
-    return hosts_raw_;
-}
-
-void FsData::hosts_raw(const std::string& hosts_raw) {
-    FsData::hosts_raw_ = hosts_raw;
-}
-
-const std::map<uint64_t, std::string>& FsData::hosts() const {
-    return hosts_;
-}
-
-void FsData::hosts(const std::map<uint64_t, std::string>& hosts) {
-    FsData::hosts_ = hosts;
-}
-
-const uint64_t& FsData::host_id() const {
-    return host_id_;
-}
-
-void FsData::host_id(const uint64_t& host_id) {
-    FsData::host_id_ = host_id;
-}
-
-size_t FsData::host_size() const {
-    return host_size_;
-}
-
-void FsData::host_size(size_t host_size) {
-    FsData::host_size_ = host_size;
 }
 
 unsigned int FsData::rpc_port() const {

@@ -34,9 +34,6 @@ static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
     out.blocks_state = static_cast<hg_bool_t>(ADAFS_DATA->blocks_state());
     out.uid = getuid();
     out.gid = getgid();
-    out.hosts_raw = static_cast<hg_const_string_t>(ADAFS_DATA->hosts_raw().c_str());
-    out.host_id = static_cast<hg_uint64_t>(ADAFS_DATA->host_id());
-    out.host_size = static_cast<hg_uint64_t>(ADAFS_DATA->host_size());
     out.rpc_port = ADAFS_DATA->rpc_port();
     out.lookup_file = ADAFS_DATA->lookup_file().c_str();
     ADAFS_DATA->spdlogger()->debug("{}() Sending output configs back to library", __func__);
