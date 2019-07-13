@@ -183,7 +183,7 @@ void load_hosts() {
 
     if (!local_host_found) {
         CTX->log()->warn("{}() Failed to find local host."
-                            "Fallback: use host id '0' as local host");
+                            "Fallback: use host id '0' as local host", __func__);
         CTX->local_host_id(0);
     }
     CTX->hosts(addrs);
