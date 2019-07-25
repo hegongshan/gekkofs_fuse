@@ -179,7 +179,7 @@ fi
 
 # get BMI
 if [ "${NA_LAYER}" == "bmi" ] || [ "${NA_LAYER}" == "all" ]; then
-    clonedeps "bmi" "http://git.mcs.anl.gov/bmi.git" "2abbe991edc45b713e64c5fed78a20fdaddae59b" &
+    clonedeps "bmi" "https://xgitlab.cels.anl.gov/sds/bmi.git" "81ad0575fc57a69269a16208417cbcbefa51f9ea" &
 fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
