@@ -33,9 +33,9 @@ int adafs_statvfs(struct statvfs* buf);
 
 int adafs_statfs(struct statfs* buf);
 
-off64_t adafs_lseek(int fd, off64_t offset, int whence);
+off64_t adafs_lseek(unsigned int fd, off64_t offset, unsigned int whence);
 
-off64_t adafs_lseek(std::shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence);
+off64_t adafs_lseek(std::shared_ptr<OpenFile> adafs_fd, off64_t offset, unsigned int whence);
 
 int adafs_truncate(const std::string& path, off_t offset);
 

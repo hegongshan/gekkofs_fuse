@@ -251,11 +251,11 @@ int adafs_statvfs(struct statvfs* buf) {
     return 0;
 }
 
-off64_t adafs_lseek(int fd, off64_t offset, int whence) {
+off_t adafs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
     return adafs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
-off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
+off_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
             CTX->log()->debug("{}() whence is SEEK_SET", __func__);

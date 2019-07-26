@@ -112,3 +112,15 @@ test path resolution:
   artifacts:
     paths:
      - "${LOG_PATH}"
+
+test lseek:
+  stage: test
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_lseek
+  artifacts:
+    paths:
+     - "${LOG_PATH}"
+
