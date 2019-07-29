@@ -289,9 +289,6 @@ void initialize_loggers() {
 
 int main(int argc, const char* argv[]) {
 
-    initialize_loggers();
-    ADAFS_DATA->spdlogger(spdlog::get("main"));
-
     // Parse input
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -335,6 +332,10 @@ int main(int argc, const char* argv[]) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+    
+    initialize_loggers();
+    ADAFS_DATA->spdlogger(spdlog::get("main"));
+
 
     string addr;
     if (vm.count("listen")) {
