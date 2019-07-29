@@ -469,6 +469,9 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         }
         assert(task_read_size != nullptr);
         if(*task_read_size < 0){
+            if(-(*task_read_size) == ENOENT) {
+                continue;
+            }
             ADAFS_DATA->spdlogger()->warn(
                     "{}() Read task failed for chunk {}",
                     __func__, chnk_id_curr);
