@@ -49,6 +49,7 @@ target_link_libraries(gkfs_intercept
     dl
     ${ABT_LIBRARIES}
     mercury
+    hermes
     ${MARGO_LIBRARIES}
     Boost::boost # needed for tokenizer header
     Threads::Threads
