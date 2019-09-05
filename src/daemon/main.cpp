@@ -322,6 +322,11 @@ int main(int argc, const char* argv[]) {
 #else
         cout << "Shared-memory comm: OFF" << endl;
 #endif
+#if LOG_SYSCALLS
+        cout << "Syscalls logging: ON" << endl;
+#else
+        cout << "Syscalls logging: OFF" << endl;
+#endif
         cout << "Chunk size: " << CHUNKSIZE << " bytes" << endl;
         return 0;
     }

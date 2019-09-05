@@ -106,6 +106,9 @@ message(STATUS "RPC protocol: '${RPC_PROTOCOL}'")
 option(USE_SHM "Use shared memory for intra-node communication" ON)
 message(STATUS "Shared-memory communication: ${USE_SHM}")
 
+option(LOG_SYSCALLS "Enable verbose logging for syscalls interception" OFF)
+message(STATUS "Syscall logging: ${LOG_SYSCALLS}")
+
 option(SYMLINK_SUPPORT "Compile with support for symlinks" ON)
 if(SYMLINK_SUPPORT)
     add_definitions(-DHAS_SYMLINKS)

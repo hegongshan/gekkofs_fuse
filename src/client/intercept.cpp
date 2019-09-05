@@ -14,8 +14,9 @@
 #include "client/intercept.hpp"
 #include "client/preload.hpp"
 #include "client/hooks.hpp"
+#include "global/configure.hpp"
 
-#ifndef NDEBUG
+#if LOG_SYSCALLS
 #include "client/syscall_names.hpp"
 #endif
 
@@ -303,13 +304,13 @@ static inline int hook(long syscall_number,
          * as would normally happen.
          */
 
-        #ifndef NDEBUG
+        #if LOG_SYSCALLS
         CTX->log()->trace("Syscall [{}, {}]  Passthrough", syscall_names[syscall_number], syscall_number);
         #endif
         return NOT_HOOKED;
     }
 
-    #ifndef NDEBUG
+    #if LOG_SYSCALLS
     CTX->log()->trace("Syscall [{}, {}]  Intercepted", syscall_names[syscall_number], syscall_number);
     #endif
     return HOOKED;
