@@ -201,6 +201,13 @@ static inline int hook(long syscall_number,
                                 static_cast<unsigned int>(arg2));
         break;
 
+    case SYS_getdents64:
+        *result = hook_getdents64(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<struct linux_dirent64 *>(arg1),
+                                static_cast<unsigned int>(arg2));
+        break;
+
+
     case SYS_mkdirat:
         *result = hook_mkdirat(static_cast<unsigned int>(arg0),
                                reinterpret_cast<const char *>(arg1),
