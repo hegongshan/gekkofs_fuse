@@ -152,8 +152,15 @@ struct fs_config {
 
         explicit 
         output(const rpc_config_out_t& out) {
-            m_mountdir = out.mountdir;
-            m_rootdir = out.rootdir;
+
+            if(out.mountdir != nullptr) {
+                m_mountdir = out.mountdir;
+            }
+
+            if(out.rootdir != nullptr) {
+                m_rootdir = out.rootdir;
+            }
+
             m_atime_state = out.atime_state;
             m_mtime_state = out.mtime_state;
             m_ctime_state = out.ctime_state;
@@ -421,7 +428,10 @@ struct stat {
         explicit 
         output(const rpc_stat_out_t& out) {
             m_err = out.err;
-            m_db_val = out.db_val;
+
+            if(out.db_val != nullptr) {
+                m_db_val = out.db_val;
+            }
         }
 
         int32_t
