@@ -31,7 +31,7 @@ namespace rpc_send {
 bool get_fs_config() {
 
     auto endp = CTX->hosts2().at(CTX->local_host_id());
-    fs_config::output out;
+    gkfs::rpc::fs_config::output out;
 
     try {
         CTX->log()->debug("{}() Retrieving file system configurations from daemon", __func__);
@@ -40,7 +40,7 @@ bool get_fs_config() {
         // TODO(amiranda): hermes will eventually provide a post(endpoint) 
         // returning one result and a broadcast(endpoint_set) returning a 
         // result_set. When that happens we can remove the .at(0) :/
-        out = ld_network_service->post<fs_config>(endp).get().at(0);
+        out = ld_network_service->post<gkfs::rpc::fs_config>(endp).get().at(0);
     } catch (const std::exception& ex) {
         CTX->log()->error("{}() Retrieving fs configurations from daemon", __func__);
         return false;

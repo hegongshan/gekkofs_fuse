@@ -44,7 +44,7 @@ int mk_node(const std::string& path, const mode_t mode) {
         // returning one result and a broadcast(endpoint_set) returning a 
         // result_set. When that happens we can remove the .at(0) :/
         auto out = 
-            ld_network_service->post<create>(endp, path, mode).get().at(0);
+            ld_network_service->post<gkfs::rpc::create>(endp, path, mode).get().at(0);
         err = out.err();
         CTX->log()->debug("{}() Got response success: {}", __func__, err);
 

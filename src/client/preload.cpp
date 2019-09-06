@@ -190,8 +190,8 @@ bool init_hermes_client(const std::string& transport_prefix) {
         return false;
     }
 
-    rpc_config_id = fs_config::public_id;
-    rpc_mk_node_id = create::public_id;
+    rpc_config_id = gkfs::rpc::fs_config::public_id;
+    rpc_mk_node_id = gkfs::rpc::create::public_id;
 
     return true;
 }

@@ -49,6 +49,9 @@ hg_proc_void_t(hg_proc_t proc, void *data)
 
 }} // namespace hermes::detail
 
+namespace gkfs {
+namespace rpc {
+
 //==============================================================================
 // definitions for fs_config
 struct fs_config {
@@ -327,6 +330,9 @@ struct create {
         int32_t m_err;
     };
 };
+
+} // namespace rpc
+} // namespace gkfs
 
 
 #endif // GKFS_RPCS_HPP
