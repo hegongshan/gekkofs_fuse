@@ -137,70 +137,71 @@ int decr_size(const std::string& path, size_t length) {
 }
 
 int rm_node(const std::string& path, const bool remove_metadentry_only) {
-    hg_return_t ret;
-    int err = 0; // assume we succeed
-    // if metadentry should only removed only, send only 1 rpc to remove the metadata
-    // else send an rpc to all hosts and thus broadcast chunk_removal.
-    auto rpc_target_size = remove_metadentry_only ? static_cast<uint64_t>(1) : CTX->hosts().size();
 
-    CTX->log()->debug("{}() Creating Mercury handles for all nodes ...", __func__);
-    vector<hg_handle_t> rpc_handles(rpc_target_size);
-    vector<margo_request> rpc_waiters(rpc_target_size);
-    vector<rpc_rm_node_in_t> rpc_in(rpc_target_size);
-    // Send rpc to all nodes as all of them can have chunks for this path
-    for (size_t i = 0; i < rpc_target_size; i++) {
-        // fill in
-        rpc_in[i].path = path.c_str();
-        // create handle
-        // if only the metadentry needs to removed send one rpc to metadentry's responsible node
-        if (remove_metadentry_only)
-            ret = margo_create_wrap(rpc_rm_node_id, path, rpc_handles[i]);
-        else
-            ret = margo_create_wrap_helper(rpc_rm_node_id, i, rpc_handles[i]);
-        if (ret != HG_SUCCESS) {
-            CTX->log()->warn("{}() Unable to create Mercury handle", __func__);
-            // We use continue here to remove at least some data
-            // XXX In the future we can discuss RPC retrying. This should be a function to be used in general
-            errno = EBUSY;
-            err = -1;
-        }
-        // send async rpc
-        ret = margo_iforward(rpc_handles[i], &rpc_in[i], &rpc_waiters[i]);
-        if (ret != HG_SUCCESS) {
-            CTX->log()->warn("{}() Unable to create Mercury handle", __func__);
-            errno = EBUSY;
-            err = -1;
-        }
-    }
+    // if only the metadentry should be removed, send one rpc to the
+    // metadentry's responsible node to remove the metadata
+    // else, send an rpc to all hosts and thus broadcast chunk_removal.
+    if(remove_metadentry_only) {
 
-    // Wait for RPC responses and then get response
-    for (size_t i = 0; i < rpc_target_size; i++) {
-        // XXX We might need a timeout here to not wait forever for an output that never comes?
-        ret = margo_wait(rpc_waiters[i]);
-        if (ret != HG_SUCCESS) {
-            CTX->log()->warn("{}() Unable to wait for margo_request handle for path {} recipient {}", __func__, path, i);
-            errno = EBUSY;
-            err = -1;
-        }
-        rpc_err_out_t out{};
-        ret = margo_get_output(rpc_handles[i], &out);
-        if (ret == HG_SUCCESS) {
-            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-            if (err != 0) {
-                errno = out.err;
-                err = -1;
-            }
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            err = -1;
+        auto idx = CTX->distributor()->locate_file_metadata(path);
+        auto endp = CTX->hosts2().at(idx);
+
+        try {
+
+            CTX->log()->debug("{}() Sending RPC ...", __func__);
+            // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+            // retry for RPC_TRIES (see old commits with margo)
+            // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+            // returning one result and a broadcast(endpoint_set) returning a 
+            // result_set. When that happens we can remove the .at(0) :/
+            auto out = 
+                ld_network_service->post<gkfs::rpc::remove>(endp, path).get().at(0);
+
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+            assert(out.err() == 0);
+
+        } catch(const std::exception& ex) {
             CTX->log()->error("{}() while getting rpc output", __func__);
+            errno = EBUSY;
+            return -1;
         }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(rpc_handles[i], &out);
-        margo_destroy(rpc_handles[i]);
+
+        return 0;
     }
-    return err;
+
+
+    std::size_t rpc_target_size2 = CTX->hosts2().size();
+    std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
+
+    hermes::endpoint_set endps;
+
+    std::copy(CTX->hosts2().begin(), 
+              CTX->hosts2().end(), 
+              std::back_inserter(endps));
+
+    try {
+
+        auto output_set = 
+            ld_network_service->broadcast<gkfs::rpc::remove>(endps, path).get();
+
+        // Wait for RPC responses and then get response
+        for (const auto& out : output_set) {
+            CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+            if(out.err() != 0) {
+                errno = out.err();
+                return -1;
+            }
+        }
+
+        return 0;
+
+    } catch(const std::exception& ex) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
+        errno = EBUSY;
+        return -1;
+    }
 }
 
 
