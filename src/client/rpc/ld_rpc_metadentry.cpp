@@ -76,9 +76,11 @@ int stat(const std::string& path, string& attr) {
         if(out.err() != 0) {
             errno = out.err();
             return -1;
-        } else {
-            attr = out.db_val();
         }
+
+        attr = out.db_val();
+        return 0;
+
     } catch(const std::exception& ex) {
         CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
@@ -89,51 +91,36 @@ int stat(const std::string& path, string& attr) {
 }
 
 int decr_size(const std::string& path, size_t length) {
-    hg_handle_t handle;
-    rpc_trunc_in_t in{};
-    int err = 0;
-    in.path = path.c_str();
-    in.length = length;
 
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_decr_size_id, path, handle);
-    if (ret != HG_SUCCESS) {
-        errno = EBUSY;
-        return -1;
-    }
+    auto endp = CTX->hosts2().at(
+        CTX->distributor()->locate_file_metadata(path));
 
-    // Send rpc
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() timed out", __func__);
-        margo_destroy(handle);
-        errno = EBUSY;
-        return -1;
-    }
+    try {
 
-    rpc_err_out_t out{};
-    ret = margo_get_output(handle, &out);
-    if (ret != HG_SUCCESS) {
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::decr_size>(
+                    endp, path, length).get().at(0);
+
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        if(out.err() != 0) {
+            errno = out.err();
+            return -1;
+        }
+
+        return 0;
+
+    } catch(const std::exception& ex) {
         CTX->log()->error("{}() while getting rpc output", __func__);
-        margo_free_output(handle, &out);
-        margo_destroy(handle);
         errno = EBUSY;
         return -1;
     }
-
-    CTX->log()->debug("{}() Got response: {}", __func__, out.err);
-
-    if(out.err != 0){
-        //In case of error out.err contains the
-        //corresponding value of errno
-        errno = out.err;
-        err = -1;
-    }
-
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
-    return err;
 }
 
 int rm_node(const std::string& path, const bool remove_metadentry_only) {
@@ -143,8 +130,8 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
     // else, send an rpc to all hosts and thus broadcast chunk_removal.
     if(remove_metadentry_only) {
 
-        auto idx = CTX->distributor()->locate_file_metadata(path);
-        auto endp = CTX->hosts2().at(idx);
+        auto endp = CTX->hosts2().at(
+            CTX->distributor()->locate_file_metadata(path));
 
         try {
 
@@ -159,7 +146,12 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
             CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
 
-            assert(out.err() == 0);
+            if(out.err() != 0) {
+                errno = out.err();
+                return -1;
+            }
+            
+            return 0;
 
         } catch(const std::exception& ex) {
             CTX->log()->error("{}() while getting rpc output", __func__);
@@ -169,7 +161,6 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
         return 0;
     }
-
 
     std::size_t rpc_target_size2 = CTX->hosts2().size();
     std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
