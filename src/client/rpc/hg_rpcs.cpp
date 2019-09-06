@@ -22,6 +22,7 @@ namespace hermes { namespace detail {
 void
 register_user_request_types() {
     (void) registered_requests().add<fs_config>();
+    (void) registered_requests().add<create>();
 }
 
 }} // namespace hermes::detail
