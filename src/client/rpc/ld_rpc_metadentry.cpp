@@ -58,50 +58,34 @@ int mk_node(const std::string& path, const mode_t mode) {
 }
 
 int stat(const std::string& path, string& attr) {
-    hg_handle_t handle;
-    rpc_path_only_in_t in{};
-    rpc_stat_out_t out{};
-    int err = 0;
-    // fill in
-    in.path = path.c_str();
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_stat_id, path, handle);
-    if (ret != HG_SUCCESS) {
-        errno = EBUSY;
-        return -1;
-    }
-    // Send rpc
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret != HG_SUCCESS) {
-        errno = EBUSY;
-        CTX->log()->error("{}() timed out", __func__);
-        margo_destroy(handle);
-        return -1;
-    }
 
-    ret = margo_get_output(handle, &out);
-    if (ret != HG_SUCCESS) {
+    auto endp = CTX->hosts2().at(
+            CTX->distributor()->locate_file_metadata(path));
+    
+    try {
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::stat>(endp, path).get().at(0);
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        if(out.err() != 0) {
+            errno = out.err();
+            return -1;
+        } else {
+            attr = out.db_val();
+        }
+    } catch(const std::exception& ex) {
         CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
-        margo_free_output(handle, &out);
-        margo_destroy(handle);
         return -1;
     }
 
-    CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-
-    if(out.err != 0) {
-        err = -1;
-        errno = out.err;
-    } else {
-        attr = out.db_val;
-    }
-
-    /* clean up resources consumed by this rpc */
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
-    return err;
+    return 0;
 }
 
 int decr_size(const std::string& path, size_t length) {

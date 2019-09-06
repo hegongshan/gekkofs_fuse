@@ -23,6 +23,7 @@ void
 register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::fs_config>();
     (void) registered_requests().add<gkfs::rpc::create>();
+    (void) registered_requests().add<gkfs::rpc::stat>();
 }
 
 }} // namespace hermes::detail
