@@ -658,6 +658,266 @@ struct decr_size {
     };
 };
 
+//==============================================================================
+// definitions for update_metadentry
+struct update_metadentry {
+
+    // forward declarations of public input/output types for this RPC
+    class input;
+    class output;
+
+    // traits used so that the engine knows what to do with the RPC
+    using self_type = update_metadentry;
+    using handle_type = hermes::rpc_handle<self_type>;
+    using input_type = input;
+    using output_type = output;
+    using mercury_input_type = rpc_update_metadentry_in_t;
+    using mercury_output_type = rpc_err_out_t;
+
+    // RPC public identifier
+    constexpr static const uint64_t public_id = 99483648;
+
+    // RPC internal Mercury identifier
+    constexpr static const hg_id_t mercury_id = public_id;
+
+    // RPC name
+    constexpr static const auto name = hg_tag::update_metadentry;
+
+    // requires response?
+    constexpr static const auto requires_response = true;
+
+    // Mercury callback to serialize input arguments
+    constexpr static const auto mercury_in_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_update_metadentry_in_t);
+
+    // Mercury callback to serialize output arguments
+    constexpr static const auto mercury_out_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_err_out_t);
+
+    class input {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        input(const std::string& path, 
+              uint64_t nlink,
+              uint32_t mode,
+              uint32_t uid,
+              uint32_t gid,
+              int64_t size,
+              int64_t blocks,
+              int64_t atime,
+              int64_t mtime,
+              int64_t ctime,
+              bool nlink_flag,
+              bool mode_flag,
+              bool size_flag,
+              bool block_flag,
+              bool atime_flag,
+              bool mtime_flag,
+              bool ctime_flag) :
+            m_path(path),
+            m_nlink(nlink),
+            m_mode(mode),
+            m_uid(uid),
+            m_gid(gid),
+            m_size(size),
+            m_blocks(blocks),
+            m_atime(atime),
+            m_mtime(mtime),
+            m_ctime(ctime),
+            m_nlink_flag(nlink_flag),
+            m_mode_flag(mode_flag),
+            m_size_flag(size_flag),
+            m_block_flag(block_flag),
+            m_atime_flag(atime_flag),
+            m_mtime_flag(mtime_flag),
+            m_ctime_flag(ctime_flag) { }
+
+        input(input&& rhs) = default;
+        input(const input& other) = default;
+        input& operator=(input&& rhs) = default;
+        input& operator=(const input& other) = default;
+
+        std::string
+        path() const {
+            return m_path;
+        }
+
+        uint64_t
+        nlink() const {
+            return m_nlink;
+        }
+
+        uint32_t 
+        mode() const {
+            return m_mode;
+        }
+
+        uint32_t 
+        uid() const {
+            return m_uid;
+        }
+
+        uint32_t 
+        gid() const {
+            return m_gid;
+        }
+
+        int64_t 
+        size() const {
+            return m_size;
+        }
+
+        int64_t 
+        blocks() const {
+            return m_blocks;
+        }
+
+        int64_t 
+        atime() const {
+            return m_atime;
+        }
+
+        int64_t 
+        mtime() const {
+            return m_mtime;
+        }
+
+        int64_t 
+        ctime() const {
+            return m_ctime;
+        }
+
+        bool 
+        nlink_flag() const {
+            return m_nlink_flag;
+        }
+
+        bool 
+        mode_flag() const {
+            return m_mode_flag;
+        }
+
+        bool 
+        size_flag() const {
+            return m_size_flag;
+        }
+
+        bool 
+        block_flag() const {
+            return m_block_flag;
+        }
+
+        bool 
+        atime_flag() const {
+            return m_atime_flag;
+        }
+
+        bool 
+        mtime_flag() const {
+            return m_mtime_flag;
+        }
+
+        bool 
+        ctime_flag() const {
+            return m_ctime_flag;
+        }
+
+        explicit
+        input(const rpc_update_metadentry_in_t& other) :
+            m_path(other.path),
+            m_nlink(other.nlink),
+            m_mode(other.mode),
+            m_uid(other.uid),
+            m_gid(other.gid),
+            m_size(other.size),
+            m_blocks(other.blocks),
+            m_atime(other.atime),
+            m_mtime(other.mtime),
+            m_ctime(other.ctime),
+            m_nlink_flag(other.nlink_flag),
+            m_mode_flag(other.mode_flag),
+            m_size_flag(other.size_flag),
+            m_block_flag(other.block_flag),
+            m_atime_flag(other.atime_flag),
+            m_mtime_flag(other.mtime_flag),
+            m_ctime_flag(other.ctime_flag) { }
+
+        explicit
+        operator rpc_update_metadentry_in_t() {
+            return {m_path.c_str(), 
+                    m_nlink,
+                    m_mode,
+                    m_uid,
+                    m_gid,
+                    m_size,
+                    m_blocks,
+                    m_atime,
+                    m_mtime,
+                    m_ctime,
+                    m_nlink_flag,
+                    m_mode_flag,
+                    m_size_flag,
+                    m_block_flag,
+                    m_atime_flag,
+                    m_mtime_flag,
+                    m_ctime_flag};
+        }
+
+    private:
+        std::string m_path;
+        uint64_t m_nlink;
+        uint32_t m_mode;
+        uint32_t m_uid;
+        uint32_t m_gid;
+        int64_t m_size;
+        int64_t m_blocks;
+        int64_t m_atime;
+        int64_t m_mtime;
+        int64_t m_ctime;
+        bool m_nlink_flag;
+        bool m_mode_flag;
+        bool m_size_flag;
+        bool m_block_flag;
+        bool m_atime_flag;
+        bool m_mtime_flag;
+        bool m_ctime_flag;
+    };
+
+    class output {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        output() :
+            m_err() {}
+
+        output(int32_t err) :
+            m_err(err) {}
+
+        output(output&& rhs) = default;
+        output(const output& other) = default;
+        output& operator=(output&& rhs) = default;
+        output& operator=(const output& other) = default;
+
+        explicit 
+        output(const rpc_err_out_t& out) {
+            m_err = out.err;
+        }
+
+        int32_t
+        err() const {
+            return m_err;
+        }
+
+    private:
+        int32_t m_err;
+    };
+};
+
 } // namespace rpc
 } // namespace gkfs
 

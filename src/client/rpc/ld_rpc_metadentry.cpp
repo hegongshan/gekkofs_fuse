@@ -162,7 +162,6 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
         return 0;
     }
 
-    std::size_t rpc_target_size2 = CTX->hosts2().size();
     std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
 
     hermes::endpoint_set endps;
@@ -197,56 +196,53 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
 
 int update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
-    hg_handle_t handle;
-    rpc_update_metadentry_in_t in{};
-    rpc_err_out_t out{};
-    int err = EUNKNOWN;
-    // fill in
-    // add data
-    in.path = path.c_str();
-    in.size = md_flags.size ? md.size() : 0;
-    in.nlink = md_flags.link_count ? md.link_count() : 0;
-    in.blocks = md_flags.blocks ? md.blocks() : 0;
-    in.atime = md_flags.atime ? md.atime() : 0;
-    in.mtime = md_flags.mtime ? md.mtime() : 0;
-    in.ctime = md_flags.ctime ? md.ctime() : 0;
-    // add data flags
-    in.size_flag = bool_to_merc_bool(md_flags.size);
-    in.nlink_flag = bool_to_merc_bool(md_flags.link_count);
-    in.block_flag = bool_to_merc_bool(md_flags.blocks);
-    in.atime_flag = bool_to_merc_bool(md_flags.atime);
-    in.mtime_flag = bool_to_merc_bool(md_flags.mtime);
-    in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
 
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_update_metadentry_id, path, handle);
-    if (ret != HG_SUCCESS) {
+    auto endp = CTX->hosts2().at(
+        CTX->distributor()->locate_file_metadata(path));
+
+    try {
+
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::update_metadentry>(
+                    endp, 
+                    path,
+                    (md_flags.link_count ? md.link_count() : 0),
+                    /* mode */ 0,
+                    /* uid */  0,
+                    /* gid */  0,
+                    (md_flags.size ? md.size() : 0),
+                    (md_flags.blocks ? md.blocks() : 0),
+                    (md_flags.atime ? md.atime() : 0),
+                    (md_flags.mtime ? md.mtime() : 0),
+                    (md_flags.ctime ? md.ctime() : 0),
+                    bool_to_merc_bool(md_flags.link_count),
+                    /* mode_flag */ false, 
+                    bool_to_merc_bool(md_flags.size),
+                    bool_to_merc_bool(md_flags.blocks),
+                    bool_to_merc_bool(md_flags.atime),
+                    bool_to_merc_bool(md_flags.mtime),
+                    bool_to_merc_bool(md_flags.ctime)).get().at(0);
+
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        if(out.err() != 0) {
+            errno = out.err();
+            return -1;
+        }
+
+        return 0;
+
+    } catch(const std::exception& ex) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
         return -1;
     }
-    // Send rpc
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret == HG_SUCCESS) {
-        CTX->log()->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-        if (ret == HG_SUCCESS) {
-            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            CTX->log()->error("{}() while getting rpc output", __func__);
-        }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        CTX->log()->warn("{}() timed out", __func__);
-        errno = EBUSY;
-    }
-
-    margo_destroy(handle);
-    return err;
 }
 
 int update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
