@@ -297,43 +297,33 @@ int update_metadentry_size(const string& path, const size_t size, const off64_t 
 }
 
 int get_metadentry_size(const std::string& path, off64_t& ret_size) {
-    hg_handle_t handle;
-    rpc_path_only_in_t in{};
-    rpc_get_metadentry_size_out_t out{};
-    // add data
-    in.path = path.c_str();
-    int err = EUNKNOWN;
 
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_get_metadentry_size_id, path, handle);
-    if (ret != HG_SUCCESS) {
+    auto endp = CTX->hosts2().at(
+        CTX->distributor()->locate_file_metadata(path));
+
+    try {
+
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::get_metadentry_size>(
+                    endp, path).get().at(0);
+
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        ret_size = out.ret_size();
+        return out.err();
+
+    } catch(const std::exception& ex) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
-        return -1;
+        ret_size = 0;
+        return EUNKNOWN;
     }
-    // Send rpc
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret == HG_SUCCESS) {
-        CTX->log()->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-        if (ret == HG_SUCCESS) {
-            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-            ret_size = out.ret_size;
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            ret_size = 0;
-            CTX->log()->error("{}() while getting rpc output", __func__);
-        }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        CTX->log()->warn("{}() timed out", __func__);
-        errno = EBUSY;
-    }
-    margo_destroy(handle);
-    return err;
 }
 
 /**
