@@ -15,6 +15,7 @@
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/env_util.hpp>
+#include <hermes.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -103,6 +104,35 @@ vector<pair<string, string>> load_hosts_file(const std::string& lfpath) {
     return hosts;
 }
 
+hermes::endpoint lookup_endpoint(const std::string& uri, 
+                                 std::size_t max_retries = 3) {
+
+    CTX->log()->debug("{}() Looking up address '{}'", __func__, uri);
+
+    std::random_device rd; // obtain a random number from hardware
+    std::size_t attempts = 0;
+    std::string error_msg;
+
+    do {
+        try {
+            return ld_network_service->lookup(uri);
+        } catch (const exception& ex) {
+            error_msg = ex.what();
+            CTX->log()->warn("{}() Failed to lookup address '{}'. Attempts [{}/{}]", 
+                             __func__, uri, attempts + 1, max_retries);
+            // Wait a random amount of time and try again
+            std::mt19937 g(rd()); // seed the random generator
+            std::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
+            std::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
+            continue;
+        }
+    } while (++attempts < max_retries);
+
+    throw std::runtime_error(
+            fmt::format("Endpoint for address '{}' could not be found ({})", 
+                        uri, error_msg));
+}
+
 hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
     CTX->log()->debug("{}() Lookink up address '{}'", __func__, uri);
     // try to look up 3 times before erroring out
@@ -152,7 +182,10 @@ void load_hosts() {
 
     auto local_hostname = get_my_hostname(true);
     bool local_host_found = false;
-    vector<hg_addr_t> addrs(hosts.size());
+    vector<hg_addr_t> addrs(hosts.size()); // TODO(amiranda) remove
+
+    std::vector<hermes::endpoint> addrs2;
+    addrs2.reserve(hosts.size());
 
     vector<uint64_t> host_ids(hosts.size());
     // populate vector with [0, ..., host_size - 1]
@@ -171,8 +204,14 @@ void load_hosts() {
     for (const auto& id: host_ids) {
         const auto& hostname = hosts.at(id).first;
         const auto& uri = hosts.at(id).second;
-        auto addr = margo_addr_lookup_retry(uri);
-        addrs.at(id) = addr;
+
+        auto endp = ::lookup_endpoint(uri);
+
+        auto it = std::next(addrs2.begin(), id);
+        addrs2.emplace(it, endp);
+
+        auto addr = margo_addr_lookup_retry(uri); // TODO(amiranda) remove
+        addrs.at(id) = addr; // TODO(amiranda) remove
 
         if (!local_host_found && hostname == local_hostname) {
             CTX->log()->debug("{}() Found local host: {}", __func__, hostname);
@@ -181,12 +220,42 @@ void load_hosts() {
         }
     }
 
+#if 0
+    fmt::print(stdout, " YYY hi!\n");
+
+    std::for_each(
+        addrs.begin(), 
+        addrs.end(), 
+        [](hg_addr_t addr) {
+            hg_class_t* hg_class = margo_get_class(ld_margo_rpc_id);
+            hg_size_t bsize = 0;
+            hg_return ret = HG_Addr_to_string(hg_class, NULL, &bsize, addr);
+
+            const auto buffer = std::make_unique<char[]>(bsize);
+            HG_Addr_to_string(hg_class, buffer.get(), &bsize, addr);
+            fmt::print(stdout, " XXX {}\n", std::string(buffer.get()));
+        }
+    );
+
+    std::for_each(
+        addrs2.begin(), 
+        addrs2.end(), 
+        [](const hermes::endpoint& endp) {
+            fmt::print(stdout, " ZZZ {}\n", endp.to_string());
+        }
+    );
+#endif
+
     if (!local_host_found) {
         CTX->log()->warn("{}() Failed to find local host."
                             "Fallback: use host id '0' as local host", __func__);
         CTX->local_host_id(0);
     }
+
+#if 1 // TODO(amiranda) remove
     CTX->hosts(addrs);
+#endif
+    CTX->hosts2(addrs2);
 }
 
 void cleanup_addresses() {

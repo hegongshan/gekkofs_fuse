@@ -23,8 +23,11 @@
 #include <client/rpc/ld_rpc_management.hpp>
 #include <client/preload_util.hpp>
 #include <client/intercept.hpp>
+#include <client/rpc/hg_rpcs.hpp>
+#include <hermes.hpp>
 
 #include <fstream>
+
 
 using namespace std;
 //
@@ -49,6 +52,7 @@ hg_id_t rpc_chunk_stat_id;
 // Margo instances
 margo_instance_id ld_margo_rpc_id;
 
+std::unique_ptr<hermes::async_engine> ld_network_service;
 
 static inline void exit_error_msg(int errcode, const string& msg) {
     CTX->log()->error(msg);
@@ -117,6 +121,22 @@ void register_client_rpcs(margo_instance_id mid) {
         rpc_chunk_stat_in_t,
         rpc_chunk_stat_out_t,
         NULL);
+
+    fmt::print(stdout, "rpc_config_id: {}\n", rpc_config_id);
+    fmt::print(stdout, "rpc_mk_node_id: {}\n", rpc_mk_node_id);
+    fmt::print(stdout, "rpc_stat_id: {}\n", rpc_stat_id);
+    fmt::print(stdout, "rpc_rm_node_id: {}\n", rpc_rm_node_id);
+    fmt::print(stdout, "rpc_decr_size_id: {}\n", rpc_decr_size_id);
+    fmt::print(stdout, "rpc_update_metadentry_id: {}\n", rpc_update_metadentry_id);
+    fmt::print(stdout, "rpc_get_metadentry_size_id: {}\n", rpc_get_metadentry_size_id);
+    fmt::print(stdout, "rpc_update_metadentry_size_id: {}\n", rpc_update_metadentry_size_id);
+    fmt::print(stdout, "rpc_mk_symlink_id: {}\n", rpc_mk_symlink_id);
+    fmt::print(stdout, "rpc_write_data_id: {}\n", rpc_write_data_id);
+    fmt::print(stdout, "rpc_read_data_id: {}\n", rpc_read_data_id);
+    fmt::print(stdout, "rpc_trunc_data_id: {}\n", rpc_trunc_data_id);
+    fmt::print(stdout, "rpc_get_dirents_id: {}\n", rpc_get_dirents_id);
+    fmt::print(stdout, "rpc_chunk_stat_id: {}\n", rpc_chunk_stat_id);
+
 }
 
 /**
@@ -149,6 +169,33 @@ bool init_margo_client(const std::string& na_plugin) {
     return true;
 }
 
+
+
+
+/**
+ * Initializes the Hermes client for a given transport prefix
+ * @param transport_prefix
+ * @return true if succesfully initialized; false otherwise
+ */
+bool init_hermes_client(const std::string& transport_prefix) {
+
+    try {
+        ld_network_service = 
+            std::make_unique<hermes::async_engine>(
+                    hermes::get_transport_type(transport_prefix));
+        ld_network_service->run();
+    } catch (const std::exception& ex) {
+        fmt::print(stderr, "Failed to initialize Hermes RPC client {}\n", 
+                   ex.what());
+        return false;
+    }
+
+    rpc_config_id = fs_config::public_id;
+
+    return true;
+}
+
+
 /**
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
@@ -157,6 +204,11 @@ void init_ld_environment_() {
     //use rpc_addresses here to avoid "static initialization order problem"
     if (!init_margo_client(RPC_PROTOCOL)) {
         exit_error_msg(EXIT_FAILURE, "Unable to initializa Margo RPC client");
+    }
+
+    // initialize Hermes interface to Mercury
+    if (!init_hermes_client(RPC_PROTOCOL)) {
+        exit_error_msg(EXIT_FAILURE, "Unable to initialize Hermes RPC client");
     }
 
     try {

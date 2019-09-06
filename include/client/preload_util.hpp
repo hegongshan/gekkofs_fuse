@@ -41,6 +41,11 @@ struct MetadentryUpdateFlags {
 
 // Margo instances
 extern margo_instance_id ld_margo_rpc_id;
+
+// Hermes instance
+namespace hermes { class async_engine; }
+extern std::unique_ptr<hermes::async_engine> ld_network_service;
+
 // RPC IDs
 extern hg_id_t rpc_config_id;
 extern hg_id_t rpc_mk_node_id;

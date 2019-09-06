@@ -8,6 +8,7 @@ set(PRELOAD_SRC
     preload.cpp
     resolve.cpp
     preload_util.cpp
+    rpc/hg_rpcs.cpp
     rpc/ld_rpc_management.cpp
     rpc/ld_rpc_data_ws.cpp
     rpc/ld_rpc_metadentry.cpp
@@ -31,6 +32,7 @@ set(PRELOAD_HEADERS
     ../../include/client/preload.hpp
     ../../include/client/resolve.hpp
     ../../include/client/preload_util.hpp
+    ../../include/client/rpc/hg_rpcs.hpp
     ../../include/client/rpc/ld_rpc_management.hpp
     ../../include/client/rpc/ld_rpc_data_ws.hpp
     ../../include/client/rpc/ld_rpc_metadentry.hpp

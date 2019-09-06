@@ -17,6 +17,8 @@
 #include <boost/type_traits/is_pointer.hpp> // see https://github.com/boostorg/tokenizer/issues/9
 #include <boost/token_functions.hpp>
 #include <boost/tokenizer.hpp>
+#include <hermes.hpp>
+#include <client/rpc/hg_rpcs.hpp>
 
 
 namespace rpc_send {
@@ -27,54 +29,37 @@ namespace rpc_send {
  * @return
  */
 bool get_fs_config() {
-    hg_handle_t handle;
-    rpc_config_out_t out{};
-    // fill in
-    auto ret = margo_create(ld_margo_rpc_id, CTX->hosts().at(CTX->local_host_id()), rpc_config_id, &handle);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() creating handle for failed", __func__);
-        return false;
-    }
-    CTX->log()->debug("{}() Forwarding request", __func__);
-    for (int i = 0; i < RPC_TRIES; ++i) {
-        ret = margo_forward_timed(handle, nullptr, RPC_TIMEOUT);
-        if (ret == HG_SUCCESS) {
-            break;
-        }
-        CTX->log()->warn("{}() Failed to forward request. Error: {}. Attempt {}/{}", __func__, HG_Error_to_string(ret), i+1, RPC_TRIES);
-    }
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() Failed to forward request. Giving up after {} attempts", __func__, RPC_TRIES);
-        margo_destroy(handle);
-        return false;
-    }
 
-    /* decode response */
-    CTX->log()->debug("{}() Waiting for response", __func__);
-    ret = margo_get_output(handle, &out);
-    if (ret != HG_SUCCESS) {
+    auto endp = CTX->hosts2().at(CTX->local_host_id());
+    fs_config::output out;
+
+    try {
+        CTX->log()->debug("{}() Retrieving file system configurations from daemon", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can retry
+        // for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        out = ld_network_service->post<fs_config>(endp).get().at(0);
+    } catch (const std::exception& ex) {
         CTX->log()->error("{}() Retrieving fs configurations from daemon", __func__);
-        margo_destroy(handle);
         return false;
     }
 
-    CTX->mountdir(out.mountdir);
+    CTX->mountdir(out.mountdir());
     CTX->log()->info("Mountdir: '{}'", CTX->mountdir());
 
-    CTX->fs_conf()->rootdir = out.rootdir;
-    CTX->fs_conf()->atime_state = out.atime_state;
-    CTX->fs_conf()->mtime_state = out.mtime_state;
-    CTX->fs_conf()->ctime_state = out.ctime_state;
-    CTX->fs_conf()->link_cnt_state = out.link_cnt_state;
-    CTX->fs_conf()->blocks_state = out.blocks_state;
-    CTX->fs_conf()->uid = out.uid;
-    CTX->fs_conf()->gid = out.gid;
+    CTX->fs_conf()->rootdir = out.rootdir();
+    CTX->fs_conf()->atime_state = out.atime_state();
+    CTX->fs_conf()->mtime_state = out.mtime_state();
+    CTX->fs_conf()->ctime_state = out.ctime_state();
+    CTX->fs_conf()->link_cnt_state = out.link_cnt_state();
+    CTX->fs_conf()->blocks_state = out.blocks_state();
+    CTX->fs_conf()->uid = out.uid();
+    CTX->fs_conf()->gid = out.gid();
 
-    CTX->log()->debug("{}() Got response with mountdir {}", __func__, out.mountdir);
+    CTX->log()->debug("{}() Got response with mountdir {}", __func__, out.mountdir());
 
-    /* clean up resources consumed by this rpc */
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
     return true;
 }
 

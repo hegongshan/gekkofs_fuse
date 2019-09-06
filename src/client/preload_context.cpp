@@ -11,6 +11,7 @@
   SPDX-License-Identifier: MIT
 */
 
+#include <hermes.hpp>
 #include <client/preload_context.hpp>
 
 #include <client/open_file_map.hpp>
@@ -57,12 +58,22 @@ const std::string& PreloadContext::cwd() const {
     return cwd_;
 }
 
+#if 1 // TODO(amiranda) remove
 const std::vector<hg_addr_t>& PreloadContext::hosts() const {
     return hosts_;
 }
 
 void PreloadContext::hosts(const std::vector<hg_addr_t>& addrs) {
     hosts_ = addrs;
+}
+#endif
+
+const std::vector<hermes::endpoint>& PreloadContext::hosts2() const {
+    return hosts2_;
+}
+
+void PreloadContext::hosts2(const std::vector<hermes::endpoint>& endpoints) {
+    hosts2_ = endpoints;
 }
 
 uint64_t PreloadContext::local_host_id() const {
