@@ -247,53 +247,41 @@ int update_metadentry(const string& path, const Metadata& md, const MetadentryUp
 
 int update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
                                     off64_t& ret_size) {
-    hg_handle_t handle;
-    rpc_update_metadentry_size_in_t in{};
-    rpc_update_metadentry_size_out_t out{};
-    // add data
-    in.path = path.c_str();
-    in.size = size;
-    in.offset = offset;
-    if (append_flag)
-        in.append = HG_TRUE;
-    else
-        in.append = HG_FALSE;
-    int err = EUNKNOWN;
 
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_update_metadentry_size_id, path, handle);
-    if (ret != HG_SUCCESS) {
-        ret_size = 0;
+    auto endp = CTX->hosts2().at(
+        CTX->distributor()->locate_file_metadata(path));
+
+    try {
+
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::update_metadentry_size>(
+                    endp, path, size, offset,
+                    bool_to_merc_bool(append_flag)).get().at(0);
+
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        if(out.err() != 0) {
+            errno = out.err();
+            return -1;
+        }
+
+        ret_size = out.ret_size();
+        return out.err();
+
+        return 0;
+
+    } catch(const std::exception& ex) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
-        margo_destroy(handle);
-        return -1;
-    }
-    // Send rpc
-    ret = margo_forward_timed_wrap(handle, &in);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() margo forward failed: {}", __func__, HG_Error_to_string(ret));
         ret_size = 0;
-        errno = EBUSY;
-        margo_destroy(handle);
-        return -1;
+        return EUNKNOWN;
     }
-
-    ret = margo_get_output(handle, &out);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() failed to get rpc ouptut: {}", __func__, HG_Error_to_string(ret));
-        ret_size = 0;
-        errno = EBUSY;
-        margo_free_output(handle, &out);
-        margo_destroy(handle);
-    }
-
-    CTX->log()->debug("{}() Got response: {}", __func__, out.err);
-    err = out.err;
-    ret_size = out.ret_size;
-
-    margo_free_output(handle, &out);
-    margo_destroy(handle);
-    return err;
 }
 
 int get_metadentry_size(const std::string& path, off64_t& ret_size) {

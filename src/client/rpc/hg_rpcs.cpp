@@ -28,6 +28,7 @@ register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::decr_size>();
     (void) registered_requests().add<gkfs::rpc::update_metadentry>();
     (void) registered_requests().add<gkfs::rpc::get_metadentry_size>();
+    (void) registered_requests().add<gkfs::rpc::update_metadentry_size>();
 }
 
 }} // namespace hermes::detail

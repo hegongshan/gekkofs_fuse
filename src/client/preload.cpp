@@ -197,6 +197,7 @@ bool init_hermes_client(const std::string& transport_prefix) {
     rpc_decr_size_id = gkfs::rpc::decr_size::public_id;
     rpc_update_metadentry_id = gkfs::rpc::update_metadentry::public_id;
     rpc_get_metadentry_size_id = gkfs::rpc::get_metadentry_size::public_id;
+    rpc_update_metadentry_size_id = gkfs::rpc::update_metadentry::public_id;
 
     return true;
 }

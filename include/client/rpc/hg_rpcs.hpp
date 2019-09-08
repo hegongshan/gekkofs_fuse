@@ -1026,6 +1026,143 @@ struct get_metadentry_size {
         int64_t m_ret_size;
     };
 };
+
+//==============================================================================
+// definitions for update_metadentry_size
+struct update_metadentry_size {
+
+    // forward declarations of public input/output types for this RPC
+    class input;
+    class output;
+
+    // traits used so that the engine knows what to do with the RPC
+    using self_type = update_metadentry_size;
+    using handle_type = hermes::rpc_handle<self_type>;
+    using input_type = input;
+    using output_type = output;
+    using mercury_input_type = rpc_update_metadentry_size_in_t;
+    using mercury_output_type = rpc_update_metadentry_size_out_t;
+
+    // RPC public identifier
+    constexpr static const uint64_t public_id = 2760900608;
+
+    // RPC internal Mercury identifier
+    constexpr static const hg_id_t mercury_id = public_id;
+
+    // RPC name
+    constexpr static const auto name = hg_tag::update_metadentry_size;
+
+    // requires response?
+    constexpr static const auto requires_response = true;
+
+    // Mercury callback to serialize input arguments
+    constexpr static const auto mercury_in_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_update_metadentry_size_in_t);
+
+    // Mercury callback to serialize output arguments
+    constexpr static const auto mercury_out_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_update_metadentry_size_out_t);
+
+    class input {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        input(const std::string& path, 
+              uint64_t size, 
+              int64_t offset, 
+              bool append) :
+            m_path(path),
+            m_size(size),
+            m_offset(offset),
+            m_append(append) { }
+
+        input(input&& rhs) = default;
+        input(const input& other) = default;
+        input& operator=(input&& rhs) = default;
+        input& operator=(const input& other) = default;
+
+        std::string
+        path() const {
+            return m_path;
+        }
+
+        uint64_t
+        size() const {
+            return m_size;
+        }
+
+        int64_t
+        offset() const {
+            return m_offset;
+        }
+
+        bool
+        append() const {
+            return m_append;
+        }
+
+        explicit
+        input(const rpc_update_metadentry_size_in_t& other) :
+            m_path(other.path),
+            m_size(other.size), 
+            m_offset(other.offset), 
+            m_append(other.append) { }
+
+        explicit
+        operator rpc_update_metadentry_size_in_t() {
+            return {m_path.c_str(), m_size, m_offset, m_append};
+        }
+
+    private:
+        std::string m_path;
+        uint64_t m_size;
+        int64_t  m_offset;
+        bool     m_append;
+    };
+
+    class output {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        output() :
+            m_err(),
+            m_ret_size() {}
+
+        output(int32_t err, int64_t ret_size) :
+            m_err(err),
+            m_ret_size(ret_size) {}
+
+        output(output&& rhs) = default;
+        output(const output& other) = default;
+        output& operator=(output&& rhs) = default;
+        output& operator=(const output& other) = default;
+
+        explicit 
+        output(const rpc_update_metadentry_size_out_t& out) {
+            m_err = out.err;
+            m_ret_size = out.ret_size;
+        }
+
+        int32_t
+        err() const {
+            return m_err;
+        }
+
+        int64_t
+        ret_size() const {
+            return m_ret_size;
+        }
+
+    private:
+        int32_t m_err;
+        int64_t m_ret_size;
+    };
+};
+
 } // namespace rpc
 } // namespace gkfs
 
