@@ -199,6 +199,10 @@ bool init_hermes_client(const std::string& transport_prefix) {
     rpc_get_metadentry_size_id = gkfs::rpc::get_metadentry_size::public_id;
     rpc_update_metadentry_size_id = gkfs::rpc::update_metadentry::public_id;
 
+#ifdef HAS_SYMLINKS
+    rpc_mk_symlink_id = gkfs::rpc::mk_symlink::public_id;
+#endif // HAS_SYMLINKS
+
     return true;
 }
 

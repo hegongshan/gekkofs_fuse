@@ -416,43 +416,36 @@ void get_dirents(OpenDir& open_dir){
 #ifdef HAS_SYMLINKS
 
 int mk_symlink(const std::string& path, const std::string& target_path) {
-    hg_handle_t handle;
-    rpc_mk_symlink_in_t in{};
-    rpc_err_out_t out{};
-    int err = EUNKNOWN;
-    // fill in
-    in.path = path.c_str();
-    in.target_path = target_path.c_str();
-    // Create handle
-    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(rpc_mk_symlink_id, path, handle);
-    if (ret != HG_SUCCESS) {
+
+    auto endp = CTX->hosts2().at(
+        CTX->distributor()->locate_file_metadata(path));
+
+    try {
+
+        CTX->log()->debug("{}() Sending RPC ...", __func__);
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+        // returning one result and a broadcast(endpoint_set) returning a 
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = 
+            ld_network_service->post<gkfs::rpc::mk_symlink>(
+                    endp, path, target_path).get().at(0);
+
+        CTX->log()->debug("{}() Got response success: {}", __func__, out.err());
+
+        if(out.err() != 0) {
+            errno = out.err();
+            return -1;
+        }
+
+        return 0;
+
+    } catch(const std::exception& ex) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
         errno = EBUSY;
         return -1;
     }
-    // Send rpc
-    CTX->log()->debug("{}() About to send RPC ...", __func__);
-    ret = margo_forward_timed_wrap(handle, &in);
-    // Get response
-    if (ret == HG_SUCCESS) {
-        CTX->log()->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-        if (ret == HG_SUCCESS) {
-            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            CTX->log()->error("{}() while getting rpc output", __func__);
-        }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        CTX->log()->warn("{}() timed out");
-        errno = EBUSY;
-    }
-    margo_destroy(handle);
-    return err;
 }
 
 #endif
