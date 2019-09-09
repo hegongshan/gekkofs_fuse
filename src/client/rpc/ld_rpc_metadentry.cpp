@@ -33,7 +33,6 @@ int mk_node(const std::string& path, const mode_t mode) {
     hg_handle_t handle;
     rpc_mk_node_in_t in{};
     rpc_err_out_t out{};
-    int err = EUNKNOWN;
     // fill in
     in.path = path.c_str();
     in.mode = mode;
@@ -41,6 +40,7 @@ int mk_node(const std::string& path, const mode_t mode) {
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
     auto ret = margo_create_wrap(rpc_mk_node_id, path, handle);
     if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() Failed to create HG handle", __func__);
         errno = EBUSY;
         return -1;
     }
@@ -48,23 +48,23 @@ int mk_node(const std::string& path, const mode_t mode) {
     CTX->log()->debug("{}() About to send RPC ...", __func__);
     ret = margo_forward_timed_wrap(handle, &in);
     // Get response
-    if (ret == HG_SUCCESS) {
-        CTX->log()->trace("{}() Waiting for response", __func__);
-        ret = margo_get_output(handle, &out);
-        if (ret == HG_SUCCESS) {
-            CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
-            err = out.err;
-        } else {
-            // something is wrong
-            errno = EBUSY;
-            CTX->log()->error("{}() while getting rpc output", __func__);
-        }
-        /* clean up resources consumed by this rpc */
-        margo_free_output(handle, &out);
-    } else {
-        CTX->log()->warn("{}() timed out", __func__);
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() Failed to forward request", __func__);
+        margo_destroy(handle);
         errno = EBUSY;
+        return -1;
     }
+    CTX->log()->trace("{}() Waiting for response", __func__);
+    ret = margo_get_output(handle, &out);
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() Failed to get output response", __func__);
+        margo_free_output(handle, &out);
+        margo_destroy(handle);
+        errno = EBUSY;
+        return -1;
+    }
+    int err = out.err;
+    margo_free_output(handle, &out);
     margo_destroy(handle);
     return err;
 }
