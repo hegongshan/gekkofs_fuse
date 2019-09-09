@@ -1917,6 +1917,126 @@ struct get_dirents {
     };
 };
 
+//==============================================================================
+// definitions for chunk_stat
+struct chunk_stat {
+
+    // forward declarations of public input/output types for this RPC
+    class input;
+    class output;
+
+    // traits used so that the engine knows what to do with the RPC
+    using self_type = chunk_stat;
+    using handle_type = hermes::rpc_handle<self_type>;
+    using input_type = input;
+    using output_type = output;
+    using mercury_input_type = rpc_chunk_stat_in_t;
+    using mercury_output_type = rpc_chunk_stat_out_t;
+
+    // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
+    constexpr static const uint64_t public_id = 532742144;
+
+    // RPC internal Mercury identifier
+    constexpr static const hg_id_t mercury_id = public_id;
+
+    // RPC name
+    constexpr static const auto name = hg_tag::chunk_stat;
+
+    // requires response?
+    constexpr static const auto requires_response = true;
+
+    // Mercury callback to serialize input arguments
+    constexpr static const auto mercury_in_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_chunk_stat_in_t);
+
+    // Mercury callback to serialize output arguments
+    constexpr static const auto mercury_out_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_chunk_stat_out_t);
+
+    class input {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        input(int32_t dummy) :
+            m_dummy(dummy) { }
+
+        input(input&& rhs) = default;
+        input(const input& other) = default;
+        input& operator=(input&& rhs) = default;
+        input& operator=(const input& other) = default;
+
+        int32_t
+        dummy() const {
+            return m_dummy;
+        }
+
+        explicit
+        input(const rpc_chunk_stat_in_t& other) :
+            m_dummy(other.dummy) { }
+
+        explicit
+        operator rpc_chunk_stat_in_t() {
+            return { m_dummy };
+        }
+
+    private:
+        int32_t m_dummy;
+    };
+
+    class output {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        output() :
+            m_chunk_size(),
+            m_chunk_total(),
+            m_chunk_free() {}
+
+        output(uint64_t chunk_size, uint64_t chunk_total, uint64_t chunk_free) :
+            m_chunk_size(chunk_size),
+            m_chunk_total(chunk_total),
+            m_chunk_free(chunk_free) {}
+
+        output(output&& rhs) = default;
+        output(const output& other) = default;
+        output& operator=(output&& rhs) = default;
+        output& operator=(const output& other) = default;
+
+        explicit 
+        output(const rpc_chunk_stat_out_t& out) {
+            m_chunk_size = out.chunk_size;
+            m_chunk_total = out.chunk_total;
+            m_chunk_free = out.chunk_free;
+        }
+
+        uint64_t
+        chunk_size() const {
+            return m_chunk_size;
+        }
+
+        uint64_t
+        chunk_total() const {
+            return m_chunk_total;
+        }
+
+        uint64_t
+        chunk_free() const {
+            return m_chunk_free;
+        }
+
+    private:
+        uint64_t m_chunk_size;
+        uint64_t m_chunk_total;
+        uint64_t m_chunk_free;
+    };
+};
+
 } // namespace rpc
 } // namespace gkfs
 

@@ -435,56 +435,57 @@ int trunc_data(const std::string& path, size_t current_size, size_t new_size) {
 }
 
 ChunkStat chunk_stat() {
+
     CTX->log()->trace("{}()", __func__);
-    rpc_chunk_stat_in_t in;
 
-    auto const host_size =  CTX->hosts().size();
-    std::vector<hg_handle_t> rpc_handles(host_size);
-    std::vector<margo_request> rpc_waiters(host_size);
+    std::vector<hermes::rpc_handle<gkfs::rpc::chunk_stat>> handles;
 
-    hg_return_t hg_ret;
+    for (const auto& endp : CTX->hosts2()) {
+        try {
+            CTX->log()->trace("{}() Sending RPC to host: {}", 
+                              __func__, endp.to_string());
 
-    for (unsigned int target_host = 0; target_host < host_size; ++target_host) {
-        //Setup rpc input parameters for each host
-        hg_ret = margo_create_wrap_helper(rpc_chunk_stat_id, target_host,
-                                          rpc_handles[target_host]);
-        if (hg_ret != HG_SUCCESS) {
-            throw std::runtime_error("Failed to create margo handle");
-        }
-        // Send RPC
-        CTX->log()->trace("{}() Sending RPC to host: {}", __func__, target_host);
-        hg_ret = margo_iforward(rpc_handles[target_host],
-                                &in,
-                                &rpc_waiters[target_host]);
-        if (hg_ret != HG_SUCCESS) {
-            CTX->log()->error("{}() Unable to send non-blocking chunk_stat to recipient {}", __func__, target_host);
-            for (unsigned int i = 0; i <= target_host; i++) {
-                margo_destroy(rpc_handles[i]);
-            }
+            gkfs::rpc::chunk_stat::input in(0);
+
+            // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that
+            // we can retry for RPC_TRIES (see old commits with margo)
+            // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+            // returning one result and a broadcast(endpoint_set) returning a 
+            // result_set. When that happens we can remove the .at(0) :/
+            handles.emplace_back(
+                ld_network_service->post<gkfs::rpc::chunk_stat>(endp, in));
+
+        } catch (const std::exception& ex) {
+            // TODO(amiranda): we should cancel all previously posted requests 
+            // here, unfortunately, Hermes does not support it yet :/
+            CTX->log()->error("{}() Failed to send request to host: {}", 
+                              __func__, endp.to_string());
             throw std::runtime_error("Failed to forward non-blocking rpc request");
         }
     }
+
     unsigned long chunk_size = CHUNKSIZE;
     unsigned long chunk_total = 0;
     unsigned long chunk_free = 0;
 
-    for (unsigned int target_host = 0; target_host < host_size; ++target_host) {
-        hg_ret = margo_wait(rpc_waiters[target_host]);
-        if (hg_ret != HG_SUCCESS) {
-            throw std::runtime_error(fmt::format("Failed while waiting for rpc completion. target host: {}", target_host));
-        }
-        rpc_chunk_stat_out_t out{};
-        hg_ret = margo_get_output(rpc_handles[target_host], &out);
-        if (hg_ret != HG_SUCCESS) {
-            throw std::runtime_error(fmt::format("Failed to get rpc output for target host: {}", target_host));
-        }
+    // wait for RPC responses
+    for(std::size_t i = 0; i < handles.size(); ++i) {
 
-        assert(out.chunk_size == chunk_size);
-        chunk_total += out.chunk_total;
-        chunk_free  += out.chunk_free;
+        gkfs::rpc::chunk_stat::output out;
 
-        margo_free_output(rpc_handles[target_host], &out);
-        margo_destroy(rpc_handles[target_host]);
+        try {
+            // XXX We might need a timeout here to not wait forever for an
+            // output that never comes?
+            out = handles[i].get().at(0);
+
+            assert(out.chunk_size() == chunk_size);
+            chunk_total += out.chunk_total();
+            chunk_free  += out.chunk_free();
+
+        } catch(const std::exception& ex) {
+            throw std::runtime_error(
+                fmt::format("Failed to get rpc output for target host: {}]", i));
+        }
     }
 
     return {chunk_size, chunk_total, chunk_free};
