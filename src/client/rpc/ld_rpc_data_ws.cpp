@@ -365,84 +365,73 @@ ssize_t read(const string& path, void* buf, const off64_t offset, const size_t r
 }
 
 int trunc_data(const std::string& path, size_t current_size, size_t new_size) {
-    assert(current_size > new_size);
-    hg_return_t ret;
-    rpc_trunc_in_t in;
-    in.path = path.c_str();
-    in.length = new_size;
 
+    assert(current_size > new_size);
     bool error = false;
 
-    // Find out which data server needs to delete chunks in order to contact only them
+    // Find out which data servers need to delete data chunks in order to 
+    // contact only them
     const unsigned int chunk_start = chnk_id_for_offset(new_size, CHUNKSIZE);
-    const unsigned int chunk_end = chnk_id_for_offset(current_size - new_size - 1, CHUNKSIZE);
+    const unsigned int chunk_end = 
+        chnk_id_for_offset(current_size - new_size - 1, CHUNKSIZE);
+
     std::unordered_set<unsigned int> hosts;
     for(unsigned int chunk_id = chunk_start; chunk_id <= chunk_end; ++chunk_id) {
         hosts.insert(CTX->distributor()->locate_data(path, chunk_id));
     }
 
-    std::vector<hg_handle_t> rpc_handles(hosts.size());
-    std::vector<margo_request> rpc_waiters(hosts.size());
-    unsigned int req_num = 0;
+    std::vector<hermes::rpc_handle<gkfs::rpc::trunc_data>> handles;
+
     for (const auto& host: hosts) {
-        ret = margo_create_wrap_helper(rpc_trunc_data_id, host, rpc_handles[req_num]);
-        if (ret != HG_SUCCESS) {
-            CTX->log()->error("{}() Unable to create Mercury handle for host: ", __func__, host);
-            break;
+
+        auto endp = CTX->hosts2().at(host);
+
+        try {
+            CTX->log()->debug("{}() Sending RPC ...", __func__);
+
+            gkfs::rpc::trunc_data::input in(path, new_size);
+
+            // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that
+            // we can retry for RPC_TRIES (see old commits with margo)
+            // TODO(amiranda): hermes will eventually provide a post(endpoint) 
+            // returning one result and a broadcast(endpoint_set) returning a 
+            // result_set. When that happens we can remove the .at(0) :/
+            handles.emplace_back(
+                ld_network_service->post<gkfs::rpc::trunc_data>(endp, in));
+
+        } catch (const std::exception& ex) {
+            // TODO(amiranda): we should cancel all previously posted requests 
+            // here, unfortunately, Hermes does not support it yet :/
+            CTX->log()->error("{}() Failed to send request to host: {}", 
+                              __func__, host);
+            errno = EIO;
+            return -1;
         }
 
-        // send async rpc
-        ret = margo_iforward(rpc_handles[req_num], &in, &rpc_waiters[req_num]);
-        if (ret != HG_SUCCESS) {
-            CTX->log()->error("{}() Failed to send request to host: {}", __func__, host);
-            break;
-        }
-        ++req_num;
     }
 
-    if(req_num < hosts.size()) {
-        // An error occurred. Cleanup and return
-        CTX->log()->error("{}() Error -> sent only some requests {}/{}. Cancelling request...", __func__, req_num, hosts.size());
-        for(unsigned int i = 0; i < req_num; ++i) {
-            margo_destroy(rpc_handles[i]);
-        }
-        errno = EIO;
-        return -1;
-    }
-
-    assert(req_num == hosts.size());
     // Wait for RPC responses and then get response
-    rpc_err_out_t out{};
-    for (unsigned int i = 0; i < hosts.size(); ++i) {
-        ret = margo_wait(rpc_waiters[i]);
-        if (ret == HG_SUCCESS) {
-            ret = margo_get_output(rpc_handles[i], &out);
-            if (ret == HG_SUCCESS) {
-                if(out.err){
-                    CTX->log()->error("{}() received error response: {}", __func__, out.err);
-                    error = true;
-                }
-            } else {
-                // Get output failed
-                CTX->log()->error("{}() while getting rpc output", __func__);
+    for(const auto& h : handles) {
+
+        try {
+            // XXX We might need a timeout here to not wait forever for an
+            // output that never comes?
+            auto out = h.get().at(0);
+
+            if(out.err() != 0) {
+                CTX->log()->error("{}() received error response: {}", 
+                        __func__, out.err());
                 error = true;
+                errno = EIO;
             }
-        } else {
-            // Wait failed
-            CTX->log()->error("{}() Failed while waiting for response", __func__);
+        } catch(const std::exception& ex) {
+            CTX->log()->error("{}() while getting rpc output", __func__);
             error = true;
+            errno = EIO;
         }
-
-        /* clean up resources consumed by this rpc */
-        margo_free_output(rpc_handles[i], &out);
-        margo_destroy(rpc_handles[i]);
     }
 
-    if(error) {
-        errno = EIO;
-        return -1;
-    }
-    return 0;
+    return error ? -1 : 0;
 }
 
 ChunkStat chunk_stat() {
