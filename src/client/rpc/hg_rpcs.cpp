@@ -34,6 +34,7 @@ register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::mk_symlink>();
 #endif // HAS_SYMLINKS
 
+    (void) registered_requests().add<gkfs::rpc::write_data>();
 
 }
 

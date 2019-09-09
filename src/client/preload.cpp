@@ -203,6 +203,8 @@ bool init_hermes_client(const std::string& transport_prefix) {
     rpc_mk_symlink_id = gkfs::rpc::mk_symlink::public_id;
 #endif // HAS_SYMLINKS
 
+    rpc_write_data_id = gkfs::rpc::write_data::public_id;
+
     return true;
 }
 
