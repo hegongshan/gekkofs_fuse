@@ -1906,7 +1906,7 @@ struct get_dirents {
             return m_err;
         }
 
-        int64_t
+        size_t
         dirents_size() const {
             return m_dirents_size;
         }
