@@ -69,6 +69,8 @@ struct fs_config {
     using mercury_output_type = rpc_config_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 3033006080;
 
     // RPC internal Mercury identifier
@@ -246,6 +248,8 @@ struct create {
     using mercury_output_type = rpc_err_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 796590080;
 
     // RPC internal Mercury identifier
@@ -355,6 +359,8 @@ struct stat {
     using mercury_output_type = rpc_stat_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 1396244480;
 
     // RPC internal Mercury identifier
@@ -467,6 +473,8 @@ struct remove {
     using mercury_output_type = rpc_err_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 2549415936;
 
     // RPC internal Mercury identifier
@@ -567,6 +575,8 @@ struct decr_size {
     using mercury_output_type = rpc_err_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 1291649024;
 
     // RPC internal Mercury identifier
@@ -675,6 +685,8 @@ struct update_metadentry {
     using mercury_output_type = rpc_err_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 99483648;
 
     // RPC internal Mercury identifier
@@ -935,6 +947,8 @@ struct get_metadentry_size {
     using mercury_output_type = rpc_get_metadentry_size_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 3426484224;
 
     // RPC internal Mercury identifier
@@ -1044,6 +1058,8 @@ struct update_metadentry_size {
     using mercury_output_type = rpc_update_metadentry_size_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 2760900608;
 
     // RPC internal Mercury identifier
@@ -1182,6 +1198,8 @@ struct mk_symlink {
     using mercury_output_type = rpc_err_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 3207004160;
 
     // RPC internal Mercury identifier
@@ -1293,6 +1311,8 @@ struct write_data {
     using mercury_output_type = rpc_data_out_t;
 
     // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
     constexpr static const uint64_t public_id = 3716481024;
 
     // RPC internal Mercury identifier
@@ -1401,6 +1421,199 @@ struct write_data {
 
         explicit
         operator rpc_write_data_in_t() {
+            return {
+                m_path.c_str(), 
+                m_offset,
+                m_host_id,
+                m_host_size,
+                m_chunk_n,
+                m_chunk_start,
+                m_chunk_end,
+                m_total_chunk_size,
+                hg_bulk_t(m_buffers)
+            };
+        }
+
+    private:
+        std::string m_path;
+        int64_t m_offset;
+        uint64_t m_host_id;
+        uint64_t m_host_size;
+        uint64_t m_chunk_n;
+        uint64_t m_chunk_start;
+        uint64_t m_chunk_end;
+        uint64_t m_total_chunk_size;
+        hermes::exposed_memory m_buffers;
+    };
+
+    class output {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        output() :
+            m_err(),
+            m_io_size() {}
+
+        output(int32_t err, size_t io_size) :
+            m_err(err),
+            m_io_size(io_size) {}
+
+        output(output&& rhs) = default;
+        output(const output& other) = default;
+        output& operator=(output&& rhs) = default;
+        output& operator=(const output& other) = default;
+
+        explicit 
+        output(const rpc_data_out_t& out) {
+            m_err = out.err;
+            m_io_size = out.io_size;
+        }
+
+        int32_t
+        err() const {
+            return m_err;
+        }
+
+        int64_t
+        io_size() const {
+            return m_io_size;
+        }
+
+    private:
+        int32_t m_err;
+        size_t m_io_size;
+    };
+};
+
+//==============================================================================
+// definitions for read_data
+struct read_data {
+
+    // forward declarations of public input/output types for this RPC
+    class input;
+    class output;
+
+    // traits used so that the engine knows what to do with the RPC
+    using self_type = read_data;
+    using handle_type = hermes::rpc_handle<self_type>;
+    using input_type = input;
+    using output_type = output;
+    using mercury_input_type = rpc_read_data_in_t;
+    using mercury_output_type = rpc_data_out_t;
+
+    // RPC public identifier
+    // (N.B: we reuse the same IDs assigned by Margo so that the daemon 
+    // understands Hermes RPCs)
+    constexpr static const uint64_t public_id = 892207104;
+
+    // RPC internal Mercury identifier
+    constexpr static const hg_id_t mercury_id = public_id;
+
+    // RPC name
+    constexpr static const auto name = hg_tag::read_data;
+
+    // requires response?
+    constexpr static const auto requires_response = true;
+
+    // Mercury callback to serialize input arguments
+    constexpr static const auto mercury_in_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_read_data_in_t);
+
+    // Mercury callback to serialize output arguments
+    constexpr static const auto mercury_out_proc_cb = 
+        HG_GEN_PROC_NAME(rpc_data_out_t);
+
+    class input {
+
+        template <typename ExecutionContext>
+        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+
+    public:
+        input(const std::string& path, 
+              int64_t offset,
+              uint64_t host_id,
+              uint64_t host_size,
+              uint64_t chunk_n,
+              uint64_t chunk_start,
+              uint64_t chunk_end,
+              uint64_t total_chunk_size,
+              const hermes::exposed_memory& buffers) :
+            m_path(path),
+            m_offset(offset),
+            m_host_id(host_id),
+            m_host_size(host_size),
+            m_chunk_n(chunk_n),
+            m_chunk_start(chunk_start),
+            m_chunk_end(chunk_end),
+            m_total_chunk_size(total_chunk_size),
+            m_buffers(buffers) { }
+
+        input(input&& rhs) = default;
+        input(const input& other) = default;
+        input& operator=(input&& rhs) = default;
+        input& operator=(const input& other) = default;
+
+        std::string
+        path() const {
+            return m_path;
+        }
+
+        int64_t
+        offset() const {
+            return m_offset;
+        }
+
+        uint64_t
+        host_id() const {
+            return m_host_id;
+        }
+
+        uint64_t
+        host_size() const {
+            return m_host_size;
+        }
+
+        uint64_t
+        chunk_n() const {
+            return m_chunk_n;
+        }
+
+        uint64_t
+        chunk_start() const {
+            return m_chunk_start;
+        }
+
+        uint64_t
+        chunk_end() const {
+            return m_chunk_end;
+        }
+
+        uint64_t
+        total_chunk_size() const {
+            return m_total_chunk_size;
+        }
+
+        hermes::exposed_memory
+        buffers() const {
+            return m_buffers;
+        }
+
+        explicit
+        input(const rpc_read_data_in_t& other) :
+            m_path(other.path),
+            m_offset(other.offset),
+            m_host_id(other.host_id),
+            m_host_size(other.host_size),
+            m_chunk_n(other.chunk_n),
+            m_chunk_start(other.chunk_start),
+            m_chunk_end(other.chunk_end),
+            m_total_chunk_size(other.total_chunk_size),
+            m_buffers(other.bulk_handle) { }
+
+        explicit
+        operator rpc_read_data_in_t() {
             return {
                 m_path.c_str(), 
                 m_offset,
