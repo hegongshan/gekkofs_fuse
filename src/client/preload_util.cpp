@@ -259,9 +259,13 @@ void load_hosts() {
 }
 
 void cleanup_addresses() {
+#if 1 //TODO(amiranda) remove
     for (auto& addr: CTX->hosts()) {
         margo_addr_free(ld_margo_rpc_id, addr);
     }
+#endif
+
+    CTX->clear_hosts();
 }
 
 

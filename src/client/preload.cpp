@@ -308,6 +308,10 @@ void destroy_preload() {
         return;
     }
     cleanup_addresses();
+
+    CTX->log()->debug("{}() About to finalize the Hermes RPC client", __func__);
+    ld_network_service.reset();
+
     CTX->log()->debug("{}() About to finalize the margo RPC client", __func__);
     // XXX Sometimes this hangs on the cluster. Investigate.
     margo_finalize(ld_margo_rpc_id);

@@ -96,6 +96,8 @@ class PreloadContext {
 
     const std::vector<hermes::endpoint>& hosts2() const;
     void hosts2(const std::vector<hermes::endpoint>& addrs);
+    void clear_hosts();
+
 
     uint64_t local_host_id() const;
     void local_host_id(uint64_t id);

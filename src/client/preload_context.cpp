@@ -66,6 +66,7 @@ const std::vector<hg_addr_t>& PreloadContext::hosts() const {
 void PreloadContext::hosts(const std::vector<hg_addr_t>& addrs) {
     hosts_ = addrs;
 }
+
 #endif
 
 const std::vector<hermes::endpoint>& PreloadContext::hosts2() const {
@@ -74,6 +75,10 @@ const std::vector<hermes::endpoint>& PreloadContext::hosts2() const {
 
 void PreloadContext::hosts2(const std::vector<hermes::endpoint>& endpoints) {
     hosts2_ = endpoints;
+}
+
+void PreloadContext::clear_hosts() {
+    hosts2_.clear();
 }
 
 uint64_t PreloadContext::local_host_id() const {

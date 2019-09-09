@@ -101,6 +101,10 @@ ssize_t write(const string& path, const void* buf, const bool append_flag,
     std::vector<hermes::rpc_handle<gkfs::rpc::write_data>> handles;
 
     // Issue non-blocking RPC requests and wait for the result later
+    //
+    // TODO(amiranda): This could be simplified by adding a vector of inputs
+    // to async_engine::broadcast(). This would allow us to avoid manually 
+    // looping over handles as we do below
     for(const auto& target : targets) {
 
         // total chunk_size for target
