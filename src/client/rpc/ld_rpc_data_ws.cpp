@@ -121,7 +121,7 @@ ssize_t write(const string& path, const void* buf, const bool append_flag,
             total_chunk_size -= chnk_rpad(offset + write_size, CHUNKSIZE);
         }
 
-        auto endp = CTX->hosts2().at(target);
+        auto endp = CTX->hosts().at(target);
 
         try {
 
@@ -133,7 +133,7 @@ ssize_t write(const string& path, const void* buf, const bool append_flag,
                 // a potential offset
                 chnk_lpad(offset, CHUNKSIZE),
                 target,
-                CTX->hosts2().size(),
+                CTX->hosts().size(),
                 // number of chunks handled by that destination
                 target_chnks[target].size(),
                 // chunk start id of this write
@@ -284,7 +284,7 @@ ssize_t read(const string& path, void* buf, const off64_t offset, const size_t r
             total_chunk_size -= chnk_rpad(offset + read_size, CHUNKSIZE);
         }
 
-        auto endp = CTX->hosts2().at(target);
+        auto endp = CTX->hosts().at(target);
 
         try {
 
@@ -296,7 +296,7 @@ ssize_t read(const string& path, void* buf, const off64_t offset, const size_t r
                 // a potential offset
                 chnk_lpad(offset, CHUNKSIZE),
                 target,
-                CTX->hosts2().size(),
+                CTX->hosts().size(),
                 // number of chunks handled by that destination
                 target_chnks[target].size(),
                 // chunk start id of this write
@@ -384,7 +384,7 @@ int trunc_data(const std::string& path, size_t current_size, size_t new_size) {
 
     for (const auto& host: hosts) {
 
-        auto endp = CTX->hosts2().at(host);
+        auto endp = CTX->hosts().at(host);
 
         try {
             CTX->log()->debug("{}() Sending RPC ...", __func__);
@@ -440,7 +440,7 @@ ChunkStat chunk_stat() {
 
     std::vector<hermes::rpc_handle<gkfs::rpc::chunk_stat>> handles;
 
-    for (const auto& endp : CTX->hosts2()) {
+    for (const auto& endp : CTX->hosts()) {
         try {
             CTX->log()->trace("{}() Sending RPC to host: {}", 
                               __func__, endp.to_string());

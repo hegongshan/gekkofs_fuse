@@ -160,10 +160,9 @@ void load_hosts() {
 
     auto local_hostname = get_my_hostname(true);
     bool local_host_found = false;
-    vector<hg_addr_t> addrs(hosts.size()); // TODO(amiranda) remove
 
-    std::vector<hermes::endpoint> addrs2;
-    addrs2.reserve(hosts.size());
+    std::vector<hermes::endpoint> addrs;
+    addrs.reserve(hosts.size());
 
     vector<uint64_t> host_ids(hosts.size());
     // populate vector with [0, ..., host_size - 1]
@@ -185,8 +184,8 @@ void load_hosts() {
 
         auto endp = ::lookup_endpoint(uri);
 
-        auto it = std::next(addrs2.begin(), id);
-        addrs2.emplace(it, endp);
+        auto it = std::next(addrs.begin(), id);
+        addrs.emplace(it, endp);
 
         if (!local_host_found && hostname == local_hostname) {
             CTX->log()->debug("{}() Found local host: {}", __func__, hostname);
@@ -201,8 +200,5 @@ void load_hosts() {
         CTX->local_host_id(0);
     }
 
-#if 1 // TODO(amiranda) remove
     CTX->hosts(addrs);
-#endif
-    CTX->hosts2(addrs2);
 }

@@ -28,7 +28,7 @@ using namespace std;
 int mk_node(const std::string& path, const mode_t mode) {
 
     int err = EUNKNOWN;
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
             CTX->distributor()->locate_file_metadata(path));
     
     try {
@@ -54,7 +54,7 @@ int mk_node(const std::string& path, const mode_t mode) {
 
 int stat(const std::string& path, string& attr) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
             CTX->distributor()->locate_file_metadata(path));
     
     try {
@@ -87,7 +87,7 @@ int stat(const std::string& path, string& attr) {
 
 int decr_size(const std::string& path, size_t length) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
         CTX->distributor()->locate_file_metadata(path));
 
     try {
@@ -125,7 +125,7 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
     // else, send an rpc to all hosts and thus broadcast chunk_removal.
     if(remove_metadentry_only) {
 
-        auto endp = CTX->hosts2().at(
+        auto endp = CTX->hosts().at(
             CTX->distributor()->locate_file_metadata(path));
 
         try {
@@ -161,8 +161,8 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
     hermes::endpoint_set endps;
 
-    std::copy(CTX->hosts2().begin(), 
-              CTX->hosts2().end(), 
+    std::copy(CTX->hosts().begin(), 
+              CTX->hosts().end(), 
               std::back_inserter(endps));
 
     try {
@@ -192,7 +192,7 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
 int update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
         CTX->distributor()->locate_file_metadata(path));
 
     try {
@@ -243,7 +243,7 @@ int update_metadentry(const string& path, const Metadata& md, const MetadentryUp
 int update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
                                     off64_t& ret_size) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
         CTX->distributor()->locate_file_metadata(path));
 
     try {
@@ -281,7 +281,7 @@ int update_metadentry_size(const string& path, const size_t size, const off64_t 
 
 int get_metadentry_size(const std::string& path, off64_t& ret_size) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
         CTX->distributor()->locate_file_metadata(path));
 
     try {
@@ -360,7 +360,7 @@ void get_dirents(OpenDir& open_dir){
         CTX->log()->trace("{}() target_host: {}", __func__, targets[i]);
 
         // Setup rpc input parameters for each host
-        auto endp = CTX->hosts2().at(targets[i]);
+        auto endp = CTX->hosts().at(targets[i]);
 
         gkfs::rpc::get_dirents::input in(root_dir, exposed_buffers[i]);
 
@@ -436,7 +436,7 @@ void get_dirents(OpenDir& open_dir){
 
 int mk_symlink(const std::string& path, const std::string& target_path) {
 
-    auto endp = CTX->hosts2().at(
+    auto endp = CTX->hosts().at(
         CTX->distributor()->locate_file_metadata(path));
 
     try {

@@ -30,7 +30,7 @@ namespace rpc_send {
  */
 bool get_fs_config() {
 
-    auto endp = CTX->hosts2().at(CTX->local_host_id());
+    auto endp = CTX->hosts().at(CTX->local_host_id());
     gkfs::rpc::fs_config::output out;
 
     try {

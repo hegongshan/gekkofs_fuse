@@ -62,10 +62,7 @@ class PreloadContext {
     std::vector<std::string> mountdir_components_;
     std::string mountdir_;
 
-#if 1 // TODO(amiranda): remove
-    std::vector<hg_addr_t> hosts_;
-#endif
-    std::vector<hermes::endpoint> hosts2_;
+    std::vector<hermes::endpoint> hosts_;
     uint64_t local_host_id_;
 
     bool interception_enabled_;
@@ -89,13 +86,8 @@ class PreloadContext {
     void cwd(const std::string& path);
     const std::string& cwd() const;
 
-#if 1 // TODO(amiranda) remove
-    const std::vector<hg_addr_t>& hosts() const;
-    void hosts(const std::vector<hg_addr_t>& addrs);
-#endif
-
-    const std::vector<hermes::endpoint>& hosts2() const;
-    void hosts2(const std::vector<hermes::endpoint>& addrs);
+    const std::vector<hermes::endpoint>& hosts() const;
+    void hosts(const std::vector<hermes::endpoint>& addrs);
     void clear_hosts();
 
 
