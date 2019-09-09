@@ -121,8 +121,7 @@ ssize_t write(const string& path, const void* buf, const bool append_flag,
             total_chunk_size -= chnk_rpad(offset + write_size, CHUNKSIZE);
         }
 
-        auto endp = CTX->hosts2().at(
-            CTX->distributor()->locate_file_metadata(path));
+        auto endp = CTX->hosts2().at(target);
 
         try {
 
@@ -285,8 +284,7 @@ ssize_t read(const string& path, void* buf, const off64_t offset, const size_t r
             total_chunk_size -= chnk_rpad(offset + read_size, CHUNKSIZE);
         }
 
-        auto endp = CTX->hosts2().at(
-            CTX->distributor()->locate_file_metadata(path));
+        auto endp = CTX->hosts2().at(target);
 
         try {
 
