@@ -37,6 +37,7 @@ register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::write_data>();
     (void) registered_requests().add<gkfs::rpc::read_data>();
     (void) registered_requests().add<gkfs::rpc::trunc_data>();
+    (void) registered_requests().add<gkfs::rpc::get_dirents>();
 
 }
 

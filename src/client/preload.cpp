@@ -206,6 +206,7 @@ bool init_hermes_client(const std::string& transport_prefix) {
     rpc_write_data_id = gkfs::rpc::write_data::public_id;
     rpc_read_data_id = gkfs::rpc::read_data::public_id;
     rpc_trunc_data_id = gkfs::rpc::trunc_data::public_id;
+    rpc_get_dirents_id = gkfs::rpc::get_dirents::public_id;
 
     return true;
 }
