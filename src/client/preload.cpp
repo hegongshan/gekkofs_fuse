@@ -65,22 +65,16 @@ static inline void exit_error_msg(int errcode, const string& msg) {
  */
 bool init_hermes_client(const std::string& transport_prefix) {
 
-#if 0
-    // IMPORTANT: this struct needs to be zeroed before use
-    struct hg_init_info hg_options = {};
+    try {
+
+        hermes::engine_options opts;
 #if USE_SHM
-    hg_options.auto_sm = HG_TRUE;
-#else
-    hg_options.auto_sm = HG_FALSE;
-#endif
-    hg_options.stats = HG_FALSE;
-    hg_options.na_class = nullptr;
+        opts |= hermes::use_auto_sm;
 #endif
 
-    try {
         ld_network_service = 
             std::make_unique<hermes::async_engine>(
-                    hermes::get_transport_type(transport_prefix));
+                    hermes::get_transport_type(transport_prefix), opts);
         ld_network_service->run();
     } catch (const std::exception& ex) {
         fmt::print(stderr, "Failed to initialize Hermes RPC client {}\n", 
