@@ -25,11 +25,6 @@ namespace rpc_send  {
 
 using namespace std;
 
-static inline hg_return_t
-margo_forward_timed_wrap(const hg_handle_t& handle, void* in_struct) {
-    return margo_forward_timed(handle, in_struct, RPC_TIMEOUT);
-}
-
 int mk_node(const std::string& path, const mode_t mode) {
 
     int err = EUNKNOWN;

@@ -30,8 +30,8 @@
 
 
 using namespace std;
-//
-// thread to initialize the whole margo shazaam only once per process
+
+// make sure that things are only initialized once
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
 // RPC IDs
@@ -49,8 +49,6 @@ hg_id_t rpc_read_data_id;
 hg_id_t rpc_trunc_data_id;
 hg_id_t rpc_get_dirents_id;
 hg_id_t rpc_chunk_stat_id;
-// Margo instances
-margo_instance_id ld_margo_rpc_id;
 
 std::unique_ptr<hermes::async_engine> ld_network_service;
 
@@ -61,91 +59,13 @@ static inline void exit_error_msg(int errcode, const string& msg) {
 }
 
 /**
- * Registers a margo instance with all used RPC
- * Note that the r(pc tags are redundant for rpc
- * @param mid
- * @param mode
+ * Initializes the Hermes client for a given transport prefix
+ * @param transport_prefix
+ * @return true if succesfully initialized; false otherwise
  */
-void register_client_rpcs(margo_instance_id mid) {
+bool init_hermes_client(const std::string& transport_prefix) {
 
-    rpc_config_id = MARGO_REGISTER(mid,
-        hg_tag::fs_config,
-        void,
-        rpc_config_out_t,
-        NULL);
-
-    rpc_mk_node_id = MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, NULL);
-    rpc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, NULL);
-    rpc_rm_node_id = MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t,
-                                    rpc_err_out_t, NULL);
-
-    rpc_decr_size_id = MARGO_REGISTER(mid,
-        hg_tag::decr_size,
-        rpc_trunc_in_t,
-        rpc_err_out_t,
-        NULL);
-
-    rpc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
-                                              rpc_err_out_t, NULL);
-    rpc_get_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::get_metadentry_size, rpc_path_only_in_t,
-                                                rpc_get_metadentry_size_out_t, NULL);
-    rpc_update_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::update_metadentry_size,
-                                                   rpc_update_metadentry_size_in_t,
-                                                   rpc_update_metadentry_size_out_t,
-                                                   NULL);
-
-#ifdef HAS_SYMLINKS
-    rpc_mk_symlink_id = MARGO_REGISTER(mid,
-         hg_tag::mk_symlink,
-         rpc_mk_symlink_in_t,
-         rpc_err_out_t,
-         NULL);
-#endif
-
-    rpc_write_data_id = MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t,
-                                       NULL);
-    rpc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
-                                      NULL);
-
-    rpc_trunc_data_id = MARGO_REGISTER(mid,
-         hg_tag::trunc_data,
-         rpc_trunc_in_t,
-         rpc_err_out_t,
-         NULL);
-
-    rpc_get_dirents_id = MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
-                                      NULL);
-
-    rpc_chunk_stat_id = MARGO_REGISTER(mid,
-        hg_tag::chunk_stat,
-        rpc_chunk_stat_in_t,
-        rpc_chunk_stat_out_t,
-        NULL);
-
-    fmt::print(stdout, "rpc_config_id: {}\n", rpc_config_id);
-    fmt::print(stdout, "rpc_mk_node_id: {}\n", rpc_mk_node_id);
-    fmt::print(stdout, "rpc_stat_id: {}\n", rpc_stat_id);
-    fmt::print(stdout, "rpc_rm_node_id: {}\n", rpc_rm_node_id);
-    fmt::print(stdout, "rpc_decr_size_id: {}\n", rpc_decr_size_id);
-    fmt::print(stdout, "rpc_update_metadentry_id: {}\n", rpc_update_metadentry_id);
-    fmt::print(stdout, "rpc_get_metadentry_size_id: {}\n", rpc_get_metadentry_size_id);
-    fmt::print(stdout, "rpc_update_metadentry_size_id: {}\n", rpc_update_metadentry_size_id);
-    fmt::print(stdout, "rpc_mk_symlink_id: {}\n", rpc_mk_symlink_id);
-    fmt::print(stdout, "rpc_write_data_id: {}\n", rpc_write_data_id);
-    fmt::print(stdout, "rpc_read_data_id: {}\n", rpc_read_data_id);
-    fmt::print(stdout, "rpc_trunc_data_id: {}\n", rpc_trunc_data_id);
-    fmt::print(stdout, "rpc_get_dirents_id: {}\n", rpc_get_dirents_id);
-    fmt::print(stdout, "rpc_chunk_stat_id: {}\n", rpc_chunk_stat_id);
-
-}
-
-/**
- * Initializes the Margo client for a given na_plugin
- * @param mode
- * @param na_plugin
- * @return
- */
-bool init_margo_client(const std::string& na_plugin) {
+#if 0
     // IMPORTANT: this struct needs to be zeroed before use
     struct hg_init_info hg_options = {};
 #if USE_SHM
@@ -155,29 +75,7 @@ bool init_margo_client(const std::string& na_plugin) {
 #endif
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
-
-    ld_margo_rpc_id = margo_init_opt(na_plugin.c_str(),
-                                     MARGO_CLIENT_MODE,
-                                     &hg_options,
-                                     HG_FALSE,
-                                     1);
-    if (ld_margo_rpc_id == MARGO_INSTANCE_NULL) {
-        CTX->log()->error("{}() margo_init_pool failed to initialize the Margo client", __func__);
-        return false;
-    }
-    register_client_rpcs(ld_margo_rpc_id);
-    return true;
-}
-
-
-
-
-/**
- * Initializes the Hermes client for a given transport prefix
- * @param transport_prefix
- * @return true if succesfully initialized; false otherwise
- */
-bool init_hermes_client(const std::string& transport_prefix) {
+#endif
 
     try {
         ld_network_service = 
@@ -214,14 +112,10 @@ bool init_hermes_client(const std::string& transport_prefix) {
 
 
 /**
- * This function is only called in the preload constructor and initializes Argobots and Margo clients
+ * This function is only called in the preload constructor and initializes 
+ * the file system client
  */
 void init_ld_environment_() {
-
-    //use rpc_addresses here to avoid "static initialization order problem"
-    if (!init_margo_client(RPC_PROTOCOL)) {
-        exit_error_msg(EXIT_FAILURE, "Unable to initializa Margo RPC client");
-    }
 
     // initialize Hermes interface to Mercury
     if (!init_hermes_client(RPC_PROTOCOL)) {
@@ -305,20 +199,15 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+
     stop_interception();
     CTX->disable_interception();
-    if (ld_margo_rpc_id == nullptr) {
-        CTX->log()->debug("{}() No services in preload library used. Nothing to shut down.", __func__);
-        return;
-    }
-    cleanup_addresses();
 
+    CTX->clear_hosts();
     CTX->log()->debug("{}() About to finalize the Hermes RPC client", __func__);
+
     ld_network_service.reset();
 
-    CTX->log()->debug("{}() About to finalize the margo RPC client", __func__);
-    // XXX Sometimes this hangs on the cluster. Investigate.
-    margo_finalize(ld_margo_rpc_id);
-    CTX->log()->debug("{}() Shut down Margo RPC client successful", __func__);
+    CTX->log()->debug("{}() Shut down Hermes RPC client successful", __func__);
     CTX->log()->info("All services shut down. Client shutdown complete.");
 }

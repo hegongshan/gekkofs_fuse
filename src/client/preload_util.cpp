@@ -133,28 +133,6 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
                         uri, error_msg));
 }
 
-hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
-    CTX->log()->debug("{}() Lookink up address '{}'", __func__, uri);
-    // try to look up 3 times before erroring out
-    hg_return_t ret;
-    hg_addr_t remote_addr = HG_ADDR_NULL;
-    ::random_device rd; // obtain a random number from hardware
-    unsigned int attempts = 0;
-    do {
-        ret = margo_addr_lookup(ld_margo_rpc_id, uri.c_str(), &remote_addr);
-        if (ret == HG_SUCCESS) {
-            return remote_addr;
-        }
-        CTX->log()->warn("{}() Failed to lookup address '{}'. Attempts [{}/3]", __func__, uri, attempts + 1);
-        // Wait a random amount of time and try again
-        ::mt19937 g(rd()); // seed the random generator
-        ::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
-        ::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
-    } while (++attempts < 3);
-    throw runtime_error(
-            fmt::format("Failed to lookup address '{}', error: {}", uri, HG_Error_to_string(ret)));
-}
-
 void load_hosts() {
     string hosts_file;
     try {
@@ -210,41 +188,12 @@ void load_hosts() {
         auto it = std::next(addrs2.begin(), id);
         addrs2.emplace(it, endp);
 
-        auto addr = margo_addr_lookup_retry(uri); // TODO(amiranda) remove
-        addrs.at(id) = addr; // TODO(amiranda) remove
-
         if (!local_host_found && hostname == local_hostname) {
             CTX->log()->debug("{}() Found local host: {}", __func__, hostname);
             CTX->local_host_id(id);
             local_host_found = true;
         }
     }
-
-#if 0
-    fmt::print(stdout, " YYY hi!\n");
-
-    std::for_each(
-        addrs.begin(), 
-        addrs.end(), 
-        [](hg_addr_t addr) {
-            hg_class_t* hg_class = margo_get_class(ld_margo_rpc_id);
-            hg_size_t bsize = 0;
-            hg_return ret = HG_Addr_to_string(hg_class, NULL, &bsize, addr);
-
-            const auto buffer = std::make_unique<char[]>(bsize);
-            HG_Addr_to_string(hg_class, buffer.get(), &bsize, addr);
-            fmt::print(stdout, " XXX {}\n", std::string(buffer.get()));
-        }
-    );
-
-    std::for_each(
-        addrs2.begin(), 
-        addrs2.end(), 
-        [](const hermes::endpoint& endp) {
-            fmt::print(stdout, " ZZZ {}\n", endp.to_string());
-        }
-    );
-#endif
 
     if (!local_host_found) {
         CTX->log()->warn("{}() Failed to find local host."
@@ -256,37 +205,4 @@ void load_hosts() {
     CTX->hosts(addrs);
 #endif
     CTX->hosts2(addrs2);
-}
-
-void cleanup_addresses() {
-#if 1 //TODO(amiranda) remove
-    for (auto& addr: CTX->hosts()) {
-        margo_addr_free(ld_margo_rpc_id, addr);
-    }
-#endif
-
-    CTX->clear_hosts();
-}
-
-
-
-hg_return
-margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient, hg_handle_t& handle) {
-    auto ret = margo_create(ld_margo_rpc_id, CTX->hosts().at(recipient), rpc_id, &handle);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() creating handle FAILED", __func__);
-        return HG_OTHER_ERROR;
-    }
-    return ret;
-}
-
-/**
- * Wraps certain margo functions to create a Mercury handle
- * @param path
- * @param handle
- * @return
- */
-hg_return margo_create_wrap(const hg_id_t rpc_id, const std::string& path, hg_handle_t& handle) {
-    auto recipient = CTX->distributor()->locate_file_metadata(path);
-    return margo_create_wrap_helper(rpc_id, recipient, handle);
 }
