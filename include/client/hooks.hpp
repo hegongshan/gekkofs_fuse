@@ -15,6 +15,7 @@
 #define IFS_HOOKS_HPP
 
 #include <fcntl.h>
+#include <sys/types.h>
 
 
 int hook_openat(int dirfd, const char *cpath, int flags, mode_t mode);
