@@ -613,7 +613,7 @@ int getdents64(unsigned int fd,
         current_dirp->d_reclen = total_size;
         current_dirp->d_type =  ((de.type() == FileType::regular)? DT_REG : DT_DIR);
 
-        
+
 
         CTX->log()->trace("{}() name {}: {}", __func__, pos, de.name());
         std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());
