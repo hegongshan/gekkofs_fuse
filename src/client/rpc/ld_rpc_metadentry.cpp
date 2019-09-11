@@ -101,7 +101,7 @@ int stat(const std::string& path, string& attr) {
         return -1;
     }
 
-    CTX->log()->debug("{}() Got response success: {}", __func__, out.err);
+    CTX->log()->trace("{}() Got response: {}", __func__, out.err);
 
     if(out.err != 0) {
         err = -1;
