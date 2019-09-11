@@ -178,7 +178,7 @@ int adafs_mk_node(const std::string& path, mode_t mode) {
     if (check_parent_dir(path)) {
         return -1;
     }
-    
+
     return rpc_send::mk_node(path, mode);
 }
 
