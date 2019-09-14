@@ -61,6 +61,13 @@ int hook_close(int fd) {
         CTX->file_map()->remove(fd);
         return 0;
     }
+
+    if(CTX->is_internal_fd(fd)) {
+        // the client application (for some reason) is trying to close an 
+        // internal fd: ignore it
+        return 0;
+    }
+
     return syscall_no_intercept(SYS_close, fd);
 }
 

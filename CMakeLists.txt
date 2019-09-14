@@ -112,6 +112,25 @@ if(SYMLINK_SUPPORT)
 endif()
 message(STATUS "Symlink support: ${SYMLINK_SUPPORT}")
 
+option(USE_BITSET_FOR_INTERNAL_FDS "Use std::bitset to track internal fds" ON)
+if(USE_BITSET_FOR_INTERNAL_FDS)
+    add_definitions(-DUSE_BITSET_FOR_INTERNAL_FDS)
+    execute_process(COMMAND getconf OPEN_MAX
+                    OUTPUT_VARIABLE GETCONF_MAX_FDS
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    ERROR_QUIET)
+    if(NOT GETCONF_MAX_FDS)
+        set(GETCONF_MAX_FDS=512)
+    endif()
+    add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
+endif()
+
+message(STATUS "Use std::bitset for internal fd tracking: ${USE_BITSET_FOR_INTERNAL_FDS}")
+
+if(USE_BITSET_FOR_INTERNAL_FDS)
+    message(STATUS "Max open files: ${GETCONF_MAX_FDS}")
+endif()
+
 configure_file(include/global/configure.hpp.in include/global/configure.hpp)
 
 # Imported target

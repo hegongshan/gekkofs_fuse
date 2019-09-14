@@ -27,8 +27,47 @@
 #define NOT_HOOKED 1
 #define HOOKED 0
 
+#if 0
+static void
+log_write(const char *fmt, ...)
+{
+    int log_fd = 2;
+	if (log_fd < 0)
+		return;
 
-static inline int hook(long syscall_number,
+	char buf[0x1000];
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	va_end(ap);
+
+
+	if (len < 1)
+		return;
+
+	buf[len++] = '\n';
+
+	syscall_no_intercept(SYS_write, log_fd, buf, len);
+}
+#endif
+
+static __thread bool reentrance_guard_flag;
+
+
+/*
+ * hook_internal -- interception hook for internal syscalls
+ *
+ * This hook is basically used to keep track of file descriptors created 
+ * internally by the library itself. This is important because some 
+ * applications (e.g. ssh) may attempt to close all open file descriptors
+ * which would leave the library internals in an inconsistent state.
+ * We forward syscalls to the kernel but we keep track of any syscalls that may
+ * create or destroy a file descriptor so that we can mark them as 'internal'.
+ */
+static inline int 
+hook_internal(long syscall_number,
          long arg0, long arg1, long arg2,
          long arg3, long arg4, long arg5,
          long *result)
@@ -36,277 +75,460 @@ static inline int hook(long syscall_number,
 
     switch (syscall_number) {
 
-    case SYS_open:
-        *result = hook_openat(AT_FDCWD,
-                              reinterpret_cast<char*>(arg0),
-                              static_cast<int>(arg1),
-                              static_cast<mode_t>(arg2));
-        break;
-
-    case SYS_creat:
-        *result = hook_openat(AT_FDCWD,
-                              reinterpret_cast<const char*>(arg0),
-                              O_WRONLY | O_CREAT | O_TRUNC,
-                              static_cast<mode_t>(arg1));
-        break;
-
-    case SYS_openat:
-        *result = hook_openat(static_cast<int>(arg0),
-                              reinterpret_cast<const char*>(arg1),
-                              static_cast<int>(arg2),
-                              static_cast<mode_t>(arg3));
-        break;
-
-    case SYS_close:
-        *result = hook_close(static_cast<int>(arg0));
-        break;
-
-    case SYS_stat:
-        *result = hook_stat(reinterpret_cast<char*>(arg0),
-                            reinterpret_cast<struct stat*>(arg1));
-        break;
-
-    case SYS_lstat:
-        *result = hook_lstat(reinterpret_cast<char*>(arg0),
-                             reinterpret_cast<struct stat*>(arg1));
-        break;
-
-    case SYS_fstat:
-        *result = hook_fstat(static_cast<int>(arg0),
-                            reinterpret_cast<struct stat*>(arg1));
-        break;
-
-    case SYS_newfstatat:
-        *result = hook_fstatat(static_cast<int>(arg0),
-                              reinterpret_cast<const char*>(arg1),
-                              reinterpret_cast<struct stat *>(arg2),
-                              static_cast<int>(arg3));
-        break;
-
-    case SYS_read:
-        *result = hook_read(static_cast<unsigned int>(arg0),
-                            reinterpret_cast<void*>(arg1),
-                            static_cast<size_t>(arg2));
-        break;
-
-    case SYS_pread64:
-        *result = hook_pread(static_cast<unsigned int>(arg0),
-                             reinterpret_cast<char *>(arg1),
-                             static_cast<size_t>(arg2),
-                             static_cast<loff_t>(arg3));
-        break;
-
-    case SYS_pwrite64:
-        *result = hook_pwrite(static_cast<unsigned int>(arg0),
-                              reinterpret_cast<const char *>(arg1),
-                              static_cast<size_t>(arg2),
-                              static_cast<loff_t>(arg3));
-        break;
-    case SYS_write:
-        *result = hook_write(static_cast<unsigned int>(arg0),
-                             reinterpret_cast<const char *>(arg1),
-                             static_cast<size_t>(arg2));
-        break;
-
-    case SYS_writev:
-        *result = hook_writev(static_cast<unsigned long>(arg0),
-                              reinterpret_cast<const struct iovec *>(arg1),
-                              static_cast<unsigned long>(arg2));
-        break;
-
-    case SYS_pwritev:
-        *result = hook_pwritev(static_cast<unsigned long>(arg0),
-                               reinterpret_cast<const struct iovec *>(arg1),
-                               static_cast<unsigned long>(arg2),
-                               static_cast<unsigned long>(arg3),
-                               static_cast<unsigned long>(arg4));
-        break;
-
-    case SYS_unlink:
-        *result = hook_unlinkat(AT_FDCWD,
-                                reinterpret_cast<const char *>(arg0),
-                                0);
-        break;
-
-    case SYS_unlinkat:
-        *result = hook_unlinkat(static_cast<int>(arg0),
-                                reinterpret_cast<const char*>(arg1),
-                                static_cast<int>(arg2));
-        break;
-
-    case SYS_rmdir:
-        *result = hook_unlinkat(AT_FDCWD,
-                                reinterpret_cast<const char *>(arg0),
-                                AT_REMOVEDIR);
-        break;
-
-    case SYS_symlink:
-        *result = hook_symlinkat(reinterpret_cast<const char *>(arg0),
-                                 AT_FDCWD,
-                                 reinterpret_cast<const char *>(arg1));
-        break;
-
-    case SYS_symlinkat:
-        *result = hook_symlinkat(reinterpret_cast<const char *>(arg0),
-                                 static_cast<int>(arg1),
-                                 reinterpret_cast<const char *>(arg2));
-        break;
-
-    case SYS_access:
-        *result = hook_access(reinterpret_cast<const char*>(arg0),
-                              static_cast<int>(arg1));
-        break;
-
-    case SYS_faccessat:
-        *result = hook_faccessat(static_cast<int>(arg0),
-                                 reinterpret_cast<const char*>(arg1),
-                                 static_cast<int>(arg2));
-        break;
-
-    case SYS_lseek:
-        *result = hook_lseek(static_cast<unsigned int>(arg0),
-                             static_cast<off_t>(arg1),
-                             static_cast<unsigned int>(arg2));
-        break;
-
-    case SYS_truncate:
-        *result = hook_truncate(reinterpret_cast<const char*>(arg0),
-                                static_cast<long>(arg1));
-        break;
-
-    case SYS_ftruncate:
-        *result = hook_ftruncate(static_cast<unsigned int>(arg0),
-                                 static_cast<unsigned long>(arg1));
-        break;
-
-    case SYS_dup:
-        *result = hook_dup(static_cast<unsigned int>(arg0));
-        break;
-
-    case SYS_dup2:
-        *result = hook_dup2(static_cast<unsigned int>(arg0),
-                            static_cast<unsigned int>(arg1));
-        break;
-
-    case SYS_dup3:
-        *result = hook_dup3(static_cast<unsigned int>(arg0),
-                            static_cast<unsigned int>(arg1),
-                            static_cast<int>(arg2));
-        break;
-
-    case SYS_getdents:
-        *result = hook_getdents(static_cast<unsigned int>(arg0),
-                                reinterpret_cast<struct linux_dirent *>(arg1),
-                                static_cast<unsigned int>(arg2));
-        break;
-
-    case SYS_mkdirat:
-        *result = hook_mkdirat(static_cast<unsigned int>(arg0),
-                               reinterpret_cast<const char *>(arg1),
-                               static_cast<mode_t>(arg2));
-        break;
-
-    case SYS_mkdir:
-        *result = hook_mkdirat(AT_FDCWD,
-                               reinterpret_cast<const char *>(arg0),
-                               static_cast<mode_t>(arg1));
-        break;
-
-    case SYS_chmod:
-        *result = hook_fchmodat(AT_FDCWD,
+        case SYS_open:
+            *result = syscall_no_intercept(syscall_number, 
                                 reinterpret_cast<char*>(arg0),
-                                static_cast<mode_t>(arg1));
-        break;
-
-    case SYS_fchmod:
-        *result = hook_fchmod(static_cast<unsigned int>(arg0),
-                              static_cast<mode_t>(arg1));
-        break;
-
-    case SYS_fchmodat:
-        *result = hook_fchmodat(static_cast<unsigned int>(arg0),
-                                reinterpret_cast<char*>(arg1),
+                                static_cast<int>(arg1),
                                 static_cast<mode_t>(arg2));
-        break;
 
-    case SYS_chdir:
-        *result = hook_chdir(reinterpret_cast<const char *>(arg0));
-        break;
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
 
-    case SYS_fchdir:
-        *result = hook_fchdir(static_cast<unsigned int>(arg0));
-        break;
+        case SYS_creat:
+            *result = syscall_no_intercept(syscall_number,
+                                reinterpret_cast<const char*>(arg0),
+                                O_WRONLY | O_CREAT | O_TRUNC,
+                                static_cast<mode_t>(arg1));
 
-    case SYS_getcwd:
-        *result = hook_getcwd(reinterpret_cast<char *>(arg0),
-                               static_cast<unsigned long>(arg1));
-        break;
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
 
-    case SYS_readlink:
-        *result = hook_readlinkat(AT_FDCWD,
-                                  reinterpret_cast<const char *>(arg0),
-                                  reinterpret_cast<char *>(arg1),
-                                  static_cast<int>(arg2));
-        break;
+        case SYS_openat:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0),
+                                reinterpret_cast<const char*>(arg1),
+                                static_cast<int>(arg2),
+                                static_cast<mode_t>(arg3));
 
-    case SYS_readlinkat:
-        *result = hook_readlinkat(static_cast<int>(arg0),
-                                  reinterpret_cast<const char *>(arg1),
-                                  reinterpret_cast<char *>(arg2),
-                                  static_cast<int>(arg3));
-        break;
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
 
-    case SYS_fcntl:
-        *result = hook_fcntl(static_cast<unsigned int>(arg0),
-                             static_cast<unsigned int>(arg1),
-                             static_cast<unsigned long>(arg2));
-        break;
+        // epoll_create and epoll_create1 have the same prototype
+        case SYS_epoll_create:
+        case SYS_epoll_create1:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0));
 
-    case SYS_rename:
-        *result = hook_renameat(AT_FDCWD,
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_dup:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<unsigned int>(arg0));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_dup2:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<unsigned int>(arg0),
+                                static_cast<unsigned int>(arg1));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_dup3:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<unsigned int>(arg0),
+                                static_cast<unsigned int>(arg1),
+                                static_cast<int>(arg2));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_inotify_init:
+            *result = syscall_no_intercept(syscall_number);
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_inotify_init1:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_perf_event_open:
+            *result = syscall_no_intercept(syscall_number,
+                                reinterpret_cast<struct perf_event_attr*>(arg0),
+                                static_cast<pid_t>(arg1),
+                                static_cast<int>(arg2),
+                                static_cast<int>(arg3),
+                                static_cast<unsigned long>(arg4));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_signalfd:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0),
+                                reinterpret_cast<const sigset_t*>(arg1));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_signalfd4:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0),
+                                reinterpret_cast<const sigset_t*>(arg1),
+                                static_cast<int>(arg2));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_timerfd_create:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0),
+                                static_cast<int>(arg1));
+
+            if(*result != -1) {
+                CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_close:
+            *result = syscall_no_intercept(syscall_number,
+                                static_cast<int>(arg0));
+            CTX->unregister_internal_fd(*result);
+            break;
+
+        default:
+            /*
+            * Ignore any other syscalls
+            * i.e.: pass them on to the kernel
+            * as would normally happen.
+            */
+
+            #ifndef NDEBUG
+            CTX->log()->trace("Syscall [{}, {}]  Passthrough", 
+                    syscall_names[syscall_number], syscall_number);
+            #endif
+            return NOT_HOOKED;
+    }
+
+    #ifndef NDEBUG
+    CTX->log()->trace("Syscall [{}, {}]  Intercepted", 
+            syscall_names[syscall_number], syscall_number);
+    #endif
+
+#if 0
+    log_write("Internal syscall [%s, %d] = %d", syscall_names[syscall_number]);//, syscall_number, *result);
+#endif
+
+    return HOOKED;
+
+}
+
+/*
+ * hook -- interception hook for application syscalls
+ *
+ * This hook is used to implement any application filesystem-related syscalls.
+ */
+static inline 
+int hook(long syscall_number,
+         long arg0, long arg1, long arg2,
+         long arg3, long arg4, long arg5,
+         long *result)
+{
+
+    switch (syscall_number) {
+
+        case SYS_open:
+            *result = hook_openat(AT_FDCWD,
+                                reinterpret_cast<char*>(arg0),
+                                static_cast<int>(arg1),
+                                static_cast<mode_t>(arg2));
+            break;
+
+        case SYS_creat:
+            *result = hook_openat(AT_FDCWD,
+                                reinterpret_cast<const char*>(arg0),
+                                O_WRONLY | O_CREAT | O_TRUNC,
+                                static_cast<mode_t>(arg1));
+            break;
+
+        case SYS_openat:
+            *result = hook_openat(static_cast<int>(arg0),
+                                reinterpret_cast<const char*>(arg1),
+                                static_cast<int>(arg2),
+                                static_cast<mode_t>(arg3));
+            break;
+
+        case SYS_close:
+            *result = hook_close(static_cast<int>(arg0));
+            break;
+
+        case SYS_stat:
+            *result = hook_stat(reinterpret_cast<char*>(arg0),
+                                reinterpret_cast<struct stat*>(arg1));
+            break;
+
+        case SYS_lstat:
+            *result = hook_lstat(reinterpret_cast<char*>(arg0),
+                                reinterpret_cast<struct stat*>(arg1));
+            break;
+
+        case SYS_fstat:
+            *result = hook_fstat(static_cast<int>(arg0),
+                                reinterpret_cast<struct stat*>(arg1));
+            break;
+
+        case SYS_newfstatat:
+            *result = hook_fstatat(static_cast<int>(arg0),
+                                reinterpret_cast<const char*>(arg1),
+                                reinterpret_cast<struct stat *>(arg2),
+                                static_cast<int>(arg3));
+            break;
+
+        case SYS_read:
+            *result = hook_read(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<void*>(arg1),
+                                static_cast<size_t>(arg2));
+            break;
+
+        case SYS_pread64:
+            *result = hook_pread(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<char *>(arg1),
+                                static_cast<size_t>(arg2),
+                                static_cast<loff_t>(arg3));
+            break;
+
+        case SYS_pwrite64:
+            *result = hook_pwrite(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<const char *>(arg1),
+                                static_cast<size_t>(arg2),
+                                static_cast<loff_t>(arg3));
+            break;
+        case SYS_write:
+            *result = hook_write(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<const char *>(arg1),
+                                static_cast<size_t>(arg2));
+            break;
+
+        case SYS_writev:
+            *result = hook_writev(static_cast<unsigned long>(arg0),
+                                reinterpret_cast<const struct iovec *>(arg1),
+                                static_cast<unsigned long>(arg2));
+            break;
+
+        case SYS_pwritev:
+            *result = hook_pwritev(static_cast<unsigned long>(arg0),
+                                reinterpret_cast<const struct iovec *>(arg1),
+                                static_cast<unsigned long>(arg2),
+                                static_cast<unsigned long>(arg3),
+                                static_cast<unsigned long>(arg4));
+            break;
+
+        case SYS_unlink:
+            *result = hook_unlinkat(AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg0),
+                                    0);
+            break;
+
+        case SYS_unlinkat:
+            *result = hook_unlinkat(static_cast<int>(arg0),
+                                    reinterpret_cast<const char*>(arg1),
+                                    static_cast<int>(arg2));
+            break;
+
+        case SYS_rmdir:
+            *result = hook_unlinkat(AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg0),
+                                    AT_REMOVEDIR);
+            break;
+
+        case SYS_symlink:
+            *result = hook_symlinkat(reinterpret_cast<const char *>(arg0),
+                                    AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg1));
+            break;
+
+        case SYS_symlinkat:
+            *result = hook_symlinkat(reinterpret_cast<const char *>(arg0),
+                                    static_cast<int>(arg1),
+                                    reinterpret_cast<const char *>(arg2));
+            break;
+
+        case SYS_access:
+            *result = hook_access(reinterpret_cast<const char*>(arg0),
+                                static_cast<int>(arg1));
+            break;
+
+        case SYS_faccessat:
+            *result = hook_faccessat(static_cast<int>(arg0),
+                                    reinterpret_cast<const char*>(arg1),
+                                    static_cast<int>(arg2));
+            break;
+
+        case SYS_lseek:
+            *result = hook_lseek(static_cast<unsigned int>(arg0),
+                                static_cast<off_t>(arg1),
+                                static_cast<unsigned int>(arg2));
+            break;
+
+        case SYS_truncate:
+            *result = hook_truncate(reinterpret_cast<const char*>(arg0),
+                                    static_cast<long>(arg1));
+            break;
+
+        case SYS_ftruncate:
+            *result = hook_ftruncate(static_cast<unsigned int>(arg0),
+                                    static_cast<unsigned long>(arg1));
+            break;
+
+        case SYS_dup:
+            *result = hook_dup(static_cast<unsigned int>(arg0));
+            break;
+
+        case SYS_dup2:
+            *result = hook_dup2(static_cast<unsigned int>(arg0),
+                                static_cast<unsigned int>(arg1));
+            break;
+
+        case SYS_dup3:
+            *result = hook_dup3(static_cast<unsigned int>(arg0),
+                                static_cast<unsigned int>(arg1),
+                                static_cast<int>(arg2));
+            break;
+
+        case SYS_getdents:
+            *result = hook_getdents(static_cast<unsigned int>(arg0),
+                                    reinterpret_cast<struct linux_dirent *>(arg1),
+                                    static_cast<unsigned int>(arg2));
+            break;
+
+        case SYS_mkdirat:
+            *result = hook_mkdirat(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<const char *>(arg1),
+                                static_cast<mode_t>(arg2));
+            break;
+
+        case SYS_mkdir:
+            *result = hook_mkdirat(AT_FDCWD,
                                 reinterpret_cast<const char *>(arg0),
-                                AT_FDCWD,
-                                reinterpret_cast<const char *>(arg1),
-                                0);
-        break;
+                                static_cast<mode_t>(arg1));
+            break;
 
-    case SYS_renameat:
-        *result = hook_renameat(static_cast<int>(arg0),
-                                reinterpret_cast<const char *>(arg1),
-                                static_cast<int>(arg2),
-                                reinterpret_cast<const char *>(arg3),
-                                0);
-        break;
+        case SYS_chmod:
+            *result = hook_fchmodat(AT_FDCWD,
+                                    reinterpret_cast<char*>(arg0),
+                                    static_cast<mode_t>(arg1));
+            break;
 
-    case SYS_renameat2:
-        *result = hook_renameat(static_cast<int>(arg0),
-                                reinterpret_cast<const char *>(arg1),
-                                static_cast<int>(arg2),
-                                reinterpret_cast<const char *>(arg3),
-                                static_cast<unsigned int>(arg4));
-        break;
+        case SYS_fchmod:
+            *result = hook_fchmod(static_cast<unsigned int>(arg0),
+                                  static_cast<mode_t>(arg1));
+            break;
 
-    case SYS_fstatfs:
-        *result = hook_fstatfs(static_cast<unsigned int>(arg0),
-                               reinterpret_cast<struct statfs *>(arg1));
-        break;
+        case SYS_fchmodat:
+            *result = hook_fchmodat(static_cast<unsigned int>(arg0),
+                                    reinterpret_cast<char*>(arg1),
+                                    static_cast<mode_t>(arg2));
+            break;
 
-    case SYS_statfs:
-        *result = hook_statfs(reinterpret_cast<const char *>(arg0),
-                               reinterpret_cast<struct statfs *>(arg1));
-        break;
+        case SYS_chdir:
+            *result = hook_chdir(reinterpret_cast<const char *>(arg0));
+            break;
 
-    default:
-        /*
-         * Ignore any other syscalls
-         * i.e.: pass them on to the kernel
-         * as would normally happen.
-         */
+        case SYS_fchdir:
+            *result = hook_fchdir(static_cast<unsigned int>(arg0));
+            break;
 
-        #ifndef NDEBUG
-        CTX->log()->trace("Syscall [{}, {}]  Passthrough", syscall_names[syscall_number], syscall_number);
-        #endif
-        return NOT_HOOKED;
+        case SYS_getcwd:
+            *result = hook_getcwd(reinterpret_cast<char *>(arg0),
+                                static_cast<unsigned long>(arg1));
+            break;
+
+        case SYS_readlink:
+            *result = hook_readlinkat(AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg0),
+                                    reinterpret_cast<char *>(arg1),
+                                    static_cast<int>(arg2));
+            break;
+
+        case SYS_readlinkat:
+            *result = hook_readlinkat(static_cast<int>(arg0),
+                                    reinterpret_cast<const char *>(arg1),
+                                    reinterpret_cast<char *>(arg2),
+                                    static_cast<int>(arg3));
+            break;
+
+        case SYS_fcntl:
+            *result = hook_fcntl(static_cast<unsigned int>(arg0),
+                                static_cast<unsigned int>(arg1),
+                                static_cast<unsigned long>(arg2));
+            break;
+
+        case SYS_rename:
+            *result = hook_renameat(AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg0),
+                                    AT_FDCWD,
+                                    reinterpret_cast<const char *>(arg1),
+                                    0);
+            break;
+
+        case SYS_renameat:
+            *result = hook_renameat(static_cast<int>(arg0),
+                                    reinterpret_cast<const char *>(arg1),
+                                    static_cast<int>(arg2),
+                                    reinterpret_cast<const char *>(arg3),
+                                    0);
+            break;
+
+        case SYS_renameat2:
+            *result = hook_renameat(static_cast<int>(arg0),
+                                    reinterpret_cast<const char *>(arg1),
+                                    static_cast<int>(arg2),
+                                    reinterpret_cast<const char *>(arg3),
+                                    static_cast<unsigned int>(arg4));
+            break;
+
+        case SYS_fstatfs:
+            *result = hook_fstatfs(static_cast<unsigned int>(arg0),
+                                reinterpret_cast<struct statfs *>(arg1));
+            break;
+
+        case SYS_statfs:
+            *result = hook_statfs(reinterpret_cast<const char *>(arg0),
+                                reinterpret_cast<struct statfs *>(arg1));
+            break;
+
+        default:
+            /*
+            * Ignore any other syscalls
+            * i.e.: pass them on to the kernel
+            * as would normally happen.
+            */
+
+            #ifndef NDEBUG
+            CTX->log()->trace("Syscall [{}, {}]  Passthrough", syscall_names[syscall_number], syscall_number);
+            #endif
+            return NOT_HOOKED;
     }
 
     #ifndef NDEBUG
@@ -316,8 +538,20 @@ static inline int hook(long syscall_number,
 }
 
 
-static __thread bool guard_flag;
-
+/*
+ * hook_guard_wrapper -- a wrapper which can notice reentrance.
+ *
+ * The reentrance_guard_flag flag allows the library to distinguish the hooking
+ * of its own syscalls. E.g. while handling an open() syscall,
+ * libgkfs_intercept might call fopen(), which in turn uses an open()
+ * syscall internally. This internally used open() syscall is once again
+ * forwarded to libgkfs_intercept, but using this flag we can notice this
+ * case of reentering itself.
+ *
+ * XXX This approach still contains a very significant bug, as libgkfs_intercept
+ * being called inside a signal handler might easily forward a mock fd to the
+ * kernel.
+ */
 int
 hook_guard_wrapper(long syscall_number,
                    long arg0, long arg1, long arg2,
@@ -326,19 +560,30 @@ hook_guard_wrapper(long syscall_number,
 {
     assert(CTX->interception_enabled());
 
-    if (guard_flag) {
-        return NOT_HOOKED;
-    }
+#if 0
+    log_write("syscall %s called from %s",
+              syscall_names[syscall_number], 
+              reentrance_guard_flag ? "gkfs" : "client");
+#endif
 
     int is_hooked;
 
-    guard_flag = true;
+    if (reentrance_guard_flag) {
+        int oerrno = errno;
+        is_hooked = hook_internal(syscall_number,
+                                  arg0, arg1, arg2, arg3, arg4, arg5,
+                                  syscall_return_value);
+        errno = oerrno;
+        return is_hooked;
+    }
+
+    reentrance_guard_flag = true;
     int oerrno = errno;
     is_hooked = hook(syscall_number,
                      arg0, arg1, arg2, arg3, arg4, arg5,
                      syscall_return_value);
     errno = oerrno;
-    guard_flag = false;
+    reentrance_guard_flag = false;
 
     return is_hooked;
 }

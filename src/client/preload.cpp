@@ -26,6 +26,9 @@
 #include <client/rpc/hg_rpcs.hpp>
 #include <hermes.hpp>
 
+#include <sys/types.h>
+#include <dirent.h>
+
 #include <fstream>
 
 
@@ -104,12 +107,50 @@ bool init_hermes_client(const std::string& transport_prefix) {
     return true;
 }
 
+static inline std::set<int>
+query_open_fds() {
+
+    std::set<int> fds;
+    const std::string path{"/proc/self/fd"};
+
+    std::unique_ptr<DIR, decltype(&::closedir)> dirp(
+            ::opendir(path.c_str()), 
+            closedir);
+
+    struct dirent entry;
+    struct dirent *result;
+
+    while (::readdir_r(dirp.get(), &entry, &result) == 0 && result != NULL) {
+        const std::string name{entry.d_name};
+
+        if(name == "." || name == ".." || 
+           std::stoi(name) == dirfd(dirp.get())) {
+            continue;
+        }
+
+        fds.insert(std::stoi(name));
+    }
+
+    return fds;
+}
+
 
 /**
  * This function is only called in the preload constructor and initializes 
  * the file system client
  */
 void init_ld_environment_() {
+
+    // Client applications such as ssh attempt to close all open file 
+    // descriptors, which causes havoc with the interception library's internal 
+    // state. To account for this, in the interception code we keep track of
+    // internal fds by distinguishing between internal syscalls (i.e. those
+    // coming from internal code) application syscalls. The problem is that
+    // at this point in initialization we have not enabled interception yet,
+    // but the initialization process itself needs to create file descriptors.
+    // To solve this problem, we find out which fds are created by the 
+    // initialization process and manually protect them at this point
+    auto pre_init_fds = query_open_fds();
 
     // initialize Hermes interface to Mercury
     if (!init_hermes_client(RPC_PROTOCOL)) {
@@ -128,6 +169,17 @@ void init_ld_environment_() {
 
     if (!rpc_send::get_fs_config()) {
         exit_error_msg(EXIT_FAILURE, "Unable to fetch file system configurations from daemon process through RPC.");
+    }
+
+    auto post_init_fds = query_open_fds();
+    std::set<int> internal_fds{3}; // fd 3 is created by the logging system
+
+    std::set_difference(post_init_fds.begin(), post_init_fds.end(),
+                        pre_init_fds.begin(), pre_init_fds.end(),
+                        std::inserter(internal_fds, internal_fds.end()));
+
+    for(const auto& fd : internal_fds) {
+        CTX->register_internal_fd(fd);
     }
 
     CTX->log()->info("{}() Environment initialization successful.", __func__);
@@ -178,6 +230,7 @@ void log_prog_name() {
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
+
     init_logging();
     CTX->log()->debug("Initialized logging subsystem");
     log_prog_name();

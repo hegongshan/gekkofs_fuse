@@ -172,3 +172,39 @@ bool PreloadContext::interception_enabled() const {
     return interception_enabled_;
 }
 
+void PreloadContext::register_internal_fd(int fd) {
+
+#ifdef USE_BITSET_FOR_INTERNAL_FDS
+    internal_fds_.set(fd);
+#else
+    decltype(internal_fds_)::iterator it;
+    bool inserted;
+
+    std::tie(it, inserted) = internal_fds_.insert(fd);
+    assert(inserted);
+#endif // USE_BITSET_FOR_INTERNAL_FDS
+
+}
+
+void PreloadContext::unregister_internal_fd(int fd) {
+
+#ifdef USE_BITSET_FOR_INTERNAL_FDS
+    internal_fds_.reset(fd);
+#else
+    std::size_t n = internal_fds_.erase(fd);
+    assert(n == 1);
+#endif // USE_BITSET_FOR_INTERNAL_FDS
+
+}
+
+bool PreloadContext::is_internal_fd(int fd) const {
+
+#ifdef USE_BITSET_FOR_INTERNAL_FDS
+    return internal_fds_[fd];
+#else
+    return internal_fds_.count(fd) != 0;
+#endif // USE_BITSET_FOR_INTERNAL_FDS
+
+}
+
+
