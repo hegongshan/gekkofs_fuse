@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2019-09-17
+## Added
+ - Added new Cmake flag `LOG_SYSCALLS` to enable/disable syscall logging.
+ - Intercept the 64 bit version of `getdents`.
+ - Added debian-based docker image.
+## Changed
+ - Disable syscalls logging by default
+ - Update Mercury, RocksDB and Libfabric dependencies
+## Fixed
+ - Fix read at the end of file.
+ - Don't create log file when using `--version`/`--help` cli flags.
+ - On some systems LD_PRELOAD used on /bin/bash binary was not working.
+ - Missing definition of `loff_t` on new version of GCC.
+
 ## [0.6.0] - 2019-07-26
 ## Added
 - Add compile time option to disable shared memory communication `-DUSE_SHM:BOOL=OFF`
