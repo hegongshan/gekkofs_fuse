@@ -103,7 +103,7 @@ set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
 )
 message(STATUS "RPC protocol: '${RPC_PROTOCOL}'")
 
-option(USE_SHM "Use shared memory for intra-node communication" ON)
+option(USE_SHM "Use shared memory for intra-node communication" OFF)
 message(STATUS "Shared-memory communication: ${USE_SHM}")
 
 option(LOG_SYSCALLS "Enable verbose logging for syscalls interception" OFF)
