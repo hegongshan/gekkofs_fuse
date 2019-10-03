@@ -131,6 +131,27 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
 
+int check_parent_dir(const std::string& path) {
+#if CREATE_CHECK_PARENTS
+    auto p_comp = dirname(path);
+    auto md = adafs_metadata(p_comp);
+    if (!md) {
+        if (errno == ENOENT) {
+            CTX->log()->debug("{}() parent component does not exists: '{}'", __func__, p_comp);
+        } else {
+            CTX->log()->error("{}() failed to get metadata for parent component '{}': {}", __func__, path, strerror(errno));
+        }
+        return -1;
+    }
+    if (!S_ISDIR(md->mode())) {
+        CTX->log()->debug("{}() parent component is not a direcotory: '{}'", __func__, p_comp);
+        errno = ENOTDIR;
+        return -1;
+    }
+#endif // CREATE_CHECK_PARENTS
+    return 0;
+}
+
 int adafs_mk_node(const std::string& path, mode_t mode) {
 
     //file type must be set
@@ -154,18 +175,10 @@ int adafs_mk_node(const std::string& path, mode_t mode) {
             return -1;
     }
 
-    auto p_comp = dirname(path);
-    auto md = adafs_metadata(p_comp);
-    if (!md) {
-        CTX->log()->debug("{}() parent component does not exists: '{}'", __func__, p_comp);
-        errno = ENOENT;
+    if (check_parent_dir(path)) {
         return -1;
     }
-    if (!S_ISDIR(md->mode())) {
-        CTX->log()->debug("{}() parent component is not a direcotory: '{}'", __func__, p_comp);
-        errno = ENOTDIR;
-        return -1;
-    }
+    
     return rpc_send::mk_node(path, mode);
 }
 
@@ -652,16 +665,7 @@ int adafs_mk_symlink(const std::string& path, const std::string& target_path) {
         }
     }
 
-    auto p_comp = dirname(path);
-    auto md = adafs_metadata(p_comp, false);
-    if (md == nullptr) {
-        CTX->log()->debug("{}() parent component does not exist: '{}'", __func__, p_comp);
-        errno = ENOENT;
-        return -1;
-    }
-    if (!S_ISDIR(md->mode())) {
-        CTX->log()->debug("{}() parent component is not a directory: '{}'", __func__, p_comp);
-        errno = ENOTDIR;
+    if (check_parent_dir(path)) {
         return -1;
     }
 
