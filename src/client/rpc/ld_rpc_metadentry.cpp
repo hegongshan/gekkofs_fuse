@@ -118,7 +118,7 @@ int decr_size(const std::string& path, size_t length) {
     }
 }
 
-int rm_node(const std::string& path, const bool remove_metadentry_only) {
+int rm_node(const std::string& path, const bool remove_metadentry_only, const ssize_t size) {
 
     // if only the metadentry should be removed, send one rpc to the
     // metadentry's responsible node to remove the metadata
@@ -159,6 +159,35 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
 
     std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
 
+    if ((size / CHUNKSIZE) < CTX->hosts().size()) {	// Small files
+	auto endp = CTX->hosts().at(
+                 CTX->distributor()->locate_file_metadata(path));
+
+	try {
+            CTX->log()->trace("{}() Sending RPC to host: {}",
+                              __func__, endp.to_string());
+            gkfs::rpc::remove::input in(path);
+            handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp,in));
+
+	    auto chnk_start = 0;
+	    auto chnk_end = size/CHUNKSIZE;
+
+	    for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
+        	auto target = CTX->hosts().at(CTX->distributor()->locate_data(path, chnk_id));
+             
+                CTX->log()->trace("{}() Sending RPC to host: {}",
+                              __func__, target.to_string());
+
+		handles.emplace_back(
+                ld_network_service->post<gkfs::rpc::remove>(target, in));
+		}
+	} catch (const std::exception & ex) {
+		 CTX->log()->error("{}() Failed to send reduced remove requests",
+                              __func__);
+            throw std::runtime_error("Failed to forward non-blocking rpc request");
+        }
+    }
+   else {	// "Big" files 
     for (const auto& endp : CTX->hosts()) {
         try {
             CTX->log()->trace("{}() Sending RPC to host: {}", 
@@ -171,6 +200,9 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
             // TODO(amiranda): hermes will eventually provide a post(endpoint) 
             // returning one result and a broadcast(endpoint_set) returning a 
             // result_set. When that happens we can remove the .at(0) :/
+            //
+            //
+
             handles.emplace_back(
                 ld_network_service->post<gkfs::rpc::remove>(endp, in));
 
@@ -182,7 +214,7 @@ int rm_node(const std::string& path, const bool remove_metadentry_only) {
             throw std::runtime_error("Failed to forward non-blocking rpc request");
         }
     }
-
+   }
     // wait for RPC responses
     bool got_error = false;
 
