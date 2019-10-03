@@ -24,6 +24,7 @@
 
 
 constexpr static const char * ENV_NAME_CWD = ENV_PREFIX "CWD";
+static const std::string excluded_paths[2] = {"sys/", "proc/"};
 
 /* Match components in path
  *
@@ -81,6 +82,16 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
  bool resolve_path (const std::string& path, std::string& resolved, bool resolve_last_link) {
     CTX->log()->debug("{}() path: '{}'", __func__, path);
 
+    assert(is_absolute_path(path));
+
+    for (auto& excl_path: excluded_paths) {
+        if (path.compare(1, excl_path.length(), excl_path) == 0) {
+            CTX->log()->debug("{}() skipping: '{}'", __func__, path);
+            resolved = path;
+            return false;
+        }
+    }
+
     struct stat st;
     const std::vector<std::string>& mnt_components = CTX->mountdir_components();
     unsigned int matched_components = 0; // matched number of component in mountdir
@@ -91,9 +102,6 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
     std::string::size_type last_slash_pos = 0; // index of last slash in resolved path
     resolved.clear();
     resolved.reserve(path.size());
-
-    //Process first slash
-    assert(is_absolute_path(path));
 
     while (++end < path.size()) {
         start = end;
