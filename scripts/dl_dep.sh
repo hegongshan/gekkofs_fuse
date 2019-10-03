@@ -193,7 +193,7 @@ clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "fd410dfb9852b2b98d
 # get Argobots
 wgetdeps "argobots" "https://github.com/pmodels/argobots/archive/v1.0rc1.tar.gz" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "6ed94e4f3a4d526b0a3b4e57be075461e86d3666" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "016dbdce22da3fe4f97b46c20a53bced9370a217" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
 # get syscall_intercept
