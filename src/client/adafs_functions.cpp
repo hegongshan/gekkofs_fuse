@@ -88,7 +88,8 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 
         // no access check required here. If one is using our FS they have the permissions.
         if(adafs_mk_node(path, mode | S_IFREG)) {
-            CTX->log()->error("{}() error creating non-existent file", __func__);
+            CTX->log()->error("{}() error creating non-existent file: {}",
+                              __func__, strerror(errno));
             return -1;
         }
     } else {

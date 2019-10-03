@@ -63,7 +63,11 @@ int mk_node(const std::string& path, const mode_t mode) {
         errno = EBUSY;
         return -1;
     }
-    int err = out.err;
+    int err = 0;
+    if (out.err) {
+        err = -1;
+        errno = out.err;
+    }
     margo_free_output(handle, &out);
     margo_destroy(handle);
     return err;
