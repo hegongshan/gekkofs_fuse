@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2019-10-07
+## Added
+ - Paths inside kernel pseudo filesystems (`/sys`, `/proc`) are forwarded directly to the kernel and internal path resolution will be skipped. Be aware that also paths  like  `/sys/../tmp/gkfs_mountpoint/asd` will be forwarded to the kernel
+ - Added new Cmake flag `CREATE_CHECK_PARENTS` to controls if the existance of the parent node needs to be checked during the creation of a child node.
+## Changed
+ - Daemon logs for RPC handlers have been polished
+ - Updated Margo, Mercury and Libfabric dependencies
+## Fixed
+ - mk_node RPC wasn't propagating errors correctly from daemons
+ - README has been improoved and got some minor fixes
+ - fix wrong path in log call for mk_symlink function
+
 ## [0.6.1] - 2019-09-17
 ## Added
  - Added new Cmake flag `LOG_SYSCALLS` to enable/disable syscall logging.
