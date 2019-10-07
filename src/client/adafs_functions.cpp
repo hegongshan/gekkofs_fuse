@@ -671,7 +671,7 @@ int adafs_mk_symlink(const std::string& path, const std::string& target_path) {
 
     auto link_md = adafs_metadata(path, false);
     if (link_md != nullptr) {
-        CTX->log()->debug("{}() Link exists: '{}'", __func__, p_comp);
+        CTX->log()->debug("{}() Link exists: '{}'", __func__, path);
         errno = EEXIST;
         return -1;
     }
