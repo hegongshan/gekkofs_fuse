@@ -37,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 - Errors on get_dirents RPC are now reported back to clients
 - Write errors happenig on deamons are now reported back to clients
-- number overflow on lseek didn't allow to use seek on huge files 
+- number overflow on lseek didn't allow to use seek on huge files
 
 ## [0.5.0] - 2019-04-29
 ## Changed
