@@ -134,10 +134,6 @@ struct logger;
 
 namespace detail {
 
-enum { inline_buffer_size = 0x1000 };
-
-using safe_buffer = fmt::basic_memory_buffer<char, inline_buffer_size>;
-
 template <typename Buffer>
 static inline void
 log_buffer(std::FILE* fp, 
@@ -253,9 +249,16 @@ format_syscall_info_to(Buffer&& buffer,
     fmt::format_to(buffer, fmt::string_view(tmp.data(), tmp.size()));
 }
 
-
-
 } // namespace detail
+
+enum { max_buffer_size = LIBGKFS_LOG_MESSAGE_SIZE };
+
+struct static_buffer : public fmt::basic_memory_buffer<char, max_buffer_size> {
+
+protected:
+    void grow(std::size_t size) override final;
+};
+
 
 struct logger {
 
@@ -276,7 +279,7 @@ struct logger {
             return;
         }
 
-        detail::safe_buffer buffer;
+        static_buffer buffer;
         detail::format_timestamp_to(buffer, timezone_);
         fmt::format_to(buffer, "[{}] [{}] ", 
                 ::syscall_no_intercept(SYS_gettid),
@@ -324,14 +327,14 @@ struct logger {
             };
              
 
-        char buffer[detail::inline_buffer_size];
 
-        detail::safe_buffer prefix;
+        static_buffer prefix;
         detail::format_timestamp_to(prefix);
         fmt::format_to(prefix, "[{}] [{}] ", 
                 ::syscall_no_intercept(SYS_gettid),
                 lookup_level_name(level));
 
+        char buffer[max_buffer_size];
         const int n = vsnprintf(buffer, sizeof(buffer), fmt, ap);
 
         std::array<buffer_view, 3> buffers{};
@@ -375,7 +378,7 @@ struct logger {
             throw std::runtime_error("Invalid file descriptor");
         }
 
-        detail::safe_buffer buffer;
+        static_buffer buffer;
         fmt::format_to(buffer, std::forward<Args>(args)...);
         fmt::format_to(buffer, "\n");
         detail::log_buffer(fd, buffer);
@@ -423,6 +426,22 @@ get_global_logger() {
 static inline void 
 destroy_global_logger() {
     logger::global_logger().reset();
+}
+
+inline void
+static_buffer::grow(std::size_t size) {
+
+    const auto logger = get_global_logger();
+
+    if(logger) {
+        logger->log_mask_ &= ~(syscall | syscall_at_entry);
+    }
+
+    std::fprintf(stderr, 
+"FATAL: message too long for gkfs::log::static_buffer, increase the size of\n" 
+"LIBGKFS_LOG_MESSAGE_SIZE in CMake or reduce the length of the offending "
+"message.\n");
+    abort();
 }
 
 } // namespace log

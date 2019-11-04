@@ -131,11 +131,15 @@ if(NOT GETCONF_MAX_FDS)
 endif()
 add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
 
-option(ENABLE_LOGGING "Disable all logging messages" ON)
-if(NOT ENABLE_LOGGING)
+option(ENABLE_CLIENT_LOG "Enable logging messages" ON)
+if(ENABLE_CLIENT_LOG)
+    set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
+    add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
+    message(STATUS "Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
+else()
     add_definitions(-DGKFS_DISABLE_LOGGING)
 endif()
-message(STATUS "Logging output: ${ENABLE_LOGGING}")
+message(STATUS "Client logging output: ${ENABLE_CLIENT_LOGGING}")
 
 configure_file(include/global/configure.hpp.in include/global/configure.hpp)
 

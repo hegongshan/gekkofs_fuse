@@ -292,7 +292,7 @@ logger::log_syscall(syscall::info info,
 
 print_syscall:
 
-    detail::safe_buffer buffer;
+    static_buffer buffer;
 
     detail::format_timestamp_to(buffer, timezone_);
     detail::format_syscall_info_to(buffer, info);
