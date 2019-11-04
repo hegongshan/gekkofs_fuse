@@ -374,20 +374,50 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(getrandom,               3,  S_RET(rdec),    S_NARG(ptr, "buf"),            S_NARG(arg, "count"),            S_NARG(arg, "flags")),
     SYSCALL(memfd_create,            2,  S_RET(rdec),    S_NARG(cstr, "pathname"),      S_NARG(arg, "flags")),
     SYSCALL(kexec_file_load,         5,  S_RET(rdec),    S_NARG(fd, "kernel_fd"),       S_NARG(fd, "initrd_fd"),         S_NARG(arg, "cmdline_len"),       S_NARG(cstr, "cmdline"),     S_NARG(arg, "flags")),
+
+#ifdef SYS_bpf
     SYSCALL(bpf,                     2,  S_RET(rdec),    S_NARG(arg, "cmd"),            S_NARG(ptr, "attr"),             S_NARG(arg, "size")),
+#endif // SYS_bpf
+
+#ifdef SYS_execveat 
     SYSCALL(execveat,                5,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(ptr, "argv"),              S_NARG(ptr, "envp"),         S_NARG(arg, "flags")),
+#endif // SYS_execveat
+
     SYSCALL(userfaultfd,             2,  S_RET(rdec),    S_NARG(arg, "flags")),
+
+#ifdef SYS_membarrier
     SYSCALL(membarrier,              2,  S_RET(rdec),    S_NARG(arg, "cmd"),            S_NARG(arg, "flags")),
+#endif // SYS_membarrier
+
+#ifdef SYS_mlock2
     SYSCALL(mlock2,                  3,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(arg, "flags")),
+#endif // SYS_mlock2
+
     SYSCALL(copy_file_range,         6,  S_RET(rdec),    S_NARG(fd, "fd_in"),           S_NARG(ptr, "off_in"),           S_NARG(fd, "fd_out"),             S_NARG(ptr, "off_out"),      S_NARG(dec, "length"),       S_NARG(arg, "flags")),
+
+#ifdef SYS_preadv2
     SYSCALL(preadv2,                 6,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "iov"),              S_NARG(arg, "vlen"),              S_NARG(arg, "pos_l"),        S_NARG(arg, "pos_h"),          S_NARG(arg, "flags")),
+#endif // SYS_preadv2
+
+#ifdef SYS_pwritev2
     SYSCALL(pwritev2,                6,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "iov"),              S_NARG(arg, "vlen"),              S_NARG(arg, "pos_l"),        S_NARG(arg, "pos_h"),          S_NARG(arg, "flags")),
+#endif // SYS_pwritev2
+
     SYSCALL(pkey_mprotect,           4,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(mmap_prot, "prot"),        S_NARG(dec, "pkey")),
     SYSCALL(pkey_alloc,              2,  S_RET(rdec),    S_NARG(arg, "flags"),          S_NARG(arg, "init_val")),
     SYSCALL(pkey_free,               1,  S_RET(rdec),    S_NARG(dec, "pkey")),
+
+#ifdef SYS_statx
     SYSCALL(statx,                   5,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(arg, "flags"),             S_NARG(arg, "mask"),         S_NARG(ptr, "buffer")),
+#endif // SYS_statx
+
+#ifdef SYS_io_pgetevents
     SYSCALL(io_pgetevents,           6,  S_RET(rdec),    S_NARG(ptr, "ctx_id"),         S_NARG(dec, "min_nr"),           S_NARG(dec, "nr"),                S_NARG(ptr, "events"),       S_NARG(ptr, "timeout"),      S_NARG(ptr, "sig")),
+#endif // SYS_io_pgetevents
+
+#ifdef SYS_rseq
     SYSCALL(rseq,                    4,  S_RET(rdec),    S_NARG(ptr, "rseq"),           S_NARG(dec, "rseq_len"),         S_NARG(arg, "flags"),             S_NARG(signum, "sig"))
+#endif // SYS_rseq
 };
 
 
