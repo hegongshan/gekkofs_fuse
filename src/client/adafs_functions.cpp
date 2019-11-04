@@ -179,7 +179,7 @@ int adafs_rm_node(const std::string& path) {
         return -1;
     }
     bool has_data = S_ISREG(md->mode()) && (md->size() != 0);
-    return rpc_send::rm_node(path, !has_data);
+    return rpc_send::rm_node(path, !has_data, md->size());
 }
 
 int adafs_access(const std::string& path, const int mask, bool follow_links) {
@@ -523,7 +523,7 @@ int adafs_rmdir(const std::string& path) {
         errno = ENOTEMPTY;
         return -1;
     }
-    return rpc_send::rm_node(path, true);
+    return rpc_send::rm_node(path, true, 0);
 }
 
 
