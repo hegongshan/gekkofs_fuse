@@ -141,7 +141,8 @@ an MPI application use the `{mpirun, mpiexec} -x` argument.
 The following environment variables can be used to enable logging in the client
 library: `LIBGKFS_LOG=<module>` and `LIBGKFS_LOG_OUTPUT=<path/to/file>` to
 configure the output module and set the path to the log file of the client
-library.
+library. If not path is specified in `LIBGKFS_LOG_OUTPUT`, the client library 
+will send log messages to `/tmp/gkfs_client.log`.
 
 The following modules are available:
 
