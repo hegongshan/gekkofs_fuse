@@ -295,7 +295,7 @@ fi
 
 # get syscall_intercept
 if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "syscall_intercept" ) ]]; then
-    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept2.patch" &
+    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
 fi
 
 # get date
