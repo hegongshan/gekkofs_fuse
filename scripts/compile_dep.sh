@@ -47,7 +47,7 @@ optional arguments:
                 build and install a specific dependency. If unspecified 
                 all dependencies are built and installed.
     -j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
-                number of cores that are used to compile the depdencies
+                number of cores that are used to compile the dependencies
                 defaults to number of available cores
     -t, --test  Perform libraries tests.
 "
