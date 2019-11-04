@@ -1,23 +1,23 @@
 #!/bin/bash
 
-mogon1_deps=( 
+MOGON1_DEPS=( 
     "zstd" "lz4" "snappy" "bmi" "libfabric" "mercury" "argobots" "margo" 
     "rocksdb" "syscall_intercept date"
 )
 
-mogon2_deps=(
+MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "bmi" "mercury" "argobots" "margo" "rocksdb" 
     "syscall_intercept date"
 )
 
-fh2_deps=(
+FH2_DEPS=(
     "zstd" "lz4" "snappy" "bmi" "libfabric" "mercury" "argobots" "margo" 
     "rocksdb" "syscall_intercept date"
 )
 
 usage_short() {
 	echo "
-usage: compile_dep.sh [-h] [-n <NAPLUGIN>] [-c <CLUSTER>] [-d <DEPENDENCY>] [-j <COMPILE_CORES>]
+usage: compile_dep.sh [-h] [-l] [-n <NAPLUGIN>] [-c <CLUSTER>] [-d <DEPENDENCY>] [-j <COMPILE_CORES>]
                       source_path install_path
 	"
 }
@@ -59,21 +59,21 @@ list_dependencies() {
     echo "Available dependencies: "
 
     echo -n "  Mogon 1: "
-    for d in "${mogon1_deps[@]}"
+    for d in "${MOGON1_DEPS[@]}"
     do
         echo -n "$d "
     done
     echo ""
 
     echo -n "  Mogon 2: "
-    for d in "${mogon2_deps[@]}"
+    for d in "${MOGON2_DEPS[@]}"
     do
         echo -n "$d "
     done
     echo ""
 
     echo -n "  fh2: "
-    for d in "${fh2_deps[@]}"
+    for d in "${FH2_DEPS[@]}"
     do
         echo -n "$d "
     done
@@ -297,7 +297,7 @@ if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "mercury" ) ]]; then
     CURR=${SOURCE}/mercury
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    $CMAKE \
+    PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig $CMAKE \
         -DCMAKE_BUILD_TYPE:STRING=Debug \
         -DBUILD_TESTING:BOOL=ON \
         -DMERCURY_USE_SM_ROUTING:BOOL=OFF \
@@ -357,7 +357,7 @@ if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "syscall_intercept" ) ]]
     CURR=${SOURCE}/syscall_intercept
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    CC="" CXX="" $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTS:BOOK=OFF ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTS:BOOK=OFF ..
     make install
 fi
 
