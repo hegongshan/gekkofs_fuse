@@ -224,6 +224,7 @@ logger::logger(const std::string& opts,
         log_fd_ = fd;
     }
 
+#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     // Finding the current timezone implies accessing OS files (i.e. syscalls),
     // but current_zone() doesn't actually retrieve the time zone but rather
     // provides a descriptor to it that is **atomically initialized** upon its 
@@ -242,6 +243,7 @@ logger::logger(const std::string& opts,
     // be removed if the date API ends up providing this functionality.
     using namespace date;
     timezone_->get_info(date::sys_days{January/1/1970});
+#endif
 }
 
 logger::~logger() {
