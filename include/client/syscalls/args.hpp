@@ -346,7 +346,9 @@ format_mmap_flags_arg_to(FmtBuffer& buffer,
         utils::make_array(
             FLAG_ENTRY(MAP_SHARED),
             FLAG_ENTRY(MAP_PRIVATE),
+#ifdef MAP_SHARED_VALIDATE
             FLAG_ENTRY(MAP_SHARED_VALIDATE),
+#endif
             FLAG_ENTRY(MAP_FIXED),
             FLAG_ENTRY(MAP_ANONYMOUS),
             FLAG_ENTRY(MAP_GROWSDOWN),
