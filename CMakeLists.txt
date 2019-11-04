@@ -122,25 +122,14 @@ set(MAX_INTERNAL_FDS 256 CACHE STRING "Number of file descriptors reserved for i
 add_definitions(-DMAX_INTERNAL_FDS=${MAX_INTERNAL_FDS})
 message(STATUS "File descriptors reserved for internal use: ${MAX_INTERNAL_FDS}")
 
-option(USE_BITSET_FOR_INTERNAL_FDS "Use std::bitset to track internal fds" ON)
-if(USE_BITSET_FOR_INTERNAL_FDS)
-    add_definitions(-DUSE_BITSET_FOR_INTERNAL_FDS)
-    execute_process(COMMAND getconf OPEN_MAX
-                    OUTPUT_VARIABLE GETCONF_MAX_FDS
-                    OUTPUT_STRIP_TRAILING_WHITESPACE
-                    ERROR_QUIET)
-    if(NOT GETCONF_MAX_FDS)
-        set(GETCONF_MAX_FDS=512)
-    endif()
-    add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
+execute_process(COMMAND getconf OPEN_MAX
+                OUTPUT_VARIABLE GETCONF_MAX_FDS
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_QUIET)
+if(NOT GETCONF_MAX_FDS)
+    set(GETCONF_MAX_FDS=512)
 endif()
-
-message(STATUS "Use std::bitset for internal fd tracking: ${USE_BITSET_FOR_INTERNAL_FDS}")
-
-if(USE_BITSET_FOR_INTERNAL_FDS)
-    message(STATUS "Max open files: ${GETCONF_MAX_FDS}")
-endif()
-
+add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
 
 option(ENABLE_LOGGING "Disable all logging messages" ON)
 if(NOT ENABLE_LOGGING)

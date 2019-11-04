@@ -33,10 +33,7 @@ PreloadContext::PreloadContext():
     ofm_(std::make_shared<OpenFileMap>()),
     fs_conf_(std::make_shared<FsConfig>()) {
 
-#ifdef USE_BITSET_FOR_INTERNAL_FDS
     internal_fds_.set();
-#endif // USE_BITSET_FOR_INTERNAL_FDS
-    
 }
 
 void 

@@ -21,9 +21,7 @@
 #include <vector>
 #include <string>
 
-#ifdef USE_BITSET_FOR_INTERNAL_FDS
 #include <bitset>
-#endif // USE_BITSET_FOR_INTERNAL_FDS
 
 /* Forward declarations */
 class OpenFileMap;
@@ -77,13 +75,8 @@ class PreloadContext {
 
     bool interception_enabled_;
 
-#ifdef USE_BITSET_FOR_INTERNAL_FDS
     std::bitset<MAX_INTERNAL_FDS> internal_fds_;
     mutable std::mutex internal_fds_mutex_;
-#else
-    std::set<int> internal_fds_;
-#endif // USE_BITSET_FOR_INTERNAL_FDS
-
 
     public:
     static PreloadContext* getInstance() {
