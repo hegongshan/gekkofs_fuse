@@ -255,8 +255,8 @@ logger::log_syscall(syscall::info info,
                     boost::optional<long> result) {
 
 
-    const bool log_syscall_entry = !!(gkfs::log::syscall_at_entry & log_mask_);
-    const bool log_syscall_result = !!(gkfs::log::syscall & log_mask_);
+    const bool log_syscall_entry = !!(log::syscall_at_entry & log_mask_);
+    const bool log_syscall_result = !!(log::syscall & log_mask_);
 
     // log the syscall if and only if logging for syscalls is enabled
     if(!log_syscall_entry && !log_syscall_result) {
@@ -266,21 +266,23 @@ logger::log_syscall(syscall::info info,
     // log the syscall even if we don't have information on it, since it may
     // be important to the user (we assume that the syscall has completed 
     // though)
-    if(info == gkfs::syscall::no_info) {
+    if(info == syscall::no_info) {
         goto print_syscall;
     }
 
-    // log the syscall entry if the syscall may not return (e.g. execve),
-    // even if log::syscall_entry is disabled
-    if(gkfs::syscall::may_not_return(syscall_number)) {
+    // log the syscall entry if the syscall may not return (e.g. execve) or
+    // if we are sure that it won't ever return (e.g. exit), even if 
+    // log::syscall_at_entry is disabled
+    if(syscall::may_not_return(syscall_number) || 
+       syscall::never_returns(syscall_number)) {
         goto print_syscall;
     }
 
-    if(log_syscall_entry && gkfs::syscall::execution_is_pending(info)) {
+    if(log_syscall_entry && syscall::execution_is_pending(info)) {
         goto print_syscall;
     }
 
-    if(log_syscall_result && !gkfs::syscall::execution_is_pending(info)) {
+    if(log_syscall_result && !syscall::execution_is_pending(info)) {
         goto print_syscall;
     }
 
