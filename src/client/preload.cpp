@@ -216,15 +216,15 @@ void init_preload() {
  */
 void destroy_preload() {
 
-    stop_interception();
-    CTX->disable_interception();
-    LOG(DEBUG, "Syscall interception stopped");
-
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");
 
     ld_network_service.reset();
     LOG(DEBUG, "RPC subsystem shut down");
+
+    stop_interception();
+    CTX->disable_interception();
+    LOG(DEBUG, "Syscall interception stopped");
 
     LOG(INFO, "All subsystems shut down. Client shutdown complete.");
 }
