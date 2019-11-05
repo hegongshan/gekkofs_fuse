@@ -87,8 +87,11 @@ always_returns(const long syscall_number) {
 
 static inline bool
 may_not_return(const long syscall_number) {
-    return syscall_number == SYS_execve || 
-           syscall_number == SYS_execveat;
+    return syscall_number == SYS_execve 
+#ifdef SYS_execveat
+        || syscall_number == SYS_execveat
+#endif
+        ;
 }
 
 
