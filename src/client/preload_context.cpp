@@ -192,13 +192,14 @@ bool PreloadContext::interception_enabled() const {
 
 int PreloadContext::register_internal_fd(int fd) {
 
+    LOG(DEBUG, "registering fd {} as internal", fd);
+
     assert(fd >= 0);
 
     std::lock_guard<std::mutex> lock(internal_fds_mutex_);
     const int pos = internal_fds_._Find_first();
     internal_fds_.reset(pos);
 
-    LOG(DEBUG, "registering internal fd: {} -> {}", fd, pos + INTERNAL_FD_BASE);
 
 #if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     long args[gkfs::syscall::MAX_ARGS]{fd, pos + INTERNAL_FD_BASE, O_CLOEXEC};
@@ -243,10 +244,14 @@ int PreloadContext::register_internal_fd(int fd) {
         gkfs::syscall::executed, 
         SYS_close, args2, rv);
 
+    LOG(DEBUG, "    (fd {} reassigned to ifd {})", fd, ifd);
+
     return ifd;
 }
 
 void PreloadContext::unregister_internal_fd(int fd) {
+
+    LOG(DEBUG, "unregistering internal fd {}", fd);
 
     assert(fd >= INTERNAL_FD_BASE);
 
@@ -254,8 +259,6 @@ void PreloadContext::unregister_internal_fd(int fd) {
 
     std::lock_guard<std::mutex> lock(internal_fds_mutex_);
     internal_fds_.set(pos);
-
-    LOG(DEBUG, "unregistering internal fd: {}", fd);
 }
 
 bool PreloadContext::is_internal_fd(int fd) const {

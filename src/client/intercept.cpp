@@ -687,10 +687,14 @@ hook_clone_at_child(unsigned long flags,
         0};
 #endif
 
+    reentrance_guard_flag = true;
+
     LOG(SYSCALL, 
         ::get_current_syscall_info() | 
         gkfs::syscall::executed, 
         SYS_clone, args, 0);
+
+    reentrance_guard_flag = false;
 }
 
 static void
@@ -711,10 +715,14 @@ hook_clone_at_parent(unsigned long flags,
         0};
 #endif
 
+    reentrance_guard_flag = true;
+
     LOG(SYSCALL, 
         ::get_current_syscall_info() | 
         gkfs::syscall::executed, 
         SYS_clone, args, returned_pid);
+
+    reentrance_guard_flag = false;
 }
 
 
