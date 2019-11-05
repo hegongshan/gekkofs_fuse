@@ -359,8 +359,12 @@ format_mmap_flags_arg_to(FmtBuffer& buffer,
             FLAG_ENTRY(MAP_POPULATE),
             FLAG_ENTRY(MAP_NONBLOCK),
             FLAG_ENTRY(MAP_STACK),
-            FLAG_ENTRY(MAP_HUGETLB),
-            FLAG_ENTRY(MAP_SYNC));
+            FLAG_ENTRY(MAP_HUGETLB)
+#ifdef MAP_SYNC
+            ,
+            FLAG_ENTRY(MAP_SYNC)
+#endif
+            );
 
     fmt::format_to(buffer, "{}=", parg.name);
     format_flag_set(buffer, parg.value, flag_names);
@@ -397,7 +401,9 @@ format_clone_flags_arg_to(FmtBuffer& buffer,
             FLAG_ENTRY(CLONE_DETACHED),
             FLAG_ENTRY(CLONE_UNTRACED),
             FLAG_ENTRY(CLONE_CHILD_SETTID),
+#ifdef CLONE_NEWCGROUP
             FLAG_ENTRY(CLONE_NEWCGROUP),
+#endif
             FLAG_ENTRY(CLONE_NEWUTS),
             FLAG_ENTRY(CLONE_NEWIPC),
             FLAG_ENTRY(CLONE_NEWUSER),

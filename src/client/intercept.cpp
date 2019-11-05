@@ -352,6 +352,7 @@ int hook(long syscall_number,
                                 reinterpret_cast<const char* const*>(arg2));
             break;
 
+#ifdef SYS_execveat
         case SYS_execveat:
             *result = syscall_no_intercept(syscall_number,
                                 arg0,
@@ -360,6 +361,7 @@ int hook(long syscall_number,
                                 reinterpret_cast<const char* const*>(arg3),
                                 arg4);
             break;
+#endif
 
         case SYS_open:
             *result = hook_openat(AT_FDCWD,
