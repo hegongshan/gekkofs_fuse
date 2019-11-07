@@ -140,6 +140,12 @@ process_log_options(const std::string gkfs_debug) {
         bool is_known = false;
 
         for(const auto& opt : debug_opts) {
+
+            // none disables any future and previous flags observed
+            if(t == "none") {
+                return log::none;
+            }
+
             if(t == opt.name_) {
                 dm |= opt.mask_;
                 is_known = true;
