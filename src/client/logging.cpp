@@ -192,15 +192,8 @@ logger::logger(const std::string& opts,
                bool trunc) :
     timezone_(date::current_zone()) {
 
-    /* use stderr (dup()ed to an internal fd) by default */
-    log_fd_ = ::dup(2);
-
-    if(log_fd_ == -1) {
-        log(gkfs::log::error, __func__, __LINE__, "Failed to dup stderr. "
-            "Logging will fall back to normal stderr", path);
-        log_fd_ = 2;
-    }
-
+    /* use stderr by default */
+    log_fd_ = 2;
     log_mask_ = process_log_options(opts);
 
     if(!path.empty()) {
@@ -212,7 +205,8 @@ logger::logger(const std::string& opts,
 
         // we use ::open() here rather than ::syscall_no_intercept(SYS_open)
         // because we want the call to be intercepted by our hooks, which 
-        // allows us to categorize the resulting fd as 'internal'
+        // allows us to categorize the resulting fd as 'internal' and
+        // relocate it to our private range
 		int fd = ::open(path.c_str(), flags, 0600);
 
 		if(fd == -1) {

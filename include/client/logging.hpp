@@ -400,7 +400,6 @@ struct logger {
     const date::time_zone * const timezone_;
 };
 
-
 // the following static functions can be used to interact 
 // with a globally registered logger instance
 
