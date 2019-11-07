@@ -50,12 +50,18 @@ PreloadContext::init_logging() {
     const std::string log_output = 
         gkfs::env::get_var(gkfs::env::LOG_OUTPUT, DEFAULT_CLIENT_LOG_PATH);
 
+#ifdef GKFS_DEBUG_BUILD
+    const std::string log_filter =
+        gkfs::env::get_var(gkfs::env::LOG_SYSCALL_FILTER, "");
+#endif
+
     const std::string trunc_val = 
         gkfs::env::get_var(gkfs::env::LOG_OUTPUT_TRUNC);
 
     const bool log_trunc = !(!trunc_val.empty() && trunc_val[0] == 0);
 
-    gkfs::log::create_global_logger(log_opts, log_output, log_trunc);
+    gkfs::log::create_global_logger(log_opts, log_output, 
+                                    log_trunc, log_filter);
 }
 
 void PreloadContext::mountdir(const std::string& path) {
