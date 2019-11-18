@@ -96,7 +96,8 @@ bool init_hermes_client(const std::string& transport_prefix) {
 
     try {
 
-        hermes::engine_options opts;
+        hermes::engine_options opts{};
+
 #if USE_SHM
         opts |= hermes::use_auto_sm;
 #endif
