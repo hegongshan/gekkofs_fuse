@@ -282,6 +282,27 @@ hook_internal(long syscall_number,
 
             break;
 
+        case SYS_eventfd:
+
+            *result = syscall_no_intercept(syscall_number,
+                                           static_cast<int>(arg0));
+
+            if(*result >= 0) {
+                *result = CTX->register_internal_fd(*result);
+            }
+            break;
+
+        case SYS_eventfd2:
+
+            *result = syscall_no_intercept(syscall_number,
+                                           static_cast<int>(arg0),
+                                           static_cast<int>(arg1));
+
+            if(*result >= 0) {
+                *result = CTX->register_internal_fd(*result);
+            }
+            break;
+
         case SYS_accept:
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<int>(arg0),
