@@ -353,6 +353,18 @@ hook_internal(long syscall_number,
             }
             break;
 
+        case SYS_fcntl:
+            *result = syscall_no_intercept(syscall_number,
+                                           static_cast<int>(arg0),
+                                           static_cast<int>(arg1),
+                                           arg2);
+
+            if(*result >= 0 &&
+               (static_cast<int>(arg1) == F_DUPFD ||
+                static_cast<int>(arg1) == F_DUPFD_CLOEXEC)) {
+                *result = CTX->register_internal_fd(*result);
+            }
+            break;
 
         case SYS_close:
             *result = syscall_no_intercept(syscall_number,
