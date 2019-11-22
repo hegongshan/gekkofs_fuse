@@ -328,12 +328,15 @@ hook_internal(long syscall_number,
                             (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int) : 
                             0;
 
-                        const int* fds = 
+                        int* fds =
                             reinterpret_cast<int*>(CMSG_DATA(cmsg));
 
                         for(size_t i = 0; i < nfd; ++i) {
                             LOG(DEBUG, "recvmsg() provided extra fd {}", fds[i]);
-                            CTX->register_internal_fd(fds[i]);
+
+                            // ensure we update the fds in cmsg
+                            // if they have been relocated
+                            fds[i] = CTX->register_internal_fd(fds[i]);
                         }
                     }
                 }
