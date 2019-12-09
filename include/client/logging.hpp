@@ -20,8 +20,8 @@
 #include <boost/optional.hpp>
 #include <client/make_array.hpp>
 #include <client/syscalls.hpp>
-#include <fmt/fmt.h>
-#include <fmt/ostr.h>
+#include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <date/tz.h>
 
 #ifdef GKFS_DEBUG_BUILD

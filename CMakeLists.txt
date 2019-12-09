@@ -27,7 +27,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # Compiler flags for various cmake build types
 set(WARNINGS_FLAGS "-Wall -Wextra --pedantic -Wno-unused-parameter -Wno-missing-field-initializers")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${WARNINGS_FLAGS} -g -O0 -DGKFS_DEBUG_BUILD")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${WARNINGS_FLAGS} -g -O0 -DGKFS_DEBUG_BUILD -DHERMES_DEBUG_BUILD")
 set(CMAKE_CXX_FLAGS_MEMCHECK "${WARNINGS_FLAGS} -g -O0 -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_MAINTAINER "${WARNINGS_FLAGS} -g -O0 -pg -no-pie")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG -O3")
@@ -175,19 +175,11 @@ set_target_properties(spdlog
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
 )
 
-add_library(fmt INTERFACE)
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(fmt
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external/spdlog"
-)
+add_subdirectory(external/fmt)
+set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-add_library(hermes INTERFACE)
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(hermes
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external/hermes/include"
-)
+add_subdirectory(external/hermes)
+target_compile_definitions(hermes INTERFACE)
 
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 

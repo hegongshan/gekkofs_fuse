@@ -16,7 +16,7 @@
 #include <client/make_array.hpp>
 #include <boost/algorithm/string.hpp>
 #include <date/tz.h>
-#include <fmt/ostr.h>
+#include <fmt/ostream.h>
 
 namespace gkfs {
 namespace log {

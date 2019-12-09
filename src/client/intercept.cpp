@@ -26,7 +26,7 @@
 
 #include <printf.h>
 
-#include <fmt/fmt.h>
+#include <fmt/format.h>
 
 static thread_local bool reentrance_guard_flag;
 static thread_local gkfs::syscall::info saved_syscall_info;
