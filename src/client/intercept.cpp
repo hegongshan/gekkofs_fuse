@@ -64,7 +64,7 @@ hook_internal(long syscall_number,
               long arg3, long arg4, long arg5,
               long *result) {
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
 	const long args[gkfs::syscall::MAX_ARGS] = {
 	    arg0, arg1, arg2, arg3, arg4, arg5
 	};
@@ -408,7 +408,7 @@ int hook(long syscall_number,
          long arg3, long arg4, long arg5,
          long *result) {
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
 	const long args[gkfs::syscall::MAX_ARGS] = {
 	    arg0, arg1, arg2, arg3, arg4, arg5
 	};
@@ -733,7 +733,7 @@ hook_forwarded_syscall(long syscall_number,
         return;
     }
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
 	const long args[gkfs::syscall::MAX_ARGS] = {
 	    arg0, arg1, arg2, arg3, arg4, arg5
 	};
@@ -754,7 +754,7 @@ hook_clone_at_child(unsigned long flags,
 		            int* ctid,
 		            long newtls) {
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     const long args[gkfs::syscall::MAX_ARGS] = {
         static_cast<long>(flags), 
         reinterpret_cast<long>(child_stack), 
@@ -782,7 +782,7 @@ hook_clone_at_parent(unsigned long flags,
  		             long newtls, 
  		             long returned_pid) {
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     const long args[gkfs::syscall::MAX_ARGS] = {
         static_cast<long>(flags), 
         reinterpret_cast<long>(child_stack), 

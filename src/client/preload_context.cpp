@@ -234,7 +234,7 @@ int PreloadContext::register_internal_fd(int fd) {
     internal_fds_.reset(pos);
 
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     long args[gkfs::syscall::MAX_ARGS]{fd, pos + MIN_INTERNAL_FD, O_CLOEXEC};
 #endif
 
@@ -255,7 +255,7 @@ int PreloadContext::register_internal_fd(int fd) {
 
     assert(::syscall_error_code(ifd) == 0);
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     long args2[gkfs::syscall::MAX_ARGS]{fd};
 #endif
 
@@ -265,7 +265,7 @@ int PreloadContext::register_internal_fd(int fd) {
         gkfs::syscall::not_executed, 
         SYS_close, args2);
 
-#if !defined(GKFS_DISABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
+#if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
     int rv = ::syscall_no_intercept(SYS_close, fd);
 #else
     ::syscall_no_intercept(SYS_close, fd);
