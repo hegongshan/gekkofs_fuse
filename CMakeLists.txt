@@ -22,7 +22,7 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release
             CACHE STRING "Choose the type of build: Debug Release Memcheck" FORCE)
 ENDIF (NOT CMAKE_BUILD_TYPE)
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "[gekkofs] Build type: ${CMAKE_BUILD_TYPE}")
 
 # Compiler flags for various cmake build types
 set(WARNINGS_FLAGS "-Wall -Wextra --pedantic -Wno-unused-parameter -Wno-missing-field-initializers")
@@ -64,7 +64,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
         endif()
     endif()
 endif()
-message(STATUS "Project version: ${PROJECT_VERSION}")
+message(STATUS "[gekkofs] Project version: ${PROJECT_VERSION}")
 set(GKFS_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
 set(GKFS_VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(GKFS_VERSION_PATCH ${PROJECT_VERSION_PATCH})
@@ -107,20 +107,20 @@ set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
    "ofi+verbs"
    "ofi+psm2"
 )
-message(STATUS "RPC protocol: '${RPC_PROTOCOL}'")
+message(STATUS "[gekkofs] RPC protocol: '${RPC_PROTOCOL}'")
 
 option(USE_SHM "Use shared memory for intra-node communication" ON)
-message(STATUS "Shared-memory communication: ${USE_SHM}")
+message(STATUS "[gekkofs] Shared-memory communication: ${USE_SHM}")
 
 option(SYMLINK_SUPPORT "Compile with support for symlinks" ON)
 if(SYMLINK_SUPPORT)
     add_definitions(-DHAS_SYMLINKS)
 endif()
-message(STATUS "Symlink support: ${SYMLINK_SUPPORT}")
+message(STATUS "[gekkofs] Symlink support: ${SYMLINK_SUPPORT}")
 
 set(MAX_INTERNAL_FDS 256 CACHE STRING "Number of file descriptors reserved for internal use")
 add_definitions(-DMAX_INTERNAL_FDS=${MAX_INTERNAL_FDS})
-message(STATUS "File descriptors reserved for internal use: ${MAX_INTERNAL_FDS}")
+message(STATUS "[gekkofs] File descriptors reserved for internal use: ${MAX_INTERNAL_FDS}")
 
 execute_process(COMMAND getconf OPEN_MAX
                 OUTPUT_VARIABLE GETCONF_MAX_FDS
@@ -135,11 +135,11 @@ option(ENABLE_CLIENT_LOG "Enable logging messages" ON)
 if(ENABLE_CLIENT_LOG)
     add_definitions(-DGKFS_ENABLE_LOGGING)
 endif()
-message(STATUS "Client logging output: ${ENABLE_CLIENT_LOG}")
+message(STATUS "[gekkofs] Client logging output: ${ENABLE_CLIENT_LOG}")
 
 set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
 add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
-message(STATUS "Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
+message(STATUS "[gekkofs] Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
 mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 
 configure_file(include/global/configure.hpp.in include/global/configure.hpp)
