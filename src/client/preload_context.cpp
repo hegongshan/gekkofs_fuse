@@ -51,6 +51,12 @@ PreloadContext::init_logging() {
         gkfs::env::get_var(gkfs::env::LOG_OUTPUT, DEFAULT_CLIENT_LOG_PATH);
 
 #ifdef GKFS_DEBUG_BUILD
+    // atoi returns 0 if no int conversion can be performed, which works
+    // for us since if the user provides a non-numeric value we can just treat
+    // it as zero
+    const int log_verbosity = std::atoi(
+            gkfs::env::get_var(gkfs::env::LOG_DEBUG_VERBOSITY, "0").c_str());
+
     const std::string log_filter =
         gkfs::env::get_var(gkfs::env::LOG_SYSCALL_FILTER, "");
 #endif
@@ -60,8 +66,11 @@ PreloadContext::init_logging() {
 
     const bool log_trunc = !(!trunc_val.empty() && trunc_val[0] == 0);
 
-    gkfs::log::create_global_logger(log_opts, log_output, 
-                                    log_trunc, log_filter);
+    gkfs::log::create_global_logger(log_opts, log_output, log_trunc
+#ifdef GKFS_DEBUG_BUILD
+                                    , log_filter, log_verbosity
+#endif
+            );
 }
 
 void PreloadContext::mountdir(const std::string& path) {

@@ -268,9 +268,11 @@ struct logger {
 
     logger(const std::string& opts, 
            const std::string& path, 
-           bool trunc,
+           bool trunc
 #ifdef GKFS_DEBUG_BUILD
-           const std::string& filter
+           ,
+           const std::string& filter,
+           int verbosity
 #endif
            );
 
@@ -408,6 +410,7 @@ struct logger {
 
 #ifdef GKFS_DEBUG_BUILD
     std::bitset<512> filtered_syscalls_;
+    int debug_verbosity_;
 #endif
 
     const date::time_zone * const timezone_;

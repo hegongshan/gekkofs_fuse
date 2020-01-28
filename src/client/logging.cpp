@@ -225,9 +225,11 @@ process_log_filter(const std::string& log_filter) {
 
 logger::logger(const std::string& opts, 
                const std::string& path, 
-               bool trunc,
+               bool trunc
 #ifdef GKFS_DEBUG_BUILD
-               const std::string& filter
+               ,
+               const std::string& filter,
+               int verbosity
 #endif
                ) :
     timezone_(date::current_zone()) {
@@ -238,6 +240,7 @@ logger::logger(const std::string& opts,
 
 #ifdef GKFS_DEBUG_BUILD
     filtered_syscalls_ = process_log_filter(filter);
+    debug_verbosity_ = verbosity;
 #endif
 
     if(!path.empty()) {
