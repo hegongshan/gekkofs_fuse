@@ -133,13 +133,14 @@ add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
 
 option(ENABLE_CLIENT_LOG "Enable logging messages" ON)
 if(ENABLE_CLIENT_LOG)
-    set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
-    add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
-    message(STATUS "Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
-else()
-    add_definitions(-DGKFS_DISABLE_LOGGING)
+    add_definitions(-DGKFS_ENABLE_LOGGING)
 endif()
-message(STATUS "Client logging output: ${ENABLE_CLIENT_LOGGING}")
+message(STATUS "Client logging output: ${ENABLE_CLIENT_LOG}")
+
+set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
+add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
+message(STATUS "Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
+mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 
 configure_file(include/global/configure.hpp.in include/global/configure.hpp)
 
@@ -178,6 +179,11 @@ set_target_properties(spdlog
 add_subdirectory(external/fmt)
 set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
 
+if(ENABLE_CLIENT_LOG)
+    option(HERMES_LOGGING "" ON)
+    option(HERMES_LOGGING_FMT_USE_BUNDLED "" OFF)
+    option(HERMES_LOGGING_FMT_HEADER_ONLY "" OFF)
+endif()
 add_subdirectory(external/hermes)
 target_compile_definitions(hermes INTERFACE)
 
