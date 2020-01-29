@@ -100,17 +100,21 @@ find_package(Threads REQUIRED)
 
 find_package(Date REQUIRED)
 
-set(RPC_PROTOCOL "ofi+tcp" CACHE STRING "Communication plugin used for RPCs")
+set(RPC_PROTOCOL "ofi+sockets" CACHE STRING "Communication plugin used for RPCs")
 set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
    "bmi+tcp"
+   "ofi+sockets"
    "ofi+tcp"
    "ofi+verbs"
    "ofi+psm2"
 )
 message(STATUS "[gekkofs] RPC protocol: '${RPC_PROTOCOL}'")
 
-option(USE_SHM "Use shared memory for intra-node communication" ON)
+option(USE_SHM "Use shared memory for intra-node communication" OFF)
 message(STATUS "[gekkofs] Shared-memory communication: ${USE_SHM}")
+
+option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
+message(STATUS "Create checks parents: ${CREATE_CHECK_PARENTS}")
 
 option(SYMLINK_SUPPORT "Compile with support for symlinks" ON)
 if(SYMLINK_SUPPORT)

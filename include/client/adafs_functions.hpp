@@ -23,6 +23,8 @@ int adafs_open(const std::string& path, mode_t mode, int flags);
 
 int adafs_mk_node(const std::string& path, mode_t mode);
 
+int check_parent_dir(const std::string& path);
+
 int adafs_rm_node(const std::string& path);
 
 int adafs_access(const std::string& path, int mask, bool follow_links = true);

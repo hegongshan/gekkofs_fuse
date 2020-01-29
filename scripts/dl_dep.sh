@@ -268,14 +268,14 @@ if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "ofi" ) ]]; then
     if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
         # No need to get libfabric for mogon2 as it is already installed
         if [[ ("${CLUSTER}" != "mogon2") ]]; then
-            wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.7.2/libfabric-1.7.2.tar.gz" &
+            wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.8.1/libfabric-1.8.1.tar.bz2" &
         fi
     fi
 fi
 
 # get Mercury
 if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "mercury" ) ]]; then
-    clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "9906f25b6f9c52079d57006f199b3ea47960c435"  "--recurse-submodules" &
+    clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "fd410dfb9852b2b98d21113531f3058f45bfcd64"  "--recurse-submodules" &
 fi
 
 # get Argobots
@@ -285,12 +285,12 @@ fi
 
 # get Margo
 if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "margo" ) ]]; then
-    clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "6ed94e4f3a4d526b0a3b4e57be075461e86d3666" &
+    clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "016dbdce22da3fe4f97b46c20a53bced9370a217" &
 fi
 
 # get rocksdb
 if [[ ( "${DEPENDENCY}" == "" ) || ( "${DEPENDENCY}" == "rocksdb" ) ]]; then
-    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.1.2.tar.gz" &
+    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
 fi
 
 # get syscall_intercept
