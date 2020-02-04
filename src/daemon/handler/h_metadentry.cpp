@@ -22,14 +22,14 @@
 using namespace std;
 
 static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
-    rpc_mk_node_in_t in{};
-    rpc_err_out_t out{};
+    rpc_mk_node_in_t in;
+    rpc_err_out_t out;
 
     auto ret = margo_get_input(handle, &in);
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() path '{}'", __func__, in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got RPC with path '{}'", __func__, in.path);
     Metadata md(in.mode);
     try {
         // create metadentry
@@ -73,7 +73,7 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->debug("{}() Entry not found: '{}'", __func__, in.path);
         out.err = ENOENT;
     } catch (const std::exception& e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry from DB: {}", __func__, e.what());
+        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry from DB: '{}'", __func__, e.what());
         out.err = EBUSY;
     }
 
@@ -132,7 +132,7 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() path '{}'", __func__, in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got remove node RPC with path '{}'", __func__, in.path);
 
     try {
         // Remove metadentry if exists on the node
@@ -176,7 +176,7 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() path '{}'", __func__, in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got update metadentry RPC with path '{}'", __func__, in.path);
 
     // do update
     try {
@@ -233,10 +233,10 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
         // do to concurrency on size
         out.ret_size = in.size + in.offset;
     } catch (const NotFoundException& e) {
-        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: '{}'", in.path);
+        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: '{}'", __func__, in.path);
         out.err = ENOENT;
     } catch (const std::exception& e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to update metadentry size on DB: {}", e.what());
+        ADAFS_DATA->spdlogger()->error("{}() Failed to update metadentry size on DB: {}", __func__, e.what());
         out.err = EBUSY;
     }
 
@@ -263,17 +263,17 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got update metadentry size RPC with path {}", in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() Got update metadentry size RPC with path {}", __func__, in.path);
 
     // do update
     try {
         out.ret_size = get_metadentry_size(in.path);
         out.err = 0;
     } catch (const NotFoundException& e) {
-        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: {}", in.path);
+        ADAFS_DATA->spdlogger()->debug("{}() Entry not found: {}", __func__, in.path);
         out.err = ENOENT;
     } catch (const std::exception& e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry size from DB: {}", e.what());
+        ADAFS_DATA->spdlogger()->error("{}() Failed to get metadentry size from DB: {}", __func__, e.what());
         out.err = EBUSY;
     }
 
@@ -364,7 +364,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
                               out_size);
     if (ret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error(
-                "{}() Failed push dirents on path '{}' to client",
+                "{}() Failed push dirents on path {} to client",
                 __func__, in.path
                 );
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);

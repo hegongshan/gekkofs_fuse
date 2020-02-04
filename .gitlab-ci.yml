@@ -16,7 +16,9 @@ variables:
   # Configuration variables
   GKFS_LOG_LEVEL:   "100"
   GKFS_DAEMON_LOG_PATH:  "${CI_PROJECT_DIR}/logs/daemon.log"
-  GKFS_PRELOAD_LOG_PATH: "${CI_PROJECT_DIR}/logs/preload.log"
+  LIBGKFS_LOG:           "all"
+  LIBGKFS_LOG_OUTPUT:    "${CI_PROJECT_DIR}/logs/gkfs_client.log"
+  GIT_SUBMODULE_STRATEGY: recursive
 
 image: gekkofs/gekkofs:build_env
 
@@ -49,6 +51,7 @@ compile GekkoFS:
       -Wdev
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
+      -DRPC_PROTOCOL="ofi+sockets"
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
@@ -77,6 +80,7 @@ test wr:
     - sleep 4
     - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_wr
   artifacts:
+    when: on_failure
     paths:
      - "${LOG_PATH}"
 
@@ -88,6 +92,7 @@ test directories:
     - sleep 4
     - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_dir
   artifacts:
+    when: on_failure
     paths:
      - "${LOG_PATH}"
 
@@ -99,6 +104,7 @@ test truncate:
     - sleep 4
     - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
   artifacts:
+    when: on_failure
     paths:
      - "${LOG_PATH}"
 
@@ -110,6 +116,7 @@ test path resolution:
     - sleep 4
     - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_path_resolution
   artifacts:
+    when: on_failure
     paths:
      - "${LOG_PATH}"
 
@@ -121,6 +128,6 @@ test lseek:
     - sleep 4
     - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_lseek
   artifacts:
+    when: on_failure
     paths:
      - "${LOG_PATH}"
-
