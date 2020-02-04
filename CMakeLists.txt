@@ -188,6 +188,8 @@ if(ENABLE_CLIENT_LOG)
     option(HERMES_LOGGING_FMT_USE_BUNDLED "" OFF)
     option(HERMES_LOGGING_FMT_HEADER_ONLY "" OFF)
 endif()
+
+option(HERMES_MARGO_COMPATIBLE_RPCS "" ON)
 add_subdirectory(external/hermes)
 target_compile_definitions(hermes INTERFACE)
 
