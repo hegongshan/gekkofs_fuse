@@ -240,7 +240,7 @@ logger::logger(const std::string& opts,
                int verbosity
 #endif
                ) :
-    timezone_(date::current_zone()) {
+    timezone_(nullptr) {
 
     /* use stderr by default */
     log_fd_ = 2;
@@ -271,6 +271,35 @@ logger::logger(const std::string& opts,
         }
 
         log_fd_ = fd;
+    }
+
+    // Finding the current timezone implies accessing OS files (i.e. syscalls),
+    // but current_zone() doesn't actually retrieve the time zone but rather
+    // provides a descriptor to it that is **atomically initialized** upon its
+    // first use. Thus, if we don't force the initialization here, logging the
+    // first intercepted syscall will produce a call to date::time_zone::init()
+    // (under std::call_once) which internally ends up calling fopen(). Since
+    // fopen() ends up calling sys_open(), we will need to generate another
+    // timestamp for a system call log entry, which will attempt to call
+    // date::time_zone::init() since the prior initialization (under the same
+    // std::call_once) has not yet completed.
+    //
+    // Unfortunately, date::time_zone doesn't provide a function to prevent
+    // this lazy initialization, therefore we force it by requesting
+    // information from an arbitrary timepoint (January 1st 1970) which forces
+    // the initialization. This doesn't do any actual work and could safely be
+    // removed if the date API ends up providing this functionality.
+    try {
+        timezone_ = date::current_zone();
+#ifdef GKFS_DEBUG_BUILD
+        using namespace date;
+        timezone_->get_info(date::sys_days{January/1/1970});
+#endif // GKFS_DEBUG_BUILD
+    }
+    catch(const std::exception& ex) {
+        // if timezone initialization fails, setting timezone_ to nullptr
+        // makes format_timestamp_to() default to producing epoch timestamps
+        timezone_ = nullptr;
     }
 
 #ifdef GKFS_ENABLE_LOGGING
@@ -351,26 +380,6 @@ logger::logger(const std::string& opts,
     hermes::log::logger::register_callback(
             hermes::log::mercury, log_hg_message);
 
-#ifdef GKFS_DEBUG_BUILD
-    // Finding the current timezone implies accessing OS files (i.e. syscalls),
-    // but current_zone() doesn't actually retrieve the time zone but rather
-    // provides a descriptor to it that is **atomically initialized** upon its 
-    // first use. Thus, if we don't force the initialization here, logging
-    // the first intercepted syscall will produce a call to 
-    // date::time_zone::init() (under std::call_once) which internally ends up 
-    // calling fopen(). Since fopen() ends up calling sys_open(), we will need 
-    // to generate another timestamp for a system call log entry, which will
-    // attempt to call date::time_zone::init() since the prior initialization
-    // (under the same std::call_once) has not yet completed.
-    //
-    // Unfortunately, date::time_zone doesn't provide a function to prevent
-    // this lazy initialization, therefore we force it by requesting 
-    // information from an arbitrary timepoint (January 1st 1970) which forces
-    // the initialization. This doesn't do any actual work and could safely
-    // be removed if the date API ends up providing this functionality.
-    using namespace date;
-    timezone_->get_info(date::sys_days{January/1/1970});
-#endif // GKFS_DEBUG_BUILD
 #endif // GKFS_ENABLE_LOGGING
 }
 
