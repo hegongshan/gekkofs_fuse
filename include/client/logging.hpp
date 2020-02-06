@@ -417,7 +417,7 @@ struct logger {
     int debug_verbosity_;
 #endif
 
-    const date::time_zone * const timezone_;
+    const date::time_zone * timezone_;
 };
 
 // the following static functions can be used to interact 
