@@ -14,12 +14,12 @@
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
 
-#include <global/configure.hpp>
+#include <config.hpp>
 #include <global/path_util.hpp>
 #include <client/preload.hpp>
 #include "client/preload_util.hpp"
 #include <client/logging.hpp>
-#include <client/adafs_functions.hpp>
+#include <client/gkfs_functions.hpp>
 #include <client/rpc/ld_rpc_metadentry.hpp>
 #include <client/rpc/ld_rpc_data_ws.hpp>
 #include <client/open_dir.hpp>
@@ -46,22 +46,22 @@ struct linux_dirent64 {
 
 using namespace std;
 
-int adafs_open(const std::string& path, mode_t mode, int flags) {
+int gkfs_open(const std::string& path, mode_t mode, int flags) {
 
-    if(flags & O_PATH){
+    if (flags & O_PATH) {
         LOG(ERROR, "`O_PATH` flag is not supported");
         errno = ENOTSUP;
         return -1;
     }
 
-    if(flags & O_APPEND){
+    if (flags & O_APPEND) {
         LOG(ERROR, "`O_APPEND` flag is not supported");
         errno = ENOTSUP;
         return -1;
     }
 
     bool exists = true;
-    auto md = adafs_metadata(path);
+    auto md = gkfs_metadata(path);
     if (!md) {
         if(errno == ENOENT) {
             exists = false;
@@ -88,8 +88,8 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         }
 
         // no access check required here. If one is using our FS they have the permissions.
-        if(adafs_mk_node(path, mode | S_IFREG)) {
-            LOG(ERROR, "Error creating non-existent file: {}", strerror(errno));
+        if (gkfs_mk_node(path, mode | S_IFREG)) {
+            LOG(ERROR, "Error creating non-existent file: '{}'", strerror(errno));
             return -1;
         }
     } else {
@@ -108,12 +108,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
                 errno = ELOOP;
                 return -1;
             }
-            return adafs_open(md->target_path(), mode, flags);
+            return gkfs_open(md->target_path(), mode, flags);
         }
 #endif
 
         if(S_ISDIR(md->mode())) {
-            return adafs_opendir(path);
+            return gkfs_opendir(path);
         }
 
 
@@ -121,7 +121,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         assert(S_ISREG(md->mode()));
 
         if( (flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY)) ) {
-            if(adafs_truncate(path, md->size(), 0)) {
+            if (gkfs_truncate(path, md->size(), 0)) {
                 LOG(ERROR, "Error truncating file");
                 return -1;
             }
@@ -134,7 +134,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 int check_parent_dir(const std::string& path) {
 #if CREATE_CHECK_PARENTS
     auto p_comp = dirname(path);
-    auto md = adafs_metadata(p_comp);
+    auto md = gkfs_metadata(p_comp);
     if (!md) {
         if (errno == ENOENT) {
             LOG(DEBUG, "Parent component does not exist: '{}'", p_comp);
@@ -152,7 +152,7 @@ int check_parent_dir(const std::string& path) {
     return 0;
 }
 
-int adafs_mk_node(const std::string& path, mode_t mode) {
+int gkfs_mk_node(const std::string& path, mode_t mode) {
 
     //file type must be set
     switch (mode & S_IFMT) {
@@ -178,7 +178,6 @@ int adafs_mk_node(const std::string& path, mode_t mode) {
     if (check_parent_dir(path)) {
         return -1;
     }
-
     return rpc_send::mk_node(path, mode);
 }
 
@@ -187,8 +186,8 @@ int adafs_mk_node(const std::string& path, mode_t mode) {
  * @param path
  * @return
  */
-int adafs_rm_node(const std::string& path) {
-    auto md = adafs_metadata(path);
+int gkfs_rm_node(const std::string& path) {
+    auto md = gkfs_metadata(path);
     if (!md) {
         return -1;
     }
@@ -196,8 +195,8 @@ int adafs_rm_node(const std::string& path) {
     return rpc_send::rm_node(path, !has_data, md->size());
 }
 
-int adafs_access(const std::string& path, const int mask, bool follow_links) {
-    auto md = adafs_metadata(path, follow_links);
+int gkfs_access(const std::string& path, const int mask, bool follow_links) {
+    auto md = gkfs_metadata(path, follow_links);
     if (!md) {
         errno = ENOENT;
         return -1;
@@ -205,16 +204,16 @@ int adafs_access(const std::string& path, const int mask, bool follow_links) {
     return 0;
 }
 
-int adafs_stat(const string& path, struct stat* buf, bool follow_links) {
-    auto md = adafs_metadata(path, follow_links);
+int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
+    auto md = gkfs_metadata(path, follow_links);
     if (!md) {
         return -1;
     }
-    metadata_to_stat(path, *md, *buf);
+    gkfs::client::metadata_to_stat(path, *md, *buf);
     return 0;
 }
 
-std::shared_ptr<Metadata> adafs_metadata(const string& path, bool follow_links) {
+std::shared_ptr<Metadata> gkfs_metadata(const string& path, bool follow_links) {
     std::string attr;
     auto err = rpc_send::stat(path, attr);
     if (err) {
@@ -235,7 +234,7 @@ std::shared_ptr<Metadata> adafs_metadata(const string& path, bool follow_links) 
     return make_shared<Metadata>(attr);
 }
 
-int adafs_statfs(struct statfs* buf) {
+int gkfs_statfs(struct statfs* buf) {
     auto blk_stat = rpc_send::chunk_stat();
     buf->f_type = 0;
     buf->f_bsize = blk_stat.chunk_size;
@@ -252,7 +251,7 @@ int adafs_statfs(struct statfs* buf) {
     return 0;
 }
 
-int adafs_statvfs(struct statvfs* buf) {
+int gkfs_statvfs(struct statvfs* buf) {
     init_ld_env_if_needed();
     auto blk_stat = rpc_send::chunk_stat();
     buf->f_bsize = blk_stat.chunk_size;
@@ -270,26 +269,26 @@ int adafs_statvfs(struct statvfs* buf) {
     return 0;
 }
 
-off_t adafs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
-    return adafs_lseek(CTX->file_map()->get(fd), offset, whence);
+off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
+    return gkfs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
-off_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off_t offset, unsigned int whence) {
+off_t gkfs_lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
-            adafs_fd->pos(offset);
+            gkfs_fd->pos(offset);
             break;
         case SEEK_CUR:
-            adafs_fd->pos(adafs_fd->pos() + offset);
+            gkfs_fd->pos(gkfs_fd->pos() + offset);
             break;
         case SEEK_END: {
             off64_t file_size;
-            auto err = rpc_send::get_metadentry_size(adafs_fd->path(), file_size);
+            auto err = rpc_send::get_metadentry_size(gkfs_fd->path(), file_size);
             if (err < 0) {
                 errno = err; // Negative numbers are explicitly for error codes
                 return -1;
             }
-            adafs_fd->pos(file_size + offset);
+            gkfs_fd->pos(file_size + offset);
             break;
         }
         case SEEK_DATA:
@@ -307,14 +306,14 @@ off_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off_t offset, unsigned int when
             errno = EINVAL;
             return -1;
     }
-    return adafs_fd->pos();
+    return gkfs_fd->pos();
 }
 
-int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
+int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     assert(new_size >= 0);
     assert(new_size <= old_size);
 
-    if(new_size == old_size) {
+    if (new_size == old_size) {
         return 0;
     }
 
@@ -330,22 +329,22 @@ int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     return 0;
 }
 
-int adafs_truncate(const std::string& path, off_t length) {
+int gkfs_truncate(const std::string& path, off_t length) {
     /* TODO CONCURRENCY:
      * At the moment we first ask the length to the metadata-server in order to
      * know which data-server have data to be deleted.
      *
-     * From the moment we issue the adafs_stat and the moment we issue the
-     * adafs_trunc_data, some more data could have been added to the file and the
+     * From the moment we issue the gkfs_stat and the moment we issue the
+     * gkfs_trunc_data, some more data could have been added to the file and the
      * length increased.
      */
-    if(length < 0) {
+    if (length < 0) {
         LOG(DEBUG, "Length is negative: {}", length);
         errno = EINVAL;
         return -1;
     }
 
-    auto md = adafs_metadata(path, true);
+    auto md = gkfs_metadata(path, true);
     if (!md) {
         return -1;
     }
@@ -355,18 +354,18 @@ int adafs_truncate(const std::string& path, off_t length) {
         errno = EINVAL;
         return -1;
     }
-    return adafs_truncate(path, size, length);
+    return gkfs_truncate(path, size, length);
 }
 
-int adafs_dup(const int oldfd) {
+int gkfs_dup(const int oldfd) {
     return CTX->file_map()->dup(oldfd);
 }
 
-int adafs_dup2(const int oldfd, const int newfd) {
+int gkfs_dup2(const int oldfd, const int newfd) {
     return CTX->file_map()->dup2(oldfd, newfd);
 }
 
-ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file, const char * buf, size_t count, off64_t offset) {
+ssize_t gkfs_pwrite(std::shared_ptr<OpenFile> file, const char* buf, size_t count, off64_t offset) {
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         LOG(WARNING, "Cannot read from directory");
@@ -390,9 +389,9 @@ ssize_t adafs_pwrite(std::shared_ptr<OpenFile> file, const char * buf, size_t co
     return ret; // return written size or -1 as error
 }
 
-ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
+ssize_t gkfs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     auto file = CTX->file_map()->get(fd);
-    return adafs_pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
+    return gkfs_pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
 }
 
 /* Write counts bytes starting from current file position
@@ -400,32 +399,32 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
  *
  * Same as write syscall.
 */
-ssize_t adafs_write(int fd, const void * buf, size_t count) {
-    auto adafs_fd = CTX->file_map()->get(fd);
-    auto pos = adafs_fd->pos(); //retrieve the current offset
-    if (adafs_fd->get_flag(OpenFile_flags::append))
-        adafs_lseek(adafs_fd, 0, SEEK_END);
-    auto ret = adafs_pwrite(adafs_fd, reinterpret_cast<const char*>(buf), count, pos);
+ssize_t gkfs_write(int fd, const void* buf, size_t count) {
+    auto gkfs_fd = CTX->file_map()->get(fd);
+    auto pos = gkfs_fd->pos(); //retrieve the current offset
+    if (gkfs_fd->get_flag(OpenFile_flags::append))
+        gkfs_lseek(gkfs_fd, 0, SEEK_END);
+    auto ret = gkfs_pwrite(gkfs_fd, reinterpret_cast<const char*>(buf), count, pos);
     // Update offset in file descriptor in the file map
     if (ret > 0) {
-        adafs_fd->pos(pos + count);
+        gkfs_fd->pos(pos + count);
     }
     return ret;
 }
 
-ssize_t adafs_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset) {
+ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
     auto pos = offset; // keep truck of current position
     ssize_t written = 0;
     ssize_t ret;
     for (int i = 0; i < iovcnt; ++i) {
-        auto count = (iov+i)->iov_len;
+        auto count = (iov + i)->iov_len;
         if (count == 0) {
             continue;
         }
         auto buf = (iov+i)->iov_base;
-        ret = adafs_pwrite(file, reinterpret_cast<char *>(buf), count, pos);
+        ret = gkfs_pwrite(file, reinterpret_cast<char*>(buf), count, pos);
         if (ret == -1) {
             break;
         }
@@ -443,20 +442,20 @@ ssize_t adafs_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
     return written;
 }
 
-ssize_t adafs_writev(int fd, const struct iovec * iov, int iovcnt) {
+ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
 
-    auto adafs_fd = CTX->file_map()->get(fd);
-    auto pos = adafs_fd->pos(); // retrieve the current offset
-    auto ret = adafs_pwritev(fd, iov, iovcnt, pos);
+    auto gkfs_fd = CTX->file_map()->get(fd);
+    auto pos = gkfs_fd->pos(); // retrieve the current offset
+    auto ret = gkfs_pwritev(fd, iov, iovcnt, pos);
     assert(ret != 0);
     if (ret < 0) {
         return -1;
     }
-    adafs_fd->pos(pos + ret);
+    gkfs_fd->pos(pos + ret);
     return ret;
 }
 
-ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, off64_t offset) {
+ssize_t gkfs_pread(std::shared_ptr<OpenFile> file, char* buf, size_t count, off64_t offset) {
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         LOG(WARNING, "Cannot read from directory");
@@ -465,9 +464,9 @@ ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, of
     }
 
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
-#if defined(ZERO_BUFFER_BEFORE_READ)
-    memset(buf, 0, sizeof(char)*count);
-#endif
+    if (gkfs_config::io::zero_buffer_before_read) {
+        memset(buf, 0, sizeof(char) * count);
+    }
     auto ret = rpc_send::read(file->path(), buf, offset, count);
     if (ret < 0) {
         LOG(WARNING, "rpc_send::read() failed with ret {}", ret);
@@ -476,25 +475,25 @@ ssize_t adafs_pread(std::shared_ptr<OpenFile> file, char * buf, size_t count, of
     return ret; // return read size or -1 as error
 }
 
-ssize_t adafs_read(int fd, void* buf, size_t count) {
-    auto adafs_fd = CTX->file_map()->get(fd);
-    auto pos = adafs_fd->pos(); //retrieve the current offset
-    auto ret = adafs_pread(adafs_fd, reinterpret_cast<char*>(buf), count, pos);
+ssize_t gkfs_read(int fd, void* buf, size_t count) {
+    auto gkfs_fd = CTX->file_map()->get(fd);
+    auto pos = gkfs_fd->pos(); //retrieve the current offset
+    auto ret = gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, pos);
     // Update offset in file descriptor in the file map
     if (ret > 0) {
-        adafs_fd->pos(pos + ret);
+        gkfs_fd->pos(pos + ret);
     }
     return ret;
 }
 
-ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
-    auto adafs_fd = CTX->file_map()->get(fd);
-    return adafs_pread(adafs_fd, reinterpret_cast<char*>(buf), count, offset);
+ssize_t gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
+    auto gkfs_fd = CTX->file_map()->get(fd);
+    return gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, offset);
 }
 
-int adafs_opendir(const std::string& path) {
+int gkfs_opendir(const std::string& path) {
 
-    auto md = adafs_metadata(path);
+    auto md = gkfs_metadata(path);
     if (!md) {
         return -1;
     }
@@ -509,8 +508,8 @@ int adafs_opendir(const std::string& path) {
     return CTX->file_map()->add(open_dir);
 }
 
-int adafs_rmdir(const std::string& path) {
-    auto md = adafs_metadata(path);
+int gkfs_rmdir(const std::string& path) {
+    auto md = gkfs_metadata(path);
     if (!md) {
         LOG(DEBUG, "Path '{}' does not exist: ", path);
         errno = ENOENT;
@@ -636,14 +635,14 @@ int getdents64(unsigned int fd,
 
 #ifdef HAS_SYMLINKS
 
-int adafs_mk_symlink(const std::string& path, const std::string& target_path) {
+int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
     init_ld_env_if_needed();
     /* The following check is not POSIX compliant.
      * In POSIX the target is not checked at all.
     *  Here if the target is a directory we raise a NOTSUP error.
     *  So that application know we don't support link to directory.
     */
-    auto target_md = adafs_metadata(target_path, false);
+    auto target_md = gkfs_metadata(target_path, false);
     if (target_md != nullptr) {
         auto trg_mode = target_md->mode();
         if (!(S_ISREG(trg_mode) || S_ISLNK(trg_mode))) {
@@ -658,7 +657,7 @@ int adafs_mk_symlink(const std::string& path, const std::string& target_path) {
         return -1;
     }
 
-    auto link_md = adafs_metadata(path, false);
+    auto link_md = gkfs_metadata(path, false);
     if (link_md != nullptr) {
         LOG(DEBUG, "Link exists: '{}'", path);
         errno = EEXIST;
@@ -668,9 +667,9 @@ int adafs_mk_symlink(const std::string& path, const std::string& target_path) {
     return rpc_send::mk_symlink(path, target_path);
 }
 
-int adafs_readlink(const std::string& path, char *buf, int bufsize) {
+int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
     init_ld_env_if_needed();
-    auto md = adafs_metadata(path, false);
+    auto md = gkfs_metadata(path, false);
     if (md == nullptr) {
         LOG(DEBUG, "Named link doesn't exist");
         return -1;

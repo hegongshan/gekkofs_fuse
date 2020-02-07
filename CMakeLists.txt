@@ -114,7 +114,7 @@ option(USE_SHM "Use shared memory for intra-node communication" OFF)
 message(STATUS "[gekkofs] Shared-memory communication: ${USE_SHM}")
 
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
-message(STATUS "Create checks parents: ${CREATE_CHECK_PARENTS}")
+message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
 
 option(SYMLINK_SUPPORT "Compile with support for symlinks" ON)
 if(SYMLINK_SUPPORT)
@@ -146,7 +146,7 @@ add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
 message(STATUS "[gekkofs] Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
 mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 
-configure_file(include/global/configure.hpp.in include/global/configure.hpp)
+configure_file(include/global/cmake_configure.hpp.in include/global/cmake_configure.hpp)
 
 # Imported target
 add_library(RocksDB INTERFACE IMPORTED GLOBAL)

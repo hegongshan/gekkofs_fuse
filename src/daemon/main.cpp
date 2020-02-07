@@ -23,6 +23,7 @@
 #include <daemon/ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
+#include <daemon/util.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -43,100 +44,99 @@ static mutex mtx;
 
 void init_environment() {
     // Initialize metadata db
-    std::string metadata_path = ADAFS_DATA->metadir() + "/rocksdb"s;
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'", __func__, metadata_path);
+    std::string metadata_path = GKFS_DATA->metadir() + "/rocksdb"s;
+    GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'", __func__, metadata_path);
     try {
-        ADAFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
-    } catch (const std::exception & e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize metadata DB: {}", __func__, e.what());
+        GKFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
+    } catch (const std::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize metadata DB: {}", __func__, e.what());
         throw;
     }
 
     // Initialize data backend
-    std::string chunk_storage_path = ADAFS_DATA->rootdir() + "/data/chunks"s;
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
+    std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
+    GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
     bfs::create_directories(chunk_storage_path);
     try {
-        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, CHUNKSIZE));
-    } catch (const std::exception & e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize storage backend: {}", __func__, e.what());
+        GKFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, gkfs_config::rpc::chunksize));
+    } catch (const std::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize storage backend: {}", __func__, e.what());
         throw;
     }
 
     // Init margo for RPC
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'",
-                                   __func__, ADAFS_DATA->bind_addr());
+    GKFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'",
+                                  __func__, GKFS_DATA->bind_addr());
     try {
-        init_rpc_server(ADAFS_DATA->bind_addr());
-    } catch (const std::exception & e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize RPC server: {}", __func__, e.what());
+        init_rpc_server(GKFS_DATA->bind_addr());
+    } catch (const std::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize RPC server: {}", __func__, e.what());
         throw;
     }
 
     // Init Argobots ESs to drive IO
     try {
-        ADAFS_DATA->spdlogger()->debug("{}() Initializing I/O pool", __func__);
+        GKFS_DATA->spdlogger()->debug("{}() Initializing I/O pool", __func__);
         init_io_tasklet_pool();
-    } catch (const std::exception & e) {
-        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize Argobots pool for I/O: {}", __func__, e.what());
+    } catch (const std::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize Argobots pool for I/O: {}", __func__, e.what());
         throw;
     }
 
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
-    ADAFS_DATA->atime_state(MDATA_USE_ATIME);
-    ADAFS_DATA->mtime_state(MDATA_USE_MTIME);
-    ADAFS_DATA->ctime_state(MDATA_USE_CTIME);
-    ADAFS_DATA->link_cnt_state(MDATA_USE_LINK_CNT);
-    ADAFS_DATA->blocks_state(MDATA_USE_BLOCKS);
+    GKFS_DATA->atime_state(gkfs_config::metadata::use_atime);
+    GKFS_DATA->mtime_state(gkfs_config::metadata::use_mtime);
+    GKFS_DATA->ctime_state(gkfs_config::metadata::use_ctime);
+    GKFS_DATA->link_cnt_state(gkfs_config::metadata::use_link_cnt);
+    GKFS_DATA->blocks_state(gkfs_config::metadata::use_blocks);
     // Create metadentry for root directory
     Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
     try {
         create_metadentry("/", root_md);
-    } catch (const std::exception& e ) {
+    } catch (const std::exception& e) {
         throw runtime_error("Failed to write root metadentry to KV store: "s + e.what());
     }
-
-    if (!ADAFS_DATA->hosts_file().empty()) {
-        populate_hosts_file();
+    // setup hostfile to let clients know that a daemon is running on this host
+    if (!GKFS_DATA->hosts_file().empty()) {
+        gkfs::util::populate_hosts_file();
     }
-
-    ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
+    GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
 
 /**
  * Destroys the margo, argobots, and mercury environments
  */
 void destroy_enviroment() {
-    ADAFS_DATA->spdlogger()->debug("{}() Removing mount directory", __func__);
+    GKFS_DATA->spdlogger()->debug("{}() Removing mount directory", __func__);
     boost::system::error_code ecode;
-    bfs::remove_all(ADAFS_DATA->mountdir(), ecode);
-    ADAFS_DATA->spdlogger()->debug("{}() Freeing I/O executions streams", __func__);
+    bfs::remove_all(GKFS_DATA->mountdir(), ecode);
+    GKFS_DATA->spdlogger()->debug("{}() Freeing I/O executions streams", __func__);
     for (unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
         ABT_xstream_join(RPC_DATA->io_streams().at(i));
         ABT_xstream_free(&RPC_DATA->io_streams().at(i));
     }
 
-    if (!ADAFS_DATA->hosts_file().empty()) {
-        ADAFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
+    if (!GKFS_DATA->hosts_file().empty()) {
+        GKFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
         try {
             destroy_hosts_file();
         } catch (const bfs::filesystem_error& e) {
-            ADAFS_DATA->spdlogger()->debug("{}() hosts file not found", __func__);
+            GKFS_DATA->spdlogger()->debug("{}() hosts file not found", __func__);
         }
     }
 
     if (RPC_DATA->server_rpc_mid() != nullptr) {
-        ADAFS_DATA->spdlogger()->debug("{}() Finalizing margo RPC server", __func__);
+        GKFS_DATA->spdlogger()->debug("{}() Finalizing margo RPC server", __func__);
         margo_finalize(RPC_DATA->server_rpc_mid());
     }
 
-    ADAFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
-    ADAFS_DATA->close_mdb();
+    GKFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
+    GKFS_DATA->close_mdb();
 }
 
 void init_io_tasklet_pool() {
-    assert(DAEMON_IO_XSTREAMS >= 0);
-    unsigned int xstreams_num = DAEMON_IO_XSTREAMS;
+    assert(gkfs_config::rpc::daemon_io_xstreams >= 0);
+    unsigned int xstreams_num = gkfs_config::rpc::daemon_io_xstreams;
 
     //retrieve the pool of the just created scheduler
     ABT_pool pool;
@@ -177,7 +177,7 @@ void init_rpc_server(const string & protocol_port) {
                               MARGO_SERVER_MODE,
                               &hg_options,
                               HG_TRUE,
-                              DAEMON_RPC_HANDLER_XSTREAMS);
+                              gkfs_config::rpc::daemon_handler_xstreams);
     if (mid == MARGO_INSTANCE_NULL) {
         throw runtime_error("Failed to initialize the Margo RPC server");
     }
@@ -199,7 +199,7 @@ void init_rpc_server(const string & protocol_port) {
     std::string addr_self_str(addr_self_cstring);
     RPC_DATA->self_addr_str(addr_self_str);
 
-    ADAFS_DATA->spdlogger()->info("{}() Accepting RPCs on address {}", __func__, addr_self_cstring);
+    GKFS_DATA->spdlogger()->info("{}() Accepting RPCs on address {}", __func__, addr_self_cstring);
 
     // Put context and class into RPC_data object
     RPC_DATA->server_rpc_mid(mid);
@@ -213,31 +213,31 @@ void init_rpc_server(const string & protocol_port) {
  * @param hg_class
  */
 void register_server_rpcs(margo_instance_id mid) {
-    MARGO_REGISTER(mid, hg_tag::fs_config, void, rpc_config_out_t, rpc_srv_fs_config);
-    MARGO_REGISTER(mid, hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
-    MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
-    MARGO_REGISTER(mid, hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
-    MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_rm_node);
-    MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
+    MARGO_REGISTER(mid, gkfs::hg_tag::fs_config, void, rpc_config_out_t, rpc_srv_fs_config);
+    MARGO_REGISTER(mid, gkfs::hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
+    MARGO_REGISTER(mid, gkfs::hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, gkfs::hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
+    MARGO_REGISTER(mid, gkfs::hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_rm_node);
+    MARGO_REGISTER(mid, gkfs::hg_tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
-    MARGO_REGISTER(mid, hg_tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
+    MARGO_REGISTER(mid, gkfs::hg_tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
                    rpc_srv_get_metadentry_size);
-    MARGO_REGISTER(mid, hg_tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
+    MARGO_REGISTER(mid, gkfs::hg_tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
                    rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
-    MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+    MARGO_REGISTER(mid, gkfs::hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
                    rpc_srv_get_dirents);
 #ifdef HAS_SYMLINKS
-    MARGO_REGISTER(mid, hg_tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
+    MARGO_REGISTER(mid, gkfs::hg_tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
 #endif
-    MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
-    MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
-    MARGO_REGISTER(mid, hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_trunc_data);
-    MARGO_REGISTER(mid, hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
+    MARGO_REGISTER(mid, gkfs::hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
+    MARGO_REGISTER(mid, gkfs::hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
+    MARGO_REGISTER(mid, gkfs::hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_trunc_data);
+    MARGO_REGISTER(mid, gkfs::hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
 }
 
 void populate_hosts_file() {
-    const auto& hosts_file = ADAFS_DATA->hosts_file();
-    ADAFS_DATA->spdlogger()->debug("{}() Populating hosts file: '{}'", __func__, hosts_file);
+    const auto& hosts_file = GKFS_DATA->hosts_file();
+    GKFS_DATA->spdlogger()->debug("{}() Populating hosts file: '{}'", __func__, hosts_file);
     ofstream lfstream(hosts_file, ios::out | ios::app);
     if (!lfstream) {
         throw runtime_error(
@@ -252,16 +252,16 @@ void populate_hosts_file() {
 }
 
 void destroy_hosts_file() {
-    std::remove(ADAFS_DATA->hosts_file().c_str());
+    std::remove(GKFS_DATA->hosts_file().c_str());
 }
 
 void shutdown_handler(int dummy) {
-    ADAFS_DATA->spdlogger()->info("{}() Received signal: '{}'", __func__, strsignal(dummy));
+    GKFS_DATA->spdlogger()->info("{}() Received signal: '{}'", __func__, strsignal(dummy));
     shutdown_please.notify_all();
 }
 
 void initialize_loggers() {
-    std::string path = DEFAULT_DAEMON_LOG_PATH;
+    std::string path = gkfs_config::logging::daemon_log_path;
     // Try to get log path from env variable
     std::string env_path_key = DAEMON_ENV_PREFIX;
     env_path_key += "DAEMON_LOG_PATH";
@@ -270,7 +270,7 @@ void initialize_loggers() {
         path = env_path;
     }
 
-    spdlog::level::level_enum level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
+    spdlog::level::level_enum level = get_spdlog_level(gkfs_config::logging::daemon_log_level);
     // Try to get log path from env variable
     std::string env_level_key = DAEMON_ENV_PREFIX;
     env_level_key += "LOG_LEVEL";
@@ -328,7 +328,7 @@ int main(int argc, const char* argv[]) {
 #else
         cout << "Create check parents: OFF" << endl;
 #endif
-        cout << "Chunk size: " << CHUNKSIZE << " bytes" << endl;
+        cout << "Chunk size: " << gkfs_config::rpc::chunksize << " bytes" << endl;
         return 0;
     }
 
@@ -338,9 +338,9 @@ int main(int argc, const char* argv[]) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
-    
+
     initialize_loggers();
-    ADAFS_DATA->spdlogger(spdlog::get("main"));
+    GKFS_DATA->spdlogger(spdlog::get("main"));
 
 
     string addr;
@@ -350,47 +350,47 @@ int main(int argc, const char* argv[]) {
         addr = get_my_hostname(true);
     }
 
-    ADAFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
+    GKFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
 
     string hosts_file;
     if (vm.count("hosts-file")) {
         hosts_file = vm["hosts-file"].as<string>();
     } else {
-        hosts_file = 
-            gkfs::env::get_var(gkfs::env::HOSTS_FILE, DEFAULT_HOSTS_FILE);
+        hosts_file =
+                gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs_config::hostfile_path);
     }
-    ADAFS_DATA->hosts_file(hosts_file);
+    GKFS_DATA->hosts_file(hosts_file);
 
-    ADAFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
+    GKFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
 
     assert(vm.count("mountdir"));
     auto mountdir = vm["mountdir"].as<string>();
-    // Create mountdir. We use this dir to get some information on the underlying fs with statfs in adafs_statfs
+    // Create mountdir. We use this dir to get some information on the underlying fs with statfs in gkfs_statfs
     bfs::create_directories(mountdir);
-    ADAFS_DATA->mountdir(bfs::canonical(mountdir).native());
+    GKFS_DATA->mountdir(bfs::canonical(mountdir).native());
 
     assert(vm.count("rootdir"));
     auto rootdir = vm["rootdir"].as<string>();
     auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
-    ADAFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
+    GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
                                   __func__, rootdir_path.native());
     bfs::create_directories(rootdir_path);
-    ADAFS_DATA->rootdir(rootdir_path.native());
+    GKFS_DATA->rootdir(rootdir_path.native());
 
     if (vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
         bfs::create_directories(metadir);
-        ADAFS_DATA->metadir(bfs::canonical(metadir).native());
+        GKFS_DATA->metadir(bfs::canonical(metadir).native());
     } else {
         // use rootdir as metadata dir
-        ADAFS_DATA->metadir(ADAFS_DATA->rootdir());
+        GKFS_DATA->metadir(GKFS_DATA->rootdir());
     }
 
     try {
         init_environment();
     } catch (const std::exception& e) {
         auto emsg = fmt::format("Failed to initialize environment: {}", e.what());
-        ADAFS_DATA->spdlogger()->error(emsg);
+        GKFS_DATA->spdlogger()->error(emsg);
         cerr << emsg << endl;
         destroy_enviroment();
         exit(EXIT_FAILURE);
@@ -403,8 +403,8 @@ int main(int argc, const char* argv[]) {
     unique_lock<mutex> lk(mtx);
     // Wait for shutdown signal to initiate shutdown protocols
     shutdown_please.wait(lk);
-    ADAFS_DATA->spdlogger()->info("{}() Shutting down", __func__);
+    GKFS_DATA->spdlogger()->info("{}() Shutting down...", __func__);
     destroy_enviroment();
-    ADAFS_DATA->spdlogger()->info("{}() Exiting", __func__);
+    GKFS_DATA->spdlogger()->info("{}() Complete. Exiting...", __func__);
     return 0;
 }

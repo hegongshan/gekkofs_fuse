@@ -14,7 +14,7 @@
 #ifndef GKFS_DAEMON_ENV
 #define GKFS_DAEMON_ENV
 
-#include <global/configure.hpp>
+#include <config.hpp>
 
 #define ADD_PREFIX(str) DAEMON_ENV_PREFIX str
 

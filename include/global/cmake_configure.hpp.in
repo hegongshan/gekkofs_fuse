@@ -11,18 +11,12 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GEKKOFS_LOG_UITIL_HPP
-#define GEKKOFS_LOG_UITIL_HPP
+#ifndef GKFS_CMAKE_CONFIGURE_HPP
+#define GKFS_CMAKE_CONFIGURE_HPP
 
-#include <spdlog/spdlog.h>
+#define RPC_PROTOCOL "@RPC_PROTOCOL@"
+#cmakedefine01 USE_SHM
+#cmakedefine01 CREATE_CHECK_PARENTS
+#cmakedefine01 LOG_SYSCALLS
 
-
-spdlog::level::level_enum get_spdlog_level(std::string level_str);
-
-spdlog::level::level_enum get_spdlog_level(unsigned long level);
-
-void setup_loggers(const std::vector<std::string>& loggers,
-                   spdlog::level::level_enum level, const std::string& path);
-
-
-#endif
+#endif //FS_CMAKE_CONFIGURE_H
