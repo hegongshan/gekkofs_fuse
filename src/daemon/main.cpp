@@ -119,7 +119,7 @@ void destroy_enviroment() {
     if (!GKFS_DATA->hosts_file().empty()) {
         GKFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
         try {
-            destroy_hosts_file();
+            gkfs::util::destroy_hosts_file();
         } catch (const bfs::filesystem_error& e) {
             GKFS_DATA->spdlogger()->debug("{}() hosts file not found", __func__);
         }
@@ -233,26 +233,6 @@ void register_server_rpcs(margo_instance_id mid) {
     MARGO_REGISTER(mid, gkfs::hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
     MARGO_REGISTER(mid, gkfs::hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_trunc_data);
     MARGO_REGISTER(mid, gkfs::hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
-}
-
-void populate_hosts_file() {
-    const auto& hosts_file = GKFS_DATA->hosts_file();
-    GKFS_DATA->spdlogger()->debug("{}() Populating hosts file: '{}'", __func__, hosts_file);
-    ofstream lfstream(hosts_file, ios::out | ios::app);
-    if (!lfstream) {
-        throw runtime_error(
-                fmt::format("Failed to open hosts file '{}': {}", hosts_file, strerror(errno)));
-    }
-    lfstream << fmt::format("{} {}", get_my_hostname(true), RPC_DATA->self_addr_str()) << std::endl;
-    if (!lfstream) {
-        throw runtime_error(
-                fmt::format("Failed to write on hosts file '{}': {}", hosts_file, strerror(errno)));
-    }
-    lfstream.close();
-}
-
-void destroy_hosts_file() {
-    std::remove(GKFS_DATA->hosts_file().c_str());
 }
 
 void shutdown_handler(int dummy) {

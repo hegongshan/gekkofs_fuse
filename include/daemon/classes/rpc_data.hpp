@@ -62,5 +62,4 @@ public:
 
 };
 
-
 #endif //LFS_RPC_DATA_HPP

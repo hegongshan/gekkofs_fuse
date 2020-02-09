@@ -11,7 +11,6 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <fcntl.h>
 
 #include <client/open_file_map.hpp>
 #include <client/open_dir.hpp>
@@ -19,12 +18,15 @@
 #include <client/preload_util.hpp>
 #include <client/logging.hpp>
 
+extern "C" {
+#include <fcntl.h>
+}
+
 using namespace std;
 
 OpenFile::OpenFile(const string& path, const int flags, FileType type) :
-    type_(type),
-    path_(path)
-{
+        type_(type),
+        path_(path) {
     // set flags to OpenFile
     if (flags & O_CREAT)
         flags_[gkfs::client::to_underlying(OpenFile_flags::creat)] = true;
@@ -42,14 +44,9 @@ OpenFile::OpenFile(const string& path, const int flags, FileType type) :
     pos_ = 0; // If O_APPEND flag is used, it will be used before each write.
 }
 
-OpenFileMap::OpenFileMap():
-    fd_idx(10000),
-    fd_validation_needed(false)
-    {}
-
-OpenFile::~OpenFile() {
-
-}
+OpenFileMap::OpenFileMap() :
+        fd_idx(10000),
+        fd_validation_needed(false) {}
 
 string OpenFile::path() const {
     return path_;

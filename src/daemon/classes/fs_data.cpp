@@ -10,45 +10,19 @@
 
   SPDX-License-Identifier: MIT
 */
-
-#include <spdlog/spdlog.h>
-
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/backend/metadata/db.hpp>
 
+#include <spdlog/spdlog.h>
 
 // getter/setter
-
-const std::unordered_map<std::string, std::string>& FsData::hashmap() const {
-    return hashmap_;
-}
-
-void FsData::hashmap(const std::unordered_map<std::string, std::string>& hashmap_) {
-    FsData::hashmap_ = hashmap_;
-}
-
-const std::hash<std::string>& FsData::hashf() const {
-    return hashf_;
-}
-
-void FsData::hashf(const std::hash<std::string>& hashf_) {
-    FsData::hashf_ = hashf_;
-}
-
-blksize_t FsData::blocksize() const {
-    return blocksize_;
-}
-
-void FsData::blocksize(blksize_t blocksize_) {
-    FsData::blocksize_ = blocksize_;
-}
 
 const std::shared_ptr<spdlog::logger>& FsData::spdlogger() const {
     return spdlogger_;
 }
 
-void FsData::spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger_) {
-    FsData::spdlogger_ = spdlogger_;
+void FsData::spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger) {
+    FsData::spdlogger_ = spdlogger;
 }
 
 const std::shared_ptr<MetadataDB>& FsData::mdb() const {
@@ -75,8 +49,8 @@ const std::string& FsData::rootdir() const {
     return rootdir_;
 }
 
-void FsData::rootdir(const std::string& rootdir_) {
-    FsData::rootdir_ = rootdir_;
+void FsData::rootdir(const std::string& rootdir) {
+    FsData::rootdir_ = rootdir;
 }
 
 const std::string& FsData::mountdir() const {

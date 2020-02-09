@@ -11,45 +11,27 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <global/env_util.hpp>
 #include <client/preload.hpp>
 #include <client/resolve.hpp>
-#include <global/rpc/distributor.hpp>
-#include "global/rpc/rpc_types.hpp"
 #include <client/logging.hpp>
 #include <client/rpc/ld_rpc_management.hpp>
 #include <client/preload_util.hpp>
 #include <client/intercept.hpp>
-#include <client/rpc/hg_rpcs.hpp>
-#include <hermes.hpp>
 
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdarg.h>
+#include <global/rpc/distributor.hpp>
 
 #include <fstream>
 
+#include <hermes.hpp>
+
+extern "C" {
+#include <sys/types.h>
+}
 
 using namespace std;
 
 // make sure that things are only initialized once
 static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
-
-// RPC IDs
-hg_id_t rpc_config_id;
-hg_id_t rpc_mk_node_id;
-hg_id_t rpc_stat_id;
-hg_id_t rpc_rm_node_id;
-hg_id_t rpc_decr_size_id;
-hg_id_t rpc_update_metadentry_id;
-hg_id_t rpc_get_metadentry_size_id;
-hg_id_t rpc_update_metadentry_size_id;
-hg_id_t rpc_mk_symlink_id;
-hg_id_t rpc_write_data_id;
-hg_id_t rpc_read_data_id;
-hg_id_t rpc_trunc_data_id;
-hg_id_t rpc_get_dirents_id;
-hg_id_t rpc_chunk_stat_id;
 
 std::unique_ptr<hermes::async_engine> ld_network_service;
 
@@ -81,35 +63,15 @@ bool init_hermes_client(const std::string& transport_prefix) {
         opts |= hermes::use_auto_sm;
 #endif
 
-        ld_network_service = 
-            std::make_unique<hermes::async_engine>(
-                    hermes::get_transport_type(transport_prefix), opts);
+        ld_network_service =
+                std::make_unique<hermes::async_engine>(
+                        hermes::get_transport_type(transport_prefix), opts);
         ld_network_service->run();
     } catch (const std::exception& ex) {
-        fmt::print(stderr, "Failed to initialize Hermes RPC client {}\n", 
+        fmt::print(stderr, "Failed to initialize Hermes RPC client {}\n",
                    ex.what());
         return false;
     }
-
-    rpc_config_id = gkfs::rpc::fs_config::public_id;
-    rpc_mk_node_id = gkfs::rpc::create::public_id;
-    rpc_stat_id = gkfs::rpc::stat::public_id;
-    rpc_rm_node_id = gkfs::rpc::remove::public_id;
-    rpc_decr_size_id = gkfs::rpc::decr_size::public_id;
-    rpc_update_metadentry_id = gkfs::rpc::update_metadentry::public_id;
-    rpc_get_metadentry_size_id = gkfs::rpc::get_metadentry_size::public_id;
-    rpc_update_metadentry_size_id = gkfs::rpc::update_metadentry::public_id;
-
-#ifdef HAS_SYMLINKS
-    rpc_mk_symlink_id = gkfs::rpc::mk_symlink::public_id;
-#endif // HAS_SYMLINKS
-
-    rpc_write_data_id = gkfs::rpc::write_data::public_id;
-    rpc_read_data_id = gkfs::rpc::read_data::public_id;
-    rpc_trunc_data_id = gkfs::rpc::trunc_data::public_id;
-    rpc_get_dirents_id = gkfs::rpc::get_dirents::public_id;
-    rpc_chunk_stat_id = gkfs::rpc::chunk_stat::public_id;
-
     return true;
 }
 
@@ -157,7 +119,7 @@ void log_prog_name() {
         LOG(ERROR, "Unable to open cmdline file");
         throw std::runtime_error("Unable to open cmdline file");
     }
-    if(!getline(cmdline, line)) {
+    if (!getline(cmdline, line)) {
         throw std::runtime_error("Unable to read cmdline file");
     }
     std::replace(line.begin(), line.end(), '\0', ' ');

@@ -23,8 +23,8 @@ public:
 };
 
 class NotFoundException : public DBException {
-    public:
-        NotFoundException(const std::string & s) : DBException(s) {};
+public:
+    NotFoundException(const std::string& s) : DBException(s) {};
 };
 
 #endif //GEKKOFS_DB_EXCEPTIONS_HPP

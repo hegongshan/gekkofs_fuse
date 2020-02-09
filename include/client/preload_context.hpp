@@ -25,12 +25,14 @@
 
 /* Forward declarations */
 class OpenFileMap;
+
 class Distributor;
 
-namespace gkfs { namespace log {
-    struct logger;
-}}
-
+namespace gkfs {
+    namespace log {
+        struct logger;
+    }
+}
 
 struct FsConfig {
     // configurable metadata
@@ -59,7 +61,7 @@ class PreloadContext {
     static auto constexpr MIN_INTERNAL_FD = MAX_OPEN_FDS - MAX_INTERNAL_FDS;
     static auto constexpr MAX_USER_FDS = MIN_INTERNAL_FD;
 
-    private:
+private:
     PreloadContext();
 
     std::shared_ptr<OpenFileMap> ofm_;
@@ -80,53 +82,69 @@ class PreloadContext {
     bool internal_fds_must_relocate_;
     std::bitset<MAX_USER_FDS> protected_fds_;
 
-    public:
+public:
     static PreloadContext* getInstance() {
         static PreloadContext instance;
         return &instance;
     }
 
     PreloadContext(PreloadContext const&) = delete;
+
     void operator=(PreloadContext const&) = delete;
 
     void init_logging();
+
     void mountdir(const std::string& path);
+
     const std::string& mountdir() const;
+
     const std::vector<std::string>& mountdir_components() const;
 
     void cwd(const std::string& path);
+
     const std::string& cwd() const;
 
     const std::vector<hermes::endpoint>& hosts() const;
+
     void hosts(const std::vector<hermes::endpoint>& addrs);
+
     void clear_hosts();
 
 
     uint64_t local_host_id() const;
+
     void local_host_id(uint64_t id);
 
     RelativizeStatus relativize_fd_path(int dirfd,
-                                        const char * raw_path,
+                                        const char* raw_path,
                                         std::string& relative_path,
                                         bool resolve_last_link = true) const;
 
-    bool relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link = true) const;
+    bool relativize_path(const char* raw_path, std::string& relative_path, bool resolve_last_link = true) const;
+
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
     void distributor(std::shared_ptr<Distributor> distributor);
+
     std::shared_ptr<Distributor> distributor() const;
+
     const std::shared_ptr<FsConfig>& fs_conf() const;
 
     void enable_interception();
+
     void disable_interception();
+
     bool interception_enabled() const;
 
     int register_internal_fd(int fd);
+
     void unregister_internal_fd(int fd);
+
     bool is_internal_fd(int fd) const;
 
     void protect_user_fds();
-    void unprotect_user_fds(); 
+
+    void unprotect_user_fds();
 };
 
 

@@ -14,9 +14,6 @@
 #ifndef GEKKOFS_DAEMON_UTIL_HPP
 #define GEKKOFS_DAEMON_UTIL_HPP
 
-#include <string>
-#include <vector>
-
 namespace gkfs {
     namespace util {
         void populate_hosts_file();

@@ -88,6 +88,6 @@ void update_metadentry(const string& path, Metadata& md) {
     GKFS_DATA->mdb()->update(path, path, md.serialize());
 }
 
-std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir){
+std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir) {
     return GKFS_DATA->mdb()->get_dirents(dir);
 }

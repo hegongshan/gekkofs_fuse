@@ -26,26 +26,27 @@ class Metadata;
 
 namespace rpc_send {
 
+    int mk_node(const std::string& path, mode_t mode);
 
-int mk_node(const std::string& path, mode_t mode);
+    int stat(const std::string& path, std::string& attr);
 
-int stat(const std::string& path, std::string& attr);
+    int rm_node(const std::string& path, bool remove_metadentry_only, ssize_t size);
 
-int rm_node(const std::string& path, const bool remove_metadentry_only, const ssize_t size);
+    int decr_size(const std::string& path, size_t length);
 
-int decr_size(const std::string& path, size_t length);
+    int update_metadentry(const std::string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags);
 
-int update_metadentry(const std::string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags);
+    int update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
+                               off64_t& ret_size);
 
-int update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
-                                    off64_t& ret_size);
+    int get_metadentry_size(const std::string& path, off64_t& ret_size);
 
-int get_metadentry_size(const std::string& path, off64_t& ret_size);
-
-void get_dirents(OpenDir& open_dir);
+    void get_dirents(OpenDir& open_dir);
 
 #ifdef HAS_SYMLINKS
-int mk_symlink(const std::string& path, const std::string& target_path);
+
+    int mk_symlink(const std::string& path, const std::string& target_path);
+
 #endif
 
 

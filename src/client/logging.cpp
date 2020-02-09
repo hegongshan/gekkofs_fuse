@@ -14,9 +14,13 @@
 #include <client/logging.hpp>
 #include <client/env.hpp>
 #include <client/make_array.hpp>
+
 #include <boost/algorithm/string.hpp>
+
+extern "C" {
 #include <date/tz.h>
 #include <fmt/ostream.h>
+}
 
 #ifdef GKFS_ENABLE_LOGGING
 #include <hermes/logging.hpp>

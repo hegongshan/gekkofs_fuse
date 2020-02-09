@@ -88,6 +88,7 @@ inline size_t chnk_rpad(const off64_t offset, const size_t chnk_size) {
  * chunk_id(0,4) = 0;
  */
 inline uint64_t chnk_id_for_offset(const off64_t offset, const size_t chnk_size) {
+    // TODO This does not work for very large offsets: `offset / chnk_size` works
     return static_cast<uint64_t>(chnk_lalign(offset, chnk_size) >> log2(chnk_size));
 }
 

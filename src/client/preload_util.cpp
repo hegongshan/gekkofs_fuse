@@ -14,10 +14,11 @@
 #include <client/preload_util.hpp>
 #include <client/env.hpp>
 #include <client/logging.hpp>
+
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/env_util.hpp>
-#include <global/global_defs.hpp>
+
 #include <hermes.hpp>
 
 #include <fstream>
@@ -25,7 +26,10 @@
 #include <regex>
 #include <csignal>
 #include <random>
+
+extern "C" {
 #include <sys/sysmacros.h>
+}
 
 using namespace std;
 
@@ -59,7 +63,7 @@ int gkfs::client::metadata_to_stat(const std::string& path, const Metadata& md, 
         attr.st_size = md.target_path().size() + CTX->mountdir().size();
     else
 #endif
-    attr.st_size = md.size();
+        attr.st_size = md.size();
 
     if (CTX->fs_conf()->atime_state) {
         attr.st_atim.tv_sec = md.atime();
@@ -126,7 +130,7 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
         } catch (const exception& ex) {
             error_msg = ex.what();
 
-            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]", 
+            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]",
                 uri, attempts + 1, max_retries);
 
             // Wait a random amount of time and try again
@@ -138,7 +142,7 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
     } while (++attempts < max_retries);
 
     throw std::runtime_error(
-            fmt::format("Endpoint for address '{}' could not be found ({})", 
+            fmt::format("Endpoint for address '{}' could not be found ({})",
                         uri, error_msg));
 }
 
@@ -179,11 +183,11 @@ void gkfs::client::load_hosts() {
     ::random_device rd; // obtain a random number from hardware
     ::mt19937 g(rd()); // seed the random generator
     ::shuffle(host_ids.begin(), host_ids.end(), g); // Shuffle hosts vector
-    // lookup addresses and put abstract server addresses into rpc_addressesre
+    // lookup addresses and put abstract server addresses into rpc_addresses
 
     for (const auto& id: host_ids) {
-         const auto& hostname = hosts.at(id).first;
-         const auto& uri = hosts.at(id).second;
+        const auto& hostname = hosts.at(id).first;
+        const auto& uri = hosts.at(id).second;
 
         addrs[id] = ::lookup_endpoint(uri);
 
@@ -193,7 +197,7 @@ void gkfs::client::load_hosts() {
             local_host_found = true;
         }
 
-        LOG(DEBUG, "Found peer: {}", addrs[id].to_string()); 
+        LOG(DEBUG, "Found peer: {}", addrs[id].to_string());
     }
 
     if (!local_host_found) {

@@ -15,8 +15,11 @@
 #include <config.hpp>
 
 #include <fmt/format.h>
+
+extern "C" {
 #include <sys/stat.h>
 #include <unistd.h>
+}
 
 #include <ctime>
 #include <cassert>
@@ -25,29 +28,27 @@
 static const char MSP = '|'; // metadata separator
 
 Metadata::Metadata(const mode_t mode) :
-    atime_(),
-    mtime_(),
-    ctime_(),
-    mode_(mode),
-    link_count_(0),
-    size_(0),
-    blocks_(0)
-{
+        atime_(),
+        mtime_(),
+        ctime_(),
+        mode_(mode),
+        link_count_(0),
+        size_(0),
+        blocks_(0) {
     assert(S_ISDIR(mode_) || S_ISREG(mode_));
 }
 
 #ifdef HAS_SYMLINKS
 
 Metadata::Metadata(const mode_t mode, const std::string& target_path) :
-    atime_(),
-    mtime_(),
-    ctime_(),
-    mode_(mode),
-    link_count_(0),
-    size_(0),
-    blocks_(0),
-    target_path_(target_path)
-{
+        atime_(),
+        mtime_(),
+        ctime_(),
+        mode_(mode),
+        link_count_(0),
+        size_(0),
+        blocks_(0),
+        target_path_(target_path) {
     assert(S_ISLNK(mode_) || S_ISDIR(mode_) || S_ISREG(mode_));
     // target_path should be there only if this is a link
     assert(target_path_.empty() || S_ISLNK(mode_));
@@ -119,8 +120,7 @@ Metadata::Metadata(const std::string& binary_str) {
     assert(*ptr == '\0');
 }
 
-std::string Metadata::serialize() const
-{
+std::string Metadata::serialize() const {
     std::string s;
     // The order is important. don't change.
     s += fmt::format_int(mode_).c_str(); // add mandatory mode

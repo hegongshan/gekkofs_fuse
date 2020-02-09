@@ -54,7 +54,7 @@ public:
 
     OpenFile(const std::string& path, int flags, FileType type = FileType::regular);
 
-    ~OpenFile();
+    ~OpenFile() = default;
 
     // getter/setter
     std::string path() const;
@@ -111,6 +111,7 @@ public:
     int dup2(int oldfd, int newfd);
 
     int generate_fd_idx();
+
     int get_fd_idx();
 };
 

@@ -19,6 +19,7 @@
 
 /* Forward declarations */
 class MetadataDB;
+
 class ChunkStorage;
 
 #include <unordered_map>
@@ -29,13 +30,6 @@ class FsData {
 
 private:
     FsData() {}
-
-    // Caching
-    std::unordered_map<std::string, std::string> hashmap_;
-    std::hash<std::string> hashf_;
-
-    // Later the blocksize will likely be coupled to the chunks to allow individually big chunk sizes.
-    blksize_t blocksize_;
 
     //logger
     std::shared_ptr<spdlog::logger> spdlogger_;
@@ -71,18 +65,6 @@ public:
     void operator=(FsData const&) = delete;
 
     // getter/setter
-
-    const std::unordered_map<std::string, std::string>& hashmap() const;
-
-    void hashmap(const std::unordered_map<std::string, std::string>& hashmap_);
-
-    const std::hash<std::string>& hashf() const;
-
-    void hashf(const std::hash<std::string>& hashf_);
-
-    blksize_t blocksize() const;
-
-    void blocksize(blksize_t blocksize_);
 
     const std::shared_ptr<spdlog::logger>& spdlogger() const;
 
@@ -139,6 +121,5 @@ public:
     void blocks_state(bool blocks_state);
 
 };
-
 
 #endif //LFS_FS_DATA_H

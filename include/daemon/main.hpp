@@ -26,6 +26,7 @@ extern "C" {
 #include <mercury.h>
 #include <margo.h>
 }
+
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/classes/rpc_data.hpp>
 
@@ -33,14 +34,13 @@ extern "C" {
 #define RPC_DATA (static_cast<RPCData*>(RPCData::getInstance()))
 
 void init_environment();
+
 void destroy_enviroment();
 
 void init_io_tasklet_pool();
+
 void init_rpc_server(const std::string& protocol);
 
 void register_server_rpcs(margo_instance_id mid);
-
-void populate_hosts_file();
-void destroy_hosts_file();
 
 #endif // GKFS_DAEMON_MAIN_HPP

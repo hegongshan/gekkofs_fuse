@@ -17,9 +17,7 @@
 
 namespace rpc_send {
 
-
     bool get_fs_config();
-
 
 } // end namespace rpc_send
 

@@ -40,26 +40,6 @@ struct MetadentryUpdateFlags {
 namespace hermes { class async_engine; }
 extern std::unique_ptr<hermes::async_engine> ld_network_service;
 
-// RPC IDs
-extern hg_id_t rpc_config_id;
-extern hg_id_t rpc_mk_node_id;
-extern hg_id_t rpc_stat_id;
-extern hg_id_t rpc_rm_node_id;
-extern hg_id_t rpc_decr_size_id;
-extern hg_id_t rpc_update_metadentry_id;
-extern hg_id_t rpc_get_metadentry_size_id;
-extern hg_id_t rpc_update_metadentry_size_id;
-extern hg_id_t rpc_write_data_id;
-extern hg_id_t rpc_read_data_id;
-extern hg_id_t rpc_trunc_data_id;
-extern hg_id_t rpc_get_dirents_id;
-extern hg_id_t rpc_chunk_stat_id;
-
-#ifdef HAS_SYMLINKS
-extern hg_id_t ipc_mk_symlink_id;
-extern hg_id_t rpc_mk_symlink_id;
-#endif
-
 // function definitions
 namespace gkfs {
     namespace client {

@@ -12,13 +12,14 @@
 */
 
 
-#include <global/rpc/rpc_types.hpp>
+#include <daemon/main.hpp>
 #include <daemon/handler/rpc_defs.hpp>
+#include <daemon/backend/data/chunk_storage.hpp>
+
+#include <global/rpc/rpc_types.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
-#include <daemon/main.hpp>
-#include <daemon/backend/data/chunk_storage.hpp>
 
 
 using namespace std;
@@ -472,7 +473,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
             break;
         }
         assert(task_read_size != nullptr);
-        if(*task_read_size < 0) {
+        if (*task_read_size < 0) {
             if (-(*task_read_size) == ENOENT) {
                 continue;
             }
@@ -482,13 +483,13 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
             out.err = -(*task_read_size);
             break;
         }
-        
-        if(*task_read_size == 0) {
+
+        if (*task_read_size == 0) {
             continue;
         }
 
         ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, origin_offsets[chnk_id_curr],
-                bulk_handle, local_offsets[chnk_id_curr], *task_read_size);
+                                  bulk_handle, local_offsets[chnk_id_curr], *task_read_size);
         if (ret != HG_SUCCESS) {
             GKFS_DATA->spdlogger()->error(
                     "{}() Failed push chnkid {} on path {} to client. origin offset {} local offset {} chunk size {}",

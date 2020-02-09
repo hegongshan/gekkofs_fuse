@@ -24,25 +24,30 @@
 
 
 class DirEntry {
-    private:
-        std::string name_;
-        FileType type_;
-    public:
-        DirEntry(const std::string& name, const FileType type);
-        const std::string& name();
-        FileType type();
+private:
+    std::string name_;
+    FileType type_;
+public:
+    DirEntry(const std::string& name, FileType type);
+
+    const std::string& name();
+
+    FileType type();
 };
 
-class OpenDir: public OpenFile {
-    private:
-        std::vector<DirEntry> entries;
+class OpenDir : public OpenFile {
+private:
+    std::vector<DirEntry> entries;
 
 
-    public:
-        OpenDir(const std::string& path);
-        void add(const std::string& name, const FileType& type);
-        const DirEntry& getdent(unsigned int pos);
-        size_t size();
+public:
+    explicit OpenDir(const std::string& path);
+
+    void add(const std::string& name, const FileType& type);
+
+    const DirEntry& getdent(unsigned int pos);
+
+    size_t size();
 };
 
 

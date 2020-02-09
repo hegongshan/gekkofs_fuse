@@ -14,7 +14,8 @@
 
 #include <daemon/main.hpp>
 #include <daemon/handler/rpc_defs.hpp>
-#include "global/rpc/rpc_types.hpp"
+
+#include <global/rpc/rpc_types.hpp>
 
 
 using namespace std;

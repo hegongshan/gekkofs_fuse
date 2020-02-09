@@ -16,7 +16,6 @@
 
 #include <client/preload_context.hpp>
 
-
 #define EUNKNOWN (-1)
 
 #define CTX PreloadContext::getInstance()

@@ -11,24 +11,27 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <hermes.hpp>
+
+
 #include <client/preload_context.hpp>
-
-#include <libsyscall_intercept_hook_point.h>
-#include <syscall.h>
-
 #include <client/env.hpp>
-#include <global/env_util.hpp>
 #include <client/logging.hpp>
 #include <client/open_file_map.hpp>
 #include <client/open_dir.hpp>
 #include <client/resolve.hpp>
 
+#include <global/env_util.hpp>
 #include <global/path_util.hpp>
 #include <config.hpp>
 
+#include <hermes.hpp>
+
 #include <cassert>
-#include <cstdio>
+
+extern "C" {
+#include <libsyscall_intercept_hook_point.h>
+#include <syscall.h>
+}
 
 decltype(PreloadContext::MIN_INTERNAL_FD) constexpr
         PreloadContext::MIN_INTERNAL_FD;
@@ -36,14 +39,14 @@ decltype(PreloadContext::MAX_USER_FDS) constexpr
         PreloadContext::MAX_USER_FDS;
 
 PreloadContext::PreloadContext() :
-    ofm_(std::make_shared<OpenFileMap>()),
-    fs_conf_(std::make_shared<FsConfig>()) {
+        ofm_(std::make_shared<OpenFileMap>()),
+        fs_conf_(std::make_shared<FsConfig>()) {
 
     internal_fds_.set();
     internal_fds_must_relocate_ = true;
 }
 
-void 
+void
 PreloadContext::init_logging() {
 
     const std::string log_opts =
@@ -60,19 +63,19 @@ PreloadContext::init_logging() {
             gkfs::env::get_var(gkfs::env::LOG_DEBUG_VERBOSITY, "0").c_str());
 
     const std::string log_filter =
-        gkfs::env::get_var(gkfs::env::LOG_SYSCALL_FILTER, "");
+            gkfs::env::get_var(gkfs::env::LOG_SYSCALL_FILTER, "");
 #endif
 
-    const std::string trunc_val = 
-        gkfs::env::get_var(gkfs::env::LOG_OUTPUT_TRUNC);
+    const std::string trunc_val =
+            gkfs::env::get_var(gkfs::env::LOG_OUTPUT_TRUNC);
 
     const bool log_trunc = !(!trunc_val.empty() && trunc_val[0] == 0);
 
     gkfs::log::create_global_logger(log_opts, log_output, log_trunc
 #ifdef GKFS_DEBUG_BUILD
-                                    , log_filter, log_verbosity
+            , log_filter, log_verbosity
 #endif
-            );
+    );
 }
 
 void PreloadContext::mountdir(const std::string& path) {
@@ -119,7 +122,7 @@ void PreloadContext::local_host_id(uint64_t id) {
 }
 
 RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
-                                                    const char * raw_path,
+                                                    const char* raw_path,
                                                     std::string& relative_path,
                                                     bool resolve_last_link) const {
 
@@ -162,7 +165,7 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
     return RelativizeStatus::external;
 }
 
-bool PreloadContext::relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link) const {
+bool PreloadContext::relativize_path(const char* raw_path, std::string& relative_path, bool resolve_last_link) const {
     // Relativize path should be called only after the library constructor has been executed
     assert(interception_enabled_);
     // If we run the constructor we also already setup the mountdir
@@ -173,7 +176,7 @@ bool PreloadContext::relativize_path(const char * raw_path, std::string& relativ
 
     std::string path;
 
-    if(raw_path[0] != PSP) {
+    if (raw_path[0] != PSP) {
         /* Path is not absolute, we need to prepend CWD;
          * First reserve enough space to minimize memory copy
          */
@@ -216,7 +219,7 @@ int PreloadContext::register_internal_fd(int fd) {
 
     assert(fd >= 0);
 
-    if(!internal_fds_must_relocate_) {
+    if (!internal_fds_must_relocate_) {
         LOG(DEBUG, "registering fd {} as internal (no relocation needed)", fd);
         assert(fd >= MIN_INTERNAL_FD);
         internal_fds_.reset(fd - MIN_INTERNAL_FD);
@@ -228,10 +231,10 @@ int PreloadContext::register_internal_fd(int fd) {
     std::lock_guard<std::mutex> lock(internal_fds_mutex_);
     const int pos = internal_fds_._Find_first();
 
-    if(static_cast<std::size_t>(pos) == internal_fds_.size()) {
+    if (static_cast<std::size_t>(pos) == internal_fds_.size()) {
         throw std::runtime_error(
-"Internal GekkoFS file descriptors exhausted, increase MAX_INTERNAL_FDS in "
-"CMake, rebuild GekkoFS and try again.");
+                "Internal GekkoFS file descriptors exhausted, increase MAX_INTERNAL_FDS in "
+                "CMake, rebuild GekkoFS and try again.");
     }
     internal_fds_.reset(pos);
 
@@ -240,19 +243,19 @@ int PreloadContext::register_internal_fd(int fd) {
     long args[gkfs::syscall::MAX_ARGS]{fd, pos + MIN_INTERNAL_FD, O_CLOEXEC};
 #endif
 
-    LOG(SYSCALL, 
-        gkfs::syscall::from_internal_code | 
+    LOG(SYSCALL,
+        gkfs::syscall::from_internal_code |
         gkfs::syscall::to_kernel |
-        gkfs::syscall::not_executed, 
+        gkfs::syscall::not_executed,
         SYS_dup3, args);
 
-    const int ifd = 
-        ::syscall_no_intercept(SYS_dup3, fd, pos + MIN_INTERNAL_FD, O_CLOEXEC);
+    const int ifd =
+            ::syscall_no_intercept(SYS_dup3, fd, pos + MIN_INTERNAL_FD, O_CLOEXEC);
 
-    LOG(SYSCALL, 
-        gkfs::syscall::from_internal_code | 
+    LOG(SYSCALL,
+        gkfs::syscall::from_internal_code |
         gkfs::syscall::to_kernel |
-        gkfs::syscall::executed, 
+        gkfs::syscall::executed,
         SYS_dup3, args, ifd);
 
     assert(::syscall_error_code(ifd) == 0);
@@ -261,10 +264,10 @@ int PreloadContext::register_internal_fd(int fd) {
     long args2[gkfs::syscall::MAX_ARGS]{fd};
 #endif
 
-    LOG(SYSCALL, 
-        gkfs::syscall::from_internal_code | 
+    LOG(SYSCALL,
+        gkfs::syscall::from_internal_code |
         gkfs::syscall::to_kernel |
-        gkfs::syscall::not_executed, 
+        gkfs::syscall::not_executed,
         SYS_close, args2);
 
 #if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
@@ -273,10 +276,10 @@ int PreloadContext::register_internal_fd(int fd) {
     ::syscall_no_intercept(SYS_close, fd);
 #endif
 
-    LOG(SYSCALL, 
-        gkfs::syscall::from_internal_code | 
+    LOG(SYSCALL,
+        gkfs::syscall::from_internal_code |
         gkfs::syscall::to_kernel |
-        gkfs::syscall::executed, 
+        gkfs::syscall::executed,
         SYS_close, args2, rv);
 
     LOG(DEBUG, "    (fd {} relocated to ifd {})", fd, ifd);
@@ -298,7 +301,7 @@ void PreloadContext::unregister_internal_fd(int fd) {
 
 bool PreloadContext::is_internal_fd(int fd) const {
 
-    if(fd < MIN_INTERNAL_FD) {
+    if (fd < MIN_INTERNAL_FD) {
         return false;
     }
 
@@ -319,12 +322,12 @@ PreloadContext::protect_user_fds() {
 
     const auto fd_is_open = [](int fd) -> bool {
         const int ret = ::syscall_no_intercept(SYS_fcntl, fd, F_GETFD);
-        return ::syscall_error_code(ret) == 0 || 
+        return ::syscall_error_code(ret) == 0 ||
                ::syscall_error_code(ret) != EBADF;
     };
 
-    for(int fd = 0; fd < MAX_USER_FDS; ++fd) {
-        if(fd_is_open(fd)) {
+    for (int fd = 0; fd < MAX_USER_FDS; ++fd) {
+        if (fd_is_open(fd)) {
             LOG(DEBUG, "  fd {} was already in use, skipping", fd);
             continue;
         }
@@ -340,15 +343,15 @@ PreloadContext::protect_user_fds() {
 void
 PreloadContext::unprotect_user_fds() {
 
-    for(std::size_t fd = 0; fd < protected_fds_.size(); ++fd) {
-        if(!protected_fds_[fd]) {
+    for (std::size_t fd = 0; fd < protected_fds_.size(); ++fd) {
+        if (!protected_fds_[fd]) {
             continue;
         }
 
-        const int ret = 
-            ::syscall_error_code(::syscall_no_intercept(SYS_close, fd));
+        const int ret =
+                ::syscall_error_code(::syscall_no_intercept(SYS_close, fd));
 
-        if(ret != 0) {
+        if (ret != 0) {
             LOG(ERROR, "Failed to unprotect fd")
         }
     }

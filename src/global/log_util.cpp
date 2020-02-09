@@ -14,7 +14,6 @@
 #include <global/log_util.hpp>
 
 #include <spdlog/sinks/basic_file_sink.h>
-#include <exception>
 #include <vector>
 #include <algorithm>
 #include <list>
@@ -48,7 +47,7 @@ spdlog::level::level_enum get_spdlog_level(string level_str) {
 }
 
 spdlog::level::level_enum get_spdlog_level(unsigned long level) {
-    switch(level) {
+    switch (level) {
         case 0:
             return spdlog::level::off;
         case 1:
@@ -67,26 +66,26 @@ spdlog::level::level_enum get_spdlog_level(unsigned long level) {
 }
 
 void setup_loggers(const vector<string>& loggers_name,
-        spdlog::level::level_enum level, const string& path) {
+                   spdlog::level::level_enum level, const string& path) {
 
-        /* Create common sink */
-        auto file_sink = make_shared<spdlog::sinks::basic_file_sink_mt>(path);
+    /* Create common sink */
+    auto file_sink = make_shared<spdlog::sinks::basic_file_sink_mt>(path);
 
-        /* Create and configure loggers */
-        auto loggers = list<shared_ptr<spdlog::logger>>();
-        for(const auto& name: loggers_name){
-            auto logger = make_shared<spdlog::logger>(name, file_sink);
-            logger->flush_on(spdlog::level::trace);
-            loggers.push_back(logger);
-        }
+    /* Create and configure loggers */
+    auto loggers = list<shared_ptr<spdlog::logger>>();
+    for (const auto& name: loggers_name) {
+        auto logger = make_shared<spdlog::logger>(name, file_sink);
+        logger->flush_on(spdlog::level::trace);
+        loggers.push_back(logger);
+    }
 
-        /* register loggers */
-        for(const auto& logger: loggers){
-            spdlog::register_logger(logger);
-        }
+    /* register loggers */
+    for (const auto& logger: loggers) {
+        spdlog::register_logger(logger);
+    }
 
-        // set logger format
-        spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L][%n] %v");
+    // set logger format
+    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L][%n] %v");
 
-        spdlog::set_level(level);
+    spdlog::set_level(level);
 }

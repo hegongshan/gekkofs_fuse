@@ -14,11 +14,9 @@
 #include <client/open_dir.hpp>
 #include <stdexcept>
 #include <cstring>
-#include <cassert>
 
-
-DirEntry::DirEntry(const std::string& name, const FileType type):
-    name_(name), type_(type) {
+DirEntry::DirEntry(const std::string& name, const FileType type) :
+        name_(name), type_(type) {
 }
 
 const std::string& DirEntry::name() {
@@ -31,7 +29,7 @@ FileType DirEntry::type() {
 
 
 OpenDir::OpenDir(const std::string& path) :
-    OpenFile(path, 0, FileType::directory) {
+        OpenFile(path, 0, FileType::directory) {
 }
 
 

@@ -12,6 +12,7 @@
 */
 #include <daemon/util.hpp>
 #include <daemon/main.hpp>
+
 #include <global/rpc/rpc_utils.hpp>
 
 #include <fstream>

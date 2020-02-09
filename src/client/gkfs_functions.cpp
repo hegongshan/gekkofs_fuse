@@ -11,37 +11,40 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <sys/statfs.h>
-#include <sys/statvfs.h>
 
 #include <config.hpp>
-#include <global/path_util.hpp>
 #include <client/preload.hpp>
-#include "client/preload_util.hpp"
+#include <client/preload_util.hpp>
 #include <client/logging.hpp>
 #include <client/gkfs_functions.hpp>
 #include <client/rpc/ld_rpc_metadentry.hpp>
 #include <client/rpc/ld_rpc_data_ws.hpp>
 #include <client/open_dir.hpp>
 
+#include <global/path_util.hpp>
 
-#define __ALIGN_KERNEL_MASK(x, mask)	(((x) + (mask)) & ~(mask))
-#define __ALIGN_KERNEL(x, a)		    __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+extern "C" {
+#include <sys/statfs.h>
+#include <sys/statvfs.h>
+}
+
+#define __ALIGN_KERNEL_MASK(x, mask)    (((x) + (mask)) & ~(mask))
+#define __ALIGN_KERNEL(x, a)            __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
 #define ALIGN(x, a)                     __ALIGN_KERNEL((x), (a))
 
 struct linux_dirent {
-    unsigned long	d_ino;
-    unsigned long	d_off;
-    unsigned short	d_reclen;
-    char		d_name[1];
+    unsigned long d_ino;
+    unsigned long d_off;
+    unsigned short d_reclen;
+    char d_name[1];
 };
 
 struct linux_dirent64 {
-    unsigned long long  d_ino;
-    unsigned long long  d_off;
-    unsigned short  d_reclen;
+    unsigned long long d_ino;
+    unsigned long long d_off;
+    unsigned short d_reclen;
     unsigned char d_type;
-    char        d_name[1];
+    char d_name[1];
 };
 
 using namespace std;
@@ -63,7 +66,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     bool exists = true;
     auto md = gkfs_metadata(path);
     if (!md) {
-        if(errno == ENOENT) {
+        if (errno == ENOENT) {
             exists = false;
         } else {
             LOG(ERROR, "Error while retriving stat to file");
@@ -72,7 +75,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     if (!exists) {
-        if (! (flags & O_CREAT)) {
+        if (!(flags & O_CREAT)) {
             // file doesn't exists and O_CREAT was not set
             errno = ENOENT;
             return -1;
@@ -81,7 +84,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         /***   CREATION    ***/
         assert(flags & O_CREAT);
 
-        if(flags & O_DIRECTORY){
+        if (flags & O_DIRECTORY) {
             LOG(ERROR, "O_DIRECTORY use with O_CREAT. NOT SUPPORTED");
             errno = ENOTSUP;
             return -1;
@@ -95,7 +98,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     } else {
         /* File already exists */
 
-        if(flags & O_EXCL) {
+        if (flags & O_EXCL) {
             // File exists and O_EXCL was set
             errno = EEXIST;
             return -1;
@@ -112,7 +115,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
 #endif
 
-        if(S_ISDIR(md->mode())) {
+        if (S_ISDIR(md->mode())) {
             return gkfs_opendir(path);
         }
 
@@ -120,7 +123,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         /*** Regular file exists ***/
         assert(S_ISREG(md->mode()));
 
-        if( (flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY)) ) {
+        if ((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
             if (gkfs_truncate(path, md->size(), 0)) {
                 LOG(ERROR, "Error truncating file");
                 return -1;
@@ -247,7 +250,7 @@ int gkfs_statfs(struct statfs* buf) {
     buf->f_namelen = PATH_MAX_LEN;
     buf->f_frsize = 0;
     buf->f_flags =
-        ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
+            ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
     return 0;
 }
 
@@ -265,7 +268,7 @@ int gkfs_statvfs(struct statvfs* buf) {
     buf->f_namemax = PATH_MAX_LEN;
     buf->f_frsize = 0;
     buf->f_flag =
-        ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
+            ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
     return 0;
 }
 
@@ -322,7 +325,7 @@ int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
         return -1;
     }
 
-    if(rpc_send::trunc_data(path, old_size, new_size)){
+    if (rpc_send::trunc_data(path, old_size, new_size)) {
         LOG(DEBUG, "Failed to truncate data");
         return -1;
     }
@@ -349,7 +352,7 @@ int gkfs_truncate(const std::string& path, off_t length) {
         return -1;
     }
     auto size = md->size();
-    if(static_cast<unsigned long>(length) > size) {
+    if (static_cast<unsigned long>(length) > size) {
         LOG(DEBUG, "Length is greater then file size: {} > {}", length, size);
         errno = EINVAL;
         return -1;
@@ -423,7 +426,7 @@ ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) 
         if (count == 0) {
             continue;
         }
-        auto buf = (iov+i)->iov_base;
+        auto buf = (iov + i)->iov_base;
         ret = gkfs_pwrite(file, reinterpret_cast<char*>(buf), count, pos);
         if (ret == -1) {
             break;
@@ -523,7 +526,7 @@ int gkfs_rmdir(const std::string& path) {
 
     auto open_dir = std::make_shared<OpenDir>(path);
     rpc_send::get_dirents(*open_dir);
-    if(open_dir->size() != 0){
+    if (open_dir->size() != 0) {
         errno = ENOTEMPTY;
         return -1;
     }
@@ -532,11 +535,11 @@ int gkfs_rmdir(const std::string& path) {
 
 
 int getdents(unsigned int fd,
-             struct linux_dirent *dirp,
+             struct linux_dirent* dirp,
              unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
-    if(open_dir == nullptr){
+    if (open_dir == nullptr) {
         //Cast did not succeeded: open_file is a regular file
         errno = EBADF;
         return -1;
@@ -548,24 +551,25 @@ int getdents(unsigned int fd,
     }
 
     unsigned int written = 0;
-    struct linux_dirent * current_dirp = nullptr;
-    while(pos < open_dir->size()) {
+    struct linux_dirent* current_dirp = nullptr;
+    while (pos < open_dir->size()) {
         DirEntry de = open_dir->getdent(pos);
-        auto total_size = ALIGN(offsetof(struct linux_dirent, d_name) +
-                de.name().size() + 3, sizeof(long));
+        auto total_size = ALIGN(offsetof(
+                                        struct linux_dirent, d_name) +
+                                        de.name().size() + 3, sizeof(long));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct linux_dirent *>(
-                        reinterpret_cast<char*>(dirp) + written);
+        current_dirp = reinterpret_cast<struct linux_dirent*>(
+                reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
 
         current_dirp->d_reclen = total_size;
 
         *(reinterpret_cast<char*>(current_dirp) + total_size - 1) =
-            ((de.type() == FileType::regular)? DT_REG : DT_DIR);
+                ((de.type() == FileType::regular) ? DT_REG : DT_DIR);
 
         LOG(DEBUG, "name {}: {}", pos, de.name());
         std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());
@@ -584,11 +588,11 @@ int getdents(unsigned int fd,
 
 
 int getdents64(unsigned int fd,
-             struct linux_dirent64 *dirp,
-             unsigned int count) {
+               struct linux_dirent64* dirp,
+               unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
-    if(open_dir == nullptr){
+    if (open_dir == nullptr) {
         //Cast did not succeeded: open_file is a regular file
         errno = EBADF;
         return -1;
@@ -600,22 +604,23 @@ int getdents64(unsigned int fd,
     }
 
     unsigned int written = 0;
-    struct linux_dirent64 * current_dirp = nullptr;
-    while(pos < open_dir->size()) {
+    struct linux_dirent64* current_dirp = nullptr;
+    while (pos < open_dir->size()) {
         DirEntry de = open_dir->getdent(pos);
-        auto total_size = ALIGN(offsetof(struct linux_dirent64, d_name) +
-                de.name().size() + 3, sizeof(long));
+        auto total_size = ALIGN(offsetof(
+                                        struct linux_dirent64, d_name) +
+                                        de.name().size() + 3, sizeof(long));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct linux_dirent64 *>(
-                        reinterpret_cast<char*>(dirp) + written);
+        current_dirp = reinterpret_cast<struct linux_dirent64*>(
+                reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
 
         current_dirp->d_reclen = total_size;
-        current_dirp->d_type =  ((de.type() == FileType::regular)? DT_REG : DT_DIR);
+        current_dirp->d_type = ((de.type() == FileType::regular) ? DT_REG : DT_DIR);
 
         LOG(DEBUG, "name {}: {}", pos, de.name());
         std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());

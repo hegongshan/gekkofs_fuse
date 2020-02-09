@@ -11,15 +11,16 @@
   SPDX-License-Identifier: MIT
 */
 
+#include <global/env_util.hpp>
+
 #include <string>
 #include <cstdlib>
-#include <global/env_util.hpp>
 
 namespace gkfs {
 namespace env {
 
 std::string
-get_var(const std::string& name, 
+get_var(const std::string& name,
         const std::string& default_value) {
 
     const char* const val = ::secure_getenv(name.c_str());

@@ -12,11 +12,11 @@
 */
 
 #include <global/path_util.hpp>
-#include <unistd.h>
+//#include <unistd.h>
 #include <system_error>
 #include <cstring>
 #include <cassert>
-#include <sys/stat.h>
+//#include <sys/stat.h>
 
 
 bool is_relative_path(const std::string& path) {
@@ -52,7 +52,7 @@ bool has_trailing_slash(const std::string& path) {
  * prepend_path("/tmp/prefix", "./my/path") == "/tmp/prefix/./my/path"
  * ```
  */
-std::string prepend_path(const std::string& prefix_path, const char * raw_path) {
+std::string prepend_path(const std::string& prefix_path, const char* raw_path) {
     assert(!has_trailing_slash(prefix_path));
     std::size_t raw_len = std::strlen(raw_path);
     std::string res;
@@ -73,20 +73,17 @@ std::string prepend_path(const std::string& prefix_path, const char * raw_path) 
 std::vector<std::string> split_path(const std::string& path) {
     std::vector<std::string> tokens;
     size_t start = std::string::npos;
-    size_t end = (path.front() != PSP)? 0 : 1;
-    while(end != std::string::npos && end < path.size()) {
+    size_t end = (path.front() != PSP) ? 0 : 1;
+    while (end != std::string::npos && end < path.size()) {
         start = end;
         end = path.find(PSP, start);
         tokens.push_back(path.substr(start, end - start));
-        if(end != std::string::npos) {
+        if (end != std::string::npos) {
             ++end;
         }
     }
     return tokens;
 }
-
-
-
 
 
 /* Make an absolute path relative to a root path
@@ -101,7 +98,7 @@ std::string path_to_relative(const std::string& root_path, const std::string& ab
     assert(!has_trailing_slash(root_path));
 
     auto diff_its = std::mismatch(absolute_path.cbegin(), absolute_path.cend(), root_path.cbegin());
-    if(diff_its.second != root_path.cend()){
+    if (diff_its.second != root_path.cend()) {
         // complete path doesn't start with root_path
         return {};
     }
@@ -112,16 +109,16 @@ std::string path_to_relative(const std::string& root_path, const std::string& ab
     auto rel_it_end = absolute_path.cend();
 
     // relative path start exactly after the root_path prefix
-    assert((size_t)(rel_it_begin - absolute_path.cbegin()) == root_path.size());
+    assert((size_t) (rel_it_begin - absolute_path.cbegin()) == root_path.size());
 
-    if(rel_it_begin == rel_it_end) {
+    if (rel_it_begin == rel_it_end) {
         //relative path is empty, @absolute_path was equal to @root_path
         return {'/'};
     }
 
     // remove the trailing slash from relative path
-    if(has_trailing_slash(absolute_path) &&
-      rel_it_begin != rel_it_end - 1) { // the relative path is longer then 1 char ('/')
+    if (has_trailing_slash(absolute_path) &&
+        rel_it_begin != rel_it_end - 1) { // the relative path is longer then 1 char ('/')
         --rel_it_end;
     }
 
@@ -134,7 +131,7 @@ std::string dirname(const std::string& path) {
 
     auto parent_path_size = path.find_last_of(PSP);
     assert(parent_path_size != std::string::npos);
-    if(parent_path_size == 0) {
+    if (parent_path_size == 0) {
         // parent is '/'
         parent_path_size = 1;
     }

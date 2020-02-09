@@ -12,12 +12,12 @@
 */
 
 
-#include <global/rpc/rpc_types.hpp>
-#include <global/rpc/rpc_utils.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/backend/metadata/db.hpp>
-
 #include <daemon/ops/metadentry.hpp>
+
+#include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -317,7 +317,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
 
     out.dirents_size = entries.size();
 
-    if (entries.size() == 0) {
+    if (entries.empty()) {
         out.err = 0;
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
@@ -325,12 +325,12 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     //Calculate total output size
     //TODO OPTIMIZATION: this can be calculated inside db_get_dirents
     size_t tot_names_size = 0;
-    for(auto const& e: entries){
+    for (auto const& e: entries) {
         tot_names_size += e.first.size();
     }
 
-    size_t out_size = tot_names_size + entries.size() * ( sizeof(bool) + sizeof(char) );
-    if(bulk_size < out_size) {
+    size_t out_size = tot_names_size + entries.size() * (sizeof(bool) + sizeof(char));
+    if (bulk_size < out_size) {
         //Source buffer is smaller than total output size
         GKFS_DATA->spdlogger()->error("{}() Entries do not fit source buffer", __func__);
         out.err = ENOBUFS;
@@ -339,11 +339,11 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
 
     //Serialize output data on local buffer
     auto out_buff = std::make_unique<char[]>(out_size);
-    char * out_buff_ptr = out_buff.get();
+    char* out_buff_ptr = out_buff.get();
 
     auto bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
     char* names_ptr = out_buff_ptr + entries.size();
-    for(auto const& e: entries){
+    for (auto const& e: entries) {
         *bool_ptr = e.second;
         bool_ptr++;
 
@@ -352,7 +352,8 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
         names_ptr += e.first.size() + 1;
     }
 
-    ret = margo_bulk_create(mid, 1, reinterpret_cast<void**>(&out_buff_ptr), &out_size, HG_BULK_READ_ONLY, &bulk_handle);
+    ret = margo_bulk_create(mid, 1, reinterpret_cast<void**>(&out_buff_ptr), &out_size, HG_BULK_READ_ONLY,
+                            &bulk_handle);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
         out.err = EBUSY;

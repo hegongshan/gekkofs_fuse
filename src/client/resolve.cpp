@@ -11,17 +11,22 @@
   SPDX-License-Identifier: MIT
 */
 
+
+#include <client/preload.hpp>
+#include <client/logging.hpp>
+#include <client/env.hpp>
+
+#include <global/path_util.hpp>
+
 #include <vector>
 #include <string>
+#include <cassert>
+
+extern "C" {
 #include <sys/stat.h>
 #include <limits.h>
-#include <cassert>
 #include <libsyscall_intercept_hook_point.h>
-
-#include "global/path_util.hpp"
-#include "client/preload.hpp"
-#include "client/logging.hpp"
-#include "client/env.hpp"
+}
 
 static const std::string excluded_paths[2] = {"sys/", "proc/"};
 
@@ -39,19 +44,20 @@ static const std::string excluded_paths[2] = {"sys/", "proc/"};
  *  tot_comp == 4;
  * ```
  */
-unsigned int path_match_components(const std::string& path, unsigned int &path_components, const std::vector<std::string>& components) {
+unsigned int path_match_components(const std::string& path, unsigned int& path_components,
+                                   const std::vector<std::string>& components) {
     unsigned int matched = 0;
     unsigned int processed_components = 0;
     std::string::size_type comp_size = 0; // size of current component
     std::string::size_type start = 0; // start index of curr component
     std::string::size_type end = 0; // end index of curr component (last processed Path Separator "PSP")
 
-    while(++end < path.size()) {
+    while (++end < path.size()) {
         start = end;
 
         // Find next component
         end = path.find(PSP, start);
-        if(end == std::string::npos) {
+        if (end == std::string::npos) {
             end = path.size();
         }
 
@@ -78,9 +84,9 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
  * returns true if the resolved path fall inside GekkoFS namespace,
  * and false otherwise.
  */
- bool resolve_path (const std::string& path, std::string& resolved, bool resolve_last_link) {
+bool resolve_path(const std::string& path, std::string& resolved, bool resolve_last_link) {
 
-    LOG(DEBUG, "path: \"{}\", resolved: \"{}\", resolve_last_link: {}", 
+    LOG(DEBUG, "path: \"{}\", resolved: \"{}\", resolve_last_link: {}",
         path, resolved, resolve_last_link);
 
     assert(is_absolute_path(path));
@@ -108,13 +114,13 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
         start = end;
 
         /* Skip sequence of multiple path-separators. */
-        while(start < path.size() && path[start] == PSP) {
+        while (start < path.size() && path[start] == PSP) {
             ++start;
         }
 
         // Find next component
         end = path.find(PSP, start);
-        if(end == std::string::npos) {
+        if (end == std::string::npos) {
             end = path.size();
         }
         comp_size = end - start;
@@ -127,7 +133,7 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
             // component is '.', we skip it
             continue;
         }
-        if (comp_size == 2 && path.at(start) == '.' && path.at(start+1) == '.') {
+        if (comp_size == 2 && path.at(start) == '.' && path.at(start + 1) == '.') {
             // component is '..' we need to rollback resolved path
             if (resolved.size() > 0) {
                 resolved.erase(last_slash_pos);
@@ -172,7 +178,7 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
                 if (realpath(resolved.c_str(), link_resolved.get()) == nullptr) {
 
                     LOG(ERROR, "Failed to get realpath for link \"{}\". "
-                        "Error: {}", resolved, ::strerror(errno));
+                               "Error: {}", resolved, ::strerror(errno));
 
                     resolved.append(path, end, std::string::npos);
                     return false;
@@ -184,8 +190,8 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
                 last_slash_pos = resolved.find_last_of(PSP);
                 continue;
             } else if ((!S_ISDIR(st.st_mode)) && (end != path.size())) {
-               resolved.append(path, end, std::string::npos);
-               return false;
+                resolved.append(path, end, std::string::npos);
+                return false;
             }
         } else {
             // Inside GekkoFS
@@ -215,7 +221,7 @@ std::string get_sys_cwd() {
                                 "Failed to retrieve current working directory");
     }
     // getcwd could return "(unreachable)<PATH>" in some cases
-    if(temp[0] != PSP) {
+    if (temp[0] != PSP) {
         throw std::runtime_error(
                 "Current working directory is unreachable");
     }
@@ -239,7 +245,7 @@ void set_env_cwd(const std::string& path) {
 
     LOG(DEBUG, "Setting {} to \"{}\"", gkfs::env::CWD, path);
 
-    if(setenv(gkfs::env::CWD, path.c_str(), 1)) {
+    if (setenv(gkfs::env::CWD, path.c_str(), 1)) {
         LOG(ERROR, "Failed while setting {}: {}",
             gkfs::env::CWD, std::strerror(errno));
         throw std::system_error(errno,
@@ -252,9 +258,9 @@ void unset_env_cwd() {
 
     LOG(DEBUG, "Clearing {}()", gkfs::env::CWD);
 
-    if(unsetenv(gkfs::env::CWD)) {
+    if (unsetenv(gkfs::env::CWD)) {
 
-        LOG(ERROR, "Failed to clear {}: {}", 
+        LOG(ERROR, "Failed to clear {}: {}",
             gkfs::env::CWD, std::strerror(errno));
 
         throw std::system_error(errno,
@@ -273,7 +279,7 @@ void init_cwd() {
 }
 
 void set_cwd(const std::string& path, bool internal) {
-    if(internal) {
+    if (internal) {
         set_sys_cwd(CTX->mountdir());
         set_env_cwd(path);
     } else {
