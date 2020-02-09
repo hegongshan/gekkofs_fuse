@@ -21,10 +21,10 @@
 #include <vector>
 #include <string>
 #include <cassert>
+#include <climits>
 
 extern "C" {
 #include <sys/stat.h>
-#include <limits.h>
 #include <libsyscall_intercept_hook_point.h>
 }
 
@@ -99,7 +99,7 @@ bool resolve_path(const std::string& path, std::string& resolved, bool resolve_l
         }
     }
 
-    struct stat st;
+    struct stat st{};
     const std::vector<std::string>& mnt_components = CTX->mountdir_components();
     unsigned int matched_components = 0; // matched number of component in mountdir
     unsigned int resolved_components = 0;
@@ -135,7 +135,7 @@ bool resolve_path(const std::string& path, std::string& resolved, bool resolve_l
         }
         if (comp_size == 2 && path.at(start) == '.' && path.at(start + 1) == '.') {
             // component is '..' we need to rollback resolved path
-            if (resolved.size() > 0) {
+            if (!resolved.empty()) {
                 resolved.erase(last_slash_pos);
                 /* TODO     Optimization
                  * the previous slash position should be stored.
@@ -206,7 +206,7 @@ bool resolve_path(const std::string& path, std::string& resolved, bool resolve_l
         return true;
     }
 
-    if (resolved.size() == 0) {
+    if (resolved.empty()) {
         resolved.push_back(PSP);
     }
     LOG(DEBUG, "external: \"{}\"", resolved);

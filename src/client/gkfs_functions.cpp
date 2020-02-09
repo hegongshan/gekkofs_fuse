@@ -32,24 +32,51 @@ extern "C" {
 #define __ALIGN_KERNEL(x, a)            __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
 #define ALIGN(x, a)                     __ALIGN_KERNEL((x), (a))
 
-struct linux_dirent {
-    unsigned long d_ino;
-    unsigned long d_off;
-    unsigned short d_reclen;
-    char d_name[1];
-};
-
-struct linux_dirent64 {
-    unsigned long long d_ino;
-    unsigned long long d_off;
-    unsigned short d_reclen;
-    unsigned char d_type;
-    char d_name[1];
-};
-
 using namespace std;
 
-int gkfs_open(const std::string& path, mode_t mode, int flags) {
+std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_links) {
+    std::string attr;
+    auto err = rpc_send::stat(path, attr);
+    if (err) {
+        return nullptr;
+    }
+#ifdef HAS_SYMLINKS
+    if (follow_links) {
+        Metadata md{attr};
+        while (md.is_link()) {
+            err = rpc_send::stat(md.target_path(), attr);
+            if (err) {
+                return nullptr;
+            }
+            md = Metadata{attr};
+        }
+    }
+#endif
+    return make_shared<Metadata>(attr);
+}
+
+int gkfs::func::check_parent_dir(const std::string& path) {
+#if CREATE_CHECK_PARENTS
+    auto p_comp = dirname(path);
+    auto md = gkfs::func::metadata(p_comp);
+    if (!md) {
+        if (errno == ENOENT) {
+            LOG(DEBUG, "Parent component does not exist: '{}'", p_comp);
+        } else {
+            LOG(ERROR, "Failed to get metadata for parent component '{}': {}", path, strerror(errno));
+        }
+        return -1;
+    }
+    if (!S_ISDIR(md->mode())) {
+        LOG(DEBUG, "Parent component is not a directory: '{}'", p_comp);
+        errno = ENOTDIR;
+        return -1;
+    }
+#endif // CREATE_CHECK_PARENTS
+    return 0;
+}
+
+int gkfs::func::open(const std::string& path, mode_t mode, int flags) {
 
     if (flags & O_PATH) {
         LOG(ERROR, "`O_PATH` flag is not supported");
@@ -64,7 +91,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     bool exists = true;
-    auto md = gkfs_metadata(path);
+    auto md = gkfs::func::metadata(path);
     if (!md) {
         if (errno == ENOENT) {
             exists = false;
@@ -91,7 +118,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
 
         // no access check required here. If one is using our FS they have the permissions.
-        if (gkfs_mk_node(path, mode | S_IFREG)) {
+        if (gkfs::func::mk_node(path, mode | S_IFREG)) {
             LOG(ERROR, "Error creating non-existent file: '{}'", strerror(errno));
             return -1;
         }
@@ -111,12 +138,12 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
                 errno = ELOOP;
                 return -1;
             }
-            return gkfs_open(md->target_path(), mode, flags);
+            return gkfs::func::open(md->target_path(), mode, flags);
         }
 #endif
 
         if (S_ISDIR(md->mode())) {
-            return gkfs_opendir(path);
+            return gkfs::func::opendir(path);
         }
 
 
@@ -124,7 +151,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         assert(S_ISREG(md->mode()));
 
         if ((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
-            if (gkfs_truncate(path, md->size(), 0)) {
+            if (gkfs::func::truncate(path, md->size(), 0)) {
                 LOG(ERROR, "Error truncating file");
                 return -1;
             }
@@ -134,28 +161,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
 
-int check_parent_dir(const std::string& path) {
-#if CREATE_CHECK_PARENTS
-    auto p_comp = dirname(path);
-    auto md = gkfs_metadata(p_comp);
-    if (!md) {
-        if (errno == ENOENT) {
-            LOG(DEBUG, "Parent component does not exist: '{}'", p_comp);
-        } else {
-            LOG(ERROR, "Failed to get metadata for parent component '{}': {}", path, strerror(errno));
-        }
-        return -1;
-    }
-    if (!S_ISDIR(md->mode())) {
-        LOG(DEBUG, "Parent component is not a directory: '{}'", p_comp);
-        errno = ENOTDIR;
-        return -1;
-    }
-#endif // CREATE_CHECK_PARENTS
-    return 0;
-}
-
-int gkfs_mk_node(const std::string& path, mode_t mode) {
+int gkfs::func::mk_node(const std::string& path, mode_t mode) {
 
     //file type must be set
     switch (mode & S_IFMT) {
@@ -189,8 +195,8 @@ int gkfs_mk_node(const std::string& path, mode_t mode) {
  * @param path
  * @return
  */
-int gkfs_rm_node(const std::string& path) {
-    auto md = gkfs_metadata(path);
+int gkfs::func::rm_node(const std::string& path) {
+    auto md = gkfs::func::metadata(path);
     if (!md) {
         return -1;
     }
@@ -198,8 +204,8 @@ int gkfs_rm_node(const std::string& path) {
     return rpc_send::rm_node(path, !has_data, md->size());
 }
 
-int gkfs_access(const std::string& path, const int mask, bool follow_links) {
-    auto md = gkfs_metadata(path, follow_links);
+int gkfs::func::access(const std::string& path, const int mask, bool follow_links) {
+    auto md = gkfs::func::metadata(path, follow_links);
     if (!md) {
         errno = ENOENT;
         return -1;
@@ -207,8 +213,8 @@ int gkfs_access(const std::string& path, const int mask, bool follow_links) {
     return 0;
 }
 
-int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
-    auto md = gkfs_metadata(path, follow_links);
+int gkfs::func::stat(const string& path, struct stat* buf, bool follow_links) {
+    auto md = gkfs::func::metadata(path, follow_links);
     if (!md) {
         return -1;
     }
@@ -216,28 +222,7 @@ int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     return 0;
 }
 
-std::shared_ptr<Metadata> gkfs_metadata(const string& path, bool follow_links) {
-    std::string attr;
-    auto err = rpc_send::stat(path, attr);
-    if (err) {
-        return nullptr;
-    }
-#ifdef HAS_SYMLINKS
-    if (follow_links) {
-        Metadata md{attr};
-        while (md.is_link()) {
-            err = rpc_send::stat(md.target_path(), attr);
-            if (err) {
-                return nullptr;
-            }
-            md = Metadata{attr};
-        }
-    }
-#endif
-    return make_shared<Metadata>(attr);
-}
-
-int gkfs_statfs(struct statfs* buf) {
+int gkfs::func::statfs(sys_statfs* buf) {
     auto blk_stat = rpc_send::chunk_stat();
     buf->f_type = 0;
     buf->f_bsize = blk_stat.chunk_size;
@@ -254,7 +239,7 @@ int gkfs_statfs(struct statfs* buf) {
     return 0;
 }
 
-int gkfs_statvfs(struct statvfs* buf) {
+int gkfs::func::statvfs(sys_statvfs* buf) {
     init_ld_env_if_needed();
     auto blk_stat = rpc_send::chunk_stat();
     buf->f_bsize = blk_stat.chunk_size;
@@ -272,11 +257,11 @@ int gkfs_statvfs(struct statvfs* buf) {
     return 0;
 }
 
-off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
-    return gkfs_lseek(CTX->file_map()->get(fd), offset, whence);
+off_t gkfs::func::lseek(unsigned int fd, off_t offset, unsigned int whence) {
+    return gkfs::func::lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
-off_t gkfs_lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
+off_t gkfs::func::lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
             gkfs_fd->pos(offset);
@@ -312,7 +297,7 @@ off_t gkfs_lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int whence
     return gkfs_fd->pos();
 }
 
-int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
+int gkfs::func::truncate(const std::string& path, off_t old_size, off_t new_size) {
     assert(new_size >= 0);
     assert(new_size <= old_size);
 
@@ -332,7 +317,7 @@ int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     return 0;
 }
 
-int gkfs_truncate(const std::string& path, off_t length) {
+int gkfs::func::truncate(const std::string& path, off_t length) {
     /* TODO CONCURRENCY:
      * At the moment we first ask the length to the metadata-server in order to
      * know which data-server have data to be deleted.
@@ -347,7 +332,7 @@ int gkfs_truncate(const std::string& path, off_t length) {
         return -1;
     }
 
-    auto md = gkfs_metadata(path, true);
+    auto md = gkfs::func::metadata(path, true);
     if (!md) {
         return -1;
     }
@@ -357,18 +342,18 @@ int gkfs_truncate(const std::string& path, off_t length) {
         errno = EINVAL;
         return -1;
     }
-    return gkfs_truncate(path, size, length);
+    return gkfs::func::truncate(path, size, length);
 }
 
-int gkfs_dup(const int oldfd) {
+int gkfs::func::dup(const int oldfd) {
     return CTX->file_map()->dup(oldfd);
 }
 
-int gkfs_dup2(const int oldfd, const int newfd) {
+int gkfs::func::dup2(const int oldfd, const int newfd) {
     return CTX->file_map()->dup2(oldfd, newfd);
 }
 
-ssize_t gkfs_pwrite(std::shared_ptr<OpenFile> file, const char* buf, size_t count, off64_t offset) {
+ssize_t gkfs::func::pwrite(std::shared_ptr<OpenFile> file, const char* buf, size_t count, off64_t offset) {
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         LOG(WARNING, "Cannot read from directory");
@@ -392,9 +377,9 @@ ssize_t gkfs_pwrite(std::shared_ptr<OpenFile> file, const char* buf, size_t coun
     return ret; // return written size or -1 as error
 }
 
-ssize_t gkfs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
+ssize_t gkfs::func::pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     auto file = CTX->file_map()->get(fd);
-    return gkfs_pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
+    return gkfs::func::pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
 }
 
 /* Write counts bytes starting from current file position
@@ -402,12 +387,12 @@ ssize_t gkfs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
  *
  * Same as write syscall.
 */
-ssize_t gkfs_write(int fd, const void* buf, size_t count) {
+ssize_t gkfs::func::write(int fd, const void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); //retrieve the current offset
     if (gkfs_fd->get_flag(OpenFile_flags::append))
-        gkfs_lseek(gkfs_fd, 0, SEEK_END);
-    auto ret = gkfs_pwrite(gkfs_fd, reinterpret_cast<const char*>(buf), count, pos);
+        gkfs::func::lseek(gkfs_fd, 0, SEEK_END);
+    auto ret = gkfs::func::pwrite(gkfs_fd, reinterpret_cast<const char*>(buf), count, pos);
     // Update offset in file descriptor in the file map
     if (ret > 0) {
         gkfs_fd->pos(pos + count);
@@ -415,7 +400,7 @@ ssize_t gkfs_write(int fd, const void* buf, size_t count) {
     return ret;
 }
 
-ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
+ssize_t gkfs::func::pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
     auto pos = offset; // keep truck of current position
@@ -427,7 +412,7 @@ ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) 
             continue;
         }
         auto buf = (iov + i)->iov_base;
-        ret = gkfs_pwrite(file, reinterpret_cast<char*>(buf), count, pos);
+        ret = gkfs::func::pwrite(file, reinterpret_cast<char*>(buf), count, pos);
         if (ret == -1) {
             break;
         }
@@ -445,11 +430,11 @@ ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) 
     return written;
 }
 
-ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
+ssize_t gkfs::func::writev(int fd, const struct iovec* iov, int iovcnt) {
 
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); // retrieve the current offset
-    auto ret = gkfs_pwritev(fd, iov, iovcnt, pos);
+    auto ret = gkfs::func::pwritev(fd, iov, iovcnt, pos);
     assert(ret != 0);
     if (ret < 0) {
         return -1;
@@ -458,7 +443,7 @@ ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
     return ret;
 }
 
-ssize_t gkfs_pread(std::shared_ptr<OpenFile> file, char* buf, size_t count, off64_t offset) {
+ssize_t gkfs::func::pread(std::shared_ptr<OpenFile> file, char* buf, size_t count, off64_t offset) {
     if (file->type() != FileType::regular) {
         assert(file->type() == FileType::directory);
         LOG(WARNING, "Cannot read from directory");
@@ -478,10 +463,10 @@ ssize_t gkfs_pread(std::shared_ptr<OpenFile> file, char* buf, size_t count, off6
     return ret; // return read size or -1 as error
 }
 
-ssize_t gkfs_read(int fd, void* buf, size_t count) {
+ssize_t gkfs::func::read(int fd, void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); //retrieve the current offset
-    auto ret = gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, pos);
+    auto ret = gkfs::func::pread(gkfs_fd, reinterpret_cast<char*>(buf), count, pos);
     // Update offset in file descriptor in the file map
     if (ret > 0) {
         gkfs_fd->pos(pos + ret);
@@ -489,14 +474,14 @@ ssize_t gkfs_read(int fd, void* buf, size_t count) {
     return ret;
 }
 
-ssize_t gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
+ssize_t gkfs::func::pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     auto gkfs_fd = CTX->file_map()->get(fd);
-    return gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, offset);
+    return gkfs::func::pread(gkfs_fd, reinterpret_cast<char*>(buf), count, offset);
 }
 
-int gkfs_opendir(const std::string& path) {
+int gkfs::func::opendir(const std::string& path) {
 
-    auto md = gkfs_metadata(path);
+    auto md = gkfs::func::metadata(path);
     if (!md) {
         return -1;
     }
@@ -511,8 +496,8 @@ int gkfs_opendir(const std::string& path) {
     return CTX->file_map()->add(open_dir);
 }
 
-int gkfs_rmdir(const std::string& path) {
-    auto md = gkfs_metadata(path);
+int gkfs::func::rmdir(const std::string& path) {
+    auto md = gkfs::func::metadata(path);
     if (!md) {
         LOG(DEBUG, "Path '{}' does not exist: ", path);
         errno = ENOENT;
@@ -533,10 +518,9 @@ int gkfs_rmdir(const std::string& path) {
     return rpc_send::rm_node(path, true, 0);
 }
 
-
-int getdents(unsigned int fd,
-             struct linux_dirent* dirp,
-             unsigned int count) {
+int gkfs::func::getdents(unsigned int fd,
+                         struct linux_dirent* dirp,
+                         unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
     if (open_dir == nullptr) {
@@ -587,9 +571,9 @@ int getdents(unsigned int fd,
 }
 
 
-int getdents64(unsigned int fd,
-               struct linux_dirent64* dirp,
-               unsigned int count) {
+int gkfs::func::getdents64(unsigned int fd,
+                           struct linux_dirent64* dirp,
+                           unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
     if (open_dir == nullptr) {
@@ -640,14 +624,14 @@ int getdents64(unsigned int fd,
 
 #ifdef HAS_SYMLINKS
 
-int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
+int gkfs::func::mk_symlink(const std::string& path, const std::string& target_path) {
     init_ld_env_if_needed();
     /* The following check is not POSIX compliant.
      * In POSIX the target is not checked at all.
     *  Here if the target is a directory we raise a NOTSUP error.
     *  So that application know we don't support link to directory.
     */
-    auto target_md = gkfs_metadata(target_path, false);
+    auto target_md = gkfs::func::metadata(target_path, false);
     if (target_md != nullptr) {
         auto trg_mode = target_md->mode();
         if (!(S_ISREG(trg_mode) || S_ISLNK(trg_mode))) {
@@ -662,7 +646,7 @@ int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
         return -1;
     }
 
-    auto link_md = gkfs_metadata(path, false);
+    auto link_md = gkfs::func::metadata(path, false);
     if (link_md != nullptr) {
         LOG(DEBUG, "Link exists: '{}'", path);
         errno = EEXIST;
@@ -672,9 +656,9 @@ int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
     return rpc_send::mk_symlink(path, target_path);
 }
 
-int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
+int gkfs::func::readlink(const std::string& path, char* buf, int bufsize) {
     init_ld_env_if_needed();
-    auto md = gkfs_metadata(path, false);
+    auto md = gkfs::func::metadata(path, false);
     if (md == nullptr) {
         LOG(DEBUG, "Named link doesn't exist");
         return -1;
@@ -697,3 +681,5 @@ int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
 }
 
 #endif
+
+#pragma clang diagnostic pop
