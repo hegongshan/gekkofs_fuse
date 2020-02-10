@@ -79,9 +79,9 @@ PreloadContext::init_logging() {
 }
 
 void PreloadContext::mountdir(const std::string& path) {
-    assert(is_absolute_path(path));
-    assert(!has_trailing_slash(path));
-    mountdir_components_ = split_path(path);
+    assert(gkfs::path_util::is_absolute(path));
+    assert(!gkfs::path_util::has_trailing_slash(path));
+    mountdir_components_ = gkfs::path_util::split_path(path);
     mountdir_ = path;
 }
 
@@ -136,11 +136,11 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
 
     std::string path;
 
-    if (raw_path[0] != PSP) {
+    if (raw_path[0] != gkfs::path_util::separator) {
         // path is relative
         if (dirfd == AT_FDCWD) {
             // path is relative to cwd
-            path = prepend_path(cwd_, raw_path);
+            path = gkfs::path_util::prepend_path(cwd_, raw_path);
         } else {
             if (!ofm_->exist(dirfd)) {
                 return RelativizeStatus::fd_unknown;
@@ -152,14 +152,14 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
             }
             path = mountdir_;
             path.append(dir->path());
-            path.push_back(PSP);
+            path.push_back(gkfs::path_util::separator);
             path.append(raw_path);
         }
     } else {
         path = raw_path;
     }
 
-    if (resolve_path(path, relative_path, resolve_last_link)) {
+    if (gkfs::path::resolve(path, relative_path, resolve_last_link)) {
         return RelativizeStatus::internal;
     }
     return RelativizeStatus::external;
@@ -176,15 +176,15 @@ bool PreloadContext::relativize_path(const char* raw_path, std::string& relative
 
     std::string path;
 
-    if (raw_path[0] != PSP) {
+    if (raw_path[0] != gkfs::path_util::separator) {
         /* Path is not absolute, we need to prepend CWD;
          * First reserve enough space to minimize memory copy
          */
-        path = prepend_path(cwd_, raw_path);
+        path = gkfs::path_util::prepend_path(cwd_, raw_path);
     } else {
         path = raw_path;
     }
-    return resolve_path(path, relative_path, resolve_last_link);
+    return gkfs::path::resolve(path, relative_path, resolve_last_link);
 }
 
 const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {

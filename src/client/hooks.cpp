@@ -515,13 +515,13 @@ int hook_chdir(const char* path) {
         //TODO get complete path from relativize_path instead of
         // removing mountdir and then adding again here
         rel_path.insert(0, CTX->mountdir());
-        if (has_trailing_slash(rel_path)) {
+        if (gkfs::path_util::has_trailing_slash(rel_path)) {
             // open_dir is '/'
             rel_path.pop_back();
         }
     }
     try {
-        set_cwd(rel_path, internal);
+        gkfs::path::set_cwd(rel_path, internal);
     } catch (const std::system_error& se) {
         return -(se.code().value());
     }
@@ -543,12 +543,12 @@ int hook_fchdir(unsigned int fd) {
         }
 
         std::string new_path = CTX->mountdir() + open_dir->path();
-        if (has_trailing_slash(new_path)) {
+        if (gkfs::path_util::has_trailing_slash(new_path)) {
             // open_dir is '/'
             new_path.pop_back();
         }
         try {
-            set_cwd(new_path, true);
+            gkfs::path::set_cwd(new_path, true);
         } catch (const std::system_error& se) {
             return -(se.code().value());
         }
@@ -559,8 +559,8 @@ int hook_fchdir(unsigned int fd) {
                                     std::system_category(),
                                     "Failed to change directory (fchdir syscall)");
         }
-        unset_env_cwd();
-        CTX->cwd(get_sys_cwd());
+        gkfs::path::unset_env_cwd();
+        CTX->cwd(gkfs::path::get_sys_cwd());
     }
     return 0;
 }

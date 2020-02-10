@@ -16,11 +16,15 @@
 
 #include <spdlog/spdlog.h>
 
-spdlog::level::level_enum get_spdlog_level(std::string level_str);
+namespace gkfs {
+    namespace logging {
 
-spdlog::level::level_enum get_spdlog_level(unsigned long level);
+        spdlog::level::level_enum get_level(std::string level_str);
 
-void setup_loggers(const std::vector<std::string>& loggers,
-                   spdlog::level::level_enum level, const std::string& path);
+        spdlog::level::level_enum get_level(unsigned long level);
+
+        void setup(const std::vector<std::string>& loggers, spdlog::level::level_enum level, const std::string& path);
+    }
+}
 
 #endif

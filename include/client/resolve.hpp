@@ -12,17 +12,26 @@
 */
 
 #include <string>
+#include <vector>
 
-bool resolve_path(const std::string& path, std::string& resolved, bool resolve_last_link = true);
+namespace gkfs {
+    namespace path {
 
-std::string get_sys_cwd();
+        unsigned int match_components(const std::string& path, unsigned int& path_components,
+                                      const std::vector<std::string>& components);
 
-void set_sys_cwd(const std::string& path);
+        bool resolve(const std::string& path, std::string& resolved, bool resolve_last_link = true);
 
-void set_env_cwd(const std::string& path);
+        std::string get_sys_cwd();
 
-void unset_env_cwd();
+        void set_sys_cwd(const std::string& path);
 
-void init_cwd();
+        void set_env_cwd(const std::string& path);
 
-void set_cwd(const std::string& path, bool internal);
+        void unset_env_cwd();
+
+        void init_cwd();
+
+        void set_cwd(const std::string& path, bool internal);
+    }
+}

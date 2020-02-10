@@ -60,8 +60,8 @@ std::string MetadataDB::get(const std::string& key) const {
 }
 
 void MetadataDB::put(const std::string& key, const std::string& val) {
-    assert(is_absolute_path(key));
-    assert(key == "/" || !has_trailing_slash(key));
+    assert(gkfs::path_util::is_absolute(key));
+    assert(key == "/" || !gkfs::path_util::has_trailing_slash(key));
 
     auto cop = CreateOperand(val);
     auto s = db->Merge(write_opts, key, cop.serialize());
@@ -133,9 +133,9 @@ void MetadataDB::decrease_size(const std::string& key, size_t size) {
  */
 std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::string& dir) const {
     auto root_path = dir;
-    assert(is_absolute_path(root_path));
+    assert(gkfs::path_util::is_absolute(root_path));
     //add trailing slash if missing
-    if (!has_trailing_slash(root_path) && root_path.size() != 1) {
+    if (!gkfs::path_util::has_trailing_slash(root_path) && root_path.size() != 1) {
         //add trailing slash only if missing and is not the root_folder "/"
         root_path.push_back('/');
     }

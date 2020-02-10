@@ -151,7 +151,7 @@ void init_preload() {
     CTX->protect_user_fds();
 
     log_prog_name();
-    init_cwd();
+    gkfs::path::init_cwd();
 
     LOG(DEBUG, "Current working directory: '{}'", CTX->cwd());
     init_ld_env_if_needed();

@@ -16,16 +16,9 @@
 #include <string>
 #include <cstdlib>
 
-namespace gkfs {
-namespace env {
+using namespace std;
 
-std::string
-get_var(const std::string& name,
-        const std::string& default_value) {
-
+string gkfs::env::get_var(const string& name, const string& default_value) {
     const char* const val = ::secure_getenv(name.c_str());
-    return val != nullptr ? std::string(val) : default_value;
+    return val != nullptr ? string(val) : default_value;
 }
-
-} // namespace env
-} // namespace gkfs

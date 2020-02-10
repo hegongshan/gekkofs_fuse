@@ -250,13 +250,13 @@ void initialize_loggers() {
         path = env_path;
     }
 
-    spdlog::level::level_enum level = get_spdlog_level(gkfs_config::logging::daemon_log_level);
+    spdlog::level::level_enum level = gkfs::logging::get_level(gkfs_config::logging::daemon_log_level);
     // Try to get log path from env variable
     std::string env_level_key = DAEMON_ENV_PREFIX;
     env_level_key += "LOG_LEVEL";
     char* env_level = getenv(env_level_key.c_str());
     if (env_level != nullptr) {
-        level = get_spdlog_level(env_level);
+        level = gkfs::logging::get_level(env_level);
     }
 
     auto logger_names = std::vector<std::string>{
@@ -265,7 +265,7 @@ void initialize_loggers() {
         "ChunkStorage",
     };
 
-    setup_loggers(logger_names, level, path);
+    gkfs::logging::setup(logger_names, level, path);
 }
 
 int main(int argc, const char* argv[]) {

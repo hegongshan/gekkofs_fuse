@@ -57,7 +57,7 @@ std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_l
 
 int gkfs::func::check_parent_dir(const std::string& path) {
 #if CREATE_CHECK_PARENTS
-    auto p_comp = dirname(path);
+    auto p_comp = gkfs::path_util::dirname(path);
     auto md = gkfs::func::metadata(p_comp);
     if (!md) {
         if (errno == ENOENT) {
@@ -232,7 +232,7 @@ int gkfs::func::statfs(sys_statfs* buf) {
     buf->f_files = 0;
     buf->f_ffree = 0;
     buf->f_fsid = {0, 0};
-    buf->f_namelen = PATH_MAX_LEN;
+    buf->f_namelen = gkfs::path_util::max_length;
     buf->f_frsize = 0;
     buf->f_flags =
             ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
@@ -250,7 +250,7 @@ int gkfs::func::statvfs(sys_statvfs* buf) {
     buf->f_ffree = 0;
     buf->f_favail = 0;
     buf->f_fsid = 0;
-    buf->f_namemax = PATH_MAX_LEN;
+    buf->f_namemax = gkfs::path_util::max_length;
     buf->f_frsize = 0;
     buf->f_flag =
             ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;

@@ -26,7 +26,7 @@ namespace bfs = boost::filesystem;
 using namespace std;
 
 string ChunkStorage::absolute(const string& internal_path) const {
-    assert(is_relative_path(internal_path));
+    assert(gkfs::path_util::is_relative(internal_path));
     return root_path + '/' + internal_path;
 }
 
@@ -34,7 +34,7 @@ ChunkStorage::ChunkStorage(const string& path, const size_t chunksize) :
         root_path(path),
         chunksize(chunksize) {
     //TODO check path: absolute, exists, permission to write etc...
-    assert(is_absolute_path(root_path));
+    assert(gkfs::path_util::is_absolute(root_path));
 
     /* Initialize logger */
     log = spdlog::get(LOGGER_NAME);
@@ -44,7 +44,7 @@ ChunkStorage::ChunkStorage(const string& path, const size_t chunksize) :
 }
 
 string ChunkStorage::get_chunks_dir(const string& file_path) {
-    assert(is_absolute_path(file_path));
+    assert(gkfs::path_util::is_absolute(file_path));
     string chunk_dir = file_path.substr(1);
     ::replace(chunk_dir.begin(), chunk_dir.end(), '/', ':');
     return chunk_dir;
