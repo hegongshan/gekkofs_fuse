@@ -5,10 +5,10 @@ set(PRELOAD_SRC
     logging.cpp
     open_file_map.cpp
     open_dir.cpp
+    path.cpp
     preload.cpp
     preload_context.cpp
     preload_util.cpp
-    resolve.cpp
     ../global/path_util.cpp
     ../global/rpc/rpc_utils.cpp
     rpc/hg_rpcs.cpp
@@ -27,10 +27,10 @@ set(PRELOAD_HEADERS
     ../../include/client/make_array.hpp
     ../../include/client/open_file_map.hpp
     ../../include/client/open_dir.hpp
+    ../../include/client/path.hpp
     ../../include/client/preload.hpp
     ../../include/client/preload_context.hpp
     ../../include/client/preload_util.hpp
-    ../../include/client/resolve.hpp
     ../../include/client/rpc/hg_rpcs.hpp
     ../../include/client/rpc/ld_rpc_management.hpp
     ../../include/client/rpc/ld_rpc_metadentry.hpp

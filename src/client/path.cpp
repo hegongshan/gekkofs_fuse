@@ -11,7 +11,7 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <client/resolve.hpp>
+#include <client/path.hpp>
 #include <client/preload.hpp>
 #include <client/logging.hpp>
 #include <client/env.hpp>

@@ -15,7 +15,7 @@
 #include <client/preload.hpp>
 #include <client/logging.hpp>
 #include <client/gkfs_functions.hpp>
-#include <client/resolve.hpp>
+#include <client/path.hpp>
 #include <client/open_dir.hpp>
 
 #include <global/path_util.hpp>

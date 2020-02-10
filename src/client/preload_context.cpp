@@ -18,7 +18,7 @@
 #include <client/logging.hpp>
 #include <client/open_file_map.hpp>
 #include <client/open_dir.hpp>
-#include <client/resolve.hpp>
+#include <client/path.hpp>
 
 #include <global/env_util.hpp>
 #include <global/path_util.hpp>
