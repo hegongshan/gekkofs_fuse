@@ -14,13 +14,10 @@
 #include <hermes.hpp>
 #include <client/rpc/hg_rpcs.hpp>
 
-namespace hermes { namespace detail {
-
 //==============================================================================
 // register request types so that they can be used by users and the engine
 //
-void
-register_user_request_types() {
+void hermes::detail::register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::fs_config>();
     (void) registered_requests().add<gkfs::rpc::create>();
     (void) registered_requests().add<gkfs::rpc::stat>();
@@ -41,5 +38,3 @@ register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::chunk_stat>();
 
 }
-
-}} // namespace hermes::detail

@@ -18,14 +18,14 @@
 
 namespace rpc_send {
 
-    ssize_t write(const std::string& path, const void* buf, bool append_flag, off64_t in_offset,
-                  size_t write_size, int64_t updated_metadentry_size);
-
     struct ChunkStat {
         unsigned long chunk_size;
         unsigned long chunk_total;
         unsigned long chunk_free;
     };
+
+    ssize_t write(const std::string& path, const void* buf, bool append_flag, off64_t in_offset,
+                  size_t write_size, int64_t updated_metadentry_size);
 
     ssize_t read(const std::string& path, void* buf, off64_t offset, size_t read_size);
 
