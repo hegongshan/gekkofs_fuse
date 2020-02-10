@@ -18,20 +18,25 @@
 #include <daemon/main.hpp>
 #include <global/metadata.hpp>
 
-void create_metadentry(const std::string& path, Metadata& md);
+namespace gkfs {
+    namespace metadentry {
 
-std::string get_metadentry_str(const std::string& path);
+        Metadata get(const std::string& path);
 
-Metadata get_metadentry(const std::string& path);
+        std::string get_str(const std::string& path);
 
-void remove_node(const std::string& path);
+        size_t get_size(const std::string& path);
 
-size_t get_metadentry_size(const std::string& path);
+        std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir);
 
-void update_metadentry_size(const std::string& path, size_t io_size, off_t offset, bool append);
+        void create(const std::string& path, Metadata& md);
 
-void update_metadentry(const std::string& path, Metadata& md);
+        void update(const std::string& path, Metadata& md);
 
-std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir);
+        void update_size(const std::string& path, size_t io_size, off_t offset, bool append);
+
+        void remove_node(const std::string& path);
+    }
+}
 
 #endif //GEKKOFS_METADENTRY_HPP

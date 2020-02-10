@@ -92,7 +92,7 @@ void init_environment() {
     // Create metadentry for root directory
     Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
     try {
-        create_metadentry("/", root_md);
+        gkfs::metadentry::create("/", root_md);
     } catch (const std::exception& e) {
         throw runtime_error("Failed to write root metadentry to KV store: "s + e.what());
     }

@@ -681,5 +681,3 @@ int gkfs::func::readlink(const std::string& path, char* buf, int bufsize) {
 }
 
 #endif
-
-#pragma clang diagnostic pop

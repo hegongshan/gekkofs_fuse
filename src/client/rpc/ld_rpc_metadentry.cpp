@@ -27,8 +27,7 @@ using namespace std;
 int rpc_send::mk_node(const std::string& path, const mode_t mode) {
 
     int err = EUNKNOWN;
-    auto endp = CTX->hosts().at(
-            CTX->distributor()->locate_file_metadata(path));
+    auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
         LOG(DEBUG, "Sending RPC ...");

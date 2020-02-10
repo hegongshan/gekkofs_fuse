@@ -33,7 +33,7 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     Metadata md(in.mode);
     try {
         // create metadentry
-        create_metadentry(in.path, md);
+        gkfs::metadentry::create(in.path, md);
         out.err = 0;
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create metadentry: '{}'", __func__, e.what());
@@ -65,7 +65,7 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
 
     try {
         // get the metadata
-        val = get_metadentry_str(in.path);
+        val = gkfs::metadentry::get_str(in.path);
         out.db_val = val.c_str();
         out.err = 0;
         GKFS_DATA->spdlogger()->debug("{}() Sending output mode '{}'", __func__, out.db_val);
@@ -137,7 +137,7 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     try {
         // Remove metadentry if exists on the node
         // and remove all chunks for that file
-        remove_node(in.path);
+        gkfs::metadentry::remove_node(in.path);
         out.err = 0;
     } catch (const NotFoundException& e) {
         /* The metadentry was not found on this node,
@@ -180,7 +180,7 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
 
     // do update
     try {
-        Metadata md = get_metadentry(in.path);
+        Metadata md = gkfs::metadentry::get(in.path);
         if (in.block_flag == HG_TRUE)
             md.blocks(in.blocks);
         if (in.nlink_flag == HG_TRUE)
@@ -193,7 +193,7 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
             md.mtime(in.mtime);
         if (in.ctime_flag == HG_TRUE)
             md.ctime(in.ctime);
-        update_metadentry(in.path, md);
+        gkfs::metadentry::update(in.path, md);
         out.err = 0;
     } catch (const std::exception& e) {
         //TODO handle NotFoundException
@@ -228,7 +228,7 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
                                   in.offset, in.append);
 
     try {
-        update_metadentry_size(in.path, in.size, in.offset, (in.append == HG_TRUE));
+        gkfs::metadentry::update_size(in.path, in.size, in.offset, (in.append == HG_TRUE));
         out.err = 0;
         //TODO the actual size of the file could be different after the size update
         // do to concurrency on size
@@ -268,7 +268,7 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
 
     // do update
     try {
-        out.ret_size = get_metadentry_size(in.path);
+        out.ret_size = gkfs::metadentry::get_size(in.path);
         out.err = 0;
     } catch (const NotFoundException& e) {
         GKFS_DATA->spdlogger()->debug("{}() Entry not found: '{}'", __func__, in.path);
@@ -313,7 +313,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
 
     //Get directory entries from local DB
-    std::vector<std::pair<std::string, bool>> entries = get_dirents(in.path);
+    std::vector<std::pair<std::string, bool>> entries = gkfs::metadentry::get_dirents(in.path);
 
     out.dirents_size = entries.size();
 
@@ -396,7 +396,7 @@ static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     try {
         Metadata md = {LINK_MODE, in.target_path};
         // create metadentry
-        create_metadentry(in.path, md);
+        gkfs::metadentry::create(in.path, md);
         out.err = 0;
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create metadentry: {}", __func__, e.what());
