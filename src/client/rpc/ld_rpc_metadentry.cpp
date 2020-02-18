@@ -155,7 +155,7 @@ int rpc_send::rm_node(const std::string& path, const bool remove_metadentry_only
     std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
 
     // Small files
-    if (static_cast<std::size_t>(size / gkfs_config::rpc::chunksize) < CTX->hosts().size()) {
+    if (static_cast<std::size_t>(size / gkfs::config::rpc::chunksize) < CTX->hosts().size()) {
 
         auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -165,7 +165,7 @@ int rpc_send::rm_node(const std::string& path, const bool remove_metadentry_only
             handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp, in));
 
             uint64_t chnk_start = 0;
-            uint64_t chnk_end = size / gkfs_config::rpc::chunksize;
+            uint64_t chnk_end = size / gkfs::config::rpc::chunksize;
 
             for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
                 const auto target = CTX->hosts().at(
@@ -360,10 +360,10 @@ void rpc_send::get_dirents(OpenDir& open_dir) {
      * It turns out that this operation is increadibly slow for such a big
      * buffer. Moreover we don't need a zeroed buffer here.
      */
-    auto large_buffer = std::unique_ptr<char[]>(new char[gkfs_config::rpc::dirents_buff_size]);
+    auto large_buffer = std::unique_ptr<char[]>(new char[gkfs::config::rpc::dirents_buff_size]);
 
     //XXX there is a rounding error here depending on the number of targets...
-    const std::size_t per_host_buff_size = gkfs_config::rpc::dirents_buff_size / targets.size();
+    const std::size_t per_host_buff_size = gkfs::config::rpc::dirents_buff_size / targets.size();
 
     // expose local buffers for RMA from servers
     std::vector<hermes::exposed_memory> exposed_buffers;

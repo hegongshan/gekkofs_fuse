@@ -452,7 +452,7 @@ ssize_t gkfs::func::pread(std::shared_ptr<OpenFile> file, char* buf, size_t coun
     }
 
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
-    if (gkfs_config::io::zero_buffer_before_read) {
+    if (gkfs::config::io::zero_buffer_before_read) {
         memset(buf, 0, sizeof(char) * count);
     }
     auto ret = rpc_send::read(file->path(), buf, offset, count);

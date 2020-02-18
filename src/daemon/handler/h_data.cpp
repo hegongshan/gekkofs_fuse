@@ -186,7 +186,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
      *    Last chunk can also happen if only one chunk is written. This is covered by 2 and 3.
      */
     // temporary variables
-    auto transfer_size = (bulk_size <= gkfs_config::rpc::chunksize) ? bulk_size : gkfs_config::rpc::chunksize;
+    auto transfer_size = (bulk_size <= gkfs::config::rpc::chunksize) ? bulk_size : gkfs::config::rpc::chunksize;
     uint64_t origin_offset;
     uint64_t local_offset;
     // task structures for async writing
@@ -205,9 +205,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
             // if only 1 destination and 1 chunk (small write) the transfer_size == bulk_size
-            auto offset_transfer_size = (in.offset + bulk_size <= gkfs_config::rpc::chunksize) ? bulk_size
-                                                                                               : static_cast<size_t>(
-                                                gkfs_config::rpc::chunksize - in.offset);
+            auto offset_transfer_size = (in.offset + bulk_size <= gkfs::config::rpc::chunksize) ? bulk_size
+                                                                                                : static_cast<size_t>(
+                                                gkfs::config::rpc::chunksize - in.offset);
             ret = margo_bulk_transfer(mid, HG_BULK_PULL, hgi->addr, in.bulk_handle, 0,
                                       bulk_handle, 0, offset_transfer_size);
             if (ret != HG_SUCCESS) {
@@ -225,10 +225,10 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
             local_offset = in.total_chunk_size - chnk_size_left_host;
             // origin offset of a chunk is dependent on a given offset in a write operation
             if (in.offset > 0)
-                origin_offset = (gkfs_config::rpc::chunksize - in.offset) +
-                                ((chnk_id_file - in.chunk_start) - 1) * gkfs_config::rpc::chunksize;
+                origin_offset = (gkfs::config::rpc::chunksize - in.offset) +
+                                ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
             else
-                origin_offset = (chnk_id_file - in.chunk_start) * gkfs_config::rpc::chunksize;
+                origin_offset = (chnk_id_file - in.chunk_start) * gkfs::config::rpc::chunksize;
             // last chunk might have different transfer_size
             if (chnk_id_curr == in.chunk_n - 1)
                 transfer_size = chnk_size_left_host;
@@ -386,7 +386,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     // temporary traveling pointer
     auto chnk_ptr = static_cast<char*>(bulk_buf);
     // temporary variables
-    auto transfer_size = (bulk_size <= gkfs_config::rpc::chunksize) ? bulk_size : gkfs_config::rpc::chunksize;
+    auto transfer_size = (bulk_size <= gkfs::config::rpc::chunksize) ? bulk_size : gkfs::config::rpc::chunksize;
     // tasks structures
     vector<ABT_task> abt_tasks(in.chunk_n);
     vector<ABT_eventual> task_eventuals(in.chunk_n);
@@ -403,9 +403,9 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
             // if only 1 destination and 1 chunk (small read) the transfer_size == bulk_size
-            auto offset_transfer_size = (in.offset + bulk_size <= gkfs_config::rpc::chunksize) ? bulk_size
-                                                                                               : static_cast<size_t>(
-                                                gkfs_config::rpc::chunksize - in.offset);
+            auto offset_transfer_size = (in.offset + bulk_size <= gkfs::config::rpc::chunksize) ? bulk_size
+                                                                                                : static_cast<size_t>(
+                                                gkfs::config::rpc::chunksize - in.offset);
             // Setting later transfer offsets
             local_offsets[chnk_id_curr] = 0;
             origin_offsets[chnk_id_curr] = 0;
@@ -419,10 +419,10 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
             // origin offset of a chunk is dependent on a given offset in a write operation
             if (in.offset > 0)
                 origin_offsets[chnk_id_curr] =
-                        (gkfs_config::rpc::chunksize - in.offset) +
-                        ((chnk_id_file - in.chunk_start) - 1) * gkfs_config::rpc::chunksize;
+                        (gkfs::config::rpc::chunksize - in.offset) +
+                        ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
             else
-                origin_offsets[chnk_id_curr] = (chnk_id_file - in.chunk_start) * gkfs_config::rpc::chunksize;
+                origin_offsets[chnk_id_curr] = (chnk_id_file - in.chunk_start) * gkfs::config::rpc::chunksize;
             // last chunk might have different transfer_size
             if (chnk_id_curr == in.chunk_n - 1)
                 transfer_size = chnk_size_left_host;
@@ -524,10 +524,10 @@ static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
     }
     GKFS_DATA->spdlogger()->debug("{}() path: '{}', length: {}", __func__, in.path, in.length);
 
-    unsigned int chunk_start = chnk_id_for_offset(in.length, gkfs_config::rpc::chunksize);
+    unsigned int chunk_start = chnk_id_for_offset(in.length, gkfs::config::rpc::chunksize);
 
     // If we trunc in the the middle of a chunk, do not delete that chunk
-    auto left_pad = chnk_lpad(in.length, gkfs_config::rpc::chunksize);
+    auto left_pad = chnk_lpad(in.length, gkfs::config::rpc::chunksize);
     if (left_pad != 0) {
         GKFS_DATA->storage()->truncate_chunk(in.path, chunk_start, left_pad);
         ++chunk_start;

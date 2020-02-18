@@ -76,31 +76,31 @@ Metadata::Metadata(const std::string& binary_str) {
     ptr += read;
 
     // The order is important. don't change.
-    if (gkfs_config::metadata::use_atime) {
+    if (gkfs::config::metadata::use_atime) {
         assert(*ptr == MSP);
         atime_ = static_cast<time_t>(std::stol(++ptr, &read));
         assert(read > 0);
         ptr += read;
     }
-    if (gkfs_config::metadata::use_mtime) {
+    if (gkfs::config::metadata::use_mtime) {
         assert(*ptr == MSP);
         mtime_ = static_cast<time_t>(std::stol(++ptr, &read));
         assert(read > 0);
         ptr += read;
     }
-    if (gkfs_config::metadata::use_ctime) {
+    if (gkfs::config::metadata::use_ctime) {
         assert(*ptr == MSP);
         ctime_ = static_cast<time_t>(std::stol(++ptr, &read));
         assert(read > 0);
         ptr += read;
     }
-    if (gkfs_config::metadata::use_link_cnt) {
+    if (gkfs::config::metadata::use_link_cnt) {
         assert(*ptr == MSP);
         link_count_ = static_cast<nlink_t>(std::stoul(++ptr, &read));
         assert(read > 0);
         ptr += read;
     }
-    if (gkfs_config::metadata::use_blocks) { // last one will not encounter a delimiter anymore
+    if (gkfs::config::metadata::use_blocks) { // last one will not encounter a delimiter anymore
         assert(*ptr == MSP);
         blocks_ = static_cast<blkcnt_t>(std::stoul(++ptr, &read));
         assert(read > 0);
@@ -126,23 +126,23 @@ std::string Metadata::serialize() const {
     s += fmt::format_int(mode_).c_str(); // add mandatory mode
     s += MSP;
     s += fmt::format_int(size_).c_str(); // add mandatory size
-    if (gkfs_config::metadata::use_atime) {
+    if (gkfs::config::metadata::use_atime) {
         s += MSP;
         s += fmt::format_int(atime_).c_str();
     }
-    if (gkfs_config::metadata::use_mtime) {
+    if (gkfs::config::metadata::use_mtime) {
         s += MSP;
         s += fmt::format_int(mtime_).c_str();
     }
-    if (gkfs_config::metadata::use_ctime) {
+    if (gkfs::config::metadata::use_ctime) {
         s += MSP;
         s += fmt::format_int(ctime_).c_str();
     }
-    if (gkfs_config::metadata::use_link_cnt) {
+    if (gkfs::config::metadata::use_link_cnt) {
         s += MSP;
         s += fmt::format_int(link_count_).c_str();
     }
-    if (gkfs_config::metadata::use_blocks) {
+    if (gkfs::config::metadata::use_blocks) {
         s += MSP;
         s += fmt::format_int(blocks_).c_str();
     }

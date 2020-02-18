@@ -50,10 +50,10 @@ void
 PreloadContext::init_logging() {
 
     const std::string log_opts =
-            gkfs::env::get_var(gkfs::env::LOG, gkfs_config::logging::client_log_level);
+            gkfs::env::get_var(gkfs::env::LOG, gkfs::config::logging::client_log_level);
 
     const std::string log_output =
-            gkfs::env::get_var(gkfs::env::LOG_OUTPUT, gkfs_config::logging::client_log_path);
+            gkfs::env::get_var(gkfs::env::LOG_OUTPUT, gkfs::config::logging::client_log_path);
 
 #ifdef GKFS_DEBUG_BUILD
     // atoi returns 0 if no int conversion can be performed, which works

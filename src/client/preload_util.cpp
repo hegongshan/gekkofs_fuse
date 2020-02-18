@@ -49,7 +49,7 @@ int gkfs::client::metadata_to_stat(const std::string& path, const Metadata& md, 
     attr.st_uid = CTX->fs_conf()->uid;
     attr.st_gid = CTX->fs_conf()->gid;
     attr.st_rdev = 0;
-    attr.st_blksize = gkfs_config::rpc::chunksize;
+    attr.st_blksize = gkfs::config::rpc::chunksize;
     attr.st_blocks = 0;
 
     memset(&attr.st_atim, 0, sizeof(timespec));
@@ -149,7 +149,7 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
 void gkfs::client::load_hosts() {
     string hostfile;
 
-    hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs_config::hostfile_path);
+    hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
 
     vector<pair<string, string>> hosts;
     try {

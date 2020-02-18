@@ -39,8 +39,8 @@ ssize_t rpc_send::write(const string& path, const void* buf, const bool append_f
     // which interval to look for chunks
     off64_t offset = append_flag ? in_offset : (updated_metadentry_size - write_size);
 
-    auto chnk_start = chnk_id_for_offset(offset, gkfs_config::rpc::chunksize);
-    auto chnk_end = chnk_id_for_offset((offset + write_size) - 1, gkfs_config::rpc::chunksize);
+    auto chnk_start = chnk_id_for_offset(offset, gkfs::config::rpc::chunksize);
+    auto chnk_end = chnk_id_for_offset((offset + write_size) - 1, gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
     // that those are send in one rpc bulk transfer
@@ -101,16 +101,16 @@ ssize_t rpc_send::write(const string& path, const void* buf, const bool append_f
     for (const auto& target : targets) {
 
         // total chunk_size for target
-        auto total_chunk_size = target_chnks[target].size() * gkfs_config::rpc::chunksize;
+        auto total_chunk_size = target_chnks[target].size() * gkfs::config::rpc::chunksize;
 
         // receiver of first chunk must subtract the offset from first chunk
         if (target == chnk_start_target) {
-            total_chunk_size -= chnk_lpad(offset, gkfs_config::rpc::chunksize);
+            total_chunk_size -= chnk_lpad(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
         if (target == chnk_end_target) {
-            total_chunk_size -= chnk_rpad(offset + write_size, gkfs_config::rpc::chunksize);
+            total_chunk_size -= chnk_rpad(offset + write_size, gkfs::config::rpc::chunksize);
         }
 
         auto endp = CTX->hosts().at(target);
@@ -123,7 +123,7 @@ ssize_t rpc_send::write(const string& path, const void* buf, const bool append_f
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    chnk_lpad(offset, gkfs_config::rpc::chunksize),
+                    chnk_lpad(offset, gkfs::config::rpc::chunksize),
                     target,
                     CTX->hosts().size(),
                     // number of chunks handled by that destination
@@ -195,8 +195,8 @@ ssize_t rpc_send::read(const string& path, void* buf, const off64_t offset, cons
 
     // Calculate chunkid boundaries and numbers so that daemons know in which
     // interval to look for chunks
-    auto chnk_start = chnk_id_for_offset(offset, gkfs_config::rpc::chunksize);
-    auto chnk_end = chnk_id_for_offset((offset + read_size - 1), gkfs_config::rpc::chunksize);
+    auto chnk_start = chnk_id_for_offset(offset, gkfs::config::rpc::chunksize);
+    auto chnk_end = chnk_id_for_offset((offset + read_size - 1), gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
     // that those are send in one rpc bulk transfer
@@ -257,16 +257,16 @@ ssize_t rpc_send::read(const string& path, void* buf, const off64_t offset, cons
     for (const auto& target : targets) {
 
         // total chunk_size for target
-        auto total_chunk_size = target_chnks[target].size() * gkfs_config::rpc::chunksize;
+        auto total_chunk_size = target_chnks[target].size() * gkfs::config::rpc::chunksize;
 
         // receiver of first chunk must subtract the offset from first chunk
         if (target == chnk_start_target) {
-            total_chunk_size -= chnk_lpad(offset, gkfs_config::rpc::chunksize);
+            total_chunk_size -= chnk_lpad(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
         if (target == chnk_end_target) {
-            total_chunk_size -= chnk_rpad(offset + read_size, gkfs_config::rpc::chunksize);
+            total_chunk_size -= chnk_rpad(offset + read_size, gkfs::config::rpc::chunksize);
         }
 
         auto endp = CTX->hosts().at(target);
@@ -279,7 +279,7 @@ ssize_t rpc_send::read(const string& path, void* buf, const off64_t offset, cons
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    chnk_lpad(offset, gkfs_config::rpc::chunksize),
+                    chnk_lpad(offset, gkfs::config::rpc::chunksize),
                     target,
                     CTX->hosts().size(),
                     // number of chunks handled by that destination
@@ -352,8 +352,8 @@ int rpc_send::trunc_data(const std::string& path, size_t current_size, size_t ne
 
     // Find out which data servers need to delete data chunks in order to
     // contact only them
-    const unsigned int chunk_start = chnk_id_for_offset(new_size, gkfs_config::rpc::chunksize);
-    const unsigned int chunk_end = chnk_id_for_offset(current_size - new_size - 1, gkfs_config::rpc::chunksize);
+    const unsigned int chunk_start = chnk_id_for_offset(new_size, gkfs::config::rpc::chunksize);
+    const unsigned int chunk_end = chnk_id_for_offset(current_size - new_size - 1, gkfs::config::rpc::chunksize);
 
     std::unordered_set<unsigned int> hosts;
     for (unsigned int chunk_id = chunk_start; chunk_id <= chunk_end; ++chunk_id) {
@@ -436,7 +436,7 @@ rpc_send::ChunkStat rpc_send::chunk_stat() {
         }
     }
 
-    unsigned long chunk_size = gkfs_config::rpc::chunksize;
+    unsigned long chunk_size = gkfs::config::rpc::chunksize;
     unsigned long chunk_total = 0;
     unsigned long chunk_free = 0;
 

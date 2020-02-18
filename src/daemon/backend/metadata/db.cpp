@@ -31,7 +31,7 @@ MetadataDB::MetadataDB(const std::string& path) : path(path) {
     options.create_if_missing = true;
     options.merge_operator.reset(new MetadataMergeOperator);
     MetadataDB::optimize_rocksdb_options(options);
-    write_opts.disableWAL = !(gkfs_config::rocksdb::use_write_ahead_log);
+    write_opts.disableWAL = !(gkfs::config::rocksdb::use_write_ahead_log);
     rdb::DB* rdb_ptr;
     auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
     if (!s.ok()) {

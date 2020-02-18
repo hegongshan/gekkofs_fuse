@@ -58,7 +58,7 @@ void init_environment() {
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
     bfs::create_directories(chunk_storage_path);
     try {
-        GKFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, gkfs_config::rpc::chunksize));
+        GKFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, gkfs::config::rpc::chunksize));
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize storage backend: {}", __func__, e.what());
         throw;
@@ -84,11 +84,11 @@ void init_environment() {
     }
 
     // TODO set metadata configurations. these have to go into a user configurable file that is parsed here
-    GKFS_DATA->atime_state(gkfs_config::metadata::use_atime);
-    GKFS_DATA->mtime_state(gkfs_config::metadata::use_mtime);
-    GKFS_DATA->ctime_state(gkfs_config::metadata::use_ctime);
-    GKFS_DATA->link_cnt_state(gkfs_config::metadata::use_link_cnt);
-    GKFS_DATA->blocks_state(gkfs_config::metadata::use_blocks);
+    GKFS_DATA->atime_state(gkfs::config::metadata::use_atime);
+    GKFS_DATA->mtime_state(gkfs::config::metadata::use_mtime);
+    GKFS_DATA->ctime_state(gkfs::config::metadata::use_ctime);
+    GKFS_DATA->link_cnt_state(gkfs::config::metadata::use_link_cnt);
+    GKFS_DATA->blocks_state(gkfs::config::metadata::use_blocks);
     // Create metadentry for root directory
     Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
     try {
@@ -135,8 +135,8 @@ void destroy_enviroment() {
 }
 
 void init_io_tasklet_pool() {
-    assert(gkfs_config::rpc::daemon_io_xstreams >= 0);
-    unsigned int xstreams_num = gkfs_config::rpc::daemon_io_xstreams;
+    assert(gkfs::config::rpc::daemon_io_xstreams >= 0);
+    unsigned int xstreams_num = gkfs::config::rpc::daemon_io_xstreams;
 
     //retrieve the pool of the just created scheduler
     ABT_pool pool;
@@ -177,7 +177,7 @@ void init_rpc_server(const string & protocol_port) {
                               MARGO_SERVER_MODE,
                               &hg_options,
                               HG_TRUE,
-                              gkfs_config::rpc::daemon_handler_xstreams);
+                              gkfs::config::rpc::daemon_handler_xstreams);
     if (mid == MARGO_INSTANCE_NULL) {
         throw runtime_error("Failed to initialize the Margo RPC server");
     }
@@ -241,7 +241,7 @@ void shutdown_handler(int dummy) {
 }
 
 void initialize_loggers() {
-    std::string path = gkfs_config::logging::daemon_log_path;
+    std::string path = gkfs::config::logging::daemon_log_path;
     // Try to get log path from env variable
     std::string env_path_key = DAEMON_ENV_PREFIX;
     env_path_key += "DAEMON_LOG_PATH";
@@ -250,7 +250,7 @@ void initialize_loggers() {
         path = env_path;
     }
 
-    spdlog::level::level_enum level = gkfs::logging::get_level(gkfs_config::logging::daemon_log_level);
+    spdlog::level::level_enum level = gkfs::logging::get_level(gkfs::config::logging::daemon_log_level);
     // Try to get log path from env variable
     std::string env_level_key = DAEMON_ENV_PREFIX;
     env_level_key += "LOG_LEVEL";
@@ -308,7 +308,7 @@ int main(int argc, const char* argv[]) {
 #else
         cout << "Create check parents: OFF" << endl;
 #endif
-        cout << "Chunk size: " << gkfs_config::rpc::chunksize << " bytes" << endl;
+        cout << "Chunk size: " << gkfs::config::rpc::chunksize << " bytes" << endl;
         return 0;
     }
 
@@ -337,7 +337,7 @@ int main(int argc, const char* argv[]) {
         hosts_file = vm["hosts-file"].as<string>();
     } else {
         hosts_file =
-                gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs_config::hostfile_path);
+                gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
     }
     GKFS_DATA->hosts_file(hosts_file);
 
