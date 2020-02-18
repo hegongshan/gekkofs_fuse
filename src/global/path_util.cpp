@@ -19,17 +19,20 @@
 
 using namespace std;
 
-bool gkfs::path_util::is_relative(const string& path) {
+namespace gkfs {
+namespace path {
+
+bool is_relative(const string& path) {
     return (!path.empty()) &&
            (path.front() != separator);
 }
 
-bool gkfs::path_util::is_absolute(const string& path) {
+bool is_absolute(const string& path) {
     return (!path.empty()) &&
            (path.front() == separator);
 }
 
-bool gkfs::path_util::has_trailing_slash(const string& path) {
+bool has_trailing_slash(const string& path) {
     return (!path.empty()) && (path.back() == separator);
 }
 
@@ -52,7 +55,7 @@ bool gkfs::path_util::has_trailing_slash(const string& path) {
  * prepend_path("/tmp/prefix", "./my/path") == "/tmp/prefix/./my/path"
  * ```
  */
-string gkfs::path_util::prepend_path(const string& prefix_path, const char* raw_path) {
+string prepend_path(const string& prefix_path, const char* raw_path) {
     assert(!has_trailing_slash(prefix_path));
     ::size_t raw_len = ::strlen(raw_path);
     string res;
@@ -70,7 +73,7 @@ string gkfs::path_util::prepend_path(const string& prefix_path, const char* raw_
  * Example:
  *  split_path("/first/second/third") == ["first", "second", "third"]
  */
-::vector<string> gkfs::path_util::split_path(const string& path) {
+::vector<string> split_path(const string& path) {
     ::vector<string> tokens;
     size_t start = string::npos;
     size_t end = (path.front() != separator) ? 0 : 1;
@@ -92,7 +95,7 @@ string gkfs::path_util::prepend_path(const string& prefix_path, const char* raw_
  * If @absolute_path do not start at the given @root_path an empty string will be returned.
  * NOTE: Trailing slash will be stripped from the new constructed relative path.
  */
-string gkfs::path_util::absolute_to_relative(const string& root_path, const string& absolute_path) {
+string absolute_to_relative(const string& root_path, const string& absolute_path) {
     assert(is_absolute(root_path));
     assert(is_absolute(absolute_path));
     assert(!has_trailing_slash(root_path));
@@ -130,7 +133,7 @@ string gkfs::path_util::absolute_to_relative(const string& root_path, const stri
  * @param path 
  * @return 
  */
-string gkfs::path_util::dirname(const string& path) {
+string dirname(const string& path) {
     assert(path.size() > 1 || path.front() == separator);
     assert(path.size() == 1 || !has_trailing_slash(path));
 
@@ -142,3 +145,6 @@ string gkfs::path_util::dirname(const string& path) {
     }
     return path.substr(0, parent_path_size);
 }
+
+} // namespace
+} // namespace gkfs

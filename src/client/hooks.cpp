@@ -515,7 +515,7 @@ int hook_chdir(const char* path) {
         //TODO get complete path from relativize_path instead of
         // removing mountdir and then adding again here
         rel_path.insert(0, CTX->mountdir());
-        if (gkfs::path_util::has_trailing_slash(rel_path)) {
+        if (gkfs::path::has_trailing_slash(rel_path)) {
             // open_dir is '/'
             rel_path.pop_back();
         }
@@ -543,7 +543,7 @@ int hook_fchdir(unsigned int fd) {
         }
 
         std::string new_path = CTX->mountdir() + open_dir->path();
-        if (gkfs::path_util::has_trailing_slash(new_path)) {
+        if (gkfs::path::has_trailing_slash(new_path)) {
             // open_dir is '/'
             new_path.pop_back();
         }

@@ -30,9 +30,10 @@ extern "C" {
 
 using namespace std;
 
-static const string excluded_paths[2] = {"sys/", "proc/"};
+namespace gkfs {
+namespace path {
 
-namespace p_util = gkfs::path_util;
+static const string excluded_paths[2] = {"sys/", "proc/"};
 
 /** Match components in path
  *
@@ -42,14 +43,14 @@ namespace p_util = gkfs::path_util;
  * `path_components` will be set to the total number of components found in `path`
  *
  * Example:
- * ```
+ * ```ÏÏ
  *  unsigned int tot_comp;
  *  path_match_components("/matched/head/with/tail", &tot_comp, ["matched", "head", "no"]) == 2;
  *  tot_comp == 4;
  * ```
  */
-unsigned int gkfs::path::match_components(const string& path, unsigned int& path_components,
-                                          const ::vector<string>& components) {
+unsigned int match_components(const string& path, unsigned int& path_components,
+                              const ::vector<string>& components) {
     unsigned int matched = 0;
     unsigned int processed_components = 0;
     string::size_type comp_size = 0; // size of current component
@@ -60,7 +61,7 @@ unsigned int gkfs::path::match_components(const string& path, unsigned int& path
         start = end;
 
         // Find next component
-        end = path.find(p_util::separator, start);
+        end = path.find(path::separator, start);
         if (end == string::npos) {
             end = path.size();
         }
@@ -88,12 +89,12 @@ unsigned int gkfs::path::match_components(const string& path, unsigned int& path
  * returns true if the resolved path fall inside GekkoFS namespace,
  * and false otherwise.
  */
-bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last_link) {
+bool resolve(const string& path, string& resolved, bool resolve_last_link) {
 
     LOG(DEBUG, "path: \"{}\", resolved: \"{}\", resolve_last_link: {}",
         path, resolved, resolve_last_link);
 
-    assert(p_util::is_absolute(path));
+    assert(path::is_absolute(path));
 
     for (auto& excl_path: excluded_paths) {
         if (path.compare(1, excl_path.length(), excl_path) == 0) {
@@ -118,12 +119,12 @@ bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last
         start = end;
 
         /* Skip sequence of multiple path-separators. */
-        while (start < path.size() && path[start] == p_util::separator) {
+        while (start < path.size() && path[start] == path::separator) {
             ++start;
         }
 
         // Find next component
-        end = path.find(p_util::separator, start);
+        end = path.find(path::separator, start);
         if (end == string::npos) {
             end = path.size();
         }
@@ -145,7 +146,7 @@ bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last
                  * the previous slash position should be stored.
                  * The following search could be avoided.
                  */
-                last_slash_pos = resolved.find_last_of(p_util::separator);
+                last_slash_pos = resolved.find_last_of(path::separator);
             }
             if (resolved_components > 0) {
                 if (matched_components == resolved_components) {
@@ -157,7 +158,7 @@ bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last
         }
 
         // add `/<component>` to the reresolved path
-        resolved.push_back(p_util::separator);
+        resolved.push_back(path::separator);
         last_slash_pos = resolved.size() - 1;
         resolved.append(path, start, comp_size);
 
@@ -191,7 +192,7 @@ bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last
                 resolved = link_resolved.get();
                 matched_components = match_components(resolved, resolved_components, mnt_components);
                 // set matched counter to value coherent with the new path
-                last_slash_pos = resolved.find_last_of(p_util::separator);
+                last_slash_pos = resolved.find_last_of(path::separator);
                 continue;
             } else if ((!S_ISDIR(st.st_mode)) && (end != path.size())) {
                 resolved.append(path, end, string::npos);
@@ -211,28 +212,28 @@ bool gkfs::path::resolve(const string& path, string& resolved, bool resolve_last
     }
 
     if (resolved.empty()) {
-        resolved.push_back(p_util::separator);
+        resolved.push_back(path::separator);
     }
     LOG(DEBUG, "external: \"{}\"", resolved);
     return false;
 }
 
-string gkfs::path::get_sys_cwd() {
-    char temp[p_util::max_length];
-    if (long ret = syscall_no_intercept(SYS_getcwd, temp, p_util::max_length) < 0) {
+string get_sys_cwd() {
+    char temp[path::max_length];
+    if (long ret = syscall_no_intercept(SYS_getcwd, temp, path::max_length) < 0) {
         throw ::system_error(syscall_error_code(ret),
                              ::system_category(),
-                                "Failed to retrieve current working directory");
+                             "Failed to retrieve current working directory");
     }
     // getcwd could return "(unreachable)<PATH>" in some cases
-    if (temp[0] != p_util::separator) {
+    if (temp[0] != path::separator) {
         throw ::runtime_error(
                 "Current working directory is unreachable");
     }
     return {temp};
 }
 
-void gkfs::path::set_sys_cwd(const string& path) {
+void set_sys_cwd(const string& path) {
 
     LOG(DEBUG, "Changing working directory to \"{}\"", path);
 
@@ -241,11 +242,11 @@ void gkfs::path::set_sys_cwd(const string& path) {
             ::strerror(syscall_error_code(ret)));
         throw ::system_error(syscall_error_code(ret),
                              ::system_category(),
-                                "Failed to set system current working directory");
+                             "Failed to set system current working directory");
     }
 }
 
-void gkfs::path::set_env_cwd(const string& path) {
+void set_env_cwd(const string& path) {
 
     LOG(DEBUG, "Setting {} to \"{}\"", gkfs::env::CWD, path);
 
@@ -254,11 +255,11 @@ void gkfs::path::set_env_cwd(const string& path) {
             gkfs::env::CWD, ::strerror(errno));
         throw ::system_error(errno,
                              ::system_category(),
-                                "Failed to set environment current working directory");
+                             "Failed to set environment current working directory");
     }
 }
 
-void gkfs::path::unset_env_cwd() {
+void unset_env_cwd() {
 
     LOG(DEBUG, "Clearing {}()", gkfs::env::CWD);
 
@@ -269,11 +270,11 @@ void gkfs::path::unset_env_cwd() {
 
         throw ::system_error(errno,
                              ::system_category(),
-                                "Failed to unset environment current working directory");
+                             "Failed to unset environment current working directory");
     }
 }
 
-void gkfs::path::init_cwd() {
+void init_cwd() {
     const char* env_cwd = ::getenv(gkfs::env::CWD);
     if (env_cwd != nullptr) {
         CTX->cwd(env_cwd);
@@ -282,7 +283,7 @@ void gkfs::path::init_cwd() {
     }
 }
 
-void gkfs::path::set_cwd(const string& path, bool internal) {
+void set_cwd(const string& path, bool internal) {
     if (internal) {
         set_sys_cwd(CTX->mountdir());
         set_env_cwd(path);
@@ -292,3 +293,6 @@ void gkfs::path::set_cwd(const string& path, bool internal) {
     }
     CTX->cwd(path);
 }
+
+} // namespace path
+} // namespace gkfs

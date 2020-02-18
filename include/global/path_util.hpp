@@ -18,26 +18,27 @@
 #include <vector>
 
 namespace gkfs {
-    namespace path_util {
+namespace path {
 
-        constexpr unsigned int max_length = 4096; // 4k chars
+constexpr unsigned int max_length = 4096; // 4k chars
 
-        constexpr char separator = '/'; // PATH SEPARATOR
+constexpr char separator = '/'; // PATH SEPARATOR
 
-        bool is_relative(const std::string& path);
+bool is_relative(const std::string& path);
 
-        bool is_absolute(const std::string& path);
+bool is_absolute(const std::string& path);
 
-        bool has_trailing_slash(const std::string& path);
+bool has_trailing_slash(const std::string& path);
 
-        std::string prepend_path(const std::string& path, const char* raw_path);
+std::string prepend_path(const std::string& path, const char* raw_path);
 
-        std::string absolute_to_relative(const std::string& root_path, const std::string& absolute_path); // unused ATM
+std::string absolute_to_relative(const std::string& root_path, const std::string& absolute_path); // unused ATM
 
-        std::string dirname(const std::string& path);
+std::string dirname(const std::string& path);
 
-        std::vector<std::string> split_path(const std::string& path);
-    }
-}
+std::vector<std::string> split_path(const std::string& path);
+
+} // namespace gkfs
+} // namespace path
 
 #endif //GEKKOFS_PATH_UTIL_HPP
