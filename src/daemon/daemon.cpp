@@ -213,26 +213,27 @@ void init_rpc_server(const string & protocol_port) {
  * @param hg_class
  */
 void register_server_rpcs(margo_instance_id mid) {
-    MARGO_REGISTER(mid, gkfs::hg_tag::fs_config, void, rpc_config_out_t, rpc_srv_get_fs_config);
-    MARGO_REGISTER(mid, gkfs::hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_create);
-    MARGO_REGISTER(mid, gkfs::hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
-    MARGO_REGISTER(mid, gkfs::hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
-    MARGO_REGISTER(mid, gkfs::hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_remove);
-    MARGO_REGISTER(mid, gkfs::hg_tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
+    MARGO_REGISTER(mid, gkfs::rpc::tag::fs_config, void, rpc_config_out_t, rpc_srv_get_fs_config);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_create);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_remove);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
-    MARGO_REGISTER(mid, gkfs::hg_tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
                    rpc_srv_get_metadentry_size);
-    MARGO_REGISTER(mid, gkfs::hg_tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
+    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
                    rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
-    MARGO_REGISTER(mid, gkfs::hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
                    rpc_srv_get_dirents);
 #ifdef HAS_SYMLINKS
-    MARGO_REGISTER(mid, gkfs::hg_tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
 #endif
-    MARGO_REGISTER(mid, gkfs::hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write);
-    MARGO_REGISTER(mid, gkfs::hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read);
-    MARGO_REGISTER(mid, gkfs::hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_truncate);
-    MARGO_REGISTER(mid, gkfs::hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_get_chunk_stat);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::write, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::read, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::truncate, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_truncate);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t,
+                   rpc_srv_get_chunk_stat);
 }
 
 void shutdown_handler(int dummy) {
@@ -241,7 +242,7 @@ void shutdown_handler(int dummy) {
 }
 
 void initialize_loggers() {
-    std::string path = gkfs::config::logging::daemon_log_path;
+    std::string path = gkfs::config::log::daemon_log_path;
     // Try to get log path from env variable
     std::string env_path_key = DAEMON_ENV_PREFIX;
     env_path_key += "DAEMON_LOG_PATH";
@@ -250,13 +251,13 @@ void initialize_loggers() {
         path = env_path;
     }
 
-    spdlog::level::level_enum level = gkfs::logging::get_level(gkfs::config::logging::daemon_log_level);
+    spdlog::level::level_enum level = gkfs::log::get_level(gkfs::config::log::daemon_log_level);
     // Try to get log path from env variable
     std::string env_level_key = DAEMON_ENV_PREFIX;
     env_level_key += "LOG_LEVEL";
     char* env_level = getenv(env_level_key.c_str());
     if (env_level != nullptr) {
-        level = gkfs::logging::get_level(env_level);
+        level = gkfs::log::get_level(env_level);
     }
 
     auto logger_names = std::vector<std::string>{
@@ -265,7 +266,7 @@ void initialize_loggers() {
         "ChunkStorage",
     };
 
-    gkfs::logging::setup(logger_names, level, path);
+    gkfs::log::setup(logger_names, level, path);
 }
 
 int main(int argc, const char* argv[]) {

@@ -39,7 +39,7 @@ struct opt_info {
 #define STR_AND_LEN(strbuf) \
     strbuf, sizeof(strbuf) - 1
 
-static const auto constexpr debug_opts = utils::make_array(
+static const auto constexpr debug_opts = util::make_array(
 
     opt_info{STR_AND_LEN("none"), 
              {"don't print any messages"}, 

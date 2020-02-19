@@ -110,8 +110,8 @@ static const auto constexpr most             = log_level::print_most;
 static const auto constexpr all              = log_level::print_all;
 static const auto constexpr help             = log_level::print_help;
 
-static const auto constexpr level_names = 
-    utils::make_array(
+static const auto constexpr level_names =
+        util::make_array(
         "syscall",
         "syscall", // sycall_entry uses the same name as syscall
         "info",

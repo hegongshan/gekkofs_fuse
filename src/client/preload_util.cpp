@@ -40,7 +40,7 @@ using namespace std;
  * @param attr
  * @return
  */
-int gkfs::client::metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr) {
+int gkfs::util::metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr) {
 
     /* Populate default values */
     attr.st_dev = makedev(0, 0);
@@ -83,7 +83,7 @@ int gkfs::client::metadata_to_stat(const std::string& path, const Metadata& md, 
     return 0;
 }
 
-vector<pair<string, string>> gkfs::client::load_hostfile(const std::string& lfpath) {
+vector<pair<string, string>> gkfs::util::load_hostfile(const std::string& lfpath) {
 
     LOG(DEBUG, "Loading hosts file: \"{}\"", lfpath);
 
@@ -146,14 +146,14 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
                         uri, error_msg));
 }
 
-void gkfs::client::load_hosts() {
+void gkfs::util::load_hosts() {
     string hostfile;
 
     hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
 
     vector<pair<string, string>> hosts;
     try {
-        hosts = gkfs::client::load_hostfile(hostfile);
+        hosts = gkfs::util::load_hostfile(hostfile);
     } catch (const exception& e) {
         auto emsg = fmt::format("Failed to load hosts file: {}", e.what());
         throw runtime_error(emsg);

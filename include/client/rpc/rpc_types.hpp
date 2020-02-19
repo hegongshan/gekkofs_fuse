@@ -80,7 +80,7 @@ struct fs_config {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::fs_config;
+    constexpr static const auto name = gkfs::rpc::tag::fs_config;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -267,7 +267,7 @@ struct create {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::create;
+    constexpr static const auto name = gkfs::rpc::tag::create;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -385,7 +385,7 @@ struct stat {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::stat;
+    constexpr static const auto name = gkfs::rpc::tag::stat;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -506,7 +506,7 @@ struct remove {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::remove;
+    constexpr static const auto name = gkfs::rpc::tag::remove;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -615,7 +615,7 @@ struct decr_size {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::decr_size;
+    constexpr static const auto name = gkfs::rpc::tag::decr_size;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -732,7 +732,7 @@ struct update_metadentry {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::update_metadentry;
+    constexpr static const auto name = gkfs::rpc::tag::update_metadentry;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1001,7 +1001,7 @@ struct get_metadentry_size {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::get_metadentry_size;
+    constexpr static const auto name = gkfs::rpc::tag::get_metadentry_size;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1119,7 +1119,7 @@ struct update_metadentry_size {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::update_metadentry_size;
+    constexpr static const auto name = gkfs::rpc::tag::update_metadentry_size;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1266,7 +1266,7 @@ struct mk_symlink {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::mk_symlink;
+    constexpr static const auto name = gkfs::rpc::tag::mk_symlink;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1386,7 +1386,7 @@ struct write_data {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::write_data;
+    constexpr static const auto name = gkfs::rpc::tag::write;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1586,7 +1586,7 @@ struct read_data {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::read_data;
+    constexpr static const auto name = gkfs::rpc::tag::read;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1786,7 +1786,7 @@ struct trunc_data {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::trunc_data;
+    constexpr static const auto name = gkfs::rpc::tag::truncate;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -1907,7 +1907,7 @@ struct get_dirents {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::get_dirents;
+    constexpr static const auto name = gkfs::rpc::tag::get_dirents;
 
     // requires response?
     constexpr static const auto requires_response = true;
@@ -2037,7 +2037,7 @@ struct chunk_stat {
     constexpr static const hg_id_t mercury_id = public_id;
 
     // RPC name
-    constexpr static const auto name = gkfs::hg_tag::chunk_stat;
+    constexpr static const auto name = gkfs::rpc::tag::get_chunk_stat;
 
     // requires response?
     constexpr static const auto requires_response = true;

@@ -17,7 +17,7 @@
 #include <spdlog/spdlog.h>
 
 namespace gkfs {
-    namespace logging {
+namespace log {
 
         spdlog::level::level_enum get_level(std::string level_str);
 

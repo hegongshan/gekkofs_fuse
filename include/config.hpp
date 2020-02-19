@@ -33,7 +33,7 @@ namespace io {
 constexpr auto zero_buffer_before_read = false;
 } // namespace io
 
-namespace logging {
+namespace log {
 constexpr auto client_log_path = "/tmp/gkfs_client.log";
 constexpr auto daemon_log_path = "/tmp/gkfs_daemon.log";
 

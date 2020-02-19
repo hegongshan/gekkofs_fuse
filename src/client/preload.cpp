@@ -90,7 +90,7 @@ void init_ld_environment_() {
 
     try {
         LOG(INFO, "Loading peer addresses...");
-        gkfs::client::load_hosts();
+        gkfs::util::load_hosts();
     } catch (const std::exception& e) {
         exit_error_msg(EXIT_FAILURE, "Failed to load hosts addresses: "s + e.what());
     }

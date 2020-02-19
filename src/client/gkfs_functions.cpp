@@ -218,7 +218,7 @@ int gkfs::func::stat(const string& path, struct stat* buf, bool follow_links) {
     if (!md) {
         return -1;
     }
-    gkfs::client::metadata_to_stat(path, *md, *buf);
+    gkfs::util::metadata_to_stat(path, *md, *buf);
     return 0;
 }
 

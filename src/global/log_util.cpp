@@ -20,7 +20,7 @@
 
 using namespace std;
 
-spdlog::level::level_enum gkfs::logging::get_level(string level_str) {
+spdlog::level::level_enum gkfs::log::get_level(string level_str) {
     char* parse_end;
     auto level = strtoul(level_str.c_str(), &parse_end, 10);
     if (parse_end != (level_str.c_str() + level_str.size())) {
@@ -46,7 +46,7 @@ spdlog::level::level_enum gkfs::logging::get_level(string level_str) {
         return get_level(level);
 }
 
-spdlog::level::level_enum gkfs::logging::get_level(unsigned long level) {
+spdlog::level::level_enum gkfs::log::get_level(unsigned long level) {
     switch (level) {
         case 0:
             return spdlog::level::off;
@@ -65,8 +65,8 @@ spdlog::level::level_enum gkfs::logging::get_level(unsigned long level) {
     }
 }
 
-void gkfs::logging::setup(const vector<string>& loggers_name,
-                          spdlog::level::level_enum level, const string& path) {
+void gkfs::log::setup(const vector<string>& loggers_name,
+                      spdlog::level::level_enum level, const string& path) {
 
     /* Create common sink */
     auto file_sink = make_shared<spdlog::sinks::basic_file_sink_mt>(path);

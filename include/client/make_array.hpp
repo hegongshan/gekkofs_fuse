@@ -15,7 +15,7 @@
 #define LIBGKFS_UTILS_MAKE_ARRAY_HPP
 
 namespace gkfs {
-namespace utils {
+namespace util {
 
 template <typename... T>
 constexpr auto make_array(T&&... values) ->
@@ -29,7 +29,7 @@ constexpr auto make_array(T&&... values) ->
         sizeof...(T)>{std::forward<T>(values)...};
 }
 
-} // namespace utils
+} // namespace util
 } // namespace gkfs
 
 #endif // LIBGKFS_UTILS_MAKE_ARRAY_HPP

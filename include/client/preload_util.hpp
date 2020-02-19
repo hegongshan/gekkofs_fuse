@@ -42,7 +42,7 @@ extern std::unique_ptr<hermes::async_engine> ld_network_service;
 
 // function definitions
 namespace gkfs {
-    namespace client {
+namespace util {
         template<typename E>
         constexpr typename std::underlying_type<E>::type to_underlying(E e) {
             return static_cast<typename std::underlying_type<E>::type>(e);

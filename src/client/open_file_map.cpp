@@ -29,17 +29,17 @@ OpenFile::OpenFile(const string& path, const int flags, FileType type) :
         path_(path) {
     // set flags to OpenFile
     if (flags & O_CREAT)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::creat)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::creat)] = true;
     if (flags & O_APPEND)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::append)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::append)] = true;
     if (flags & O_TRUNC)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::trunc)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::trunc)] = true;
     if (flags & O_RDONLY)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::rdonly)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::rdonly)] = true;
     if (flags & O_WRONLY)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::wronly)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::wronly)] = true;
     if (flags & O_RDWR)
-        flags_[gkfs::client::to_underlying(OpenFile_flags::rdwr)] = true;
+        flags_[gkfs::util::to_underlying(OpenFile_flags::rdwr)] = true;
 
     pos_ = 0; // If O_APPEND flag is used, it will be used before each write.
 }
@@ -68,12 +68,12 @@ void OpenFile::pos(unsigned long pos) {
 
 bool OpenFile::get_flag(OpenFile_flags flag) {
     lock_guard<mutex> lock(pos_mutex_);
-    return flags_[gkfs::client::to_underlying(flag)];
+    return flags_[gkfs::util::to_underlying(flag)];
 }
 
 void OpenFile::set_flag(OpenFile_flags flag, bool value) {
     lock_guard<mutex> lock(flag_mutex_);
-    flags_[gkfs::client::to_underlying(flag)] = value;
+    flags_[gkfs::util::to_underlying(flag)] = value;
 }
 
 FileType OpenFile::type() const {
