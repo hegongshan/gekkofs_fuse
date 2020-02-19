@@ -23,15 +23,18 @@
 
 using namespace std;
 
+namespace gkfs {
+namespace rpc {
+
 // TODO If we decide to keep this functionality with one segment, the function can be merged mostly.
 // Code is mostly redundant
 
 /**
  * Sends an RPC request to a specific node to pull all chunks that belong to him
  */
-ssize_t rpc_send::write(const string& path, const void* buf, const bool append_flag,
-                        const off64_t in_offset, const size_t write_size,
-                        const int64_t updated_metadentry_size) {
+ssize_t forward_write(const string& path, const void* buf, const bool append_flag,
+                      const off64_t in_offset, const size_t write_size,
+                      const int64_t updated_metadentry_size) {
 
     assert(write_size > 0);
 
@@ -191,7 +194,7 @@ ssize_t rpc_send::write(const string& path, const void* buf, const bool append_f
 /**
  * Sends an RPC request to a specific node to push all chunks that belong to him
  */
-ssize_t rpc_send::read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
+ssize_t forward_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
 
     // Calculate chunkid boundaries and numbers so that daemons know in which
     // interval to look for chunks
@@ -345,7 +348,7 @@ ssize_t rpc_send::read(const string& path, void* buf, const off64_t offset, cons
     return error ? -1 : out_size;
 }
 
-int rpc_send::trunc_data(const std::string& path, size_t current_size, size_t new_size) {
+int forward_truncate(const std::string& path, size_t current_size, size_t new_size) {
 
     assert(current_size > new_size);
     bool error = false;
@@ -411,7 +414,7 @@ int rpc_send::trunc_data(const std::string& path, size_t current_size, size_t ne
     return error ? -1 : 0;
 }
 
-rpc_send::ChunkStat rpc_send::chunk_stat() {
+ChunkStat forward_get_chunk_stat() {
 
     std::vector<hermes::rpc_handle<gkfs::rpc::chunk_stat>> handles;
 
@@ -462,3 +465,6 @@ rpc_send::ChunkStat rpc_send::chunk_stat() {
 
     return {chunk_size, chunk_total, chunk_free};
 }
+
+} // namespace rpc
+} // namespace gkfs

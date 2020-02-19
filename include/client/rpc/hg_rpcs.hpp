@@ -34,19 +34,22 @@
 #include <global/global_defs.hpp>
 #include <global/rpc/rpc_types.hpp>
 
-namespace hermes { namespace detail {
+namespace hermes {
+namespace detail {
 
-struct hg_void_t { };
+struct hg_void_t {
+};
 
-        static HG_INLINE hg_return_t
-        hg_proc_void_t(hg_proc_t proc, void* data) {
+static HG_INLINE hg_return_t
+hg_proc_void_t(hg_proc_t proc, void* data) {
     (void) proc;
     (void) data;
 
     return HG_SUCCESS;
 }
 
-}} // namespace hermes::detail
+}
+} // namespace hermes::detail
 
 namespace gkfs {
 namespace rpc {

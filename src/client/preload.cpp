@@ -101,7 +101,7 @@ void init_ld_environment_() {
 
     LOG(INFO, "Retrieving file system configuration...");
 
-    if (!rpc_send::get_fs_config()) {
+    if (!gkfs::rpc::forward_get_fs_config()) {
         exit_error_msg(EXIT_FAILURE, "Unable to fetch file system configurations from daemon process through RPC.");
     }
 

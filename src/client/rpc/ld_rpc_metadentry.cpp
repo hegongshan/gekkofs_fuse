@@ -24,7 +24,10 @@
 
 using namespace std;
 
-int rpc_send::mk_node(const std::string& path, const mode_t mode) {
+namespace gkfs {
+namespace rpc {
+
+int forward_create(const std::string& path, const mode_t mode) {
 
     int err = EUNKNOWN;
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
@@ -54,7 +57,7 @@ int rpc_send::mk_node(const std::string& path, const mode_t mode) {
     return err;
 }
 
-int rpc_send::stat(const std::string& path, string& attr) {
+int forward_stat(const std::string& path, string& attr) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -85,37 +88,7 @@ int rpc_send::stat(const std::string& path, string& attr) {
     return 0;
 }
 
-int rpc_send::decr_size(const std::string& path, size_t length) {
-
-    auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
-
-    try {
-
-        LOG(DEBUG, "Sending RPC ...");
-        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
-        // retry for RPC_TRIES (see old commits with margo)
-        // TODO(amiranda): hermes will eventually provide a post(endpoint)
-        // returning one result and a broadcast(endpoint_set) returning a
-        // result_set. When that happens we can remove the .at(0) :/
-        auto out = ld_network_service->post<gkfs::rpc::decr_size>(endp, path, length).get().at(0);
-
-        LOG(DEBUG, "Got response success: {}", out.err());
-
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
-
-        return 0;
-
-    } catch (const std::exception& ex) {
-        LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
-    }
-}
-
-int rpc_send::rm_node(const std::string& path, const bool remove_metadentry_only, const ssize_t size) {
+int forward_remove(const std::string& path, const bool remove_metadentry_only, const ssize_t size) {
 
     // if only the metadentry should be removed, send one rpc to the
     // metadentry's responsible node to remove the metadata
@@ -232,8 +205,37 @@ int rpc_send::rm_node(const std::string& path, const bool remove_metadentry_only
     return got_error ? -1 : 0;
 }
 
+int forward_decr_size(const std::string& path, size_t length) {
 
-int rpc_send::update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
+    auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
+
+    try {
+
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
+        // retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = ld_network_service->post<gkfs::rpc::decr_size>(endp, path, length).get().at(0);
+
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+        if (out.err() != 0) {
+            errno = out.err();
+            return -1;
+        }
+
+        return 0;
+
+    } catch (const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        errno = EBUSY;
+        return -1;
+    }
+}
+
+int forward_update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -282,8 +284,8 @@ int rpc_send::update_metadentry(const string& path, const Metadata& md, const Me
 }
 
 int
-rpc_send::update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
-                                 off64_t& ret_size) {
+forward_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
+                               off64_t& ret_size) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -319,7 +321,7 @@ rpc_send::update_metadentry_size(const string& path, const size_t size, const of
     }
 }
 
-int rpc_send::get_metadentry_size(const std::string& path, off64_t& ret_size) {
+int forward_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -349,7 +351,7 @@ int rpc_send::get_metadentry_size(const std::string& path, off64_t& ret_size) {
 /**
  * Sends an RPC request to a specific node to push all chunks that belong to him
  */
-void rpc_send::get_dirents(OpenDir& open_dir) {
+void forward_get_dirents(OpenDir& open_dir) {
 
     auto const root_dir = open_dir.path();
     auto const targets = CTX->distributor()->locate_directory_metadata(root_dir);
@@ -458,7 +460,7 @@ void rpc_send::get_dirents(OpenDir& open_dir) {
 
 #ifdef HAS_SYMLINKS
 
-int rpc_send::mk_symlink(const std::string& path, const std::string& target_path) {
+int forward_mk_symlink(const std::string& path, const std::string& target_path) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
@@ -489,3 +491,6 @@ int rpc_send::mk_symlink(const std::string& path, const std::string& target_path
 }
 
 #endif
+
+} // namespace rpc
+} // namespace gkfs

@@ -36,7 +36,7 @@ using namespace std;
 
 std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_links) {
     std::string attr;
-    auto err = rpc_send::stat(path, attr);
+    auto err = gkfs::rpc::forward_stat(path, attr);
     if (err) {
         return nullptr;
     }
@@ -44,7 +44,7 @@ std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_l
     if (follow_links) {
         Metadata md{attr};
         while (md.is_link()) {
-            err = rpc_send::stat(md.target_path(), attr);
+            err = gkfs::rpc::forward_stat(md.target_path(), attr);
             if (err) {
                 return nullptr;
             }
@@ -187,7 +187,7 @@ int gkfs::func::mk_node(const std::string& path, mode_t mode) {
     if (check_parent_dir(path)) {
         return -1;
     }
-    return rpc_send::mk_node(path, mode);
+    return gkfs::rpc::forward_create(path, mode);
 }
 
 /**
@@ -201,7 +201,7 @@ int gkfs::func::rm_node(const std::string& path) {
         return -1;
     }
     bool has_data = S_ISREG(md->mode()) && (md->size() != 0);
-    return rpc_send::rm_node(path, !has_data, md->size());
+    return gkfs::rpc::forward_remove(path, !has_data, md->size());
 }
 
 int gkfs::func::access(const std::string& path, const int mask, bool follow_links) {
@@ -223,7 +223,7 @@ int gkfs::func::stat(const string& path, struct stat* buf, bool follow_links) {
 }
 
 int gkfs::func::statfs(sys_statfs* buf) {
-    auto blk_stat = rpc_send::chunk_stat();
+    auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
     buf->f_type = 0;
     buf->f_bsize = blk_stat.chunk_size;
     buf->f_blocks = blk_stat.chunk_total;
@@ -241,7 +241,7 @@ int gkfs::func::statfs(sys_statfs* buf) {
 
 int gkfs::func::statvfs(sys_statvfs* buf) {
     init_ld_env_if_needed();
-    auto blk_stat = rpc_send::chunk_stat();
+    auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
     buf->f_bsize = blk_stat.chunk_size;
     buf->f_blocks = blk_stat.chunk_total;
     buf->f_bfree = blk_stat.chunk_free;
@@ -271,7 +271,7 @@ off_t gkfs::func::lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int
             break;
         case SEEK_END: {
             off64_t file_size;
-            auto err = rpc_send::get_metadentry_size(gkfs_fd->path(), file_size);
+            auto err = gkfs::rpc::forward_get_metadentry_size(gkfs_fd->path(), file_size);
             if (err < 0) {
                 errno = err; // Negative numbers are explicitly for error codes
                 return -1;
@@ -305,12 +305,12 @@ int gkfs::func::truncate(const std::string& path, off_t old_size, off_t new_size
         return 0;
     }
 
-    if (rpc_send::decr_size(path, new_size)) {
+    if (gkfs::rpc::forward_decr_size(path, new_size)) {
         LOG(DEBUG, "Failed to decrease size");
         return -1;
     }
 
-    if (rpc_send::trunc_data(path, old_size, new_size)) {
+    if (gkfs::rpc::forward_truncate(path, old_size, new_size)) {
         LOG(DEBUG, "Failed to truncate data");
         return -1;
     }
@@ -365,14 +365,14 @@ ssize_t gkfs::func::pwrite(std::shared_ptr<OpenFile> file, const char* buf, size
     ssize_t ret = 0;
     long updated_size = 0;
 
-    ret = rpc_send::update_metadentry_size(*path, count, offset, append_flag, updated_size);
+    ret = gkfs::rpc::forward_update_metadentry_size(*path, count, offset, append_flag, updated_size);
     if (ret != 0) {
         LOG(ERROR, "update_metadentry_size() failed with ret {}", ret);
         return ret; // ERR
     }
-    ret = rpc_send::write(*path, buf, append_flag, offset, count, updated_size);
+    ret = gkfs::rpc::forward_write(*path, buf, append_flag, offset, count, updated_size);
     if (ret < 0) {
-        LOG(WARNING, "rpc_send::write() failed with ret {}", ret);
+        LOG(WARNING, "gkfs::rpc::forward_write() failed with ret {}", ret);
     }
     return ret; // return written size or -1 as error
 }
@@ -455,9 +455,9 @@ ssize_t gkfs::func::pread(std::shared_ptr<OpenFile> file, char* buf, size_t coun
     if (gkfs::config::io::zero_buffer_before_read) {
         memset(buf, 0, sizeof(char) * count);
     }
-    auto ret = rpc_send::read(file->path(), buf, offset, count);
+    auto ret = gkfs::rpc::forward_read(file->path(), buf, offset, count);
     if (ret < 0) {
-        LOG(WARNING, "rpc_send::read() failed with ret {}", ret);
+        LOG(WARNING, "gkfs::rpc::forward_read() failed with ret {}", ret);
     }
     // XXX check that we don't try to read past end of the file
     return ret; // return read size or -1 as error
@@ -492,7 +492,7 @@ int gkfs::func::opendir(const std::string& path) {
     }
 
     auto open_dir = std::make_shared<OpenDir>(path);
-    rpc_send::get_dirents(*open_dir);
+    gkfs::rpc::forward_get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);
 }
 
@@ -510,12 +510,12 @@ int gkfs::func::rmdir(const std::string& path) {
     }
 
     auto open_dir = std::make_shared<OpenDir>(path);
-    rpc_send::get_dirents(*open_dir);
+    gkfs::rpc::forward_get_dirents(*open_dir);
     if (open_dir->size() != 0) {
         errno = ENOTEMPTY;
         return -1;
     }
-    return rpc_send::rm_node(path, true, 0);
+    return gkfs::rpc::forward_remove(path, true, 0);
 }
 
 int gkfs::func::getdents(unsigned int fd,
@@ -653,7 +653,7 @@ int gkfs::func::mk_symlink(const std::string& path, const std::string& target_pa
         return -1;
     }
 
-    return rpc_send::mk_symlink(path, target_path);
+    return gkfs::rpc::forward_mk_symlink(path, target_path);
 }
 
 int gkfs::func::readlink(const std::string& path, char* buf, int bufsize) {

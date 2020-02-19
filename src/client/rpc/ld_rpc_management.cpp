@@ -18,11 +18,14 @@
 
 #include <boost/token_functions.hpp>
 
+namespace gkfs {
+namespace rpc {
+
 /**
 * Gets fs configuration information from the running daemon and transfers it to the memory of the library
 * @return
 */
-bool rpc_send::get_fs_config() {
+bool forward_get_fs_config() {
 
     auto endp = CTX->hosts().at(CTX->local_host_id());
     gkfs::rpc::fs_config::output out;
@@ -56,3 +59,6 @@ bool rpc_send::get_fs_config() {
 
     return true;
 }
+
+} // namespace rpc
+} // namespace gkfs
