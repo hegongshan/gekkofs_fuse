@@ -12,7 +12,7 @@
 */
 
 
-#include <daemon/main.hpp>
+#include <daemon/daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 

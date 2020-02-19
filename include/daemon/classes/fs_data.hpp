@@ -15,7 +15,7 @@
 #ifndef LFS_FS_DATA_H
 #define LFS_FS_DATA_H
 
-#include <daemon/main.hpp>
+#include <daemon/daemon.hpp>
 
 /* Forward declarations */
 class MetadataDB;

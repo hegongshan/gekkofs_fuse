@@ -4,7 +4,7 @@ add_subdirectory(backend/data)
 set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
     ../global/path_util.cpp
-    main.cpp
+    daemon.cpp
     util.cpp
     ops/metadentry.cpp
     classes/fs_data.cpp
@@ -21,7 +21,7 @@ set(DAEMON_HEADERS
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp
-    ../../include/daemon/main.hpp
+    ../../include/daemon/daemon.hpp
     ../../include/daemon/util.hpp
     ../../include/daemon/ops/metadentry.hpp
     ../../include/daemon/classes/fs_data.hpp

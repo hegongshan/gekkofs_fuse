@@ -12,8 +12,8 @@
 */
 
 
-#include <daemon/main.hpp>
-#include "version.hpp"
+#include <daemon/daemon.hpp>
+#include <version.hpp>
 #include <global/log_util.hpp>
 #include <global/env_util.hpp>
 #include <global/rpc/rpc_types.hpp>

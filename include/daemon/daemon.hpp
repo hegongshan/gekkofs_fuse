@@ -11,8 +11,8 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GKFS_DAEMON_MAIN_HPP
-#define GKFS_DAEMON_MAIN_HPP
+#ifndef GKFS_DAEMON_DAEMON_HPP
+#define GKFS_DAEMON_DAEMON_HPP
 
 // std libs
 #include <string>
@@ -43,4 +43,4 @@ void init_rpc_server(const std::string& protocol);
 
 void register_server_rpcs(margo_instance_id mid);
 
-#endif // GKFS_DAEMON_MAIN_HPP
+#endif // GKFS_DAEMON_DAEMON_HPP

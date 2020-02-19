@@ -11,7 +11,7 @@
   SPDX-License-Identifier: MIT
 */
 #include <daemon/util.hpp>
-#include <daemon/main.hpp>
+#include <daemon/daemon.hpp>
 
 #include <global/rpc/rpc_utils.hpp>
 

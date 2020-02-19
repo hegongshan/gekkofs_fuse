@@ -15,7 +15,7 @@
 #ifndef GEKKOFS_METADENTRY_HPP
 #define GEKKOFS_METADENTRY_HPP
 
-#include <daemon/main.hpp>
+#include <daemon/daemon.hpp>
 #include <global/metadata.hpp>
 
 namespace gkfs {
