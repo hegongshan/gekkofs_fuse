@@ -11,8 +11,8 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GKFS_RPCS_HPP
-#define GKFS_RPCS_HPP
+#ifndef GKFS_RPCS_TYPES_HPP
+#define GKFS_RPCS_TYPES_HPP
 
 // C includes
 #include <mercury.h>
@@ -2142,4 +2142,4 @@ struct chunk_stat {
 } // namespace gkfs
 
 
-#endif // GKFS_RPCS_HPP
+#endif // GKFS_RPCS_TYPES_HPP

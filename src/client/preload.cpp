@@ -14,7 +14,7 @@
 #include <client/preload.hpp>
 #include <client/path.hpp>
 #include <client/logging.hpp>
-#include <client/rpc/ld_rpc_management.hpp>
+#include <client/rpc/forward_management.hpp>
 #include <client/preload_util.hpp>
 #include <client/intercept.hpp>
 

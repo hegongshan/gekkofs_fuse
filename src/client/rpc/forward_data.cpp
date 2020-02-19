@@ -12,8 +12,8 @@
 */
 
 #include <client/preload_util.hpp>
-#include <client/rpc/ld_rpc_data_ws.hpp>
-#include <client/rpc/hg_rpcs.hpp>
+#include <client/rpc/forward_data.hpp>
+#include <client/rpc/rpc_types.hpp>
 #include <client/logging.hpp>
 
 #include <global/rpc/distributor.hpp>

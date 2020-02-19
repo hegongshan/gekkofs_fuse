@@ -9,9 +9,9 @@ set(DAEMON_SRC
     ops/metadentry.cpp
     classes/fs_data.cpp
     classes/rpc_data.cpp
-    handler/h_metadentry.cpp
-    handler/h_data.cpp
-    handler/h_preload.cpp
+    handler/srv_metadata.cpp
+    handler/srv_data.cpp
+    handler/srv_management.cpp
     )
 set(DAEMON_HEADERS
     ../../include/config.hpp

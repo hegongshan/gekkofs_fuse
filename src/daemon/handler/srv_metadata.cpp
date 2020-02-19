@@ -21,7 +21,7 @@
 
 using namespace std;
 
-static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
+static hg_return_t rpc_srv_create(hg_handle_t handle) {
     rpc_mk_node_in_t in;
     rpc_err_out_t out;
 
@@ -51,7 +51,7 @@ static hg_return_t rpc_srv_mk_node(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_create)
 
 static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     rpc_path_only_in_t in{};
@@ -124,7 +124,7 @@ static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
+static hg_return_t rpc_srv_remove(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
 
@@ -164,7 +164,7 @@ static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_rm_node)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
 
 
 static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {

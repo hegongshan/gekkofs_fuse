@@ -11,10 +11,10 @@ set(PRELOAD_SRC
     preload_util.cpp
     ../global/path_util.cpp
     ../global/rpc/rpc_utils.cpp
-    rpc/hg_rpcs.cpp
-    rpc/ld_rpc_data_ws.cpp
-    rpc/ld_rpc_management.cpp
-    rpc/ld_rpc_metadentry.cpp
+    rpc/rpc_types.cpp
+    rpc/forward_data.cpp
+    rpc/forward_management.cpp
+    rpc/forward_metadata.cpp
     syscalls/detail/syscall_info.c
     )
 set(PRELOAD_HEADERS
@@ -31,10 +31,10 @@ set(PRELOAD_HEADERS
     ../../include/client/preload.hpp
     ../../include/client/preload_context.hpp
     ../../include/client/preload_util.hpp
-    ../../include/client/rpc/hg_rpcs.hpp
-    ../../include/client/rpc/ld_rpc_management.hpp
-    ../../include/client/rpc/ld_rpc_metadentry.hpp
-    ../../include/client/rpc/ld_rpc_data_ws.hpp
+    ../../include/client/rpc/rpc_types.hpp
+    ../../include/client/rpc/forward_management.hpp
+    ../../include/client/rpc/forward_metadata.hpp
+    ../../include/client/rpc/forward_data.hpp
     ../../include/client/syscalls/args.hpp
     ../../include/client/syscalls/decoder.hpp
     ../../include/client/syscalls/errno.hpp

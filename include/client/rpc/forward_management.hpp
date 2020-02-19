@@ -12,8 +12,8 @@
 */
 
 
-#ifndef GEKKOFS_MARGO_RPC_MANAGMENT_HPP
-#define GEKKOFS_MARGO_RPC_MANAGMENT_HPP
+#ifndef GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
+#define GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
 
 namespace gkfs {
 namespace rpc {
@@ -23,4 +23,4 @@ bool forward_get_fs_config();
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_MARGO_RPC_NANAGMENT_HPP
+#endif //GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP

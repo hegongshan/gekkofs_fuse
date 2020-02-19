@@ -17,8 +17,8 @@
 #include <client/preload_util.hpp>
 #include <client/logging.hpp>
 #include <client/gkfs_functions.hpp>
-#include <client/rpc/ld_rpc_metadentry.hpp>
-#include <client/rpc/ld_rpc_data_ws.hpp>
+#include <client/rpc/forward_metadata.hpp>
+#include <client/rpc/forward_data.hpp>
 #include <client/open_dir.hpp>
 
 #include <global/path_util.hpp>

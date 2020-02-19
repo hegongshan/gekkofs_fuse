@@ -12,8 +12,8 @@
 */
 
 
-#ifndef LFS_RPC_DEFS_HPP
-#define LFS_RPC_DEFS_HPP
+#ifndef GKFS_DAEMON_RPC_DEFS_HPP
+#define GKFS_DAEMON_RPC_DEFS_HPP
 
 extern "C" {
 #include <margo.h>
@@ -21,15 +21,15 @@ extern "C" {
 
 /* visible API for RPC operations */
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_fs_config)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_fs_config)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_node)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_create)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_rm_node)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
@@ -47,12 +47,12 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)
 
 
 // data
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_read_data)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_read)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_write_data)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_write)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_trunc_data)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_truncate)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_chunk_stat)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
-#endif //LFS_RPC_DEFS_HPP
+#endif //GKFS_DAEMON_RPC_DEFS_HPP

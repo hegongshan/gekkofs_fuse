@@ -12,8 +12,8 @@
 */
 
 
-#ifndef GEKKOFS_PRELOAD_C_DATA_WS_HPP
-#define GEKKOFS_PRELOAD_C_DATA_WS_HPP
+#ifndef GEKKOFS_CLIENT_FORWARD_DATA_HPP
+#define GEKKOFS_CLIENT_FORWARD_DATA_HPP
 
 namespace gkfs {
 namespace rpc {
@@ -36,4 +36,4 @@ ChunkStat forward_get_chunk_stat();
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_PRELOAD_C_DATA_WS_HPP
+#endif //GEKKOFS_CLIENT_FORWARD_DATA_HPP

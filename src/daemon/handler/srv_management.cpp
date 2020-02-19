@@ -20,7 +20,7 @@
 
 using namespace std;
 
-static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
+static hg_return_t rpc_srv_get_fs_config(hg_handle_t handle) {
     rpc_config_out_t out{};
 
     GKFS_DATA->spdlogger()->debug("{}() Got config RPC", __func__);
@@ -47,4 +47,4 @@ static hg_return_t rpc_srv_fs_config(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_fs_config)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_fs_config)

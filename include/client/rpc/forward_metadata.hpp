@@ -12,8 +12,8 @@
 */
 
 
-#ifndef GEKKOFS_PRELOAD_C_METADENTRY_HPP
-#define GEKKOFS_PRELOAD_C_METADENTRY_HPP
+#ifndef GEKKOFS_CLIENT_FORWARD_METADATA_HPP
+#define GEKKOFS_CLIENT_FORWARD_METADATA_HPP
 
 #include <string>
 
@@ -54,4 +54,4 @@ int forward_mk_symlink(const std::string& path, const std::string& target_path);
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_PRELOAD_C_METADENTRY_HPP
+#endif //GEKKOFS_CLIENT_FORWARD_METADATA_HPP

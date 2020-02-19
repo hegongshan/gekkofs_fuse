@@ -12,7 +12,7 @@
 */
 
 #include <hermes.hpp>
-#include <client/rpc/hg_rpcs.hpp>
+#include <client/rpc/rpc_types.hpp>
 
 //==============================================================================
 // register request types so that they can be used by users and the engine

@@ -11,12 +11,12 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <client/rpc/ld_rpc_metadentry.hpp>
+#include <client/rpc/forward_metadata.hpp>
 #include <client/preload.hpp>
 #include <client/logging.hpp>
 #include <client/preload_util.hpp>
 #include <client/open_dir.hpp>
-#include <client/rpc/hg_rpcs.hpp>
+#include <client/rpc/rpc_types.hpp>
 
 #include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>

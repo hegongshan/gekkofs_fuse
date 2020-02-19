@@ -11,10 +11,10 @@
   SPDX-License-Identifier: MIT
 */
 
-#include <client/rpc/ld_rpc_management.hpp>
+#include <client/rpc/forward_management.hpp>
 #include <client/logging.hpp>
 #include <client/preload_util.hpp>
-#include <client/rpc/hg_rpcs.hpp>
+#include <client/rpc/rpc_types.hpp>
 
 #include <boost/token_functions.hpp>
 

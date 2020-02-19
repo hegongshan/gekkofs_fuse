@@ -213,11 +213,11 @@ void init_rpc_server(const string & protocol_port) {
  * @param hg_class
  */
 void register_server_rpcs(margo_instance_id mid) {
-    MARGO_REGISTER(mid, gkfs::hg_tag::fs_config, void, rpc_config_out_t, rpc_srv_fs_config);
-    MARGO_REGISTER(mid, gkfs::hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_mk_node);
+    MARGO_REGISTER(mid, gkfs::hg_tag::fs_config, void, rpc_config_out_t, rpc_srv_get_fs_config);
+    MARGO_REGISTER(mid, gkfs::hg_tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_create);
     MARGO_REGISTER(mid, gkfs::hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
     MARGO_REGISTER(mid, gkfs::hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
-    MARGO_REGISTER(mid, gkfs::hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_rm_node);
+    MARGO_REGISTER(mid, gkfs::hg_tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_remove);
     MARGO_REGISTER(mid, gkfs::hg_tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);
     MARGO_REGISTER(mid, gkfs::hg_tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
@@ -229,10 +229,10 @@ void register_server_rpcs(margo_instance_id mid) {
 #ifdef HAS_SYMLINKS
     MARGO_REGISTER(mid, gkfs::hg_tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
 #endif
-    MARGO_REGISTER(mid, gkfs::hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write_data);
-    MARGO_REGISTER(mid, gkfs::hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read_data);
-    MARGO_REGISTER(mid, gkfs::hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_trunc_data);
-    MARGO_REGISTER(mid, gkfs::hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_chunk_stat);
+    MARGO_REGISTER(mid, gkfs::hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write);
+    MARGO_REGISTER(mid, gkfs::hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read);
+    MARGO_REGISTER(mid, gkfs::hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_truncate);
+    MARGO_REGISTER(mid, gkfs::hg_tag::chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t, rpc_srv_get_chunk_stat);
 }
 
 void shutdown_handler(int dummy) {

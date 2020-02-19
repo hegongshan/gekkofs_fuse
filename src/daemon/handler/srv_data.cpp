@@ -121,7 +121,7 @@ void cancel_abt_io(vector<ABT_task>* abt_tasks, vector<ABT_eventual>* abt_eventu
 }
 
 
-static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
+static hg_return_t rpc_srv_write(hg_handle_t handle) {
     /*
      * 1. Setup
      */
@@ -324,9 +324,9 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     return ret;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_write_data)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_write)
 
-static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
+static hg_return_t rpc_srv_read(hg_handle_t handle) {
     /*
      * 1. Setup
      */
@@ -511,9 +511,9 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     return ret;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_read_data)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_read)
 
-static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
+static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     rpc_trunc_in_t in{};
     rpc_err_out_t out{};
 
@@ -546,9 +546,9 @@ static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_trunc_data)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_truncate)
 
-static hg_return_t rpc_srv_chunk_stat(hg_handle_t handle) {
+static hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->trace("{}() called", __func__);
 
     rpc_chunk_stat_out_t out{};
@@ -568,6 +568,6 @@ static hg_return_t rpc_srv_chunk_stat(hg_handle_t handle) {
     return hret;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_chunk_stat)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
 
