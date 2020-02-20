@@ -18,52 +18,58 @@
 #include <string>
 #include <numeric>
 
-using ChunkID = unsigned int;
-using Host = unsigned int;
+namespace gkfs {
+namespace rpc {
+
+using chunkid_t = unsigned int;
+using host_t = unsigned int;
 
 class Distributor {
 public:
-    virtual Host localhost() const = 0;
+    virtual host_t localhost() const = 0;
 
-    virtual Host locate_data(const std::string& path, const ChunkID& chnk_id) const = 0;
+    virtual host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const = 0;
 
-    virtual Host locate_file_metadata(const std::string& path) const = 0;
+    virtual host_t locate_file_metadata(const std::string& path) const = 0;
 
-    virtual std::vector<Host> locate_directory_metadata(const std::string& path) const = 0;
+    virtual std::vector<host_t> locate_directory_metadata(const std::string& path) const = 0;
 };
 
 
 class SimpleHashDistributor : public Distributor {
 private:
-    Host localhost_;
+    host_t localhost_;
     unsigned int hosts_size_;
-    std::vector<Host> all_hosts_;
+    std::vector<host_t> all_hosts_;
     std::hash<std::string> str_hash;
 public:
-    SimpleHashDistributor(Host localhost, unsigned int hosts_size);
+    SimpleHashDistributor(host_t localhost, unsigned int hosts_size);
 
-    Host localhost() const override;
+    host_t localhost() const override;
 
-    Host locate_data(const std::string& path, const ChunkID& chnk_id) const override;
+    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override;
 
-    Host locate_file_metadata(const std::string& path) const override;
+    host_t locate_file_metadata(const std::string& path) const override;
 
-    std::vector<Host> locate_directory_metadata(const std::string& path) const override;
+    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
 };
 
 class LocalOnlyDistributor : public Distributor {
 private:
-    Host localhost_;
+    host_t localhost_;
 public:
-    explicit LocalOnlyDistributor(Host localhost);
+    explicit LocalOnlyDistributor(host_t localhost);
 
-    Host localhost() const override;
+    host_t localhost() const override;
 
-    Host locate_data(const std::string& path, const ChunkID& chnk_id) const override;
+    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override;
 
-    Host locate_file_metadata(const std::string& path) const override;
+    host_t locate_file_metadata(const std::string& path) const override;
 
-    std::vector<Host> locate_directory_metadata(const std::string& path) const override;
+    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
 };
+
+} // namespace rpc
+} // namespace gkfs
 
 #endif //GEKKOFS_RPC_LOCATOR_HPP

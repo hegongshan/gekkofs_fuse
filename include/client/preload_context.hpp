@@ -26,12 +26,14 @@
 /* Forward declarations */
 class OpenFileMap;
 
-class Distributor;
 
 namespace gkfs {
-    namespace log {
-        struct logger;
-    }
+namespace rpc {
+class Distributor;
+}
+namespace log {
+struct logger;
+}
 }
 
 struct FsConfig {
@@ -65,7 +67,7 @@ private:
     PreloadContext();
 
     std::shared_ptr<OpenFileMap> ofm_;
-    std::shared_ptr<Distributor> distributor_;
+    std::shared_ptr<gkfs::rpc::Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
     std::string cwd_;
@@ -124,9 +126,9 @@ public:
 
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
-    void distributor(std::shared_ptr<Distributor> distributor);
+    void distributor(std::shared_ptr<gkfs::rpc::Distributor> distributor);
 
-    std::shared_ptr<Distributor> distributor() const;
+    std::shared_ptr<gkfs::rpc::Distributor> distributor() const;
 
     const std::shared_ptr<FsConfig>& fs_conf() const;
 

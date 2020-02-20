@@ -163,7 +163,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    SimpleHashDistributor distributor(host_id, host_size);
+    gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
@@ -369,7 +369,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    SimpleHashDistributor distributor(host_id, host_size);
+    gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host

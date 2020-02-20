@@ -191,11 +191,11 @@ const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {
     return ofm_;
 }
 
-void PreloadContext::distributor(std::shared_ptr<Distributor> d) {
+void PreloadContext::distributor(std::shared_ptr<gkfs::rpc::Distributor> d) {
     distributor_ = d;
 }
 
-std::shared_ptr<Distributor> PreloadContext::distributor() const {
+std::shared_ptr<gkfs::rpc::Distributor> PreloadContext::distributor() const {
     return distributor_;
 }
 

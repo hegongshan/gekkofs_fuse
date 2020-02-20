@@ -96,7 +96,8 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
-    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->local_host_id(), CTX->hosts().size());
+    auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(CTX->local_host_id(),
+                                                                               CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
 
     LOG(INFO, "Retrieving file system configuration...");

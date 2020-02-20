@@ -15,52 +15,58 @@
 
 using namespace std;
 
+namespace gkfs {
+namespace rpc {
+
 SimpleHashDistributor::
-SimpleHashDistributor(Host localhost, unsigned int hosts_size) :
+SimpleHashDistributor(host_t localhost, unsigned int hosts_size) :
         localhost_(localhost),
         hosts_size_(hosts_size),
         all_hosts_(hosts_size) {
     ::iota(all_hosts_.begin(), all_hosts_.end(), 0);
 }
 
-Host SimpleHashDistributor::
+host_t SimpleHashDistributor::
 localhost() const {
     return localhost_;
 }
 
-Host SimpleHashDistributor::
-locate_data(const string& path, const ChunkID& chnk_id) const {
+host_t SimpleHashDistributor::
+locate_data(const string& path, const chunkid_t& chnk_id) const {
     return str_hash(path + ::to_string(chnk_id)) % hosts_size_;
 }
 
-Host SimpleHashDistributor::
+host_t SimpleHashDistributor::
 locate_file_metadata(const string& path) const {
     return str_hash(path) % hosts_size_;
 }
 
-::vector<Host> SimpleHashDistributor::
+::vector<host_t> SimpleHashDistributor::
 locate_directory_metadata(const string& path) const {
     return all_hosts_;
 }
 
-LocalOnlyDistributor::LocalOnlyDistributor(Host localhost) : localhost_(localhost) {}
+LocalOnlyDistributor::LocalOnlyDistributor(host_t localhost) : localhost_(localhost) {}
 
-Host LocalOnlyDistributor::
+host_t LocalOnlyDistributor::
 localhost() const {
     return localhost_;
 }
 
-Host LocalOnlyDistributor::
-locate_data(const string& path, const ChunkID& chnk_id) const {
+host_t LocalOnlyDistributor::
+locate_data(const string& path, const chunkid_t& chnk_id) const {
     return localhost_;
 }
 
-Host LocalOnlyDistributor::
+host_t LocalOnlyDistributor::
 locate_file_metadata(const string& path) const {
     return localhost_;
 }
 
-::vector<Host> LocalOnlyDistributor::
+::vector<host_t> LocalOnlyDistributor::
 locate_directory_metadata(const string& path) const {
     return {localhost_};
 }
+
+} // namespace rpc
+} // namespace gkfs
