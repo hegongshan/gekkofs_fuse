@@ -27,6 +27,9 @@ namespace spdlog {
     class logger;
 }
 
+namespace gkfs {
+namespace data {
+
 struct ChunkStat {
     unsigned long chunk_size;
     unsigned long chunk_total;
@@ -72,5 +75,8 @@ public:
 
     ChunkStat chunk_stat() const;
 };
+
+} // namespace data
+} // namespace gkfs
 
 #endif //GEKKOFS_CHUNK_STORAGE_HPP

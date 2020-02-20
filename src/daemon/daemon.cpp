@@ -58,7 +58,8 @@ void init_environment() {
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
     bfs::create_directories(chunk_storage_path);
     try {
-        GKFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, gkfs::config::rpc::chunksize));
+        GKFS_DATA->storage(
+                std::make_shared<gkfs::data::ChunkStorage>(chunk_storage_path, gkfs::config::rpc::chunksize));
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize storage backend: {}", __func__, e.what());
         throw;

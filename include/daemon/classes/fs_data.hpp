@@ -22,9 +22,12 @@ namespace gkfs {
 namespace metadata {
 class MetadataDB;
 }
+
+namespace data {
+class ChunkStorage;
+}
 }
 
-class ChunkStorage;
 
 #include <unordered_map>
 #include <map>
@@ -49,7 +52,7 @@ private:
     // Database
     std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
     // Storage backend
-    std::shared_ptr<ChunkStorage> storage_;
+    std::shared_ptr<gkfs::data::ChunkStorage> storage_;
 
     // configurable metadata
     bool atime_state_;
@@ -92,9 +95,9 @@ public:
 
     void close_mdb();
 
-    const std::shared_ptr<ChunkStorage>& storage() const;
+    const std::shared_ptr<gkfs::data::ChunkStorage>& storage() const;
 
-    void storage(const std::shared_ptr<ChunkStorage>& storage);
+    void storage(const std::shared_ptr<gkfs::data::ChunkStorage>& storage);
 
     const std::string& bind_addr() const;
 

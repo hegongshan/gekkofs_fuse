@@ -37,11 +37,11 @@ void FsData::close_mdb() {
     mdb_.reset();
 }
 
-const std::shared_ptr<ChunkStorage>& FsData::storage() const {
+const std::shared_ptr<gkfs::data::ChunkStorage>& FsData::storage() const {
     return storage_;
 }
 
-void FsData::storage(const std::shared_ptr<ChunkStorage>& storage) {
+void FsData::storage(const std::shared_ptr<gkfs::data::ChunkStorage>& storage) {
     storage_ = storage;
 }
 

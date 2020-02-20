@@ -25,6 +25,9 @@ extern "C" {
 namespace bfs = boost::filesystem;
 using namespace std;
 
+namespace gkfs {
+namespace data {
+
 string ChunkStorage::absolute(const string& internal_path) const {
     assert(gkfs::path::is_relative(internal_path));
     return root_path + '/' + internal_path;
@@ -214,3 +217,6 @@ ChunkStat ChunkStorage::chunk_stat() const {
             bytes_total / chunksize,
             bytes_free / chunksize};
 }
+
+} // namespace data
+} // namespace gkfs
