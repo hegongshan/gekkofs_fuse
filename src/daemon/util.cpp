@@ -13,7 +13,7 @@
 #include <daemon/util.hpp>
 #include <daemon/daemon.hpp>
 
-#include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_util.hpp>
 
 #include <fstream>
 #include <iostream>

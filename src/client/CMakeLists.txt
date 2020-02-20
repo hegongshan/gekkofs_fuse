@@ -10,7 +10,7 @@ set(PRELOAD_SRC
     preload_context.cpp
     preload_util.cpp
     ../global/path_util.cpp
-    ../global/rpc/rpc_utils.cpp
+    ../global/rpc/rpc_util.cpp
     rpc/rpc_types.cpp
     rpc/forward_data.cpp
     rpc/forward_management.cpp
@@ -46,7 +46,7 @@ set(PRELOAD_HEADERS
     ../../include/global/global_defs.hpp
     ../../include/global/path_util.hpp
     ../../include/global/rpc/rpc_types.hpp
-    ../../include/global/rpc/rpc_utils.hpp
+    ../../include/global/rpc/rpc_util.hpp
     )
 
 add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})

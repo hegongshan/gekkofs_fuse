@@ -16,7 +16,7 @@
 #include <client/logging.hpp>
 
 #include <global/rpc/distributor.hpp>
-#include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_util.hpp>
 #include <global/env_util.hpp>
 
 #include <hermes.hpp>

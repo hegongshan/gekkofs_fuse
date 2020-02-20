@@ -13,11 +13,11 @@
 
 
 #include <daemon/handler/rpc_defs.hpp>
+#include <daemon/handler/rpc_util.hpp>
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/ops/metadentry.hpp>
 
 #include <global/rpc/rpc_types.hpp>
-#include <global/rpc/rpc_utils.hpp>
 
 using namespace std;
 
@@ -319,7 +319,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
 
     if (entries.empty()) {
         out.err = 0;
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
     //Calculate total output size
@@ -334,7 +334,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
         //Source buffer is smaller than total output size
         GKFS_DATA->spdlogger()->error("{}() Entries do not fit source buffer", __func__);
         out.err = ENOBUFS;
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
     //Serialize output data on local buffer
@@ -357,7 +357,7 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
         out.err = EBUSY;
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
     ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr,
@@ -369,14 +369,14 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
                 "{}() Failed push dirents on path {} to client",
                 __func__, in.path
         );
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
     out.dirents_size = entries.size();
     out.err = 0;
     GKFS_DATA->spdlogger()->debug(
             "{}() Sending output response", __func__);
-    return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)

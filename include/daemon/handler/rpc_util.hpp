@@ -11,9 +11,8 @@
   SPDX-License-Identifier: MIT
 */
 
-
-#ifndef GEKKOFS_RPC_UTILS_HPP
-#define GEKKOFS_RPC_UTILS_HPP
+#ifndef GEKKOFS_DAEMON_RPC_UTIL_HPP
+#define GEKKOFS_DAEMON_RPC_UTIL_HPP
 
 extern "C" {
 #include <mercury_types.h>
@@ -23,8 +22,11 @@ extern "C" {
 
 #include <string>
 
+namespace gkfs {
+namespace rpc {
+
 template<typename I, typename O>
-inline hg_return_t rpc_cleanup(hg_handle_t* handle, I* input, O* output, hg_bulk_t* bulk_handle) {
+inline hg_return_t cleanup(hg_handle_t* handle, I* input, O* output, hg_bulk_t* bulk_handle) {
     auto ret = HG_SUCCESS;
     if (bulk_handle) {
         ret = margo_bulk_free(*bulk_handle);
@@ -50,21 +52,19 @@ inline hg_return_t rpc_cleanup(hg_handle_t* handle, I* input, O* output, hg_bulk
 }
 
 template<typename I, typename O>
-inline hg_return_t rpc_cleanup_respond(hg_handle_t* handle, I* input, O* output, hg_bulk_t* bulk_handle) {
+inline hg_return_t cleanup_respond(hg_handle_t* handle, I* input, O* output, hg_bulk_t* bulk_handle) {
     auto ret = HG_SUCCESS;
     if (output && handle) {
         ret = margo_respond(*handle, output);
         if (ret != HG_SUCCESS)
             return ret;
     }
-    return rpc_cleanup(handle, input, static_cast<O*>(nullptr), bulk_handle);
+    return cleanup(handle, input, static_cast<O*>(nullptr), bulk_handle);
 
 }
 
-hg_bool_t bool_to_merc_bool(bool state);
+} // namespace rpc
+} // namespace gkfs
 
-std::string get_my_hostname(bool short_hostname = false);
 
-std::string get_host_by_name(const std::string& hostname);
-
-#endif //GEKKOFS_RPC_UTILS_HPP
+#endif //GEKKOFS_DAEMON_RPC_UTIL_HPP

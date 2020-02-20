@@ -14,10 +14,10 @@
 
 #include <daemon/daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
+#include <daemon/handler/rpc_util.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 
 #include <global/rpc/rpc_types.hpp>
-#include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
 
@@ -135,7 +135,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     auto ret = margo_get_input(handle, &in);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Could not get RPC input data with err {}", __func__, ret);
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
@@ -151,7 +151,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     ret = margo_bulk_create(mid, 1, nullptr, &in.total_chunk_size, HG_BULK_READWRITE, &bulk_handle);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
-        return rpc_cleanup_respond(&handle, &in, &out, static_cast<hg_bulk_t*>(nullptr));
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, static_cast<hg_bulk_t*>(nullptr));
     }
     // access the internally allocated memory buffer and put it into buf_ptrs
     uint32_t actual_count;
@@ -159,7 +159,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
                             &in.total_chunk_size, &actual_count);
     if (ret != HG_SUCCESS || actual_count != 1) {
         GKFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
@@ -215,7 +215,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
                         "{}() Failed to pull data from client for chunk {} (startchunk {}; endchunk {}", __func__,
                         chnk_id_file, in.chunk_start, in.chunk_end - 1);
                 cancel_abt_io(&abt_tasks, &task_eventuals, chnk_id_curr);
-                return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+                return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
             }
             bulk_buf_ptrs[chnk_id_curr] = chnk_ptr;
             chnk_sizes[chnk_id_curr] = offset_transfer_size;
@@ -244,7 +244,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
                         "{}() Failed to pull data from client. file {} chunk {} (startchunk {}; endchunk {})", __func__,
                         *path, chnk_id_file, in.chunk_start, (in.chunk_end - 1));
                 cancel_abt_io(&abt_tasks, &task_eventuals, chnk_id_curr);
-                return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+                return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
             }
             bulk_buf_ptrs[chnk_id_curr] = chnk_ptr;
             chnk_sizes[chnk_id_curr] = transfer_size;
@@ -267,7 +267,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
         if (abt_ret != ABT_SUCCESS) {
             GKFS_DATA->spdlogger()->error("{}() task create failed", __func__);
             cancel_abt_io(&abt_tasks, &task_eventuals, chnk_id_curr + 1);
-            return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+            return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
         }
         // next chunk
         chnk_id_curr++;
@@ -315,7 +315,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
      * 5. Respond and cleanup
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response {}", __func__, out.err);
-    ret = rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    ret = gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     // free tasks after responding
     for (auto&& task : abt_tasks) {
         ABT_task_join(task);
@@ -340,7 +340,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     auto ret = margo_get_input(handle, &in);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Could not get RPC input data with err {}", __func__, ret);
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
@@ -357,7 +357,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     ret = margo_bulk_create(mid, 1, nullptr, &in.total_chunk_size, HG_BULK_READWRITE, &bulk_handle);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
-        return rpc_cleanup_respond(&handle, &in, &out, static_cast<hg_bulk_t*>(nullptr));
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, static_cast<hg_bulk_t*>(nullptr));
     }
     // access the internally allocated memory buffer and put it into buf_ptrs
     uint32_t actual_count;
@@ -365,7 +365,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
                             &in.total_chunk_size, &actual_count);
     if (ret != HG_SUCCESS || actual_count != 1) {
         GKFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
-        return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
@@ -448,7 +448,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
         if (abt_ret != ABT_SUCCESS) {
             GKFS_DATA->spdlogger()->error("{}() task create failed", __func__);
             cancel_abt_io(&abt_tasks, &task_eventuals, chnk_id_curr + 1);
-            return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+            return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
         }
         chnk_id_curr++;
     }
@@ -505,7 +505,7 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
      * 5. Respond and cleanup
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response, err: {}", __func__, out.err);
-    ret = rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+    ret = gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     // free tasks after responding
     cancel_abt_io(&abt_tasks, &task_eventuals, in.chunk_n);
     return ret;

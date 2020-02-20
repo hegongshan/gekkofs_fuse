@@ -12,7 +12,7 @@
 */
 
 
-#include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_util.hpp>
 
 extern "C" {
 #include <unistd.h>

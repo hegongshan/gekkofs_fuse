@@ -18,7 +18,7 @@
 #include <client/open_dir.hpp>
 #include <client/rpc/rpc_types.hpp>
 
-#include <global/rpc/rpc_utils.hpp>
+#include <global/rpc/rpc_util.hpp>
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_types.hpp>
 
