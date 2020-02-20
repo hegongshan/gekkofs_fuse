@@ -40,7 +40,7 @@ using namespace std;
  * @param attr
  * @return
  */
-int gkfs::util::metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr) {
+int gkfs::util::metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr) {
 
     /* Populate default values */
     attr.st_dev = makedev(0, 0);

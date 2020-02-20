@@ -47,7 +47,7 @@ void init_environment() {
     std::string metadata_path = GKFS_DATA->metadir() + "/rocksdb"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'", __func__, metadata_path);
     try {
-        GKFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
+        GKFS_DATA->mdb(std::make_shared<gkfs::metadata::MetadataDB>(metadata_path));
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize metadata DB: {}", __func__, e.what());
         throw;
@@ -90,9 +90,9 @@ void init_environment() {
     GKFS_DATA->link_cnt_state(gkfs::config::metadata::use_link_cnt);
     GKFS_DATA->blocks_state(gkfs::config::metadata::use_blocks);
     // Create metadentry for root directory
-    Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
+    gkfs::metadata::Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
     try {
-        gkfs::metadentry::create("/", root_md);
+        gkfs::metadata::create("/", root_md);
     } catch (const std::exception& e) {
         throw runtime_error("Failed to write root metadentry to KV store: "s + e.what());
     }

@@ -20,6 +20,9 @@
 
 namespace rdb = rocksdb;
 
+namespace gkfs {
+namespace metadata {
+
 class MetadataDB {
 private:
     std::unique_ptr<rdb::DB> db;
@@ -52,5 +55,8 @@ public:
 
     void iterate_all();
 };
+
+} // namespace metadata
+} // namespace gkfs
 
 #endif //GEKKOFS_METADATA_DB_HPP

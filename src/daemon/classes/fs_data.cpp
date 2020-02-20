@@ -25,11 +25,11 @@ void FsData::spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger) {
     FsData::spdlogger_ = spdlogger;
 }
 
-const std::shared_ptr<MetadataDB>& FsData::mdb() const {
+const std::shared_ptr<gkfs::metadata::MetadataDB>& FsData::mdb() const {
     return mdb_;
 }
 
-void FsData::mdb(const std::shared_ptr<MetadataDB>& mdb) {
+void FsData::mdb(const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb) {
     mdb_ = mdb;
 }
 

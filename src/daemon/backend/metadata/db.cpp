@@ -22,6 +22,9 @@ extern "C" {
 #include <sys/stat.h>
 }
 
+namespace gkfs {
+namespace metadata {
+
 
 MetadataDB::MetadataDB(const std::string& path) : path(path) {
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
@@ -190,3 +193,6 @@ void MetadataDB::iterate_all() {
 void MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
     options.max_successive_merges = 128;
 }
+
+} // namespace metadata
+} // namespace gkfs

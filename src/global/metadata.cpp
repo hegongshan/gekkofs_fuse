@@ -24,6 +24,8 @@ extern "C" {
 #include <ctime>
 #include <cassert>
 
+namespace gkfs {
+namespace metadata {
 
 static const char MSP = '|'; // metadata separator
 
@@ -250,5 +252,8 @@ void Metadata::target_path(const std::string& target_path) {
 bool Metadata::is_link() const {
     return S_ISLNK(mode_);
 }
+
+} // namespace metadata
+} // namespace gkfs
 
 #endif

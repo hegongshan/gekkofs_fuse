@@ -18,7 +18,11 @@
 #include <daemon/daemon.hpp>
 
 /* Forward declarations */
+namespace gkfs {
+namespace metadata {
 class MetadataDB;
+}
+}
 
 class ChunkStorage;
 
@@ -43,7 +47,7 @@ private:
     std::string hosts_file_;
 
     // Database
-    std::shared_ptr<MetadataDB> mdb_;
+    std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
     // Storage backend
     std::shared_ptr<ChunkStorage> storage_;
 
@@ -82,9 +86,9 @@ public:
 
     void metadir(const std::string& metadir_);
 
-    const std::shared_ptr<MetadataDB>& mdb() const;
+    const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb() const;
 
-    void mdb(const std::shared_ptr<MetadataDB>& mdb);
+    void mdb(const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb);
 
     void close_mdb();
 

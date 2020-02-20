@@ -39,7 +39,7 @@ namespace gkfs {
     namespace func {
 
 
-        std::shared_ptr<Metadata> metadata(const std::string& path, bool follow_links = false);
+    std::shared_ptr<gkfs::metadata::Metadata> metadata(const std::string& path, bool follow_links = false);
 
         int check_parent_dir(const std::string& path);
 

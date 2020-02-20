@@ -21,9 +21,10 @@
 #include <sys/stat.h>
 #include <string>
 
+namespace gkfs {
+namespace metadata {
 
 constexpr mode_t LINK_MODE = ((S_IRWXU | S_IRWXG | S_IRWXO) | S_IFLNK);
-
 
 class Metadata {
 private:
@@ -98,6 +99,9 @@ public:
 
 #endif
 };
+
+} // namespace metadata
+} // namespace gkfs
 
 
 #endif //FS_METADATA_H

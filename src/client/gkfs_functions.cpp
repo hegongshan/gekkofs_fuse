@@ -34,7 +34,7 @@ extern "C" {
 
 using namespace std;
 
-std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_links) {
+std::shared_ptr<gkfs::metadata::Metadata> gkfs::func::metadata(const string& path, bool follow_links) {
     std::string attr;
     auto err = gkfs::rpc::forward_stat(path, attr);
     if (err) {
@@ -42,17 +42,17 @@ std::shared_ptr<Metadata> gkfs::func::metadata(const string& path, bool follow_l
     }
 #ifdef HAS_SYMLINKS
     if (follow_links) {
-        Metadata md{attr};
+        gkfs::metadata::Metadata md{attr};
         while (md.is_link()) {
             err = gkfs::rpc::forward_stat(md.target_path(), attr);
             if (err) {
                 return nullptr;
             }
-            md = Metadata{attr};
+            md = gkfs::metadata::Metadata{attr};
         }
     }
 #endif
-    return make_shared<Metadata>(attr);
+    return make_shared<gkfs::metadata::Metadata>(attr);
 }
 
 int gkfs::func::check_parent_dir(const std::string& path) {

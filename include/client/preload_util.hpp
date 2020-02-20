@@ -48,7 +48,7 @@ namespace util {
             return static_cast<typename std::underlying_type<E>::type>(e);
         }
 
-        int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
+int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr);
 
         std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
 
