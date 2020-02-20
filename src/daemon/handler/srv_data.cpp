@@ -524,10 +524,10 @@ static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     }
     GKFS_DATA->spdlogger()->debug("{}() path: '{}', length: {}", __func__, in.path, in.length);
 
-    unsigned int chunk_start = chnk_id_for_offset(in.length, gkfs::config::rpc::chunksize);
+    unsigned int chunk_start = gkfs::util::chnk_id_for_offset(in.length, gkfs::config::rpc::chunksize);
 
     // If we trunc in the the middle of a chunk, do not delete that chunk
-    auto left_pad = chnk_lpad(in.length, gkfs::config::rpc::chunksize);
+    auto left_pad = gkfs::util::chnk_lpad(in.length, gkfs::config::rpc::chunksize);
     if (left_pad != 0) {
         GKFS_DATA->storage()->truncate_chunk(in.path, chunk_start, left_pad);
         ++chunk_start;
