@@ -19,12 +19,12 @@
 namespace gkfs {
 namespace log {
 
-        spdlog::level::level_enum get_level(std::string level_str);
+spdlog::level::level_enum get_level(std::string level_str);
 
-        spdlog::level::level_enum get_level(unsigned long level);
+spdlog::level::level_enum get_level(unsigned long level);
 
-        void setup(const std::vector<std::string>& loggers, spdlog::level::level_enum level, const std::string& path);
-    }
+void setup(const std::vector<std::string>& loggers, spdlog::level::level_enum level, const std::string& path);
+}
 }
 
 #endif

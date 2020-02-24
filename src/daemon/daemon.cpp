@@ -150,7 +150,7 @@ void init_io_tasklet_pool() {
     vector<ABT_xstream> xstreams(xstreams_num);
     for (unsigned int i = 0; i < xstreams_num; ++i) {
         ret = ABT_xstream_create_basic(ABT_SCHED_BASIC_WAIT, 1, &pool,
-                ABT_SCHED_CONFIG_NULL, &xstreams[i]);
+                                       ABT_SCHED_CONFIG_NULL, &xstreams[i]);
         if (ret != ABT_SUCCESS) {
             throw runtime_error("Failed to create task execution streams for I/O operations");
         }
@@ -160,7 +160,7 @@ void init_io_tasklet_pool() {
     RPC_DATA->io_pool(pool);
 }
 
-void init_rpc_server(const string & protocol_port) {
+void init_rpc_server(const string& protocol_port) {
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
@@ -262,9 +262,9 @@ void initialize_loggers() {
     }
 
     auto logger_names = std::vector<std::string>{
-        "main",
-        "MetadataDB",
-        "ChunkStorage",
+            "main",
+            "MetadataDB",
+            "ChunkStorage",
     };
 
     gkfs::log::setup(logger_names, level, path);
@@ -281,8 +281,8 @@ int main(int argc, const char* argv[]) {
             ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
             ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
             ("hosts-file,H", po::value<string>(),
-                             "Shared file used by deamons to register their "
-                             "enpoints. (default './gkfs_hosts.txt')")
+             "Shared file used by deamons to register their "
+             "enpoints. (default './gkfs_hosts.txt')")
             ("version,h", "print version and exit");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

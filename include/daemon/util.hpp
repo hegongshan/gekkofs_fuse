@@ -15,11 +15,11 @@
 #define GEKKOFS_DAEMON_UTIL_HPP
 
 namespace gkfs {
-    namespace util {
-        void populate_hosts_file();
+namespace util {
+void populate_hosts_file();
 
-        void destroy_hosts_file();
-    }
+void destroy_hosts_file();
+}
 }
 
 #endif //GEKKOFS_DAEMON_UTIL_HPP

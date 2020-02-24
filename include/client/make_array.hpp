@@ -17,16 +17,16 @@
 namespace gkfs {
 namespace util {
 
-template <typename... T>
-constexpr auto make_array(T&&... values) ->
-    std::array<
-       typename std::decay<
-           typename std::common_type<T...>::type>::type,
-       sizeof...(T)> {
-    return std::array<
+template<typename... T>
+constexpr auto make_array(T&& ... values) ->
+std::array<
         typename std::decay<
-            typename std::common_type<T...>::type>::type,
-        sizeof...(T)>{std::forward<T>(values)...};
+                typename std::common_type<T...>::type>::type,
+        sizeof...(T)> {
+    return std::array<
+            typename std::decay<
+                    typename std::common_type<T...>::type>::type,
+            sizeof...(T)>{std::forward<T>(values)...};
 }
 
 } // namespace util

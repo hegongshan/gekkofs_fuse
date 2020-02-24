@@ -43,17 +43,17 @@ extern std::unique_ptr<hermes::async_engine> ld_network_service;
 // function definitions
 namespace gkfs {
 namespace util {
-        template<typename E>
-        constexpr typename std::underlying_type<E>::type to_underlying(E e) {
-            return static_cast<typename std::underlying_type<E>::type>(e);
-        }
+template<typename E>
+constexpr typename std::underlying_type<E>::type to_underlying(E e) {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
 
 int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr);
 
-        std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
+std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
 
-        void load_hosts();
-    }
+void load_hosts();
+}
 }
 
 #endif //GEKKOFS_PRELOAD_UTIL_HPP

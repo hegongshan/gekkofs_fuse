@@ -55,7 +55,7 @@ IncreaseSizeOperand::IncreaseSizeOperand(const rdb::Slice& serialized_op) {
 
     //Parse append flag
     assert(serialized_op[chrs_parsed] == false_char ||
-                   serialized_op[chrs_parsed] == true_char);
+           serialized_op[chrs_parsed] == true_char);
     append = serialized_op[chrs_parsed] != false_char;
     //check that we consumed all the input string
     assert(chrs_parsed + 1 == serialized_op.size());
