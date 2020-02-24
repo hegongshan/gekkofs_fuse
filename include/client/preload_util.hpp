@@ -48,12 +48,15 @@ constexpr typename std::underlying_type<E>::type to_underlying(E e) {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
+std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const std::string& path, bool follow_links = false);
+
 int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr);
 
 std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
 
 void load_hosts();
-}
-}
+
+} // namespace util
+} // namespace gkfs
 
 #endif //GEKKOFS_PRELOAD_UTIL_HPP

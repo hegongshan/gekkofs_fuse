@@ -13,6 +13,7 @@
 
 #include <client/hooks.hpp>
 #include <client/preload.hpp>
+#include <client/preload_util.hpp>
 #include <client/logging.hpp>
 #include <client/gkfs_functions.hpp>
 #include <client/path.hpp>
@@ -51,7 +52,7 @@ int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
             return -ENOTDIR;
 
         case RelativizeStatus::internal:
-            return with_errno(gkfs::func::open(resolved, mode, flags));
+            return with_errno(gkfs::syscall::gkfs_open(resolved, mode, flags));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
@@ -85,7 +86,7 @@ int hook_stat(const char* path, struct stat* buf) {
 
     std::string rel_path;
     if (CTX->relativize_path(path, rel_path, false)) {
-        return with_errno(gkfs::func::stat(rel_path, buf));
+        return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept(SYS_stat, rel_path.c_str(), buf);
 }
@@ -97,7 +98,7 @@ int hook_lstat(const char* path, struct stat* buf) {
 
     std::string rel_path;
     if (CTX->relativize_path(path, rel_path)) {
-        return with_errno(gkfs::func::stat(rel_path, buf));
+        return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept(SYS_lstat, rel_path.c_str(), buf);
 }
@@ -109,7 +110,7 @@ int hook_fstat(unsigned int fd, struct stat* buf) {
 
     if (CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
-        return with_errno(gkfs::func::stat(path, buf));
+        return with_errno(gkfs::syscall::gkfs_stat(path, buf));
     }
     return syscall_no_intercept(SYS_fstat, fd, buf);
 }
@@ -137,7 +138,7 @@ int hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
             return -ENOTDIR;
 
         case RelativizeStatus::internal:
-            return with_errno(gkfs::func::stat(resolved, buf));
+            return with_errno(gkfs::syscall::gkfs_stat(resolved, buf));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
@@ -151,7 +152,7 @@ int hook_read(unsigned int fd, void* buf, size_t count) {
         __func__, fd, fmt::ptr(buf), count);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::read(fd, buf, count));
+        return with_errno(gkfs::syscall::gkfs_read(fd, buf, count));
     }
     return syscall_no_intercept(SYS_read, fd, buf, count);
 }
@@ -162,7 +163,7 @@ int hook_pread(unsigned int fd, char* buf, size_t count, loff_t pos) {
         __func__, fd, fmt::ptr(buf), count, pos);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::pread_ws(fd, buf, count, pos));
+        return with_errno(gkfs::syscall::gkfs_pread_ws(fd, buf, count, pos));
     }
     /* Since kernel 2.6: pread() became pread64(), and pwrite() became pwrite64(). */
     return syscall_no_intercept(SYS_pread64, fd, buf, count, pos);
@@ -174,7 +175,7 @@ int hook_write(unsigned int fd, const char* buf, size_t count) {
         __func__, fd, fmt::ptr(buf), count);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::write(fd, buf, count));
+        return with_errno(gkfs::syscall::gkfs_write(fd, buf, count));
     }
     return syscall_no_intercept(SYS_write, fd, buf, count);
 }
@@ -185,7 +186,7 @@ int hook_pwrite(unsigned int fd, const char* buf, size_t count, loff_t pos) {
         __func__, fd, fmt::ptr(buf), count, pos);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::pwrite_ws(fd, buf, count, pos));
+        return with_errno(gkfs::syscall::gkfs_pwrite_ws(fd, buf, count, pos));
     }
     /* Since kernel 2.6: pread() became pread64(), and pwrite() became pwrite64(). */
     return syscall_no_intercept(SYS_pwrite64, fd, buf, count, pos);
@@ -197,7 +198,7 @@ int hook_writev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt)
         __func__, fd, fmt::ptr(iov), iovcnt);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::writev(fd, iov, iovcnt));
+        return with_errno(gkfs::syscall::gkfs_writev(fd, iov, iovcnt));
     }
     return syscall_no_intercept(SYS_writev, fd, iov, iovcnt);
 }
@@ -240,9 +241,9 @@ int hook_unlinkat(int dirfd, const char* cpath, int flags) {
 
         case RelativizeStatus::internal:
             if (flags & AT_REMOVEDIR) {
-                return with_errno(gkfs::func::rmdir(resolved));
+                return with_errno(gkfs::syscall::gkfs_rmdir(resolved));
             } else {
-                return with_errno(gkfs::func::rm_node(resolved));
+                return with_errno(gkfs::syscall::gkfs_remove(resolved));
             }
 
         default:
@@ -292,7 +293,7 @@ int hook_access(const char* path, int mask) {
 
     std::string rel_path;
     if (CTX->relativize_path(path, rel_path)) {
-        auto ret = gkfs::func::access(rel_path, mask);
+        auto ret = gkfs::syscall::gkfs_access(rel_path, mask);
         if (ret < 0) {
             return -errno;
         }
@@ -319,7 +320,7 @@ int hook_faccessat(int dirfd, const char* cpath, int mode) {
             return -ENOTDIR;
 
         case RelativizeStatus::internal:
-            return with_errno(gkfs::func::access(resolved, mode));
+            return with_errno(gkfs::syscall::gkfs_access(resolved, mode));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
@@ -333,7 +334,7 @@ off_t hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
         __func__, fd, offset, whence);
 
     if (CTX->file_map()->exist(fd)) {
-        auto off_ret = gkfs::func::lseek(fd, static_cast<off64_t>(offset), whence);
+        auto off_ret = gkfs::syscall::gkfs_lseek(fd, static_cast<off64_t>(offset), whence);
         if (off_ret > std::numeric_limits<off_t>::max()) {
             return -EOVERFLOW;
         } else if (off_ret < 0) {
@@ -352,7 +353,7 @@ int hook_truncate(const char* path, long length) {
 
     std::string rel_path;
     if (CTX->relativize_path(path, rel_path)) {
-        return with_errno(gkfs::func::truncate(rel_path, length));
+        return with_errno(gkfs::syscall::gkfs_truncate(rel_path, length));
     }
     return syscall_no_intercept(SYS_truncate, rel_path.c_str(), length);
 }
@@ -364,7 +365,7 @@ int hook_ftruncate(unsigned int fd, unsigned long length) {
 
     if (CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
-        return with_errno(gkfs::func::truncate(path, length));
+        return with_errno(gkfs::syscall::gkfs_truncate(path, length));
     }
     return syscall_no_intercept(SYS_ftruncate, fd, length);
 }
@@ -375,7 +376,7 @@ int hook_dup(unsigned int fd) {
         __func__, fd);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::dup(fd));
+        return with_errno(gkfs::syscall::gkfs_dup(fd));
     }
     return syscall_no_intercept(SYS_dup, fd);
 }
@@ -386,7 +387,7 @@ int hook_dup2(unsigned int oldfd, unsigned int newfd) {
         __func__, oldfd, newfd);
 
     if (CTX->file_map()->exist(oldfd)) {
-        return with_errno(gkfs::func::dup2(oldfd, newfd));
+        return with_errno(gkfs::syscall::gkfs_dup2(oldfd, newfd));
     }
     return syscall_no_intercept(SYS_dup2, oldfd, newfd);
 }
@@ -411,7 +412,7 @@ int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count
         __func__, fd, fmt::ptr(dirp), count);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::getdents(fd, dirp, count));
+        return with_errno(gkfs::syscall::gkfs_getdents(fd, dirp, count));
     }
     return syscall_no_intercept(SYS_getdents, fd, dirp, count);
 }
@@ -423,7 +424,7 @@ int hook_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int c
         __func__, fd, fmt::ptr(dirp), count);
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::getdents64(fd, dirp, count));
+        return with_errno(gkfs::syscall::gkfs_getdents64(fd, dirp, count));
     }
     return syscall_no_intercept(SYS_getdents64, fd, dirp, count);
 }
@@ -447,7 +448,7 @@ int hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
             return -ENOTDIR;
 
         case RelativizeStatus::internal:
-            return with_errno(gkfs::func::mk_node(resolved, mode | S_IFDIR));
+            return with_errno(gkfs::syscall::gkfs_create(resolved, mode | S_IFDIR));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
@@ -503,7 +504,7 @@ int hook_chdir(const char* path) {
     bool internal = CTX->relativize_path(path, rel_path);
     if (internal) {
         //path falls in our namespace
-        auto md = gkfs::func::metadata(rel_path);
+        auto md = gkfs::util::get_metadata(rel_path);
         if (md == nullptr) {
             LOG(ERROR, "{}() path does not exists", __func__);
             return -ENOENT;
@@ -619,11 +620,11 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
 
         case F_DUPFD:
             LOG(DEBUG, "{}() F_DUPFD on fd {}", __func__, fd);
-            return with_errno(gkfs::func::dup(fd));
+            return with_errno(gkfs::syscall::gkfs_dup(fd));
 
         case F_DUPFD_CLOEXEC:
             LOG(DEBUG, "{}() F_DUPFD_CLOEXEC on fd {}", __func__, fd);
-            ret = gkfs::func::dup(fd);
+            ret = gkfs::syscall::gkfs_dup(fd);
             if (ret == -1) {
                 return -errno;
             }
@@ -736,7 +737,7 @@ int hook_statfs(const char* path, struct statfs* buf) {
 
     std::string rel_path;
     if (CTX->relativize_path(path, rel_path)) {
-        return with_errno(gkfs::func::statfs(buf));
+        return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
     return syscall_no_intercept(SYS_statfs, rel_path.c_str(), buf);
 }
@@ -747,7 +748,7 @@ int hook_fstatfs(unsigned int fd, struct statfs* buf) {
         __func__, fd, fmt::ptr(buf));
 
     if (CTX->file_map()->exist(fd)) {
-        return with_errno(gkfs::func::statfs(buf));
+        return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
     return syscall_no_intercept(SYS_fstatfs, fd, buf);
 }

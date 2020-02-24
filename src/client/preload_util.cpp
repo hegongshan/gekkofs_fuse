@@ -14,6 +14,7 @@
 #include <client/preload_util.hpp>
 #include <client/env.hpp>
 #include <client/logging.hpp>
+#include <client/rpc/forward_metadata.hpp>
 
 #include <global/rpc/distributor.hpp>
 #include <global/rpc/rpc_util.hpp>
@@ -33,6 +34,66 @@ extern "C" {
 
 using namespace std;
 
+namespace {
+
+hermes::endpoint lookup_endpoint(const std::string& uri,
+                                 std::size_t max_retries = 3) {
+
+    LOG(DEBUG, "Looking up address \"{}\"", uri);
+
+    std::random_device rd; // obtain a random number from hardware
+    std::size_t attempts = 0;
+    std::string error_msg;
+
+    do {
+        try {
+            return ld_network_service->lookup(uri);
+        } catch (const exception& ex) {
+            error_msg = ex.what();
+
+            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]",
+                uri, attempts + 1, max_retries);
+
+            // Wait a random amount of time and try again
+            std::mt19937 g(rd()); // seed the random generator
+            std::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
+            std::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
+            continue;
+        }
+    } while (++attempts < max_retries);
+
+    throw std::runtime_error(
+            fmt::format("Endpoint for address '{}' could not be found ({})",
+                        uri, error_msg));
+}
+
+} // namespace
+
+namespace gkfs {
+namespace util {
+
+
+std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const string& path, bool follow_links) {
+    std::string attr;
+    auto err = gkfs::rpc::forward_stat(path, attr);
+    if (err) {
+        return nullptr;
+    }
+#ifdef HAS_SYMLINKS
+    if (follow_links) {
+        gkfs::metadata::Metadata md{attr};
+        while (md.is_link()) {
+            err = gkfs::rpc::forward_stat(md.target_path(), attr);
+            if (err) {
+                return nullptr;
+            }
+            md = gkfs::metadata::Metadata{attr};
+        }
+    }
+#endif
+    return make_shared<gkfs::metadata::Metadata>(attr);
+}
+
 /**
  * Converts the Metadata object into a stat struct, which is needed by Linux
  * @param path
@@ -40,7 +101,7 @@ using namespace std;
  * @param attr
  * @return
  */
-int gkfs::util::metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr) {
+int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr) {
 
     /* Populate default values */
     attr.st_dev = makedev(0, 0);
@@ -83,7 +144,7 @@ int gkfs::util::metadata_to_stat(const std::string& path, const gkfs::metadata::
     return 0;
 }
 
-vector<pair<string, string>> gkfs::util::load_hostfile(const std::string& lfpath) {
+vector<pair<string, string>> load_hostfile(const std::string& lfpath) {
 
     LOG(DEBUG, "Loading hosts file: \"{}\"", lfpath);
 
@@ -115,51 +176,20 @@ vector<pair<string, string>> gkfs::util::load_hostfile(const std::string& lfpath
     return hosts;
 }
 
-hermes::endpoint lookup_endpoint(const std::string& uri,
-                                 std::size_t max_retries = 3) {
-
-    LOG(DEBUG, "Looking up address \"{}\"", uri);
-
-    std::random_device rd; // obtain a random number from hardware
-    std::size_t attempts = 0;
-    std::string error_msg;
-
-    do {
-        try {
-            return ld_network_service->lookup(uri);
-        } catch (const exception& ex) {
-            error_msg = ex.what();
-
-            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]",
-                uri, attempts + 1, max_retries);
-
-            // Wait a random amount of time and try again
-            std::mt19937 g(rd()); // seed the random generator
-            std::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
-            std::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
-            continue;
-        }
-    } while (++attempts < max_retries);
-
-    throw std::runtime_error(
-            fmt::format("Endpoint for address '{}' could not be found ({})",
-                        uri, error_msg));
-}
-
-void gkfs::util::load_hosts() {
+void load_hosts() {
     string hostfile;
 
     hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
 
     vector<pair<string, string>> hosts;
     try {
-        hosts = gkfs::util::load_hostfile(hostfile);
+        hosts = load_hostfile(hostfile);
     } catch (const exception& e) {
         auto emsg = fmt::format("Failed to load hosts file: {}", e.what());
         throw runtime_error(emsg);
     }
 
-    if (hosts.size() == 0) {
+    if (hosts.empty()) {
         throw runtime_error(fmt::format("Hostfile empty: '{}'", hostfile));
     }
 
@@ -189,7 +219,7 @@ void gkfs::util::load_hosts() {
         const auto& hostname = hosts.at(id).first;
         const auto& uri = hosts.at(id).second;
 
-        addrs[id] = ::lookup_endpoint(uri);
+        addrs[id] = lookup_endpoint(uri);
 
         if (!local_host_found && hostname == local_hostname) {
             LOG(DEBUG, "Found local host: {}", hostname);
@@ -207,3 +237,6 @@ void gkfs::util::load_hosts() {
 
     CTX->hosts(addrs);
 }
+
+} // namespace util
+} // namespace gkfs
