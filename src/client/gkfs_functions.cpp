@@ -143,7 +143,7 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
     }
 
-    return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
+    return CTX->file_map()->add(std::make_shared<gkfs::filemap::OpenFile>(path, flags));
 }
 
 int gkfs_create(const std::string& path, mode_t mode) {
@@ -246,7 +246,7 @@ off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
     return gkfs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
-off_t gkfs_lseek(shared_ptr<OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
+off_t gkfs_lseek(shared_ptr<gkfs::filemap::OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
             gkfs_fd->pos(offset);
@@ -338,15 +338,15 @@ int gkfs_dup2(const int oldfd, const int newfd) {
     return CTX->file_map()->dup2(oldfd, newfd);
 }
 
-ssize_t gkfs_pwrite(std::shared_ptr<OpenFile> file, const char* buf, size_t count, off64_t offset) {
-    if (file->type() != FileType::regular) {
-        assert(file->type() == FileType::directory);
+ssize_t gkfs_pwrite(std::shared_ptr<gkfs::filemap::OpenFile> file, const char* buf, size_t count, off64_t offset) {
+    if (file->type() != gkfs::filemap::FileType::regular) {
+        assert(file->type() == gkfs::filemap::FileType::directory);
         LOG(WARNING, "Cannot read from directory");
         errno = EISDIR;
         return -1;
     }
     auto path = make_shared<string>(file->path());
-    auto append_flag = file->get_flag(OpenFile_flags::append);
+    auto append_flag = file->get_flag(gkfs::filemap::OpenFile_flags::append);
     ssize_t ret = 0;
     long updated_size = 0;
 
@@ -375,7 +375,7 @@ ssize_t gkfs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
 ssize_t gkfs_write(int fd, const void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); //retrieve the current offset
-    if (gkfs_fd->get_flag(OpenFile_flags::append))
+    if (gkfs_fd->get_flag(gkfs::filemap::OpenFile_flags::append))
         gkfs_lseek(gkfs_fd, 0, SEEK_END);
     auto ret = gkfs_pwrite(gkfs_fd, reinterpret_cast<const char*>(buf), count, pos);
     // Update offset in file descriptor in the file map
@@ -428,9 +428,9 @@ ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
     return ret;
 }
 
-ssize_t gkfs_pread(std::shared_ptr<OpenFile> file, char* buf, size_t count, off64_t offset) {
-    if (file->type() != FileType::regular) {
-        assert(file->type() == FileType::directory);
+ssize_t gkfs_pread(std::shared_ptr<gkfs::filemap::OpenFile> file, char* buf, size_t count, off64_t offset) {
+    if (file->type() != gkfs::filemap::FileType::regular) {
+        assert(file->type() == gkfs::filemap::FileType::directory);
         LOG(WARNING, "Cannot read from directory");
         errno = EISDIR;
         return -1;
@@ -476,7 +476,7 @@ int gkfs_opendir(const std::string& path) {
         return -1;
     }
 
-    auto open_dir = std::make_shared<OpenDir>(path);
+    auto open_dir = std::make_shared<gkfs::filemap::OpenDir>(path);
     gkfs::rpc::forward_get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);
 }
@@ -494,7 +494,7 @@ int gkfs_rmdir(const std::string& path) {
         return -1;
     }
 
-    auto open_dir = std::make_shared<OpenDir>(path);
+    auto open_dir = std::make_shared<gkfs::filemap::OpenDir>(path);
     gkfs::rpc::forward_get_dirents(*open_dir);
     if (open_dir->size() != 0) {
         errno = ENOTEMPTY;
@@ -522,7 +522,7 @@ int gkfs_getdents(unsigned int fd,
     unsigned int written = 0;
     struct linux_dirent* current_dirp = nullptr;
     while (pos < open_dir->size()) {
-        DirEntry de = open_dir->getdent(pos);
+        gkfs::filemap::DirEntry de = open_dir->getdent(pos);
         auto total_size = ALIGN(offsetof(
                                         struct linux_dirent, d_name) +
                                         de.name().size() + 3, sizeof(long));
@@ -538,7 +538,7 @@ int gkfs_getdents(unsigned int fd,
         current_dirp->d_reclen = total_size;
 
         *(reinterpret_cast<char*>(current_dirp) + total_size - 1) =
-                ((de.type() == FileType::regular) ? DT_REG : DT_DIR);
+                ((de.type() == gkfs::filemap::FileType::regular) ? DT_REG : DT_DIR);
 
         LOG(DEBUG, "name {}: {}", pos, de.name());
         std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());
@@ -575,7 +575,7 @@ int gkfs_getdents64(unsigned int fd,
     unsigned int written = 0;
     struct linux_dirent64* current_dirp = nullptr;
     while (pos < open_dir->size()) {
-        DirEntry de = open_dir->getdent(pos);
+        gkfs::filemap::DirEntry de = open_dir->getdent(pos);
         auto total_size = ALIGN(offsetof(
                                         struct linux_dirent64, d_name) +
                                         de.name().size() + 3, sizeof(long));
@@ -589,7 +589,7 @@ int gkfs_getdents64(unsigned int fd,
                 open_dir->path() + "/" + de.name());
 
         current_dirp->d_reclen = total_size;
-        current_dirp->d_type = ((de.type() == FileType::regular) ? DT_REG : DT_DIR);
+        current_dirp->d_type = ((de.type() == gkfs::filemap::FileType::regular) ? DT_REG : DT_DIR);
 
         LOG(DEBUG, "name {}: {}", pos, de.name());
         std::strcpy(&(current_dirp->d_name[0]), de.name().c_str());

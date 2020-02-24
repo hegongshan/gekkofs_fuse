@@ -628,13 +628,13 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
             if (ret == -1) {
                 return -errno;
             }
-            CTX->file_map()->get(fd)->set_flag(OpenFile_flags::cloexec, true);
+            CTX->file_map()->get(fd)->set_flag(gkfs::filemap::OpenFile_flags::cloexec, true);
             return ret;
 
         case F_GETFD:
             LOG(DEBUG, "{}() F_GETFD on fd {}", __func__, fd);
             if (CTX->file_map()->get(fd)
-                    ->get_flag(OpenFile_flags::cloexec)) {
+                    ->get_flag(gkfs::filemap::OpenFile_flags::cloexec)) {
                 return FD_CLOEXEC;
             }
             return 0;
@@ -643,15 +643,15 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
             LOG(DEBUG, "{}() F_GETFL on fd {}", __func__, fd);
             ret = 0;
             if (CTX->file_map()->get(fd)
-                    ->get_flag(OpenFile_flags::rdonly)) {
+                    ->get_flag(gkfs::filemap::OpenFile_flags::rdonly)) {
                 ret |= O_RDONLY;
             }
             if (CTX->file_map()->get(fd)
-                    ->get_flag(OpenFile_flags::wronly)) {
+                    ->get_flag(gkfs::filemap::OpenFile_flags::wronly)) {
                 ret |= O_WRONLY;
             }
             if (CTX->file_map()->get(fd)
-                    ->get_flag(OpenFile_flags::rdwr)) {
+                    ->get_flag(gkfs::filemap::OpenFile_flags::rdwr)) {
                 ret |= O_RDWR;
             }
             return ret;
@@ -660,7 +660,7 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
             LOG(DEBUG, "{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]",
                 __func__, fd, (arg & FD_CLOEXEC));
             CTX->file_map()->get(fd)
-                    ->set_flag(OpenFile_flags::cloexec, (arg & FD_CLOEXEC));
+                    ->set_flag(gkfs::filemap::OpenFile_flags::cloexec, (arg & FD_CLOEXEC));
             return 0;
 
 

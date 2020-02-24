@@ -15,6 +15,9 @@
 #include <stdexcept>
 #include <cstring>
 
+namespace gkfs {
+namespace filemap {
+
 DirEntry::DirEntry(const std::string& name, const FileType type) :
         name_(name), type_(type) {
 }
@@ -44,3 +47,6 @@ const DirEntry& OpenDir::getdent(unsigned int pos) {
 size_t OpenDir::size() {
     return entries.size();
 }
+
+} // namespace filemap
+} // namespace gkfs

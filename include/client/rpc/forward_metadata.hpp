@@ -20,11 +20,15 @@
 /* Forward declaration */
 struct MetadentryUpdateFlags;
 
-class OpenDir;
-
-class Metadata;
 
 namespace gkfs {
+namespace filemap {
+class OpenDir;
+}
+namespace metadata {
+class Metadata;
+}
+
 namespace rpc {
 
 int forward_create(const std::string& path, mode_t mode);
@@ -35,14 +39,15 @@ int forward_remove(const std::string& path, bool remove_metadentry_only, ssize_t
 
 int forward_decr_size(const std::string& path, size_t length);
 
-int forward_update_metadentry(const std::string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags);
+int forward_update_metadentry(const std::string& path, const gkfs::metadata::Metadata& md,
+                              const MetadentryUpdateFlags& md_flags);
 
 int forward_update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
                                    off64_t& ret_size);
 
 int forward_get_metadentry_size(const std::string& path, off64_t& ret_size);
 
-void forward_get_dirents(OpenDir& open_dir);
+void forward_get_dirents(gkfs::filemap::OpenDir& open_dir);
 
 #ifdef HAS_SYMLINKS
 

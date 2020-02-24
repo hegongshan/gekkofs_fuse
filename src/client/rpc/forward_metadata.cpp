@@ -352,7 +352,7 @@ int forward_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 /**
  * Sends an RPC request to a specific node to push all chunks that belong to him
  */
-void forward_get_dirents(OpenDir& open_dir) {
+void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
 
     auto const root_dir = open_dir.path();
     auto const targets = CTX->distributor()->locate_directory_metadata(root_dir);
@@ -444,7 +444,8 @@ void forward_get_dirents(OpenDir& open_dir) {
 
         for (std::size_t j = 0; j < out.dirents_size(); j++) {
 
-            FileType ftype = (*bool_ptr) ? FileType::directory : FileType::regular;
+            gkfs::filemap::FileType ftype = (*bool_ptr) ? gkfs::filemap::FileType::directory
+                                                        : gkfs::filemap::FileType::regular;
             bool_ptr++;
 
             // Check that we are not outside the recv_buff for this specific host

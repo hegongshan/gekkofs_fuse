@@ -24,6 +24,9 @@ extern "C" {
 
 using namespace std;
 
+namespace gkfs {
+namespace filemap {
+
 OpenFile::OpenFile(const string& path, const int flags, FileType type) :
         type_(type),
         path_(path) {
@@ -202,3 +205,6 @@ int OpenFileMap::get_fd_idx() {
     std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
     return fd_idx;
 }
+
+} // namespace filemap
+} // namespace gkfs

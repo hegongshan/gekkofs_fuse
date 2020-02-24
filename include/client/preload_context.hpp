@@ -24,10 +24,12 @@
 #include <bitset>
 
 /* Forward declarations */
-class OpenFileMap;
-
-
 namespace gkfs {
+
+namespace filemap {
+class OpenFileMap;
+}
+
 namespace rpc {
 class Distributor;
 }
@@ -66,7 +68,7 @@ class PreloadContext {
 private:
     PreloadContext();
 
-    std::shared_ptr<OpenFileMap> ofm_;
+    std::shared_ptr<gkfs::filemap::OpenFileMap> ofm_;
     std::shared_ptr<gkfs::rpc::Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
@@ -124,7 +126,7 @@ public:
 
     bool relativize_path(const char* raw_path, std::string& relative_path, bool resolve_last_link = true) const;
 
-    const std::shared_ptr<OpenFileMap>& file_map() const;
+    const std::shared_ptr<gkfs::filemap::OpenFileMap>& file_map() const;
 
     void distributor(std::shared_ptr<gkfs::rpc::Distributor> distributor);
 

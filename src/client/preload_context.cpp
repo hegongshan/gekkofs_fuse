@@ -39,7 +39,7 @@ decltype(PreloadContext::MAX_USER_FDS) constexpr
         PreloadContext::MAX_USER_FDS;
 
 PreloadContext::PreloadContext() :
-        ofm_(std::make_shared<OpenFileMap>()),
+        ofm_(std::make_shared<gkfs::filemap::OpenFileMap>()),
         fs_conf_(std::make_shared<FsConfig>()) {
 
     internal_fds_.set();
@@ -187,7 +187,7 @@ bool PreloadContext::relativize_path(const char* raw_path, std::string& relative
     return gkfs::path::resolve(path, relative_path, resolve_last_link);
 }
 
-const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {
+const std::shared_ptr<gkfs::filemap::OpenFileMap>& PreloadContext::file_map() const {
     return ofm_;
 }
 
