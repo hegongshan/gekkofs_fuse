@@ -11,17 +11,15 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GKFS_COMMON_ENV_UTIL_HPP
-#define GKFS_COMMON_ENV_UTIL_HPP
-
-#include <string>
+#ifndef GEKKOFS_DAEMON_UTIL_HPP
+#define GEKKOFS_DAEMON_UTIL_HPP
 
 namespace gkfs {
-namespace env {
+namespace util {
+void populate_hosts_file();
 
-std::string get_var(const std::string& name, const std::string& default_value = "");
+void destroy_hosts_file();
+}
+}
 
-} // namespace env
-} // namespace gkfs
-
-#endif // GKFS_COMMON_ENV_UTIL_HPP
+#endif //GEKKOFS_DAEMON_UTIL_HPP

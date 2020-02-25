@@ -11,17 +11,16 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GKFS_COMMON_ENV_UTIL_HPP
-#define GKFS_COMMON_ENV_UTIL_HPP
 
-#include <string>
+#ifndef GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
+#define GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
 
 namespace gkfs {
-namespace env {
+namespace rpc {
 
-std::string get_var(const std::string& name, const std::string& default_value = "");
+bool forward_get_fs_config();
 
-} // namespace env
+} // namespace rpc
 } // namespace gkfs
 
-#endif // GKFS_COMMON_ENV_UTIL_HPP
+#endif //GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP

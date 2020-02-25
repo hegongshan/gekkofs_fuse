@@ -11,17 +11,12 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GKFS_COMMON_ENV_UTIL_HPP
-#define GKFS_COMMON_ENV_UTIL_HPP
+#ifndef GKFS_CMAKE_CONFIGURE_HPP
+#define GKFS_CMAKE_CONFIGURE_HPP
 
-#include <string>
+#define RPC_PROTOCOL "@RPC_PROTOCOL@"
+#cmakedefine01 USE_SHM
+#cmakedefine01 CREATE_CHECK_PARENTS
+#cmakedefine01 LOG_SYSCALLS
 
-namespace gkfs {
-namespace env {
-
-std::string get_var(const std::string& name, const std::string& default_value = "");
-
-} // namespace env
-} // namespace gkfs
-
-#endif // GKFS_COMMON_ENV_UTIL_HPP
+#endif //FS_CMAKE_CONFIGURE_H
