@@ -26,6 +26,7 @@
 extern "C" {
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
+#include <dirent.h>
 }
 
 #define __ALIGN_KERNEL_MASK(x, mask)    (((x) + (mask)) & ~(mask))
@@ -207,7 +208,7 @@ int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     return 0;
 }
 
-int gkfs_statfs(sys_statfs* buf) {
+int gkfs_statfs(struct statfs* buf) {
     auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
     buf->f_type = 0;
     buf->f_bsize = blk_stat.chunk_size;
@@ -224,8 +225,8 @@ int gkfs_statfs(sys_statfs* buf) {
     return 0;
 }
 
-int gkfs_statvfs(sys_statvfs* buf) {
-    init_ld_env_if_needed();
+int gkfs_statvfs(struct statvfs* buf) {
+    gkfs::preload::init_ld_env_if_needed();
     auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
     buf->f_bsize = blk_stat.chunk_size;
     buf->f_blocks = blk_stat.chunk_total;
@@ -504,7 +505,7 @@ int gkfs_rmdir(const std::string& path) {
 }
 
 int gkfs_getdents(unsigned int fd,
-                  struct linux_dirent* dirp,
+                  struct dirent* dirp,
                   unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
@@ -520,17 +521,17 @@ int gkfs_getdents(unsigned int fd,
     }
 
     unsigned int written = 0;
-    struct linux_dirent* current_dirp = nullptr;
+    struct dirent* current_dirp = nullptr;
     while (pos < open_dir->size()) {
         gkfs::filemap::DirEntry de = open_dir->getdent(pos);
         auto total_size = ALIGN(offsetof(
-                                        struct linux_dirent, d_name) +
+                                        struct dirent, d_name) +
                                         de.name().size() + 3, sizeof(long));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct linux_dirent*>(
+        current_dirp = reinterpret_cast<struct dirent*>(
                 reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
@@ -557,7 +558,7 @@ int gkfs_getdents(unsigned int fd,
 
 
 int gkfs_getdents64(unsigned int fd,
-                    struct linux_dirent64* dirp,
+                    struct dirent64* dirp,
                     unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
@@ -573,17 +574,17 @@ int gkfs_getdents64(unsigned int fd,
     }
 
     unsigned int written = 0;
-    struct linux_dirent64* current_dirp = nullptr;
+    struct dirent64* current_dirp = nullptr;
     while (pos < open_dir->size()) {
         gkfs::filemap::DirEntry de = open_dir->getdent(pos);
         auto total_size = ALIGN(offsetof(
-                                        struct linux_dirent64, d_name) +
+                                        struct dirent64, d_name) +
                                         de.name().size() + 3, sizeof(long));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct linux_dirent64*>(
+        current_dirp = reinterpret_cast<struct dirent64*>(
                 reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
@@ -610,7 +611,7 @@ int gkfs_getdents64(unsigned int fd,
 #ifdef HAS_SYMLINKS
 
 int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
-    init_ld_env_if_needed();
+    gkfs::preload::init_ld_env_if_needed();
     /* The following check is not POSIX compliant.
      * In POSIX the target is not checked at all.
     *  Here if the target is a directory we raise a NOTSUP error.
@@ -642,7 +643,7 @@ int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
 }
 
 int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
-    init_ld_env_if_needed();
+    gkfs::preload::init_ld_env_if_needed();
     auto md = gkfs::util::get_metadata(path, false);
     if (md == nullptr) {
         LOG(DEBUG, "Named link doesn't exist");

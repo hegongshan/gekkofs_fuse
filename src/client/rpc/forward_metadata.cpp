@@ -236,7 +236,7 @@ int forward_decr_size(const std::string& path, size_t length) {
 }
 
 int forward_update_metadentry(const string& path, const gkfs::metadata::Metadata& md,
-                              const MetadentryUpdateFlags& md_flags) {
+                              const gkfs::metadata::MetadentryUpdateFlags& md_flags) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 

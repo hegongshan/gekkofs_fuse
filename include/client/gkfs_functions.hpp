@@ -17,23 +17,10 @@
 #include <client/open_file_map.hpp>
 #include <global/metadata.hpp>
 
-struct linux_dirent {
-    unsigned long d_ino;
-    unsigned long d_off;
-    unsigned short d_reclen;
-    char d_name[1];
-};
-
-struct linux_dirent64 {
-    unsigned long long d_ino;
-    unsigned long long d_off;
-    unsigned short d_reclen;
-    unsigned char d_type;
-    char d_name[1];
-};
-
-using sys_statfs = struct statfs;
-using sys_statvfs = struct statvfs;
+struct statfs;
+struct statvfs;
+struct dirent;
+struct dirent64;
 
 namespace gkfs {
 namespace syscall {
@@ -48,9 +35,9 @@ int gkfs_access(const std::string& path, int mask, bool follow_links = true);
 
 int gkfs_stat(const std::string& path, struct stat* buf, bool follow_links = true);
 
-int gkfs_statfs(sys_statfs* buf);
+int gkfs_statfs(struct statfs* buf);
 
-int gkfs_statvfs(sys_statvfs* buf);
+int gkfs_statvfs(struct statvfs* buf);
 
 off64_t gkfs_lseek(unsigned int fd, off64_t offset, unsigned int whence);
 
@@ -92,13 +79,9 @@ ssize_t gkfs_read(int fd, void* buf, size_t count);
 
 int gkfs_opendir(const std::string& path);
 
-int gkfs_getdents(unsigned int fd,
-             struct linux_dirent* dirp,
-             unsigned int count);
+int gkfs_getdents(unsigned int fd, struct dirent* dirp, unsigned int count);
 
-int gkfs_getdents64(unsigned int fd,
-                    struct linux_dirent64* dirp,
-                    unsigned int count);
+int gkfs_getdents64(unsigned int fd, struct dirent64* dirp, unsigned int count);
 
 int gkfs_rmdir(const std::string& path);
 

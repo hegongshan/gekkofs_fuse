@@ -18,14 +18,12 @@
 #include <string>
 
 /* Forward declaration */
-struct MetadentryUpdateFlags;
-
-
 namespace gkfs {
 namespace filemap {
 class OpenDir;
 }
 namespace metadata {
+struct MetadentryUpdateFlags;
 class Metadata;
 }
 
@@ -40,7 +38,7 @@ int forward_remove(const std::string& path, bool remove_metadentry_only, ssize_t
 int forward_decr_size(const std::string& path, size_t length);
 
 int forward_update_metadentry(const std::string& path, const gkfs::metadata::Metadata& md,
-                              const MetadentryUpdateFlags& md_flags);
+                              const gkfs::metadata::MetadentryUpdateFlags& md_flags);
 
 int forward_update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
                                    off64_t& ret_size);

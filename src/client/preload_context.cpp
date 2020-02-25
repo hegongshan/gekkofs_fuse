@@ -10,9 +10,6 @@
 
   SPDX-License-Identifier: MIT
 */
-
-
-
 #include <client/preload_context.hpp>
 #include <client/env.hpp>
 #include <client/logging.hpp>
@@ -32,6 +29,9 @@ extern "C" {
 #include <libsyscall_intercept_hook_point.h>
 #include <syscall.h>
 }
+
+namespace gkfs {
+namespace preload {
 
 decltype(PreloadContext::MIN_INTERNAL_FD) constexpr
         PreloadContext::MIN_INTERNAL_FD;
@@ -323,7 +323,7 @@ PreloadContext::protect_user_fds() {
     const auto fd_is_open = [](int fd) -> bool {
         const int ret = ::syscall_no_intercept(SYS_fcntl, fd, F_GETFD);
         return ::syscall_error_code(ret) == 0 ||
-               ::syscall_error_code(ret) != EBADF;
+                ::syscall_error_code(ret) != EBADF;
     };
 
     for (int fd = 0; fd < MAX_USER_FDS; ++fd) {
@@ -358,3 +358,6 @@ PreloadContext::unprotect_user_fds() {
 
     internal_fds_must_relocate_ = true;
 }
+
+} // namespace preload
+} // namespace gkfs

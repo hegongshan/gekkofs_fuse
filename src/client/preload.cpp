@@ -30,12 +30,14 @@ extern "C" {
 
 using namespace std;
 
+std::unique_ptr<hermes::async_engine> ld_network_service; // extern variable
+
+namespace {
 // make sure that things are only initialized once
-static pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
+pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
-std::unique_ptr<hermes::async_engine> ld_network_service;
 
-static inline void exit_error_msg(int errcode, const string& msg) {
+inline void exit_error_msg(int errcode, const string& msg) {
 
     LOG_ERROR("{}", msg);
     gkfs::log::logger::log_message(stderr, "{}\n", msg);
@@ -43,7 +45,7 @@ static inline void exit_error_msg(int errcode, const string& msg) {
     // if we don't disable interception before calling ::exit()
     // syscall hooks may find an inconsistent in shared state
     // (e.g. the logger) and thus, crash
-    stop_interception();
+    gkfs::preload::stop_interception();
     CTX->disable_interception();
     ::exit(errcode);
 }
@@ -109,10 +111,6 @@ void init_ld_environment_() {
     LOG(INFO, "Environment initialization successful.");
 }
 
-void init_ld_env_if_needed() {
-    pthread_once(&init_env_thread, init_ld_environment_);
-}
-
 void log_prog_name() {
     std::string line;
     std::ifstream cmdline("/proc/self/cmdline");
@@ -129,13 +127,25 @@ void log_prog_name() {
     cmdline.close();
 }
 
+} // namespace
+
+namespace gkfs {
+namespace preload {
+
+void init_ld_env_if_needed() {
+    pthread_once(&init_env_thread, init_ld_environment_);
+}
+
+} // namespace preload
+} // namespace gkfs
+
 /**
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
 
     CTX->enable_interception();
-    start_self_interception();
+    gkfs::preload::start_self_interception();
 
     CTX->init_logging();
     // from here ownwards it is safe to print messages
@@ -155,12 +165,12 @@ void init_preload() {
     gkfs::path::init_cwd();
 
     LOG(DEBUG, "Current working directory: '{}'", CTX->cwd());
-    init_ld_env_if_needed();
+    gkfs::preload::init_ld_env_if_needed();
     CTX->enable_interception();
 
     CTX->unprotect_user_fds();
 
-    start_interception();
+    gkfs::preload::start_interception();
 }
 
 /**
@@ -174,7 +184,7 @@ void destroy_preload() {
     ld_network_service.reset();
     LOG(DEBUG, "RPC subsystem shut down");
 
-    stop_interception();
+    gkfs::preload::stop_interception();
     CTX->disable_interception();
     LOG(DEBUG, "Syscall interception stopped");
 

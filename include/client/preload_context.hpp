@@ -25,19 +25,20 @@
 
 /* Forward declarations */
 namespace gkfs {
-
 namespace filemap {
 class OpenFileMap;
 }
-
 namespace rpc {
 class Distributor;
 }
 namespace log {
 struct logger;
 }
-}
 
+namespace preload {
+/*
+ * Client file system config
+ */
 struct FsConfig {
     // configurable metadata
     bool atime_state;
@@ -60,6 +61,9 @@ enum class RelativizeStatus {
     fd_not_a_dir
 };
 
+/**
+ * Singleton class of the client context with all relevant global data
+ */
 class PreloadContext {
 
     static auto constexpr MIN_INTERNAL_FD = MAX_OPEN_FDS - MAX_INTERNAL_FDS;
@@ -150,6 +154,9 @@ public:
 
     void unprotect_user_fds();
 };
+
+} // namespace preload
+} // namespace gkfs
 
 
 #endif //GEKKOFS_PRELOAD_CTX_HPP

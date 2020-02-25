@@ -17,6 +17,12 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
+struct statfs;
+struct dirent;
+struct dirent64;
+
+namespace gkfs {
+namespace hook {
 
 int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode);
 
@@ -63,9 +69,9 @@ int hook_dup2(unsigned int oldfd, unsigned int newfd);
 
 int hook_dup3(unsigned int oldfd, unsigned int newfd, int flags);
 
-int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count);
+int hook_getdents(unsigned int fd, struct dirent* dirp, unsigned int count);
 
-int hook_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int count);
+int hook_getdents64(unsigned int fd, struct dirent64* dirp, unsigned int count);
 
 int hook_mkdirat(int dirfd, const char* cpath, mode_t mode);
 
@@ -90,5 +96,7 @@ int hook_statfs(const char* path, struct statfs* buf);
 
 int hook_fstatfs(unsigned int fd, struct statfs* buf);
 
+} // namespace hook
+} // namespace gkfs
 
 #endif

@@ -23,6 +23,9 @@
 #include <map>
 #include <type_traits>
 
+namespace gkfs {
+namespace metadata {
+
 struct MetadentryUpdateFlags {
     bool atime = false;
     bool mtime = false;
@@ -36,8 +39,12 @@ struct MetadentryUpdateFlags {
     bool path = false;
 };
 
+} // namespace metadata
+} // namespace gkfs
+
 // Hermes instance
 namespace hermes { class async_engine; }
+
 extern std::unique_ptr<hermes::async_engine> ld_network_service;
 
 // function definitions

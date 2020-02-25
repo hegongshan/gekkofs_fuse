@@ -25,14 +25,22 @@
 
 extern "C" {
 #include <libsyscall_intercept_hook_point.h>
-#include <sys/stat.h>
+#include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
 }
 
-static inline int with_errno(int ret) {
+namespace {
+
+inline int with_errno(int ret) {
     return (ret < 0) ? -errno : ret;
 }
 
+} // namespace
+
+namespace gkfs {
+namespace hook {
 
 int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
 
@@ -42,16 +50,16 @@ int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_openat, dirfd, cpath, flags, mode);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_openat, dirfd, resolved.c_str(), flags, mode);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             return with_errno(gkfs::syscall::gkfs_open(resolved, mode, flags));
 
         default:
@@ -128,16 +136,16 @@ int hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_newfstatat, dirfd, cpath, buf, flags);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_newfstatat, dirfd, resolved.c_str(), buf, flags);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             return with_errno(gkfs::syscall::gkfs_stat(resolved, buf));
 
         default:
@@ -230,16 +238,16 @@ int hook_unlinkat(int dirfd, const char* cpath, int flags) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_unlinkat, dirfd, cpath, flags);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_unlinkat, dirfd, resolved.c_str(), flags);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             if (flags & AT_REMOVEDIR) {
                 return with_errno(gkfs::syscall::gkfs_rmdir(resolved));
             } else {
@@ -266,16 +274,16 @@ int hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
     std::string newname_resolved;
     auto rstatus = CTX->relativize_fd_path(newdfd, newname, newname_resolved, false);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_symlinkat, oldname, newdfd, newname);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_symlinkat, oldname, newdfd, newname_resolved.c_str());
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             LOG(WARNING, "{}() operation not supported", __func__);
             return -ENOTSUP;
 
@@ -310,16 +318,16 @@ int hook_faccessat(int dirfd, const char* cpath, int mode) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_faccessat, dirfd, cpath, mode);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_faccessat, dirfd, resolved.c_str(), mode);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             return with_errno(gkfs::syscall::gkfs_access(resolved, mode));
 
         default:
@@ -406,7 +414,7 @@ int hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
     return syscall_no_intercept(SYS_dup3, oldfd, newfd, flags);
 }
 
-int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count) {
+int hook_getdents(unsigned int fd, struct dirent* dirp, unsigned int count) {
 
     LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
         __func__, fd, fmt::ptr(dirp), count);
@@ -418,7 +426,7 @@ int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count
 }
 
 
-int hook_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int count) {
+int hook_getdents64(unsigned int fd, struct dirent64* dirp, unsigned int count) {
 
     LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
         __func__, fd, fmt::ptr(dirp), count);
@@ -438,16 +446,16 @@ int hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch (rstatus) {
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_mkdirat, dirfd, resolved.c_str(), mode);
 
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_mkdirat, dirfd, cpath, mode);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             return with_errno(gkfs::syscall::gkfs_create(resolved, mode | S_IFDIR));
 
         default:
@@ -464,16 +472,16 @@ int hook_fchmodat(int dirfd, const char* cpath, mode_t mode) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_fchmodat, dirfd, cpath, mode);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_fchmodat, dirfd, resolved.c_str(), mode);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             LOG(WARNING, "{}() operation not supported", __func__);
             return -ENOTSUP;
 
@@ -588,16 +596,16 @@ int hook_readlinkat(int dirfd, const char* cpath, char* buf, int bufsiz) {
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
     switch (rstatus) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_readlinkat, dirfd, cpath, buf, bufsiz);
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             return syscall_no_intercept(SYS_readlinkat, dirfd, resolved.c_str(), buf, bufsiz);
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             LOG(WARNING, "{}() not supported", __func__);
             return -ENOTSUP;
 
@@ -683,18 +691,18 @@ int hook_renameat(int olddfd, const char* oldname,
     std::string oldpath_resolved;
     auto oldpath_status = CTX->relativize_fd_path(olddfd, oldname, oldpath_resolved);
     switch (oldpath_status) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             oldpath_pass = oldname;
             break;
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             oldpath_pass = oldpath_resolved.c_str();
             break;
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             LOG(WARNING, "{}() not supported", __func__);
             return -ENOTSUP;
 
@@ -707,18 +715,18 @@ int hook_renameat(int olddfd, const char* oldname,
     std::string newpath_resolved;
     auto newpath_status = CTX->relativize_fd_path(newdfd, newname, newpath_resolved);
     switch (newpath_status) {
-        case RelativizeStatus::fd_unknown:
+        case gkfs::preload::RelativizeStatus::fd_unknown:
             newpath_pass = newname;
             break;
 
-        case RelativizeStatus::external:
+        case gkfs::preload::RelativizeStatus::external:
             newpath_pass = newpath_resolved.c_str();
             break;
 
-        case RelativizeStatus::fd_not_a_dir:
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
-        case RelativizeStatus::internal:
+        case gkfs::preload::RelativizeStatus::internal:
             LOG(WARNING, "{}() not supported", __func__);
             return -ENOTSUP;
 
@@ -752,3 +760,6 @@ int hook_fstatfs(unsigned int fd, struct statfs* buf) {
     }
     return syscall_no_intercept(SYS_fstatfs, fd, buf);
 }
+
+} // namespace hook
+} // namespace gkfs
