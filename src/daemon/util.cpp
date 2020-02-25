@@ -20,7 +20,10 @@
 
 using namespace std;
 
-void gkfs::util::populate_hosts_file() {
+namespace gkfs {
+namespace util {
+
+void populate_hosts_file() {
     const auto& hosts_file = GKFS_DATA->hosts_file();
     GKFS_DATA->spdlogger()->debug("{}() Populating hosts file: '{}'", __func__, hosts_file);
     ofstream lfstream(hosts_file, ios::out | ios::app);
@@ -36,6 +39,9 @@ void gkfs::util::populate_hosts_file() {
     lfstream.close();
 }
 
-void gkfs::util::destroy_hosts_file() {
+void destroy_hosts_file() {
     std::remove(GKFS_DATA->hosts_file().c_str());
 }
+
+} // namespace util
+} // namespace gkfs

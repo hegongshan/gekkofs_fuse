@@ -17,6 +17,10 @@
 
 #include <daemon/daemon.hpp>
 
+#include <unordered_map>
+#include <map>
+#include <functional> //std::hash
+
 /* Forward declarations */
 namespace gkfs {
 namespace metadata {
@@ -26,12 +30,8 @@ class MetadataDB;
 namespace data {
 class ChunkStorage;
 }
-}
 
-
-#include <unordered_map>
-#include <map>
-#include <functional> //std::hash
+namespace daemon {
 
 class FsData {
 
@@ -128,5 +128,8 @@ public:
     void blocks_state(bool blocks_state);
 
 };
+
+} // namespace daemon
+} // namespace gkfs
 
 #endif //LFS_FS_DATA_H

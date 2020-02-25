@@ -16,6 +16,9 @@
 
 using namespace std;
 
+namespace gkfs {
+namespace daemon {
+
 // Getter/Setter
 
 margo_instance* RPCData::server_rpc_mid() {
@@ -49,3 +52,6 @@ const std::string& RPCData::self_addr_str() const {
 void RPCData::self_addr_str(const std::string& addr_str) {
     self_addr_str_ = addr_str;
 }
+
+} // namespace daemon
+} // namespace gkfs

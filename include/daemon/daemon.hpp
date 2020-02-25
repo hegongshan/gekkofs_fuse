@@ -30,17 +30,7 @@ extern "C" {
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/classes/rpc_data.hpp>
 
-#define GKFS_DATA (static_cast<FsData*>(FsData::getInstance()))
-#define RPC_DATA (static_cast<RPCData*>(RPCData::getInstance()))
-
-void init_environment();
-
-void destroy_enviroment();
-
-void init_io_tasklet_pool();
-
-void init_rpc_server(const std::string& protocol);
-
-void register_server_rpcs(margo_instance_id mid);
+#define GKFS_DATA (static_cast<gkfs::daemon::FsData*>(gkfs::daemon::FsData::getInstance()))
+#define RPC_DATA (static_cast<gkfs::daemon::RPCData*>(gkfs::daemon::RPCData::getInstance()))
 
 #endif // GKFS_DAEMON_DAEMON_HPP

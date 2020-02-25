@@ -17,6 +17,9 @@
 
 #include <daemon/daemon.hpp>
 
+namespace gkfs {
+namespace daemon {
+
 class RPCData {
 
 private:
@@ -59,7 +62,9 @@ public:
 
     void self_addr_str(const std::string& addr_str);
 
-
 };
+
+} // namespace daemon
+} // namespace gkfs
 
 #endif //LFS_RPC_DATA_HPP

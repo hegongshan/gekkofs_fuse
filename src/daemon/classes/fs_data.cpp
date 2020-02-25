@@ -15,6 +15,9 @@
 
 #include <spdlog/spdlog.h>
 
+namespace gkfs {
+namespace daemon {
+
 // getter/setter
 
 const std::shared_ptr<spdlog::logger>& FsData::spdlogger() const {
@@ -125,7 +128,8 @@ void FsData::blocks_state(bool blocks_state) {
     FsData::blocks_state_ = blocks_state;
 }
 
-
+} // namespace daemon
+} // namespace gkfs
 
 
 

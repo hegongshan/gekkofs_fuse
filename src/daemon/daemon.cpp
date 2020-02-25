@@ -42,6 +42,108 @@ namespace bfs = boost::filesystem;
 static condition_variable shutdown_please;
 static mutex mtx;
 
+void init_io_tasklet_pool() {
+    assert(gkfs::config::rpc::daemon_io_xstreams >= 0);
+    unsigned int xstreams_num = gkfs::config::rpc::daemon_io_xstreams;
+
+    //retrieve the pool of the just created scheduler
+    ABT_pool pool;
+    auto ret = ABT_pool_create_basic(ABT_POOL_FIFO_WAIT, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &pool);
+    if (ret != ABT_SUCCESS) {
+        throw runtime_error("Failed to create I/O tasks pool");
+    }
+
+    //create all subsequent xstream and the associated scheduler, all tapping into the same pool
+    vector<ABT_xstream> xstreams(xstreams_num);
+    for (unsigned int i = 0; i < xstreams_num; ++i) {
+        ret = ABT_xstream_create_basic(ABT_SCHED_BASIC_WAIT, 1, &pool,
+                                       ABT_SCHED_CONFIG_NULL, &xstreams[i]);
+        if (ret != ABT_SUCCESS) {
+            throw runtime_error("Failed to create task execution streams for I/O operations");
+        }
+    }
+
+    RPC_DATA->io_streams(xstreams);
+    RPC_DATA->io_pool(pool);
+}
+
+/**
+ * Registers RPC handlers to Margo instance
+ * @param hg_class
+ */
+void register_server_rpcs(margo_instance_id mid) {
+    MARGO_REGISTER(mid, gkfs::rpc::tag::fs_config, void, rpc_config_out_t, rpc_srv_get_fs_config);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_create);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_remove);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
+                   rpc_srv_update_metadentry);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
+                   rpc_srv_get_metadentry_size);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
+                   rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+                   rpc_srv_get_dirents);
+#ifdef HAS_SYMLINKS
+    MARGO_REGISTER(mid, gkfs::rpc::tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
+#endif
+    MARGO_REGISTER(mid, gkfs::rpc::tag::write, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::read, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::truncate, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_truncate);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t,
+                   rpc_srv_get_chunk_stat);
+}
+
+void init_rpc_server(const string& protocol_port) {
+    hg_addr_t addr_self;
+    hg_size_t addr_self_cstring_sz = 128;
+    char addr_self_cstring[128];
+    // IMPORTANT: this struct needs to be zeroed before use
+    struct hg_init_info hg_options = {};
+#if USE_SHM
+    hg_options.auto_sm = HG_TRUE;
+#else
+    hg_options.auto_sm = HG_FALSE;
+#endif
+    hg_options.stats = HG_FALSE;
+    hg_options.na_class = nullptr;
+    // Start Margo (this will also initialize Argobots and Mercury internally)
+    auto mid = margo_init_opt(protocol_port.c_str(),
+                              MARGO_SERVER_MODE,
+                              &hg_options,
+                              HG_TRUE,
+                              gkfs::config::rpc::daemon_handler_xstreams);
+    if (mid == MARGO_INSTANCE_NULL) {
+        throw runtime_error("Failed to initialize the Margo RPC server");
+    }
+    // Figure out what address this server is listening on (must be freed when finished)
+    auto hret = margo_addr_self(mid, &addr_self);
+    if (hret != HG_SUCCESS) {
+        margo_finalize(mid);
+        throw runtime_error("Failed to retrieve server RPC address");
+    }
+    // Convert the address to a cstring (with \0 terminator).
+    hret = margo_addr_to_string(mid, addr_self_cstring, &addr_self_cstring_sz, addr_self);
+    if (hret != HG_SUCCESS) {
+        margo_addr_free(mid, addr_self);
+        margo_finalize(mid);
+        throw runtime_error("Failed to convert server RPC address to string");
+    }
+    margo_addr_free(mid, addr_self);
+
+    std::string addr_self_str(addr_self_cstring);
+    RPC_DATA->self_addr_str(addr_self_str);
+
+    GKFS_DATA->spdlogger()->info("{}() Accepting RPCs on address {}", __func__, addr_self_cstring);
+
+    // Put context and class into RPC_data object
+    RPC_DATA->server_rpc_mid(mid);
+
+    // register RPCs
+    register_server_rpcs(mid);
+}
+
 void init_environment() {
     // Initialize metadata db
     std::string metadata_path = GKFS_DATA->metadir() + "/rocksdb"s;
@@ -133,108 +235,6 @@ void destroy_enviroment() {
 
     GKFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
     GKFS_DATA->close_mdb();
-}
-
-void init_io_tasklet_pool() {
-    assert(gkfs::config::rpc::daemon_io_xstreams >= 0);
-    unsigned int xstreams_num = gkfs::config::rpc::daemon_io_xstreams;
-
-    //retrieve the pool of the just created scheduler
-    ABT_pool pool;
-    auto ret = ABT_pool_create_basic(ABT_POOL_FIFO_WAIT, ABT_POOL_ACCESS_MPMC, ABT_TRUE, &pool);
-    if (ret != ABT_SUCCESS) {
-        throw runtime_error("Failed to create I/O tasks pool");
-    }
-
-    //create all subsequent xstream and the associated scheduler, all tapping into the same pool
-    vector<ABT_xstream> xstreams(xstreams_num);
-    for (unsigned int i = 0; i < xstreams_num; ++i) {
-        ret = ABT_xstream_create_basic(ABT_SCHED_BASIC_WAIT, 1, &pool,
-                                       ABT_SCHED_CONFIG_NULL, &xstreams[i]);
-        if (ret != ABT_SUCCESS) {
-            throw runtime_error("Failed to create task execution streams for I/O operations");
-        }
-    }
-
-    RPC_DATA->io_streams(xstreams);
-    RPC_DATA->io_pool(pool);
-}
-
-void init_rpc_server(const string& protocol_port) {
-    hg_addr_t addr_self;
-    hg_size_t addr_self_cstring_sz = 128;
-    char addr_self_cstring[128];
-    // IMPORTANT: this struct needs to be zeroed before use
-    struct hg_init_info hg_options = {};
-#if USE_SHM
-    hg_options.auto_sm = HG_TRUE;
-#else
-    hg_options.auto_sm = HG_FALSE;
-#endif
-    hg_options.stats = HG_FALSE;
-    hg_options.na_class = nullptr;
-    // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init_opt(protocol_port.c_str(),
-                              MARGO_SERVER_MODE,
-                              &hg_options,
-                              HG_TRUE,
-                              gkfs::config::rpc::daemon_handler_xstreams);
-    if (mid == MARGO_INSTANCE_NULL) {
-        throw runtime_error("Failed to initialize the Margo RPC server");
-    }
-    // Figure out what address this server is listening on (must be freed when finished)
-    auto hret = margo_addr_self(mid, &addr_self);
-    if (hret != HG_SUCCESS) {
-        margo_finalize(mid);
-        throw runtime_error("Failed to retrieve server RPC address");
-    }
-    // Convert the address to a cstring (with \0 terminator).
-    hret = margo_addr_to_string(mid, addr_self_cstring, &addr_self_cstring_sz, addr_self);
-    if (hret != HG_SUCCESS) {
-        margo_addr_free(mid, addr_self);
-        margo_finalize(mid);
-        throw runtime_error("Failed to convert server RPC address to string");
-    }
-    margo_addr_free(mid, addr_self);
-
-    std::string addr_self_str(addr_self_cstring);
-    RPC_DATA->self_addr_str(addr_self_str);
-
-    GKFS_DATA->spdlogger()->info("{}() Accepting RPCs on address {}", __func__, addr_self_cstring);
-
-    // Put context and class into RPC_data object
-    RPC_DATA->server_rpc_mid(mid);
-
-    // register RPCs
-    register_server_rpcs(mid);
-}
-
-/**
- * Registers RPC handlers to Margo instance
- * @param hg_class
- */
-void register_server_rpcs(margo_instance_id mid) {
-    MARGO_REGISTER(mid, gkfs::rpc::tag::fs_config, void, rpc_config_out_t, rpc_srv_get_fs_config);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::create, rpc_mk_node_in_t, rpc_err_out_t, rpc_srv_create);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::stat, rpc_path_only_in_t, rpc_stat_out_t, rpc_srv_stat);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::decr_size, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_decr_size);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::remove, rpc_rm_node_in_t, rpc_err_out_t, rpc_srv_remove);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry, rpc_update_metadentry_in_t, rpc_err_out_t,
-                   rpc_srv_update_metadentry);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::get_metadentry_size, rpc_path_only_in_t, rpc_get_metadentry_size_out_t,
-                   rpc_srv_get_metadentry_size);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry_size, rpc_update_metadentry_size_in_t,
-                   rpc_update_metadentry_size_out_t, rpc_srv_update_metadentry_size);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
-                   rpc_srv_get_dirents);
-#ifdef HAS_SYMLINKS
-    MARGO_REGISTER(mid, gkfs::rpc::tag::mk_symlink, rpc_mk_symlink_in_t, rpc_err_out_t, rpc_srv_mk_symlink);
-#endif
-    MARGO_REGISTER(mid, gkfs::rpc::tag::write, rpc_write_data_in_t, rpc_data_out_t, rpc_srv_write);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::read, rpc_read_data_in_t, rpc_data_out_t, rpc_srv_read);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::truncate, rpc_trunc_in_t, rpc_err_out_t, rpc_srv_truncate);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::get_chunk_stat, rpc_chunk_stat_in_t, rpc_chunk_stat_out_t,
-                   rpc_srv_get_chunk_stat);
 }
 
 void shutdown_handler(int dummy) {
