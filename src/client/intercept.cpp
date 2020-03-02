@@ -596,13 +596,13 @@ int hook(long syscall_number,
 
         case SYS_getdents:
             *result = gkfs::hook::hook_getdents(static_cast<unsigned int>(arg0),
-                                                reinterpret_cast<struct dirent*>(arg1),
+                                                reinterpret_cast<struct linux_dirent*>(arg1),
                                                 static_cast<unsigned int>(arg2));
             break;
 
         case SYS_getdents64:
             *result = gkfs::hook::hook_getdents64(static_cast<unsigned int>(arg0),
-                                                  reinterpret_cast<struct dirent64*>(arg1),
+                                                  reinterpret_cast<struct linux_dirent64*>(arg1),
                                                   static_cast<unsigned int>(arg2));
             break;
 

@@ -18,8 +18,6 @@
 #include <string>
 #include <vector>
 
-#include <dirent.h>
-
 #include <client/open_file_map.hpp>
 
 namespace gkfs {

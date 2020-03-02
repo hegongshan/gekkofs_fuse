@@ -24,16 +24,41 @@
 #include <global/path_util.hpp>
 
 extern "C" {
+#include <dirent.h> // used for file types in the getdents{,64}() functions
+#include <linux/kernel.h> // used for definition of alignment macros
 #include <sys/statfs.h>
 #include <sys/statvfs.h>
-#include <dirent.h>
 }
 
-#define __ALIGN_KERNEL_MASK(x, mask)    (((x) + (mask)) & ~(mask))
-#define __ALIGN_KERNEL(x, a)            __ALIGN_KERNEL_MASK(x, (typeof(x))(a) - 1)
+using namespace std;
+
+/*
+ * Macro used within getdents{,64} functions.
+ * __ALIGN_KERNEL defined in linux/kernel.h
+ */
 #define ALIGN(x, a)                     __ALIGN_KERNEL((x), (a))
 
-using namespace std;
+/*
+ * linux_dirent is used in getdents() but is privately defined in the linux kernel: fs/readdir.c.
+ */
+struct linux_dirent {
+    unsigned long d_ino;
+    unsigned long d_off;
+    unsigned short d_reclen;
+    char d_name[1];
+};
+/*
+ * linux_dirent64 is used in getdents64() and defined in the linux kernel: include/linux/dirent.h.
+ * However, it is not part of the kernel-headers and cannot be imported.
+ */
+struct linux_dirent64 {
+    uint64_t d_ino;
+    int64_t d_off;
+    unsigned short d_reclen;
+    unsigned char d_type;
+    char d_name[1]; // originally `char d_name[0]` in kernel, but ISO C++ forbids zero-size array 'd_name'
+};
+
 
 namespace {
 
@@ -505,9 +530,10 @@ int gkfs_rmdir(const std::string& path) {
 }
 
 int gkfs_getdents(unsigned int fd,
-                  struct dirent* dirp,
+                  struct linux_dirent* dirp,
                   unsigned int count) {
 
+    // Get opendir object (content was downloaded with opendir() call)
     auto open_dir = CTX->file_map()->get_dir(fd);
     if (open_dir == nullptr) {
         //Cast did not succeeded: open_file is a regular file
@@ -515,24 +541,32 @@ int gkfs_getdents(unsigned int fd,
         return -1;
     }
 
+    // get directory position of which entries to return
     auto pos = open_dir->pos();
     if (pos >= open_dir->size()) {
         return 0;
     }
 
     unsigned int written = 0;
-    struct dirent* current_dirp = nullptr;
+    struct linux_dirent* current_dirp = nullptr;
     while (pos < open_dir->size()) {
-        gkfs::filemap::DirEntry de = open_dir->getdent(pos);
+        // get dentry fir current position
+        auto de = open_dir->getdent(pos);
+        /*
+         * Calculate the total dentry size within the kernel struct `linux_dirent` depending on the file name size.
+         * The size is then aligned to the size of `long` boundary.
+         * This line was originally defined in the linux kernel: fs/readdir.c in function filldir():
+         * int reclen = ALIGN(offsetof(struct linux_dirent, d_name) + namlen + 2, sizeof(long));
+         * However, since d_name is null-terminated and de.name().size() does not include space
+         * for the null-terminator, we add 1. Thus, + 3 in total.
+         */
         auto total_size = ALIGN(offsetof(
-                                        struct dirent, d_name) +
-                                        de.name().size() + 3, sizeof(long));
+                                        struct linux_dirent, d_name) + de.name().size() + 3, sizeof(long));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct dirent*>(
-                reinterpret_cast<char*>(dirp) + written);
+        current_dirp = reinterpret_cast<struct linux_dirent*>(reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
 
@@ -552,13 +586,14 @@ int gkfs_getdents(unsigned int fd,
         errno = EINVAL;
         return -1;
     }
+    // set directory position for next getdents() call
     open_dir->pos(pos);
     return written;
 }
 
 
 int gkfs_getdents64(unsigned int fd,
-                    struct dirent64* dirp,
+                    struct linux_dirent64* dirp,
                     unsigned int count) {
 
     auto open_dir = CTX->file_map()->get_dir(fd);
@@ -567,25 +602,32 @@ int gkfs_getdents64(unsigned int fd,
         errno = EBADF;
         return -1;
     }
-
     auto pos = open_dir->pos();
     if (pos >= open_dir->size()) {
         return 0;
     }
-
     unsigned int written = 0;
-    struct dirent64* current_dirp = nullptr;
+    struct linux_dirent64* current_dirp = nullptr;
     while (pos < open_dir->size()) {
-        gkfs::filemap::DirEntry de = open_dir->getdent(pos);
+        auto de = open_dir->getdent(pos);
+        /*
+         * Calculate the total dentry size within the kernel struct `linux_dirent` depending on the file name size.
+         * The size is then aligned to the size of `long` boundary.
+         *
+         * This line was originally defined in the linux kernel: fs/readdir.c in function filldir64():
+         * int reclen = ALIGN(offsetof(struct linux_dirent64, d_name) + namlen + 1, sizeof(u64));
+         * We keep + 1 because:
+         * Since d_name is null-terminated and de.name().size() does not include space
+         * for the null-terminator, we add 1. Since d_name in our `struct linux_dirent64` definition
+         * is not a zero-size array (as opposed to the kernel version), we subtract 1. Thus, it stays + 1.
+         */
         auto total_size = ALIGN(offsetof(
-                                        struct dirent64, d_name) +
-                                        de.name().size() + 3, sizeof(long));
+                                        struct linux_dirent64, d_name) + de.name().size() + 1, sizeof(uint64_t));
         if (total_size > (count - written)) {
             //no enough space left on user buffer to insert next dirent
             break;
         }
-        current_dirp = reinterpret_cast<struct dirent64*>(
-                reinterpret_cast<char*>(dirp) + written);
+        current_dirp = reinterpret_cast<struct linux_dirent64*>(reinterpret_cast<char*>(dirp) + written);
         current_dirp->d_ino = std::hash<std::string>()(
                 open_dir->path() + "/" + de.name());
 
