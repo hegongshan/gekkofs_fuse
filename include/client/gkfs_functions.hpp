@@ -19,8 +19,8 @@
 
 struct statfs;
 struct statvfs;
-struct dirent;
-struct dirent64;
+struct linux_dirent;
+struct linux_dirent64;
 
 namespace gkfs {
 namespace syscall {
@@ -79,9 +79,9 @@ ssize_t gkfs_read(int fd, void* buf, size_t count);
 
 int gkfs_opendir(const std::string& path);
 
-int gkfs_getdents(unsigned int fd, struct dirent* dirp, unsigned int count);
+int gkfs_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count);
 
-int gkfs_getdents64(unsigned int fd, struct dirent64* dirp, unsigned int count);
+int gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int count);
 
 int gkfs_rmdir(const std::string& path);
 

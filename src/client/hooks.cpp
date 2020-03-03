@@ -25,7 +25,6 @@
 
 extern "C" {
 #include <libsyscall_intercept_hook_point.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -413,7 +412,7 @@ int hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
     return syscall_no_intercept(SYS_dup3, oldfd, newfd, flags);
 }
 
-int hook_getdents(unsigned int fd, struct dirent* dirp, unsigned int count) {
+int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count) {
 
     LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
         __func__, fd, fmt::ptr(dirp), count);
@@ -425,7 +424,7 @@ int hook_getdents(unsigned int fd, struct dirent* dirp, unsigned int count) {
 }
 
 
-int hook_getdents64(unsigned int fd, struct dirent64* dirp, unsigned int count) {
+int hook_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int count) {
 
     LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
         __func__, fd, fmt::ptr(dirp), count);
