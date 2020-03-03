@@ -666,7 +666,7 @@ int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
     return path_size;
 }
 
+#endif
+
 } // namespace syscall
 } // namespace gkfs
-
-#endif
