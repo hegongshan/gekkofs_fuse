@@ -18,6 +18,9 @@ namespace gkfs {
 
 // These constexpr set the RPC's identity and which handler the receiver end should use
 namespace rpc {
+
+using chnk_id_t = unsigned long;
+
 namespace tag {
 
 constexpr auto fs_config = "rpc_srv_fs_config";
@@ -46,10 +49,6 @@ constexpr auto ofi_verbs = "ofi+verbs";
 } // namespace protocol
 } // namespace rpc
 
-namespace types {
-// typedefs
-typedef unsigned long rpc_chnk_id_t;
-} // namespace types
 } // namespace gkfs
 
 #endif //GEKKOFS_GLOBAL_DEFS_HPP
