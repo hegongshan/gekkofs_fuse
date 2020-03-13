@@ -293,6 +293,29 @@ int gkfs_statfs(struct statfs* buf) {
     return 0;
 }
 
+int gkfs_statvfs(struct statvfs* buf) {
+    gkfs::rpc::ChunkStat blk_stat{};
+    try {
+        blk_stat = gkfs::rpc::forward_get_chunk_stat();
+    } catch (const std::exception& e) {
+        LOG(ERROR, "{}() Failure with error: '{}'", e.what());
+        return -1;
+    }
+    buf->f_bsize = blk_stat.chunk_size;
+    buf->f_blocks = blk_stat.chunk_total;
+    buf->f_bfree = blk_stat.chunk_free;
+    buf->f_bavail = blk_stat.chunk_free;
+    buf->f_files = 0;
+    buf->f_ffree = 0;
+    buf->f_favail = 0;
+    buf->f_fsid = 0;
+    buf->f_namemax = path::max_length;
+    buf->f_frsize = 0;
+    buf->f_flag =
+            ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
+    return 0;
+}
+
 off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
     return gkfs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
