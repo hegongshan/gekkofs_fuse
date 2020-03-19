@@ -24,3 +24,5 @@ def test_cp(gkfs_daemon, gkfs_shell, file_factory):
     logger.debug("copying into gkfs")
     cmd = gkfs_shell.cp(lf01.pathname, gkfs_daemon.mountdir)
     assert cmd.exit_code == 0
+    assert cmd.stdout.decode() == ''
+    assert cmd.stderr.decode() == ''
