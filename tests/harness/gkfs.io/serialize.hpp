@@ -150,7 +150,9 @@ struct adl_serializer<struct ::stat> {
 
 } // namespace nlohmann
 
-template <> struct fmt::formatter<struct ::dirent> {
+namespace fmt {
+
+template <> struct formatter<struct ::dirent> {
     constexpr auto parse(format_parse_context &ctx) {
         // [ctx.begin(), ctx.end()) is a character range that contains a part of
         // the format string starting from the format specifications to be parsed,
@@ -191,5 +193,7 @@ template <> struct fmt::formatter<struct ::dirent> {
                     dirent.d_name);
         }
 };
+
+}
 
 #endif // GKFS_IO_SERIALIZE_HPP
