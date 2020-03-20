@@ -17,6 +17,11 @@ add_custom_target(check
             --output-on-failure
 )
 
+
+# unit tests
+add_subdirectory(unit)
+
+# define CTest tests for functional test groups
 gkfs_add_python_test(
     NAME test_directories
     PYTHON_VERSION 3.6
