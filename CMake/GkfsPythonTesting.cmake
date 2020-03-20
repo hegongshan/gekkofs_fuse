@@ -68,7 +68,7 @@ function(gkfs_add_python_test)
     # Parse arguments
     set(OPTION)
     set(SINGLE NAME PYTHON_VERSION WORKING_DIRECTORY VIRTUALENV)
-    set(MULTI COMMAND BINARY_DIRECTORIES LIBRARY_PREFIX_DIRECTORIES)
+    set(MULTI SOURCE BINARY_DIRECTORIES LIBRARY_PREFIX_DIRECTORIES)
 
     cmake_parse_arguments(PYTEST "${OPTION}" "${SINGLE}" "${MULTI}" ${ARGN})
 
@@ -169,7 +169,7 @@ function(gkfs_add_python_test)
              COMMAND ${PYTEST_VIRTUALENV_INTERPRETER}
                     -m pytest -v -s
                     ${PYTEST_COMMAND_ARGS}
-                    ${PYTEST_COMMAND}
+                    ${PYTEST_SOURCE}
              WORKING_DIRECTORY ${PYTEST_WORKING_DIRECTORY})
 
     # instruct Python to not create __pycache__ directories,
