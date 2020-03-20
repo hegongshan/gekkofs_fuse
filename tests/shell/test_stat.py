@@ -21,14 +21,14 @@ def test_shell_if_e(gkfs_daemon, gkfs_shell, file_factory):
     exists using `if [[ -e <file> ]]`.
     """
 
-    logger.debug("creating input file")
+    logger.info("creating input file")
     lf01 = file_factory.create(file01, size=4.0, unit='MB')
 
-    logger.debug("copying into gkfs")
+    logger.info("copying into gkfs")
     cmd = gkfs_shell.cp(lf01.pathname, gkfs_daemon.mountdir)
     assert cmd.exit_code == 0
 
-    logger.debug("checking if file exists")
+    logger.info("checking if file exists")
     cmd = gkfs_shell.script(
         f"""
             expected_pathname={gkfs_daemon.mountdir / file01}
@@ -47,14 +47,14 @@ def test_stat_script(gkfs_daemon, gkfs_shell, file_factory):
     exists using stat <file> in a script.
     """
 
-    logger.debug("creating input file")
+    logger.info("creating input file")
     lf01 = file_factory.create(file01, size=4.0, unit='MB')
 
-    logger.debug("copying into gkfs")
+    logger.info("copying into gkfs")
     cmd = gkfs_shell.cp(lf01.pathname, gkfs_daemon.mountdir)
     assert cmd.exit_code == 0
 
-    logger.debug("checking metadata")
+    logger.info("checking metadata")
     cmd = gkfs_shell.script(
         f"""
             expected_pathname={gkfs_daemon.mountdir / file01}
@@ -71,14 +71,14 @@ def test_stat_command(gkfs_daemon, gkfs_shell, file_factory):
     exists using stat <file> as a command.
     """
 
-    logger.debug("creating input file")
+    logger.info("creating input file")
     lf01 = file_factory.create(file01, size=4.0, unit='MB')
 
-    logger.debug("copying into gkfs")
+    logger.info("copying into gkfs")
     cmd = gkfs_shell.cp(lf01.pathname, gkfs_daemon.mountdir)
     assert cmd.exit_code == 0
 
-    logger.debug("checking metadata")
+    logger.info("checking metadata")
     cmd = gkfs_shell.stat('--terse', gkfs_daemon.mountdir / file01)
     assert cmd.exit_code == 0
     assert cmd.parsed_stdout.size == lf01.size

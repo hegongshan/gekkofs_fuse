@@ -18,10 +18,10 @@ file01 = 'file01'
 def test_cp(gkfs_daemon, gkfs_shell, file_factory):
     """Copy a file into gkfs using the shell"""
 
-    logger.debug("creating input file")
+    logger.info("creating input file")
     lf01 = file_factory.create(file01, size=4.0, unit='MB')
 
-    logger.debug("copying into gkfs")
+    logger.info("copying into gkfs")
     cmd = gkfs_shell.cp(lf01.pathname, gkfs_daemon.mountdir)
     assert cmd.exit_code == 0
     assert cmd.stdout.decode() == ''
