@@ -52,7 +52,14 @@ if(NOT nlohmann_json_POPULATED)
     FetchContent_Populate(nlohmann_json)
     message(STATUS "[gkfs.io] Nlohmann JSON source dir: ${nlohmann_json_SOURCE_DIR}")
     message(STATUS "[gkfs.io] Nlohmann JSON binary dir: ${nlohmann_json_BINARY_DIR}")
+
+    # we don't really care so much about a third party library's tests to be
+    # run from our own project's code
     set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+    # we also don't need to install it when our main project gets installed
+    set(JSON_Install OFF CACHE INTERNAL "")
+
     add_subdirectory(${nlohmann_json_SOURCE_DIR} ${nlohmann_json_BINARY_DIR})
 endif()
 
