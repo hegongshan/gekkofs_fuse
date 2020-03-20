@@ -51,6 +51,7 @@ compile GekkoFS:
       -Wdev
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
+      -DGKFS_BUILD_TESTS:BOOL=ON
       -DRPC_PROTOCOL="ofi+sockets"
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
@@ -58,6 +59,7 @@ compile GekkoFS:
     - make -j$(nproc) install
   artifacts:
     paths:
+     - ${BUILD_PATH}
      - ${INSTALL_PATH}
 
 compile tests:
@@ -75,7 +77,7 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - make test
+    - cd ${BUILD_PATH} && ctest -V
   artifacts:
     when: on_failure
     paths:
