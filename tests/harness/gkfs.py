@@ -130,9 +130,9 @@ class Daemon:
                  '--rootdir', self.rootdir,
                  '-l', self._address ]
 
-        logger.info(f"spawning daemon")
-        logger.info(f"cmdline: {self._cmd} " + " ".join(map(str, args)))
-        logger.info(f"env: {self._patched_env}")
+        logger.debug(f"spawning daemon")
+        logger.debug(f"cmdline: {self._cmd} " + " ".join(map(str, args)))
+        logger.debug(f"env: {self._patched_env}")
 
         self._proc = self._cmd(
                 args,
@@ -142,7 +142,7 @@ class Daemon:
                 _bg=True,
             )
 
-        logger.info(f"daemon process spawned (PID={self._proc.pid})")
+        logger.debug(f"daemon process spawned (PID={self._proc.pid})")
 
         # make sure daemon is ready to accept requests
         if not self.wait_until_active(self._proc.pid):
@@ -191,7 +191,7 @@ class Daemon:
                             return True
             except FileNotFoundError:
                 # Log is missing, the daemon might have crashed...
-                logger.info(f"daemon log file missing, checking if daemon is alive")
+                logger.debug(f"daemon log file missing, checking if daemon is alive")
 
                 pid=self._proc.pid
                 try:
@@ -207,7 +207,7 @@ class Daemon:
         return False
 
     def shutdown(self):
-        logger.info(f"terminating daemon")
+        logger.debug(f"terminating daemon")
 
         try:
             self._proc.terminate()
@@ -297,9 +297,9 @@ class Client:
         return self._preload_library
 
     def run(self, cmd, *args):
-        logger.info(f"running client")
-        logger.info(f"cmdline: {self._cmd} " + " ".join(map(str, list(args))))
-        logger.info(f"env: {self._patched_env}")
+        logger.debug(f"running client")
+        logger.debug(f"cmdline: {self._cmd} " + " ".join(map(str, list(args))))
+        logger.debug(f"env: {self._patched_env}")
 
         out = self._cmd(
             [ cmd ] + list(args),
@@ -445,11 +445,11 @@ class ShellClient:
         the finished process.
         """
 
-        logger.info(f"running bash")
-        logger.info(f"cmd: bash -c '{code}'")
+        logger.debug(f"running bash")
+        logger.debug(f"cmd: bash -c '{code}'")
 
         if intercept_shell:
-            logger.info(f"env: {self._patched_env}")
+            logger.debug(f"env: {self._patched_env}")
 
         # 'sh' raises an exception if the return code is not zero;
         # since we'd rather check for return codes explictly, we
@@ -498,9 +498,9 @@ class ShellClient:
         """
 
         bash_c_args = f"{cmd} {' '.join(str(a) for a in args)}"
-        logger.info(f"running bash")
-        logger.info(f"cmd: bash -c '{bash_c_args}'")
-        logger.info(f"env: {self._patched_env}")
+        logger.debug(f"running bash")
+        logger.debug(f"cmd: bash -c '{bash_c_args}'")
+        logger.debug(f"env: {self._patched_env}")
 
         # 'sh' raises an exception if the return code is not zero;
         # since we'd rather check for return codes explictly, we
