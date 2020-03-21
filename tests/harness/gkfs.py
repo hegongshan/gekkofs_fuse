@@ -396,7 +396,7 @@ class ShellClient:
 
         return ' '.join(f'{k}="{v}"' for k,v in self._patched_env.items())
 
-    def script(self, code, intercept_shell=True, timeout=None, timeout_signal=signal.SIGKILL):
+    def script(self, code, intercept_shell=True, timeout=60, timeout_signal=signal.SIGKILL):
         """
         Execute a shell script passed as an argument in bash.
 
@@ -444,7 +444,7 @@ class ShellClient:
             If the process does not finish within the timeout, it will be sent
             the signal defined by `timeout_signal`.
 
-            Default value: None
+            Default value: 60
 
         timeout_signal: `int`
             The signal to be sent to the process if `timeout` is not None.
@@ -479,7 +479,7 @@ class ShellClient:
             _ok_code=list(range(0, 256))
             )
 
-    def run(self, cmd, *args, timeout=None, timeout_signal=signal.SIGKILL):
+    def run(self, cmd, *args, timeout=60, timeout_signal=signal.SIGKILL):
         """
         Execute a shell command  with arguments.
 
@@ -507,7 +507,7 @@ class ShellClient:
             If the process does not finish within the timeout, it will be sent
             the signal defined by `timeout_signal`.
 
-            Default value: None
+            Default value: 60
 
         timeout_signal: `int`
             The signal to be sent to the process if `timeout` is not None.
