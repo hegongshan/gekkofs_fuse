@@ -11,7 +11,7 @@
 #  SPDX-License-Identifier: MIT                                                #
 ################################################################################
 
-import os, sh, sys, re, pytest
+import os, sh, sys, re, pytest, signal
 import random, socket, netifaces
 from pathlib import Path
 from itertools import islice
@@ -240,8 +240,8 @@ class _proxy_exec():
         self._client = client
         self._name = name
 
-    def __call__(self, *args):
-        return self._client.run(self._name, *args)
+    def __call__(self, *args, **kwargs):
+        return self._client.run(self._name, *args, **kwargs)
 
 class Client:
     """
@@ -396,7 +396,7 @@ class ShellClient:
 
         return ' '.join(f'{k}="{v}"' for k,v in self._patched_env.items())
 
-    def script(self, code, intercept_shell=True):
+    def script(self, code, intercept_shell=True, timeout=None, timeout_signal=signal.SIGKILL):
         """
         Execute a shell script passed as an argument in bash.
 
@@ -439,6 +439,18 @@ class ShellClient:
             Controls whether the shell executing the script should be
             executed with LD_PRELOAD=libgkfs_intercept.so (default: True).
 
+        timeout: `int`
+            How much time, in seconds, we should give the process to complete.
+            If the process does not finish within the timeout, it will be sent
+            the signal defined by `timeout_signal`.
+
+            Default value: None
+
+        timeout_signal: `int`
+            The signal to be sent to the process if `timeout` is not None.
+
+            Default value: signal.SIGKILL
+
         Returns
         -------
         A sh.RunningCommand instance that allows interacting with
@@ -447,6 +459,8 @@ class ShellClient:
 
         logger.debug(f"running bash")
         logger.debug(f"cmd: bash -c '{code}'")
+        logger.debug(f"timeout: {timeout} seconds")
+        logger.debug(f"timeout_signal: {signal.Signals(timeout_signal).name}")
 
         if intercept_shell:
             logger.debug(f"env: {self._patched_env}")
@@ -460,10 +474,12 @@ class ShellClient:
             _env = (self._env if intercept_shell else os.environ),
     #        _out=sys.stdout,
     #        _err=sys.stderr,
+            _timeout=timeout,
+            _timeout_signal=timeout_signal,
             _ok_code=list(range(0, 256))
             )
 
-    def run(self, cmd, *args, intercept_shell=True):
+    def run(self, cmd, *args, timeout=None, timeout_signal=signal.SIGKILL):
         """
         Execute a shell command  with arguments.
 
@@ -486,9 +502,17 @@ class ShellClient:
         args: `list`
             The list of arguments for the command.
 
-        intercept_shell: `bool`
-            Controls whether the shell executing the script should be
-            executed with LD_PRELOAD=libgkfs_intercept.so (default: True).
+        timeout: `number`
+            How much time, in seconds, we should give the process to complete.
+            If the process does not finish within the timeout, it will be sent
+            the signal defined by `timeout_signal`.
+
+            Default value: None
+
+        timeout_signal: `int`
+            The signal to be sent to the process if `timeout` is not None.
+
+            Default value: signal.SIGKILL
 
         Returns
         -------
@@ -500,6 +524,8 @@ class ShellClient:
         bash_c_args = f"{cmd} {' '.join(str(a) for a in args)}"
         logger.debug(f"running bash")
         logger.debug(f"cmd: bash -c '{bash_c_args}'")
+        logger.debug(f"timeout: {timeout} seconds")
+        logger.debug(f"timeout_signal: {signal.Signals(timeout_signal).name}")
         logger.debug(f"env: {self._patched_env}")
 
         # 'sh' raises an exception if the return code is not zero;
@@ -511,6 +537,8 @@ class ShellClient:
             _env = self._env,
     #        _out=sys.stdout,
     #        _err=sys.stderr,
+            _timeout=timeout,
+            _timeout_signal=timeout_signal,
             _ok_code=list(range(0, 256))
             )
 
