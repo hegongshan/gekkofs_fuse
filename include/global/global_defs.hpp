@@ -42,6 +42,7 @@ namespace protocol {
 constexpr auto ofi_psm2 = "ofi+psm2";
 constexpr auto ofi_sockets = "ofi+sockets";
 constexpr auto ofi_tcp = "ofi+tcp";
+constexpr auto ofi_verbs = "ofi+verbs";
 } // namespace protocol
 } // namespace rpc
 

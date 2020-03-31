@@ -9,7 +9,12 @@ NA_LAYER=""
 DEP_CONFIG=""
 VERBOSE=false
 
-VALID_DEP_OPTIONS="mogon2 direct all"
+VALID_DEP_OPTIONS="mogon2 mogon1 direct all"
+
+MOGON1_DEPS=(
+    "zstd" "lz4" "snappy" "capstone" "ofi-verbs" "mercury" "argobots" "margo" "rocksdb"
+    "syscall_intercept" "date"
+)
 
 MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
@@ -48,6 +53,10 @@ list_dependencies() {
 
     echo "Available dependencies: "
 
+    echo -n "  Mogon 1: "
+    for d in "${MOGON1_DEPS[@]}"; do
+        echo -n "$d "
+    done
     echo -n "  Mogon 2: "
     for d in "${MOGON2_DEPS[@]}"; do
         echo -n "$d "
@@ -248,6 +257,10 @@ fi
 
 # enable predefined dependency template
 case ${TMP_DEP_CONF} in
+mogon1)
+  DEP_CONFIG=("${MOGON1_DEPS[@]}")
+  [[ -z "${DEPENDENCY}" ]] && echo "'Mogon1' dependencies are downloaded"
+  ;;
 mogon2)
   DEP_CONFIG=("${MOGON2_DEPS[@]}")
   [[ -z "${DEPENDENCY}" ]] && echo "'Mogon2' dependencies are downloaded"
@@ -308,8 +321,14 @@ if check_dependency "bmi" "${DEP_CONFIG[@]}"; then
 fi
 
 # get libfabric
-if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
-    if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
+if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
+    if check_dependency "ofi-experimental" "${DEP_CONFIG[@]}"; then
+        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.9.1/libfabric-1.9.1.tar.bz2" &
+    elif check_dependency "ofi-verbs" "${DEP_CONFIG[@]}"; then
+        # libibverbs 1.2.1-1 used on mogon 1i (installed on system) which is linked to libfabric
+        # libfabric 1.8 random RPCs fail to be send. 1.9 RPC client cannot be started when in an MPI environment
+        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.7.2/libfabric-1.7.2.tar.gz" &
+    elif check_dependency "ofi" "${DEP_CONFIG[@]}"; then
         wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.8.1/libfabric-1.8.1.tar.bz2" &
     fi
 fi
@@ -332,6 +351,8 @@ fi
 # get rocksdb
 if check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
     wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
+elif check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
+    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.7.3.tar.gz" &
 fi
 
 # get syscall_intercept
