@@ -32,8 +32,12 @@
 #include <iostream>
 #include <fstream>
 #include <csignal>
-#include <unistd.h>
 #include <condition_variable>
+
+extern "C" {
+#include <unistd.h>
+#include <stdlib.h>
+}
 
 using namespace std;
 namespace po = boost::program_options;
@@ -279,11 +283,14 @@ int main(int argc, const char* argv[]) {
             ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
             ("rootdir,r", po::value<string>()->required(), "data directory")
             ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
-            ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname")
+            ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname.\n"
+                                              "When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly "
+                                              "which associates the verbs device with the network interface. In case FI_VERBS_IFACE "
+                                              "is already defined, the argument is ignored. Default 'ib'.")
             ("hosts-file,H", po::value<string>(),
              "Shared file used by deamons to register their "
              "enpoints. (default './gkfs_hosts.txt')")
-            ("version,h", "print version and exit");
+            ("version", "print version and exit");
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
@@ -324,12 +331,22 @@ int main(int argc, const char* argv[]) {
     initialize_loggers();
     GKFS_DATA->spdlogger(spdlog::get("main"));
 
-
-    string addr;
+    string addr{};
     if (vm.count("listen")) {
         addr = vm["listen"].as<string>();
+        // ofi+verbs requires an empty addr to bind to the ib interface
+        if (RPC_PROTOCOL == string(gkfs::rpc::protocol::ofi_verbs)) {
+            /*
+             * FI_VERBS_IFACE : The prefix or the full name of the network interface associated with the verbs device (default: ib)
+             * Mercury does not allow to bind to an address when ofi+verbs is used
+             */
+            if (!secure_getenv("FI_VERBS_IFACE"))
+                setenv("FI_VERBS_IFACE", addr.c_str(), 1);
+            addr = ""s;
+        }
     } else {
-        addr = get_my_hostname(true);
+        if (RPC_PROTOCOL != string(gkfs::rpc::protocol::ofi_verbs))
+            addr = get_my_hostname(true);
     }
 
     GKFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
