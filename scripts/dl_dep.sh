@@ -351,6 +351,8 @@ fi
 # get rocksdb
 if check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
     wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
+elif check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
+    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.7.3.tar.gz" &
 fi
 
 # get syscall_intercept
