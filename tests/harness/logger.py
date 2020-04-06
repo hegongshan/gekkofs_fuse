@@ -15,6 +15,9 @@ import re
 import logging
 from loguru import logger
 
+# remove loguru's default logger
+logger.remove()
+
 class LogFormatter:
     """
     Formatter class for our log messages
