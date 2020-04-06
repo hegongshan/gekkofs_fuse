@@ -11,15 +11,30 @@
 #  SPDX-License-Identifier: MIT                                                #
 ################################################################################
 
-import os, sys
 import pytest
 import logging
+from collections import namedtuple
 from _pytest.logging import caplog as _caplog
 from pathlib import Path
-from harness.logger import logger
-from harness.cli import add_cli_options
+from harness.logger import logger, initialize_logging, finalize_logging
+from harness.cli import add_cli_options, set_default_log_formatter
 from harness.workspace import Workspace, FileCreator
 from harness.gkfs import Daemon, Client, ShellClient
+from harness.reporter import report_test_status, report_test_headline, report_assertion_pass
+
+def pytest_configure(config):
+    """
+    Some configurations for our particular usage of pytest
+    """
+    set_default_log_formatter(config, "%(message)s")
+
+def pytest_assertion_pass(item, lineno, orig, expl):
+
+    location = namedtuple(
+            'Location', ['path', 'module', 'function', 'lineno'])(
+                    str(item.parent.fspath), item.parent.name, item.name, lineno)
+
+    report_assertion_pass(logger, location, orig, expl)
 
 def pytest_addoption(parser):
     """
@@ -28,21 +43,31 @@ def pytest_addoption(parser):
     add_cli_options(parser)
 
 @pytest.fixture(autouse=True)
-def caplog(_caplog):
+def caplog(test_workspace, request, _caplog):
 
+    # we don't need to see the logs from sh
     _caplog.set_level(logging.CRITICAL, 'sh.command')
     _caplog.set_level(logging.CRITICAL, 'sh.command.process')
     _caplog.set_level(logging.CRITICAL, 'sh.command.process.streamreader')
     _caplog.set_level(logging.CRITICAL, 'sh.stream_bufferer')
     _caplog.set_level(logging.CRITICAL, 'sh.streamreader')
 
-    class PropagateHandler(logging.Handler):
-        def emit(self, record):
-            logging.getLogger(record.name).handle(record)
+    test_log_path = test_workspace.logdir / (request.node.name + ".log")
 
-    handler_id = logger.add(PropagateHandler(), format="{message}")
+    h = initialize_logging(logger, test_log_path)
+    report_test_headline(logger, request.node.nodeid, request.config)
+
     yield _caplog
-    logger.remove(handler_id)
+
+    finalize_logging(logger, h)
+
+def pytest_runtest_logreport(report):
+    """
+    Pytest hook called after a test phase (setup, call, teardownd) 
+    has completed.
+    """
+
+    report_test_status(logger, report)
 
 @pytest.fixture
 def test_workspace(tmp_path, request):
@@ -50,7 +75,7 @@ def test_workspace(tmp_path, request):
     Initializes a test workspace by creating a temporary directory for it.
     """
 
-    return Workspace(tmp_path,
+    yield Workspace(tmp_path,
             request.config.getoption('--bin-dir'),
             request.config.getoption('--lib-dir'))
 

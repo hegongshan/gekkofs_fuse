@@ -11,6 +11,8 @@
 #  SPDX-License-Identifier: MIT                                                #
 ################################################################################
 
+import _pytest
+import logging
 from pathlib import Path
 
 ### This code is meant to be included automatically by CMake in the build
@@ -51,3 +53,29 @@ def add_cli_options(parser):
         # from the build directory's conftest.py and from the source
         # directory's conftest.py through automatic finding, ignore the error
         pass
+
+
+def set_default_log_formatter(config, fmt):
+
+    plugin_class = config.pluginmanager.get_plugin('logging').LoggingPlugin
+
+    if not isinstance(plugin_class, LoggingPlugin):
+        config.pluginmanager.get_plugin('logging').LoggingPlugin = LoggingPlugin
+
+
+class LoggingPlugin(_pytest.logging.LoggingPlugin):
+    """
+    Replacement logging plugin that rewrites py.test default log formatter
+    """
+
+    def _create_formatter(self, log_format,
+                          log_date_format, auto_indent) -> logging.Formatter:
+        """
+        Patch pytest default logger to always return our formatter
+
+        Returns:
+            logging.Formatter: Our formatter
+        """
+
+        # since we use loguru for formatting, we just want the message
+        return logging.Formatter("%(message)s")

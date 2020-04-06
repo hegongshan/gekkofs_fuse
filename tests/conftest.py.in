@@ -11,8 +11,14 @@
 #  SPDX-License-Identifier: MIT                                                #
 ################################################################################
 
-from harness.cli import add_cli_options
+from harness.cli import add_cli_options, set_default_log_formatter
 from pathlib import Path
+
+def pytest_configure(config):
+    """
+    Some configurations for our particularusage of pytest
+    """
+    set_default_log_formatter(config, "%(message)s")
 
 def pytest_addoption(parser):
     """
