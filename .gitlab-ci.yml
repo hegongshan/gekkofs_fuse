@@ -77,7 +77,7 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - cd ${BUILD_PATH}/tests && TMPDIR=${BUILD_PATH}/run unbuffer pytest-venv/bin/py.test -v | tee session.log
+    - cd ${BUILD_PATH}/tests && TMPDIR=${BUILD_PATH}/tests/run unbuffer pytest-venv/bin/py.test -v | tee session.log
   artifacts:
     when: on_failure
     paths:
