@@ -16,7 +16,6 @@ from pathlib import Path
 import errno
 import stat
 import os
-from pprint import pprint
 import ctypes
 import sh
 import sys
@@ -41,8 +40,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     ret = gkfs_client.mkdir(
             topdir,
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
-
-    pprint(ret)
 
     assert ret.retval == 0
     assert ret.errno == 115 #FIXME: Should be 0!
@@ -137,7 +134,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     ret = gkfs_client.rmdir(file_a)
     assert ret.retval == -1
     assert ret.errno == errno.ENOTDIR
-    pprint(ret)
 
     # create a directory with the same prefix as topdir but longer name
     ret = gkfs_client.mkdir(
@@ -186,9 +182,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     ]
 
     ret = gkfs_client.readdir(dir_a)
-
-    pprint(dir_a)
-    pprint(ret.dirents)
 
     assert len(ret.dirents) == len(expected)
     assert ret.errno == 115 #FIXME: Should be 0!
