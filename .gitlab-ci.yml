@@ -77,11 +77,12 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - cd ${BUILD_PATH} && ctest -V
+    - cd ${BUILD_PATH}/tests && TMPDIR=${BUILD_PATH}/run unbuffer pytest-venv/bin/py.test -v | tee session.log
   artifacts:
     when: on_failure
     paths:
-      - "${BUILD_PATH}/tests/pytest.log"
+      - "${BUILD_PATH}/tests/session.log"
+      - "${BUILD_PATH}/tests/run"
 
 test wr:
   stage: test
