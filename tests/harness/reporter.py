@@ -50,7 +50,7 @@ def _format_exception(report):
 
     return tw._file.getvalue()
 
-def report_test_headline(logger, testid, config):
+def report_test_headline(logger, testid, config, workspace):
     """
     Emit a log message describing a test configuration
     """
@@ -82,6 +82,7 @@ def report_test_headline(logger, testid, config):
         msg += ", testpaths: {}".format(", ".join(rel_paths))
 
     lg.info(f"<normal>{msg}</>")
+    lg.info(f"<normal>workspace: {workspace.twd}</>")
     lg.info(f"\n<yellow>{_add_sep('=', testid)}</>\n")
 
 def report_test_status(logger, report):

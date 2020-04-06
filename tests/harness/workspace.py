@@ -42,7 +42,6 @@ class Workspace:
             List of paths where libraries required for the test should be
             searched for.
         """
-        logger.info(f"test workspace created at {twd}")
 
         self._twd = twd
         self._bindirs = bindirs

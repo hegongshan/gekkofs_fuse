@@ -55,7 +55,7 @@ def caplog(test_workspace, request, _caplog):
     test_log_path = test_workspace.logdir / (request.node.name + ".log")
 
     h = initialize_logging(logger, test_log_path)
-    report_test_headline(logger, request.node.nodeid, request.config)
+    report_test_headline(logger, request.node.nodeid, request.config, test_workspace)
 
     yield _caplog
 
