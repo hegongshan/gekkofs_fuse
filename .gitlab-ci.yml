@@ -10,7 +10,10 @@ variables:
   DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
   BUILD_PATH:        "${CI_PROJECT_DIR}/gkfs/build"
   INSTALL_PATH:      "${CI_PROJECT_DIR}/gkfs/install"
+  TESTS_BIN_PATH:    "${INSTALL_PATH}/share/gkfs/tests"
+  TESTS_RUN_PATH:    "${TESTS_BIN_PATH}/run"
   TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
+  PYTEST:            "${TESTS_BIN_PATH}/pytest-venv/bin/py.test"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
   LD_LIBRARY_PATH:   "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
@@ -78,13 +81,12 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - mkdir -p /tmp/gkfs/tests/run
-    - cd ${INSTALL_PATH}/share/gkfs/tests && TMPDIR=/tmp/gkfs/tests/run unbuffer ${INSTALL_PATH}/share/gkfs/tests/pytest-venv/bin/py.test -v | tee session.log
+    - mkdir -p ${TESTS_RUN_PATH}
+    - cd ${TESTS_BIN_PATH} && TMPDIR=${TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${TESTS_RUN_PATH}/session.log
   artifacts:
     when: on_failure
     paths:
-      - "${BUILD_PATH}/tests/session.log"
-      - "${BUILD_PATH}/tests/run"
+      - "${TESTS_RUN_PATH}"
 
 test wr:
   stage: test
