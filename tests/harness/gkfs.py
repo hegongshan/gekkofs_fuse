@@ -296,12 +296,16 @@ class Client:
             if search_path.exists():
                 preloads.append(search_path)
 
+        if len(preloads) == 0:
+            logger.error(f'No client libraries found in the test\'s binary directories:')
+            pytest.exit("Aborted due to initialization error. Check test logs.")
+
         if len(preloads) != 1:
             logger.error(f'Multiple client libraries found in the test\'s binary directories:')
             for p in preloads:
                 logger.error(f'  {p}')
             logger.error(f'Make sure that only one copy of the client library is available.')
-            pytest.exit("Aborted due to initialization error")
+            pytest.exit("Aborted due to initialization error. Check test logs.")
 
         self._preload_library = preloads[0]
 
