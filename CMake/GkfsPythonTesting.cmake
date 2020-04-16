@@ -57,17 +57,37 @@ function(gkfs_enable_python_testing)
     if(GKFS_INSTALL_TESTS)
         configure_file(pytest.install.ini.in pytest.install.ini @ONLY)
         install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pytest.install.ini
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
             RENAME pytest.ini
         )
 
         install(FILES conftest.py
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
         )
 
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pytest-venv
-            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
-            USE_SOURCE_PERMISSIONS
+        if(NOT PYTEST_VIRTUALENV)
+            set(PYTEST_VIRTUALENV ${CMAKE_INSTALL_FULL_DATAROOTDIR}/gkfs/tests/integration/pytest-venv)
+        endif()
+
+        # Python's virtual environments are not relocatable, we need to
+        # recreate the virtualenv at the appropriate install location
+        # find an appropriate python interpreter
+        find_package(Python3
+            3.6
+            REQUIRED
+            COMPONENTS Interpreter)
+
+        if(NOT Python3_FOUND)
+            message(FATAL_ERROR "Unable to find Python 3")
+        endif()
+
+        install(
+            CODE "message(\"Install pytest virtual environment...\")"
+            CODE "message(\"-- Create virtual environment: ${PYTEST_VIRTUALENV}\")"
+            CODE "execute_process(COMMAND ${Python3_EXECUTABLE} -m venv ${PYTEST_VIRTUALENV})"
+            CODE "message(\"-- Installing packages...\")"
+            CODE "execute_process(COMMAND ${PYTEST_VIRTUALENV}/bin/pip install --upgrade pip -v)"
+            CODE "execute_process(COMMAND ${PYTEST_VIRTUALENV}/bin/pip install -r ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --upgrade -v)"
         )
     endif()
 

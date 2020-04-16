@@ -5,23 +5,23 @@ stages:
   - test
 
 variables:
-  DEPS_SRC_PATH:     "${CI_PROJECT_DIR}/deps/src"
-  DEPS_INSTALL_PATH: "${CI_PROJECT_DIR}/deps/install"
-  DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
-  BUILD_PATH:        "${CI_PROJECT_DIR}/gkfs/build"
-  INSTALL_PATH:      "${CI_PROJECT_DIR}/gkfs/install"
-  TESTS_BIN_PATH:    "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests"
-  TESTS_RUN_PATH:    "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/run"
-  TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
-  PYTEST:            "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/pytest-venv/bin/py.test"
-  LOG_PATH:          "${CI_PROJECT_DIR}/logs"
-  LD_LIBRARY_PATH:   "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
+  DEPS_SRC_PATH:                "${CI_PROJECT_DIR}/deps/src"
+  DEPS_INSTALL_PATH:            "${CI_PROJECT_DIR}/deps/install"
+  DEPS_COMMIT:                  "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
+  BUILD_PATH:                   "${CI_PROJECT_DIR}/gkfs/build"
+  INSTALL_PATH:                 "${CI_PROJECT_DIR}/gkfs/install"
+  INTEGRATION_TESTS_BIN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
+  INTEGRATION_TESTS_RUN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/run"
+  TESTS_BUILD_PATH:             "${CI_PROJECT_DIR}/test/build"
+  PYTEST:                       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
+  LOG_PATH:                     "${CI_PROJECT_DIR}/logs"
+  LD_LIBRARY_PATH:              "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
-  GKFS_LOG_LEVEL:   "100"
-  GKFS_DAEMON_LOG_PATH:  "${CI_PROJECT_DIR}/logs/daemon.log"
-  LIBGKFS_LOG:           "all"
-  LIBGKFS_LOG_OUTPUT:    "${CI_PROJECT_DIR}/logs/gkfs_client.log"
-  GIT_SUBMODULE_STRATEGY: recursive
+  GKFS_LOG_LEVEL:               "100"
+  GKFS_DAEMON_LOG_PATH:         "${CI_PROJECT_DIR}/logs/daemon.log"
+  LIBGKFS_LOG:                  "all"
+  LIBGKFS_LOG_OUTPUT:           "${CI_PROJECT_DIR}/logs/gkfs_client.log"
+  GIT_SUBMODULE_STRATEGY:       recursive
 
 image: gekkofs/gekkofs:build_env-0.8.0
 
@@ -80,12 +80,13 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - mkdir -p ${TESTS_RUN_PATH}
-    - cd ${TESTS_BIN_PATH} && TMPDIR=${TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${TESTS_RUN_PATH}/session.log
+    - mkdir -p ${INTEGRATION_TESTS_RUN_PATH}
+    - cd ${INTEGRATION_TESTS_BIN_PATH} 
+    - TMPDIR=${INTEGRATION_TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${INTEGRATION_TESTS_RUN_PATH}/session.log
   artifacts:
     when: on_failure
     paths:
-      - "${TESTS_RUN_PATH}"
+      - "${INTEGRATION_TESTS_RUN_PATH}"
 
 test wr:
   stage: test
