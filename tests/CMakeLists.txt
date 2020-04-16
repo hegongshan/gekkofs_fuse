@@ -1,15 +1,5 @@
 include(GkfsPythonTesting)
 
-# ensure helper programs in the testing harness get built
-add_subdirectory(harness)
-
-gkfs_enable_python_testing(
-    BINARY_DIRECTORIES ${CMAKE_BINARY_DIR}/src/daemon/
-                       ${CMAKE_BINARY_DIR}/src/client/
-                       ${CMAKE_BINARY_DIR}/tests/harness/
-    LIBRARY_PREFIX_DIRECTORIES ${CMAKE_PREFIX_PATH}
-)
-
 add_custom_target(check
     COMMAND ${CMAKE_CTEST_COMMAND}
             --force-new-ctest-process
@@ -17,48 +7,8 @@ add_custom_target(check
             --output-on-failure
 )
 
+# integration tests
+add_subdirectory(integration)
 
 # unit tests
 add_subdirectory(unit)
-
-# define CTest tests for functional test groups
-gkfs_add_python_test(
-    NAME test_directories
-    PYTHON_VERSION 3.6
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    SOURCE tests/directories/test_directories.py
-)
-
-gkfs_add_python_test(
-    NAME test_shell
-    PYTHON_VERSION 3.6
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    SOURCE tests/shell/
-)
-
-if(GKFS_INSTALL_TESTS)
-    install(DIRECTORY harness
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
-        FILES_MATCHING
-            REGEX ".*\\.py"
-            PATTERN "__pycache__" EXCLUDE
-            PATTERN ".pytest_cache" EXCLUDE
-            PATTERN "gkfs.io" EXCLUDE
-    )
-
-    install(DIRECTORY directories
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
-        FILES_MATCHING
-            REGEX ".*\\.py"
-            PATTERN "__pycache__" EXCLUDE
-            PATTERN ".pytest_cache" EXCLUDE
-    )
-
-    install(DIRECTORY shell
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
-        FILES_MATCHING
-            REGEX ".*\\.py"
-            PATTERN "__pycache__" EXCLUDE
-            PATTERN ".pytest_cache" EXCLUDE
-    )
-endif()
