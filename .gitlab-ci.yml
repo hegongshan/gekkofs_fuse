@@ -10,10 +10,10 @@ variables:
   DEPS_COMMIT:       "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
   BUILD_PATH:        "${CI_PROJECT_DIR}/gkfs/build"
   INSTALL_PATH:      "${CI_PROJECT_DIR}/gkfs/install"
-  TESTS_BIN_PATH:    "${INSTALL_PATH}/share/gkfs/tests"
-  TESTS_RUN_PATH:    "${TESTS_BIN_PATH}/run"
+  TESTS_BIN_PATH:    "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests"
+  TESTS_RUN_PATH:    "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/run"
   TESTS_BUILD_PATH:  "${CI_PROJECT_DIR}/test/build"
-  PYTEST:            "${TESTS_BIN_PATH}/pytest-venv/bin/py.test"
+  PYTEST:            "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/pytest-venv/bin/py.test"
   LOG_PATH:          "${CI_PROJECT_DIR}/logs"
   LD_LIBRARY_PATH:   "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
