@@ -52,6 +52,7 @@ compile GekkoFS:
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
       -DGKFS_BUILD_TESTS:BOOL=ON
+      -DGKFS_INSTALL_TESTS:BOOL=ON
       -DRPC_PROTOCOL="ofi+sockets"
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
@@ -77,8 +78,8 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - mkdir -p ${BUILD_PATH}/tests/run
-    - cd ${BUILD_PATH}/tests && TMPDIR=${BUILD_PATH}/tests/run unbuffer pytest-venv/bin/py.test -v | tee session.log
+    - mkdir -p /tmp/gkfs/tests/run
+    - cd ${INSTALL_PATH}/share/gkfs/tests && TMPDIR=/tmp/gkfs/tests/run unbuffer ${INSTALL_PATH}/share/gkfs/tests/pytest-venv/bin/py.test -v | tee session.log
   artifacts:
     when: on_failure
     paths:
