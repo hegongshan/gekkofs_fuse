@@ -54,6 +54,23 @@ function(gkfs_enable_python_testing)
     configure_file(conftest.py.in conftest.py @ONLY)
     configure_file(harness/cli.py harness/cli.py COPYONLY)
 
+    if(GKFS_INSTALL_TESTS)
+        configure_file(pytest.install.ini.in pytest.install.ini @ONLY)
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pytest.install.ini
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+            RENAME pytest.ini
+        )
+
+        install(FILES conftest.py
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+        )
+
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pytest-venv
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+            USE_SOURCE_PERMISSIONS
+        )
+    endif()
+
     # enable testing
     set(GKFS_PYTHON_TESTING_ENABLED ON PARENT_SCOPE)
 

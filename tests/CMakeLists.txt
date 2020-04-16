@@ -35,3 +35,30 @@ gkfs_add_python_test(
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     SOURCE tests/shell/
 )
+
+if(GKFS_INSTALL_TESTS)
+    install(DIRECTORY harness
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+            PATTERN "gkfs.io" EXCLUDE
+    )
+
+    install(DIRECTORY directories
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
+
+    install(DIRECTORY shell
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
+endif()

@@ -46,3 +46,9 @@ target_link_libraries(tests
 set(CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/contrib" ${CMAKE_MODULE_PATH})
 include(Catch)
 catch_discover_tests(tests)
+
+if(GKFS_INSTALL_TESTS)
+    install(TARGETS tests
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()

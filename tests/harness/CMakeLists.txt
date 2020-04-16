@@ -72,3 +72,9 @@ target_link_libraries(gkfs.io
     nlohmann_json::nlohmann_json
     fmt::fmt
 )
+
+if(GKFS_INSTALL_TESTS)
+    install(TARGETS gkfs.io
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()

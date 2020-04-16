@@ -213,6 +213,9 @@ add_subdirectory(src/client)
 
 option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
 
+include(CMakeDependentOption)
+cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
+
 if(GKFS_BUILD_TESTS)
     message(STATUS "[gekkofs] Preparing tests...")
     add_subdirectory(tests)
