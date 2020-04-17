@@ -218,5 +218,9 @@ cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS
 
 if(GKFS_BUILD_TESTS)
     message(STATUS "[gekkofs] Preparing tests...")
+    set(GKFS_TESTS_INTERFACE "lo" CACHE STRING "Network interface to use when running tests (default: lo)")
+    message(STATUS "[gekkofs] Network interface for tests: ${GKFS_TESTS_INTERFACE}")
     add_subdirectory(tests)
+else()
+    unset(GKFS_TESTS_INTERFACE CACHE)
 endif()

@@ -13,5 +13,5 @@
 
 [pytest]
 testpaths = @CMAKE_CURRENT_SOURCE_DIR@
-addopts = @PYTEST_BINDIR_ARGS@ @PYTEST_LIBDIR_ARGS@
+addopts = @PYTEST_BINDIR_ARGS@ @PYTEST_LIBDIR_ARGS@ --interface=@GKFS_TESTS_INTERFACE@
 enable_assertion_pass_hook = true
