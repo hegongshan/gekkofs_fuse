@@ -11,10 +11,12 @@
 #  SPDX-License-Identifier: MIT                                                #
 ################################################################################
 
+import pytest
 from harness.logger import logger
 
 file01 = 'file01'
 
+@pytest.mark.skip(reason="shell tests seem to hang clients at times")
 def test_shell_if_e(gkfs_daemon, gkfs_shell, file_factory):
     """
     Copy a file into gkfs using the shell and check that it
@@ -41,6 +43,7 @@ def test_shell_if_e(gkfs_daemon, gkfs_shell, file_factory):
 
     assert cmd.exit_code == 0
 
+@pytest.mark.skip(reason="shell tests seem to hang clients at times")
 def test_stat_script(gkfs_daemon, gkfs_shell, file_factory):
     """
     Copy a file into gkfs using the shell and check that it
@@ -65,6 +68,7 @@ def test_stat_script(gkfs_daemon, gkfs_shell, file_factory):
 
     assert cmd.exit_code == 0
 
+@pytest.mark.skip(reason="shell tests seem to hang clients at times")
 def test_stat_command(gkfs_daemon, gkfs_shell, file_factory):
     """
     Copy a file into gkfs using the shell and check that it
