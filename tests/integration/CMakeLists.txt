@@ -12,14 +12,14 @@ gkfs_enable_python_testing(
 gkfs_add_python_test(
     NAME test_directories
     PYTHON_VERSION 3.6
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
     SOURCE directories/test_directories.py
 )
 
 gkfs_add_python_test(
     NAME test_shell
     PYTHON_VERSION 3.6
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
     SOURCE shell/
 )
 
