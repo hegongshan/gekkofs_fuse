@@ -5,6 +5,7 @@ project(
     VERSION 0.7.0
 )
 
+enable_testing()
 
 if(NOT CMAKE_COMPILER_IS_GNUCC)
     message(FATAL_ERROR "The choosen C compiler is not gcc and is not supported")
@@ -209,3 +210,17 @@ add_subdirectory(src/global)
 add_subdirectory(src/daemon)
 # Client library
 add_subdirectory(src/client)
+
+option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
+
+include(CMakeDependentOption)
+cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
+
+if(GKFS_BUILD_TESTS)
+    message(STATUS "[gekkofs] Preparing tests...")
+    set(GKFS_TESTS_INTERFACE "lo" CACHE STRING "Network interface to use when running tests (default: lo)")
+    message(STATUS "[gekkofs] Network interface for tests: ${GKFS_TESTS_INTERFACE}")
+    add_subdirectory(tests)
+else()
+    unset(GKFS_TESTS_INTERFACE CACHE)
+endif()

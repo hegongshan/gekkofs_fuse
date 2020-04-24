@@ -115,6 +115,21 @@ make
 make install
 ```
 
+In order to build self-tests, the *optional* GKFS_BUILD_TESTS CMake option needs
+to be enabled when building. Once that is done, tests can be run by running
+`make test` in the `build` directory:
+
+```bash
+mkdir build && cd build
+cmake -DGKFS_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release -DRPC_PROTOCOL='ofi+sockets' ..
+make
+make test
+make install
+```
+
+**IMPORTANT:** Please note that the testing framework requires Python 3.6 as an
+additional dependency in order to run.
+
 ## Run GekkoFS
 
 First on each node a daemon has to be started. This can be done in two ways using the `gkfs_daemon` binary directly or
