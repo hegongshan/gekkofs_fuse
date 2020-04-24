@@ -211,7 +211,7 @@ class Daemon:
 
         while perf_counter() - init_time < timeout:
             try:
-                #logger.debug(f"checking log file")
+                logger.debug(f"checking log file")
                 with open(self.logdir / gkfs_daemon_log_file) as log:
                     for line in islice(log, max_lines):
                         if re.search(gkfs_daemon_active_log_pattern, line) is not None:
@@ -226,7 +226,7 @@ class Daemon:
                     raise RuntimeError(f"process {pid} is not running")
 
                 # ... or it might just be lazy. let's give it some more time
-                logger.debug(f"daemon log file found, retrying...")
+                logger.debug(f"daemon {pid} found, retrying...")
 
         raise RuntimeError("initialization timeout exceeded")
 
