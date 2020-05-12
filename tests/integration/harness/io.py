@@ -67,6 +67,51 @@ class StructStatSchema(Schema):
                  'st_gid', 'st_rdev', 'st_size', 'st_blksize', 'st_blocks',
                  'st_atim', 'st_mtim', 'st_ctim'])(**data)
 
+
+class StructStatxTimestampSchema(Schema):
+    """Schema that deserializes a struct timespec"""
+    tv_sec = fields.Integer(required=True)
+    tv_nsec = fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StructStatxTimestampSchema',
+                ['tv_sec', 'tv_nsec'])(**data)
+
+class StructStatxSchema(Schema):
+    """Schema that deserializes a struct stat"""
+
+    stx_mask = fields.Integer(required=True)
+    stx_blksize = fields.Integer(required=True)
+    stx_attributes = fields.Integer(required=True)
+    stx_nlink = fields.Integer(required=True)
+    stx_uid = fields.Integer(required=True)
+    stx_gid = fields.Integer(required=True)
+    stx_mode = fields.Integer(required=True)
+    stx_ino = fields.Integer(required=True)
+    stx_size = fields.Integer(required=True)
+    stx_blocks = fields.Integer(required=True)
+    stx_attributes_mask = fields.Integer(required=True)
+
+    stx_atime = fields.Nested(StructStatxTimestampSchema)
+    stx_btime = fields.Nested(StructStatxTimestampSchema)
+    stx_ctime = fields.Nested(StructStatxTimestampSchema)
+    stx_mtime = fields.Nested(StructStatxTimestampSchema)
+
+    stx_rdev_major = fields.Integer(required=True)
+    stx_rdev_minor = fields.Integer(required=True)
+    stx_dev_major = fields.Integer(required=True)
+    stx_dev_minor = fields.Integer(required=True)
+
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StructStatx',
+                ['stx_mask', 'stx_blksize', 'stx_attributes', 'stx_nlink', 'stx_uid',
+                 'stx_gid', 'stx_mode', 'stx_ino', 'stx_size', 'stx_blocks', 'stx_attributes_mask',
+                 'stx_atime', 'stx_btime', 'stx_ctime', 'stx_mtime', 'stx_rdev_major', 
+                 'stx_rdev_minor', 'stx_dev_major', 'stx_dev_minor'])(**data)
+
 class DirentStruct(Schema):
     """Schema that deserializes a struct dirent"""
 
@@ -162,6 +207,17 @@ class StatOutputSchema(Schema):
         return namedtuple('StatReturn', ['retval', 'statbuf', 'errno'])(**data)
 
 
+class StatxOutputSchema(Schema):
+    """Schema to deserialize the results of a stat() execution"""
+
+    retval = fields.Integer(required=True)
+    statbuf = fields.Nested(StructStatxSchema, required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StatxReturn', ['retval', 'statbuf', 'errno'])(**data)
+
 class IOParser:
 
     OutputSchemas = {
@@ -173,6 +229,7 @@ class IOParser:
         'rmdir'   : RmdirOutputSchema(),
         'write'   : WriteOutputSchema(),
         'stat'    : StatOutputSchema(),
+        'statx'   : StatxOutputSchema(),
     }
 
     def parse(self, command, output):

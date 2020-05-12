@@ -41,4 +41,7 @@ stat_init(CLI::App& app);
 void
 write_init(CLI::App& app);
 
+void
+statx_init(CLI::App& app);
+
 #endif // IO_COMMANDS_HPP

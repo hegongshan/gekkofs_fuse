@@ -28,6 +28,7 @@ init_commands(CLI::App& app) {
     rmdir_init(app);
     stat_init(app);
     write_init(app);
+    statx_init(app);
 }
 
 

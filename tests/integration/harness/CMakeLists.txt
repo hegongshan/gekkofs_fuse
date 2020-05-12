@@ -18,6 +18,7 @@ add_executable(gkfs.io
     gkfs.io/serialize.hpp
     gkfs.io/stat.cpp
     gkfs.io/write.cpp
+    gkfs.io/statx.cpp
 )
 
 include(FetchContent)

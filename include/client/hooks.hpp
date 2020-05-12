@@ -30,6 +30,8 @@ int hook_close(int fd);
 
 int hook_stat(const char* path, struct stat* buf);
 
+int hook_statx(int dirfd, const char* path, int flags, unsigned int mask,struct statx* buf);
+
 int hook_lstat(const char* path, struct stat* buf);
 
 int hook_fstat(unsigned int fd, struct stat* buf);
