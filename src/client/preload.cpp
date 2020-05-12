@@ -36,8 +36,10 @@ namespace {
 // make sure that things are only initialized once
 pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
+#ifdef GKFS_ENABLE_FORWARDING
 pthread_t mapper;
 bool forwarding_running;
+#endif
 
 inline void exit_error_msg(int errcode, const string& msg) {
 
@@ -143,17 +145,21 @@ void *forwarding_mapper(void *p) {
 }
 #endif
 
+#ifdef GKFS_ENABLE_FORWARDING
 void init_forwarding_mapper() {
     forwarding_running = true;
 
     pthread_create(&mapper, NULL, forwarding_mapper, NULL);
 }
+#endif
 
+#ifdef GKFS_ENABLE_FORWARDING
 void destroy_forwarding_mapper() {
     forwarding_running = false;
 
     pthread_join(mapper, NULL);
 }
+#endif
 
 void log_prog_name() {
     std::string line;
@@ -214,7 +220,9 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
+    #ifdef GKFS_ENABLE_FORWARDING
     init_forwarding_mapper();
+    #endif
 
     gkfs::preload::start_interception();
 }
@@ -223,7 +231,9 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    #ifdef GKFS_ENABLE_FORWARDING
     destroy_forwarding_mapper();
+    #endif
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");
