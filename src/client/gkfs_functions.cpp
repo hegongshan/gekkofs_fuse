@@ -59,7 +59,6 @@ struct linux_dirent64 {
     char d_name[1]; // originally `char d_name[0]` in kernel, but ISO C++ forbids zero-size array 'd_name'
 };
 
-
 namespace {
 
 int check_parent_dir(const std::string& path) {
@@ -230,6 +229,43 @@ int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
         return -1;
     }
     gkfs::util::metadata_to_stat(path, *md, *buf);
+    return 0;
+}
+
+
+int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask, struct statx* buf, bool follow_links) {
+    auto md = gkfs::util::get_metadata(path, follow_links);
+    if (!md) {
+        return -1;
+    }
+
+    struct stat tmp{};
+
+    gkfs::util::metadata_to_stat(path, *md, tmp);
+
+    buf->stx_mask = 0;
+    buf->stx_blksize = tmp.st_blksize;
+    buf->stx_attributes = 0;
+    buf->stx_nlink = tmp.st_nlink;
+    buf->stx_uid = tmp.st_uid;
+    buf->stx_gid = tmp.st_gid;
+    buf->stx_mode =  tmp.st_mode;
+    buf->stx_ino =  tmp.st_ino;
+    buf->stx_size = tmp.st_size;
+    buf->stx_blocks = tmp.st_blocks;
+    buf->stx_attributes_mask = 0;
+
+    buf->stx_atime.tv_sec = tmp.st_atim.tv_sec;
+    buf->stx_atime.tv_nsec = tmp.st_atim.tv_nsec;
+
+    buf->stx_mtime.tv_sec = tmp.st_mtim.tv_sec;
+    buf->stx_mtime.tv_nsec = tmp.st_mtim.tv_nsec;
+    
+    buf->stx_ctime.tv_sec = tmp.st_ctim.tv_sec;
+    buf->stx_ctime.tv_nsec = tmp.st_ctim.tv_nsec;
+
+    buf->stx_btime = buf->stx_atime;
+    
     return 0;
 }
 

@@ -31,9 +31,17 @@ int gkfs_create(const std::string& path, mode_t mode);
 
 int gkfs_remove(const std::string& path);
 
+// Implementation of access,
+// Follow links is true by default 
 int gkfs_access(const std::string& path, int mask, bool follow_links = true);
 
+// Implementation of stat, 
+// Follow links is true by default 
 int gkfs_stat(const std::string& path, struct stat* buf, bool follow_links = true);
+
+// Implementation of statx, it uses the normal stat and maps the information to the statx structure
+// Follow links is true by default 
+int gkfs_statx(int dirfd, const std::string& path, int flags, unsigned int mask,struct statx* buf, bool follow_links = true );
 
 int gkfs_statfs(struct statfs* buf);
 

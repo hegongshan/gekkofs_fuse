@@ -105,6 +105,20 @@ struct adl_serializer<struct ::timespec> {
     }
 };
 
+// ADL specialization for struct ::statx_timestamp type
+template <>
+struct adl_serializer<struct ::statx_timestamp> {
+    static void to_json(json& j, const struct ::statx_timestamp opt) {
+
+        j = json {
+            { "tv_sec",  opt.tv_sec  },
+            { "tv_nsec", opt.tv_nsec }
+        };
+    }
+};
+
+
+
 // ADL specialization for struct ::dirent type
 template <>
 struct adl_serializer<struct ::dirent> {
@@ -144,6 +158,37 @@ struct adl_serializer<struct ::stat> {
             { "st_atim",    opt.st_atim    },
             { "st_mtim",    opt.st_mtim    },
             { "st_ctim",    opt.st_ctim    }
+        };
+    }
+};
+
+// ADL specialization for struct ::statx type
+template <>
+struct adl_serializer<struct ::statx> {
+    static void to_json(json& j, const struct ::statx opt) {
+
+        j = json {
+            { "stx_mask",     opt.stx_mask     },
+            { "stx_blksize", opt.stx_blksize },
+            { "stx_attributes", opt.stx_attributes},
+            { "stx_nlink",   opt.stx_nlink   },
+            { "stx_uid",     opt.stx_uid     },
+            { "stx_gid",     opt.stx_gid     },
+            { "stx_mode",    opt.stx_mode    },
+            { "stx_ino",     opt.stx_ino     },
+            { "stx_size",    opt.stx_size    },
+            { "stx_blocks",  opt.stx_blocks  },
+            { "stx_attributes_mask", opt.stx_attributes_mask},
+            { "stx_atime",    opt.stx_atime    },
+            { "stx_btime",    opt.stx_btime    },
+            { "stx_ctime",    opt.stx_ctime    },
+            { "stx_mtime",    opt.stx_mtime    },
+
+            { "stx_rdev_major",    opt.stx_rdev_major    },
+            { "stx_rdev_minor",    opt.stx_rdev_minor    },
+            { "stx_dev_major",    opt.stx_dev_major    },
+            { "stx_dev_minor",    opt.stx_dev_minor    }           
+          
         };
     }
 };
