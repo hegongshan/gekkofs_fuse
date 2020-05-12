@@ -19,10 +19,10 @@ variables:
   INTEGRATION_TESTS_FWD_BIN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration"
   INTEGRATION_TESTS_FWD_RUN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/run"
 
-  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/test/gkfs/build"
+  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/test/build"
   PYTEST:                           "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
 
-  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/test/gkfwd/build"
+  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/test/build"
   PYTEST_FWD:                       "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
   
   LOG_PATH:                         "${CI_PROJECT_DIR}/logs"
@@ -92,8 +92,8 @@ compile GekkoFWD:
       -DGKFS_BUILD_TESTS:BOOL=ON
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DRPC_PROTOCOL="ofi+sockets"
-      -DENABLE_FORWARDING:BOOL=ON \
-      -DENABLE_AGIOS:BOOL=ON \
+      -DENABLE_FORWARDING:BOOL=ON
+      -DENABLE_AGIOS:BOOL=ON
       -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_FWD_PATH}
       ${CI_PROJECT_DIR}
