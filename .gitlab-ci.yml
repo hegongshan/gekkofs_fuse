@@ -19,10 +19,10 @@ variables:
   INTEGRATION_TESTS_FWD_BIN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration"
   INTEGRATION_TESTS_FWD_RUN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/run"
 
-  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/test-gkfs/build"
+  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/gkfs-test/build"
   PYTEST:                           "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
 
-  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/test-gkfwd/build"
+  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/gkfwd-test/build"
   PYTEST_FWD:                       "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
   
   LOG_PATH:                         "${CI_PROJECT_DIR}/logs"
@@ -42,7 +42,7 @@ image: jeanbez/gekkofs-forwarding:latest
 compile dependencies:
   stage: build deps
   cache:
-    key: ${CI_COMMIT_REF_SLUG}
+    key: deps-build
     paths:
      - ${DEPS_INSTALL_PATH}/
   script:
@@ -201,6 +201,7 @@ test FWD wr:
   stage: test
   dependencies:
     - "compile GekkoFWD"
+    - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
     - cp agios/* /tmp
@@ -217,6 +218,7 @@ test FWD directories:
   stage: test
   dependencies:
     - "compile GekkoFWD"
+    - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
     - cp agios/* /tmp
@@ -233,6 +235,7 @@ test FWD truncate:
   stage: test
   dependencies:
     - "compile GekkoFWD"
+    - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
     - cp agios/* /tmp
@@ -249,6 +252,7 @@ test FWD path resolution:
   stage: test
   dependencies:
     - "compile GekkoFWD"
+    - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
     - cp agios/* /tmp
@@ -265,6 +269,7 @@ test FWD lseek:
   stage: test
   dependencies:
     - "compile GekkoFWD"
+    - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
     - cp agios/* /tmp
