@@ -24,6 +24,9 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
+#ifdef GKFS_ENABLE_AGIOS
+#include <daemon/scheduler/agios.hpp>
+#endif
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -209,6 +212,22 @@ void init_environment() {
     }
     GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
+#ifdef GKFS_ENABLE_AGIOS
+/**
+ * Initialize the AGIOS scheduling library
+ */
+void agios_initialize() {
+    char configuration[] = "/tmp/agios.conf";
+    
+    if (!agios_init(NULL, NULL, configuration, 0)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: '{}'", __func__, configuration);   
+
+        agios_exit();
+
+        throw;
+    }
+}
+#endif
 
 /**
  * Destroys the margo, argobots, and mercury environments

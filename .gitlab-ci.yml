@@ -2,28 +2,44 @@ stages:
   - download deps
   - build deps
   - build
+  - build forwarding
   - test
+  - test forwarding
 
 variables:
-  DEPS_SRC_PATH:                "${CI_PROJECT_DIR}/deps/src"
-  DEPS_INSTALL_PATH:            "${CI_PROJECT_DIR}/deps/install"
-  DEPS_COMMIT:                  "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
-  BUILD_PATH:                   "${CI_PROJECT_DIR}/gkfs/build"
-  INSTALL_PATH:                 "${CI_PROJECT_DIR}/gkfs/install"
-  INTEGRATION_TESTS_BIN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
-  INTEGRATION_TESTS_RUN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/run"
-  TESTS_BUILD_PATH:             "${CI_PROJECT_DIR}/test/build"
-  PYTEST:                       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
-  LOG_PATH:                     "${CI_PROJECT_DIR}/logs"
-  LD_LIBRARY_PATH:              "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
-  # Configuration variables
-  GKFS_LOG_LEVEL:               "100"
-  GKFS_DAEMON_LOG_PATH:         "${CI_PROJECT_DIR}/logs/daemon.log"
-  LIBGKFS_LOG:                  "all"
-  LIBGKFS_LOG_OUTPUT:           "${CI_PROJECT_DIR}/logs/gkfs_client.log"
-  GIT_SUBMODULE_STRATEGY:       recursive
+  DEPS_SRC_PATH:                    "${CI_PROJECT_DIR}/deps/src"
+  DEPS_INSTALL_PATH:                "${CI_PROJECT_DIR}/deps/install"
+  DEPS_COMMIT:                      "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
+  
+  BUILD_PATH:                       "${CI_PROJECT_DIR}/gkfs/build"
+  INSTALL_PATH:                     "${CI_PROJECT_DIR}/gkfs/install"
+  INTEGRATION_TESTS_BIN_PATH:       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
+  INTEGRATION_TESTS_RUN_PATH:       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/run"
 
-image: gekkofs/gekkofs:build_env-0.8.0
+  BUILD_FWD_PATH:                   "${CI_PROJECT_DIR}/gkfwd/build"
+  INSTALL_FWD_PATH:                 "${CI_PROJECT_DIR}/gkfwd/install"
+  INTEGRATION_TESTS_FWD_BIN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration"
+  INTEGRATION_TESTS_FWD_RUN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/run"
+
+  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/test/gkfs/build"
+  PYTEST:                           "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
+
+  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/test/gkfwd/build"
+  PYTEST_FWD:                       "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
+  
+  LOG_PATH:                         "${CI_PROJECT_DIR}/logs"
+
+  LD_LIBRARY_PATH:                  "${CI_PROJECT_DIR}/deps/install/lib;${CI_PROJECT_DIR}/deps/install/lib64"
+  # Configuration variables
+  GKFS_LOG_LEVEL:                   "100"
+  GKFS_DAEMON_LOG_PATH:             "${CI_PROJECT_DIR}/logs/daemon.log"
+  LIBGKFS_LOG:                      "all"
+  LIBGKFS_LOG_OUTPUT:               "${CI_PROJECT_DIR}/logs/gkfs_client.log"
+  GIT_SUBMODULE_STRATEGY:           recursive
+
+# Temporary new image file
+# image: gekkofs/gekkofs:build_env-0.8.0
+image: jeanbez/gekkofs-forwarding:latest
 
 compile dependencies:
   stage: build deps
@@ -64,6 +80,29 @@ compile GekkoFS:
   artifacts:
     paths:
      - ${INSTALL_PATH}
+
+compile GekkoFWD:
+  stage: build
+  dependencies:
+    - "compile dependencies"
+  script:
+    - mkdir -p ${BUILD_FWD_PATH} && cd ${BUILD_FWD_PATH}
+    - cmake
+      -Wdev
+      -Wdeprecate
+      -DCMAKE_BUILD_TYPE=Debug
+      -DGKFS_BUILD_TESTS:BOOL=ON
+      -DGKFS_INSTALL_TESTS:BOOL=ON
+      -DRPC_PROTOCOL="ofi+sockets"
+      -DENABLE_FORWARDING:BOOL=ON \
+      -DENABLE_AGIOS:BOOL=ON \
+      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_FWD_PATH}
+      ${CI_PROJECT_DIR}
+    - make -j$(nproc) install
+  artifacts:
+    paths:
+     - ${INSTALL_FWD_PATH}
 
 compile tests:
   stage: build
@@ -147,3 +186,85 @@ test lseek:
     when: on_failure
     paths:
      - "${LOG_PATH}"
+
+test wr:
+  stage: test forwarding
+  dependencies:
+    - "compile GekkoFWD"
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
+    - echo "`hostname` 0" > gkfs_forwarding.map
+    - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_FWD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_FWD_PATH}/gkfs_test_wr
+  artifacts:
+    when: on_failure
+    paths:
+     - "${LOG_PATH}"
+
+test directories:
+  stage: test forwarding
+  dependencies:
+    - "compile GekkoFWD"
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
+    - echo "`hostname` 0" > gkfs_forwarding.map
+    - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_FWD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_FWD_PATH}/gkfs_test_dir
+  artifacts:
+    when: on_failure
+    paths:
+     - "${LOG_PATH}"
+
+test truncate:
+  stage: test forwarding
+  dependencies:
+    - "compile GekkoFWD"
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
+    - echo "`hostname` 0" > gkfs_forwarding.map
+    - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_FWD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_FWD_PATH}/gkfs_test_truncate
+  artifacts:
+    when: on_failure
+    paths:
+     - "${LOG_PATH}"
+
+test path resolution:
+  stage: test forwarding
+  dependencies:
+    - "compile GekkoFWD"
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
+    - echo "`hostname` 0" > gkfs_forwarding.map
+    - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_FWD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_FWD_PATH}/gkfs_test_path_resolution
+  artifacts:
+    when: on_failure
+    paths:
+     - "${LOG_PATH}"
+
+test lseek:
+  stage: test forwarding
+  dependencies:
+    - "compile GekkoFWD"
+  script:
+    - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
+    - echo "`hostname` 0" > gkfs_forwarding.map
+    - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
+    - sleep 4
+    - LD_PRELOAD=${INSTALL_FWD_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_FWD_PATH}/gkfs_test_lseek
+  artifacts:
+    when: on_failure
+    paths:
+     - "${LOG_PATH}"
+
+

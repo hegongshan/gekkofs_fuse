@@ -24,6 +24,7 @@ namespace gkfs {
 namespace config {
 
 constexpr auto hostfile_path = "./gkfs_hosts.txt";
+constexpr auto forwarding_file_path = "./gkfs_forwarding.map";
 
 namespace io {
 /*

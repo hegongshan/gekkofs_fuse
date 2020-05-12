@@ -13,21 +13,21 @@ VALID_DEP_OPTIONS="mogon2 mogon1 direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi-verbs" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date"
+    "syscall_intercept" "date" "agios"
 )
 
 MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date"
+    "syscall_intercept" "date" "agios"
 )
 
 DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
 )
 
 ALL_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
-     "syscall_intercept" "date"
+     "syscall_intercept" "date" "agios"
 )
 
 # Stop all backround jobs on interruption.
@@ -358,6 +358,11 @@ fi
 # get syscall_intercept
 if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
     clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
+fi
+
+# get AGIOS
+if check_dependency "agios" "${DEP_CONFIG[@]}"; then
+clonedeps "agios" "https://github.com/francielizanon/agios.git" "c26a6544200f823ebb8f890dd94e653d148bf226" "-b development" &
 fi
 
 # get date

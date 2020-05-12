@@ -62,6 +62,7 @@ int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md
 std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
 
 void load_hosts();
+void load_forwarding_map();
 
 } // namespace util
 } // namespace gkfs
