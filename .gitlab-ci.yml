@@ -43,7 +43,7 @@ image: jeanbez/gekkofs-forwarding:latest
 compile dependencies:
   stage: build deps
   cache:
-    key: deps-cache
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
      - ${DEPS_INSTALL_PATH}/
   script:
