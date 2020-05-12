@@ -2,9 +2,7 @@ stages:
   - download deps
   - build deps
   - build
-  - build forwarding
   - test
-  - test forwarding
 
 variables:
   DEPS_SRC_PATH:                    "${CI_PROJECT_DIR}/deps/src"
@@ -187,8 +185,8 @@ test lseek:
     paths:
      - "${LOG_PATH}"
 
-test wr:
-  stage: test forwarding
+test FWD wr:
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
@@ -203,8 +201,8 @@ test wr:
     paths:
      - "${LOG_PATH}"
 
-test directories:
-  stage: test forwarding
+test FWD directories:
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
@@ -219,8 +217,8 @@ test directories:
     paths:
      - "${LOG_PATH}"
 
-test truncate:
-  stage: test forwarding
+test FWD truncate:
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
@@ -235,8 +233,8 @@ test truncate:
     paths:
      - "${LOG_PATH}"
 
-test path resolution:
-  stage: test forwarding
+test FWD path resolution:
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
@@ -251,8 +249,8 @@ test path resolution:
     paths:
      - "${LOG_PATH}"
 
-test lseek:
-  stage: test forwarding
+test FWD lseek:
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
