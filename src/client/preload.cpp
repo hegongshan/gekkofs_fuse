@@ -36,6 +36,8 @@ namespace {
 // make sure that things are only initialized once
 pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
+pthread_t mapper;
+bool forwarding_running;
 
 inline void exit_error_msg(int errcode, const string& msg) {
 
@@ -98,9 +100,22 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
+    #ifdef GKFS_ENABLE_FORWARDING
+    try {
+        gkfs::util::load_forwarding_map();
+
+        LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+    } catch (std::exception& e){
+        exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+    }
+    
+    auto forwarder_dist = std::make_shared<gkfs::rpc::ForwarderDistributor>(CTX->fwd_host_id(), CTX->hosts().size());
+    CTX->distributor(forwarder_dist);
+    #else
     auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(CTX->local_host_id(),
                                                                                CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
+    #endif
 
     LOG(INFO, "Retrieving file system configuration...");
 
@@ -109,6 +124,35 @@ void init_ld_environment_() {
     }
 
     LOG(INFO, "Environment initialization successful.");
+}
+
+#ifdef GKFS_ENABLE_FORWARDING
+void *forwarding_mapper(void *p) {
+    while (forwarding_running) {
+        try {
+            gkfs::util::load_forwarding_map();
+
+            LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+        } catch (std::exception& e){
+            exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+        }
+
+        // Sleeps for 10 seconds
+        sleep(10);
+    }
+}
+#endif
+
+void init_forwarding_mapper() {
+    forwarding_running = true;
+
+    pthread_create(&mapper, NULL, forwarding_mapper, NULL);
+}
+
+void destroy_forwarding_mapper() {
+    forwarding_running = false;
+
+    pthread_join(mapper, NULL);
 }
 
 void log_prog_name() {
@@ -170,6 +214,8 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
+    init_forwarding_mapper();
+
     gkfs::preload::start_interception();
 }
 
@@ -177,6 +223,7 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    destroy_forwarding_mapper();
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");

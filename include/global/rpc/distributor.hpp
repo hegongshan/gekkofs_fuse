@@ -69,6 +69,23 @@ public:
     std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
 };
 
+class ForwarderDistributor : public Distributor {
+private:
+    host_t fwd_host_;
+    unsigned int hosts_size_;
+    std::hash<std::string> str_hash;
+public:
+    ForwarderDistributor(host_t fwhost, unsigned int hosts_size);
+
+    host_t localhost() const override;
+
+    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override;
+
+    host_t locate_file_metadata(const std::string& path) const override;
+
+    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
+};
+
 } // namespace rpc
 } // namespace gkfs
 

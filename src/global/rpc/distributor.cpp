@@ -68,5 +68,30 @@ locate_directory_metadata(const string& path) const {
     return {localhost_};
 }
 
+ForwarderDistributor::
+ForwarderDistributor(host_t fwhost, unsigned int hosts_size) : 
+    fwd_host_(fwhost),
+    hosts_size_(hosts_size)
+{}
+
+host_t ForwarderDistributor::
+localhost() const {
+    return fwd_host_;
+}
+
+host_t ForwarderDistributor::
+locate_data(const std::string& path, const chunkid_t& chnk_id) const {
+    return fwd_host_;
+}
+
+host_t ForwarderDistributor::
+locate_file_metadata(const std::string& path) const {
+    return str_hash(path) % hosts_size_;
+}
+
+std::vector<host_t> ForwarderDistributor::
+locate_directory_metadata(const std::string& path) const {
+    return {fwd_host_};
+}
 } // namespace rpc
 } // namespace gkfs

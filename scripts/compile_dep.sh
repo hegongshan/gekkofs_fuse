@@ -13,21 +13,21 @@ VALID_DEP_OPTIONS="mogon2 mogon1 direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "verbs"
+    "syscall_intercept" "date" "verbs" "agios"
 )
 
 MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date"
+    "syscall_intercept" "date" "agios"
 )
 
 DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
 )
 
 ALL_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
-     "syscall_intercept" "date"
+     "syscall_intercept" "date" "agios"
 )
 
 usage_short() {
@@ -343,6 +343,16 @@ if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
     fi
 fi
 
+# AGIOS
+if check_dependency "agios" "${DEP_CONFIG[@]}"; then
+	echo "############################################################ Installing:  AGIOS"
+	CURR=${SOURCE}/agios
+	prepare_build_dir "${CURR}"
+	cd "${CURR}"/build
+	$CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" ..
+	make install
+fi
+
 # Mercury
 if check_dependency "mercury" "${DEP_CONFIG[@]}"; then
 
@@ -418,7 +428,7 @@ if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
     CURR=${SOURCE}/syscall_intercept
     prepare_build_dir "${CURR}"
     cd "${CURR}"/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTS:BOOK=OFF ..
+    $CMAKE -DCMAKE_PREFIX_PATH="${INSTALL}" -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTS:BOOK=OFF ..
     make install
 fi
 

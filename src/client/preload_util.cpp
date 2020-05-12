@@ -176,6 +176,72 @@ vector<pair<string, string>> load_hostfile(const std::string& lfpath) {
     return hosts;
 }
 
+#ifdef GKFS_ENABLE_FORWARDING
+map<string, uint64_t> load_forwarding_map_file(const std::string& lfpath) {
+
+    LOG(DEBUG, "Loading forwarding map file file: \"{}\"", lfpath);
+
+    ifstream lf(lfpath);
+    if (!lf) {
+        throw runtime_error(fmt::format("Failed to open forwarding map file '{}': {}",
+                            lfpath, strerror(errno)));
+    }
+    map<string, uint64_t> forwarding_map;
+    const regex line_re("^(\\S+)\\s+(\\S+)$",
+                        regex::ECMAScript | regex::optimize);
+    string line;
+    string host;
+    uint64_t forwarder;
+    std::smatch match;
+    while (getline(lf, line)) {
+        if (!regex_match(line, match, line_re)) {
+            
+            LOG(ERROR, "Unrecognized line format: [path: '{}', line: '{}']",
+                lfpath, line);
+
+            throw runtime_error(
+                    fmt::format("unrecognized line format: '{}'", line));
+        }
+        host = match[1];
+        forwarder = std::stoi(match[2].str());
+        forwarding_map[host] = forwarder;
+    }
+    return forwarding_map;
+}
+#endif
+
+#ifdef GKFS_ENABLE_FORWARDING
+void load_forwarding_map() {
+    string forwarding_map_file;
+    
+    forwarding_map_file = gkfs::env::get_var(gkfs::env::FORWARDING_MAP_FILE, gkfs::config::forwarding_file_path);
+
+    map<string, uint64_t> forwarding_map;
+
+    while (forwarding_map.size() == 0) {
+        try {
+            forwarding_map = load_forwarding_map_file(forwarding_map_file);
+        } catch (const exception& e) {
+            auto emsg = fmt::format("Failed to load forwarding map file: {}", e.what());
+            throw runtime_error(emsg);
+        }
+    }
+
+    //if (forwarding_map.size() == 0) {
+    //    throw runtime_error(fmt::format("Forwarding map file is empty: '{}'", forwarding_map_file));
+    //}
+
+    auto local_hostname = get_my_hostname(true);
+
+    if (forwarding_map.find(local_hostname) == forwarding_map.end()) {
+        throw runtime_error(fmt::format("Unable to determine the forwarder for host: '{}'", local_hostname));   
+    }
+    LOG(INFO, "Forwarding map loaded for '{}' as '{}'", local_hostname, forwarding_map[local_hostname]);
+
+    CTX->fwd_host_id(forwarding_map[local_hostname]);
+}
+#endif
+
 void load_hosts() {
     string hostfile;
 

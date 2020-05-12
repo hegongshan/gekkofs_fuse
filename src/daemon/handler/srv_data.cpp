@@ -21,6 +21,13 @@
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
 
+#ifdef GKFS_ENABLE_AGIOS
+#include <daemon/scheduler/agios.hpp>
+
+#define AGIOS_READ 0
+#define AGIOS_WRITE 1
+#define AGIOS_SERVER_ID_IGNORE 0
+#endif
 
 using namespace std;
 
@@ -142,6 +149,36 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     GKFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}", __func__,
                                   in.path, bulk_size, in.offset);
+    #ifdef GKFS_ENABLE_AGIOS
+    int *data;
+    ABT_eventual eventual = ABT_EVENTUAL_NULL;
+
+    /* creating eventual */
+    ABT_eventual_create(sizeof(int64_t), &eventual);
+
+    unsigned long long int request_id = generate_unique_id();
+    char *agios_path = (char*) in.path;
+
+    // We should call AGIOS before chunking (as that is an internal way to handle the requests)
+    if (!agios_add_request(agios_path, AGIOS_WRITE, in.offset, in.total_chunk_size, request_id, AGIOS_SERVER_ID_IGNORE, agios_eventual_callback, eventual)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to send request to AGIOS", __func__);
+    } else {
+        GKFS_DATA->spdlogger()->debug("{}() request {} was sent to AGIOS", __func__, request_id);
+    }
+
+    /* Block until the eventual is signaled */
+    ABT_eventual_wait(eventual, (void **)&data);
+
+    unsigned long long int result = *data;
+    GKFS_DATA->spdlogger()->debug("{}() request {} was unblocked (offset = {})!", __func__, result, in.offset);
+
+    ABT_eventual_free(&eventual);
+
+    // Let AGIOS knows it can release the request, as it is completed
+    if (!agios_release_request(agios_path, AGIOS_WRITE, in.total_chunk_size, in.offset)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
+    }
+    #endif
     /*
      * 2. Set up buffers for pull bulk transfers
      */
@@ -199,8 +236,10 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
+        #ifndef GKFS_ENABLE_FORWARDING
         if (distributor.locate_data(in.path, chnk_id_file) != host_id)
             continue;
+        #endif
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
@@ -347,6 +386,36 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     GKFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}", __func__,
                                   in.path, bulk_size, in.offset);
+    #ifdef GKFS_ENABLE_AGIOS
+    int *data;
+    ABT_eventual eventual = ABT_EVENTUAL_NULL;
+
+    /* creating eventual */
+    ABT_eventual_create(sizeof(int64_t), &eventual);
+
+    unsigned long long int request_id = generate_unique_id();
+    char *agios_path = (char*) in.path;
+
+    // We should call AGIOS before chunking (as that is an internal way to handle the requests)
+    if (!agios_add_request(agios_path, AGIOS_READ, in.offset, in.total_chunk_size, request_id, AGIOS_SERVER_ID_IGNORE, agios_eventual_callback, eventual)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to send request to AGIOS", __func__);
+    } else {
+        GKFS_DATA->spdlogger()->debug("{}() request {} was sent to AGIOS", __func__, request_id);
+    }
+
+    /* block until the eventual is signaled */
+    ABT_eventual_wait(eventual, (void **)&data);
+
+    unsigned long long int result = *data;
+    GKFS_DATA->spdlogger()->debug("{}() request {} was unblocked (offset = {})!", __func__, result, in.offset);
+
+    ABT_eventual_free(&eventual);
+
+    // let AGIOS knows it can release the request, as it is completed
+    if (!agios_release_request(agios_path, AGIOS_READ, in.total_chunk_size, in.offset)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
+    }
+    #endif
 
     /*
      * 2. Set up buffers for pull bulk transfers
@@ -367,9 +436,11 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
         GKFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
+    #ifndef GKFS_ENABLE_FORWARDING
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
     gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
+    #endif
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
@@ -397,8 +468,10 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
+        #ifndef GKFS_ENABLE_FORWARDING
         if (distributor.locate_data(in.path, chnk_id_file) != host_id)
             continue;
+        #endif
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
@@ -570,4 +643,13 @@ static hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
+#ifdef GKFS_ENABLE_AGIOS
+void *agios_eventual_callback(int64_t request_id, void *info) {
+    GKFS_DATA->spdlogger()->debug("{}() custom callback request {} is ready", __func__, request_id);
+
+    ABT_eventual_set((ABT_eventual) info, &request_id, sizeof(int64_t));
+    
+    return 0;
+}
+#endif
 
