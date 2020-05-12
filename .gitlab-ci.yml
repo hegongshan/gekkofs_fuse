@@ -198,7 +198,7 @@ test lseek:
      - "${LOG_PATH}"
 
 test FWD wr:
-  stage: test forwarding
+  stage: test
   dependencies:
     - "compile GekkoFWD"
   script:
