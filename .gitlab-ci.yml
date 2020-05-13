@@ -19,10 +19,10 @@ variables:
   INTEGRATION_TESTS_FWD_BIN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration"
   INTEGRATION_TESTS_FWD_RUN_PATH:   "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/run"
 
-  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/gkfs-test/build"
+  TESTS_BUILD_PATH:                 "${CI_PROJECT_DIR}/test/build-gkfs"
   PYTEST:                           "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
 
-  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/gkfwd-test/build"
+  TESTS_BUILD_FWD_PATH:             "${CI_PROJECT_DIR}/test/build-gkfwd"
   PYTEST_FWD:                       "${CI_PROJECT_DIR}/gkfwd/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
   
   LOG_PATH:                         "${CI_PROJECT_DIR}/logs"
