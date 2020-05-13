@@ -3,6 +3,7 @@ stages:
   - build deps
   - build
   - test
+  - test forwarding
 
 variables:
   DEPS_SRC_PATH:                    "${CI_PROJECT_DIR}/deps/src"
@@ -137,6 +138,17 @@ integration tests:
     paths:
       - "${INTEGRATION_TESTS_RUN_PATH}"
 
+integration GekkoFWD tests:
+  stage: test GekkoFWD
+  script:
+    - mkdir -p ${INTEGRATION_TESTS_FWD_RUN_PATH}
+    - cd ${INTEGRATION_TESTS_FWD_BIN_PATH} 
+    - TMPDIR=${INTEGRATION_TESTS_FWD_RUN_PATH} unbuffer ${PYTEST} -v | tee ${INTEGRATION_TESTS_FWD_RUN_PATH}/session.log
+  artifacts:
+    when: on_failure
+    paths:
+      - "${INTEGRATION_TESTS_FWD_RUN_PATH}"
+
 test wr:
   stage: test
   script:
@@ -198,7 +210,7 @@ test lseek:
      - "${LOG_PATH}"
 
 test FWD wr:
-  stage: test
+  stage: test forwarding
   dependencies:
     - "compile dependencies"
     - "compile GekkoFWD"
@@ -216,7 +228,7 @@ test FWD wr:
      - "${LOG_PATH}"
 
 test FWD directories:
-  stage: test
+  stage: test forwarding
   dependencies:
     - "compile dependencies"
     - "compile GekkoFWD"
@@ -234,7 +246,7 @@ test FWD directories:
      - "${LOG_PATH}"
 
 test FWD truncate:
-  stage: test
+  stage: test forwarding
   dependencies:
     - "compile dependencies"
     - "compile GekkoFWD"
@@ -252,7 +264,7 @@ test FWD truncate:
      - "${LOG_PATH}"
 
 test FWD path resolution:
-  stage: test
+  stage: test forwarding
   dependencies:
     - "compile dependencies"
     - "compile GekkoFWD"
@@ -270,7 +282,7 @@ test FWD path resolution:
      - "${LOG_PATH}"
 
 test FWD lseek:
-  stage: test
+  stage: test forwarding
   dependencies:
     - "compile dependencies"
     - "compile GekkoFWD"
