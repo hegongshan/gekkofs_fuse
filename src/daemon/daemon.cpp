@@ -162,6 +162,20 @@ void init_environment() {
         throw;
     }
 
+    #ifdef GKFS_ENABLE_FORWARDING
+    GKFS_DATA->spdlogger()->debug("{}() Enable I/O forwarding mode", __func__);
+    #endif
+
+    #ifdef GKFS_ENABLE_AGIOS
+    // Initialize AGIOS scheduler
+    GKFS_DATA->spdlogger()->debug("{}() Initializing AGIOS scheduler: '{}'", __func__, "/tmp/agios.conf");
+    try {
+        agios_initialize();    
+    } catch (const std::exception & e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: {}", __func__, e.what());
+        throw;
+    }
+    #endif
     // Initialize data backend
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
