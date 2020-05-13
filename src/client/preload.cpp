@@ -137,15 +137,11 @@ void *forwarding_mapper(void *p) {
             LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
         } catch (std::exception& e) {
             exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
-
-            return;
         }
 
         // Sleeps for 10 seconds
         sleep(10);
     }
-
-    return;
 }
 #endif
 
