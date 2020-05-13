@@ -138,7 +138,7 @@ integration tests:
     paths:
       - "${INTEGRATION_TESTS_RUN_PATH}"
 
-integration GekkoFWD tests:
+integration FWD tests:
   stage: test forwarding
   script:
     - mkdir -p ${INTEGRATION_TESTS_FWD_RUN_PATH}
