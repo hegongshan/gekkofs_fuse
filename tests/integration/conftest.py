@@ -19,7 +19,7 @@ from pathlib import Path
 from harness.logger import logger, initialize_logging, finalize_logging
 from harness.cli import add_cli_options, set_default_log_formatter
 from harness.workspace import Workspace, FileCreator
-from harness.gkfs import Daemon, Client, ShellClient
+from harness.gkfs import Daemon, Client, ShellClient, FwdDaemon, FwdClient, ShellFwdClient
 from harness.reporter import report_test_status, report_test_headline, report_assertion_pass
 
 def pytest_configure(config):
@@ -87,26 +87,40 @@ def gkfs_daemon(test_workspace, request):
 
     interface = request.config.getoption('--interface')
 
-    daemon = Daemon(interface, test_workspace)
+    if request.config.getoption('--forwarding') == 'ON':
+        daemon = FwdDaemon(interface, test_workspace)
+    else:
+        daemon = Daemon(interface, test_workspace)
+    
     yield daemon.run()
     daemon.shutdown()
 
 @pytest.fixture
-def gkfs_client(test_workspace):
+def gkfs_client(test_workspace, request):
     """
     Sets up a gekkofs client environment so that
     operations (system calls, library calls, ...) can
     be requested from a co-running daemon.
     """
 
+    interface = request.config.getoption('--interface')
+
+    if request.config.getoption('--forwarding') == 'ON':
+        return FwdClient(test_workspace)
+
     return Client(test_workspace)
 
 @pytest.fixture
-def gkfs_shell(test_workspace):
+def gkfs_shell(test_workspace, request):
     """
     Sets up a gekkofs environment so that shell commands
     (stat, ls, mkdir, etc.) can be issued to a co-running daemon.
     """
+
+    interface = request.config.getoption('--interface')
+
+    if request.config.getoption('--forwarding') == 'ON':
+        return ShellFwdClient(test_workspace)
 
     return ShellClient(test_workspace)
 

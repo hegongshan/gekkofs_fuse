@@ -34,6 +34,14 @@ def add_cli_options(parser):
         )
 
         parser.addoption(
+            '--forwarding',
+            action='store',
+            type=str,
+            default='ON',
+            help="enable the forwarding mode (default: 'OFF')."
+        )
+
+        parser.addoption(
             "--bin-dir",
             action='append',
             default=[Path.cwd()],
