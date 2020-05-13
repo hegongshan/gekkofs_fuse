@@ -200,6 +200,7 @@ test lseek:
 test FWD wr:
   stage: test
   dependencies:
+    - "compile dependencies"
     - "compile GekkoFWD"
     - "tests GekkoFWD"
   script:
