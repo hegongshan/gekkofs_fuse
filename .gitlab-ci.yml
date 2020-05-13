@@ -139,7 +139,7 @@ integration tests:
       - "${INTEGRATION_TESTS_RUN_PATH}"
 
 integration GekkoFWD tests:
-  stage: test GekkoFWD
+  stage: test forwarding
   script:
     - mkdir -p ${INTEGRATION_TESTS_FWD_RUN_PATH}
     - cd ${INTEGRATION_TESTS_FWD_BIN_PATH} 
