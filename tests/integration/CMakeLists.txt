@@ -49,6 +49,14 @@ if(GKFS_INSTALL_TESTS)
             PATTERN ".pytest_cache" EXCLUDE
     )
 
+    install(DIRECTORY status
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
+
     install(DIRECTORY shell
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
         FILES_MATCHING
