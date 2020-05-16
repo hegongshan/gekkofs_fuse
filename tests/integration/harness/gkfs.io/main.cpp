@@ -24,10 +24,16 @@ init_commands(CLI::App& app) {
     opendir_init(app);
     mkdir_init(app);
     read_init(app);
+    pread_init(app);
+    readv_init(app);
+    preadv_init(app);
     readdir_init(app);
     rmdir_init(app);
     stat_init(app);
     write_init(app);
+    pwrite_init(app);
+    writev_init(app);
+    pwritev_init(app);
     statx_init(app);
 }
 

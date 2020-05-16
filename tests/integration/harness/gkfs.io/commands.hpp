@@ -30,6 +30,15 @@ void
 read_init(CLI::App& app);
 
 void
+pread_init(CLI::App& app);
+
+void
+readv_init(CLI::App& app);
+
+void
+preadv_init(CLI::App& app);
+
+void
 readdir_init(CLI::App& app);
 
 void
@@ -40,6 +49,15 @@ stat_init(CLI::App& app);
 
 void
 write_init(CLI::App& app);
+
+void
+pwrite_init(CLI::App& app);
+
+void
+writev_init(CLI::App& app);
+
+void
+pwritev_init(CLI::App& app);
 
 void
 statx_init(CLI::App& app);

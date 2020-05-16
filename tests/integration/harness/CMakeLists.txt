@@ -12,12 +12,18 @@ add_executable(gkfs.io
     gkfs.io/open.cpp
     gkfs.io/opendir.cpp
     gkfs.io/read.cpp
+    gkfs.io/readv.cpp
+    gkfs.io/pread.cpp
+    gkfs.io/preadv.cpp
     gkfs.io/readdir.cpp
     gkfs.io/reflection.hpp
     gkfs.io/rmdir.cpp
     gkfs.io/serialize.hpp
     gkfs.io/stat.cpp
     gkfs.io/write.cpp
+    gkfs.io/pwrite.cpp
+    gkfs.io/writev.cpp
+    gkfs.io/pwritev.cpp
     gkfs.io/statx.cpp
 )
 
