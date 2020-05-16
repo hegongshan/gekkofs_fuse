@@ -521,6 +521,49 @@ ssize_t gkfs_read(int fd, void* buf, size_t count) {
     return ret;
 }
 
+ssize_t gkfs_preadv(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
+
+    auto file = CTX->file_map()->get(fd);
+    auto pos = offset; // keep truck of current position
+    ssize_t read = 0;
+    ssize_t ret;
+    for (int i = 0; i < iovcnt; ++i) {
+        auto count = (iov + i)->iov_len;
+        if (count == 0) {
+            continue;
+        }
+        auto buf = (iov + i)->iov_base;
+        ret = gkfs_pread(file, reinterpret_cast<char*>(buf), count, pos);
+        if (ret == -1) {
+            break;
+        }
+        read += ret;
+        pos += ret;
+
+        if (static_cast<size_t>(ret) < count) {
+            break;
+        }
+    }
+
+    if (read == 0) {
+        return -1;
+    }
+    return read;
+}
+
+ssize_t gkfs_readv(int fd, const struct iovec* iov, int iovcnt) {
+
+    auto gkfs_fd = CTX->file_map()->get(fd);
+    auto pos = gkfs_fd->pos(); // retrieve the current offset
+    auto ret = gkfs_preadv(fd, iov, iovcnt, pos);
+    assert(ret != 0);
+    if (ret < 0) {
+        return -1;
+    }
+    gkfs_fd->pos(pos + ret);
+    return ret;
+}
+
 ssize_t gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     return gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, offset);

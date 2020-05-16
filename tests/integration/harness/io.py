@@ -165,6 +165,41 @@ class ReadOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('ReadReturn', ['buf', 'retval', 'errno'])(**data)
 
+class PreadOutputSchema(Schema):
+    """Schema to deserialize the results of a pread() execution"""
+
+    buf = ByteList(allow_none=True)
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('PReadReturn', ['buf', 'retval', 'errno'])(**data)
+
+class ReadvOutputSchema(Schema):
+    """Schema to deserialize the results of a read() execution"""
+
+    buf_0 = ByteList(allow_none=True)
+    buf_1 = ByteList(allow_none=True)
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('ReadvReturn', ['buf_0', 'buf_1', 'retval', 'errno'])(**data)
+
+class PreadvOutputSchema(Schema):
+    """Schema to deserialize the results of a read() execution"""
+
+    buf_0 = ByteList(allow_none=True)
+    buf_1 = ByteList(allow_none=True)
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('PReadvReturn', ['buf_0', 'buf_1', 'retval', 'errno'])(**data)
+
 class ReaddirOutputSchema(Schema):
     """Schema to deserialize the results of a readdir() execution"""
 
@@ -194,6 +229,36 @@ class WriteOutputSchema(Schema):
     @post_load
     def make_object(self, data, **kwargs):
         return namedtuple('WriteReturn', ['retval', 'errno'])(**data)
+
+class PwriteOutputSchema(Schema):
+    """Schema to deserialize the results of a pwrite() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('PWriteReturn', ['retval', 'errno'])(**data)
+
+class WritevOutputSchema(Schema):
+    """Schema to deserialize the results of a writev() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('WritevReturn', ['retval', 'errno'])(**data)
+
+class PwritevOutputSchema(Schema):
+    """Schema to deserialize the results of a writev() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('PWritevReturn', ['retval', 'errno'])(**data)
 
 class StatOutputSchema(Schema):
     """Schema to deserialize the results of a stat() execution"""
@@ -225,9 +290,15 @@ class IOParser:
         'open'    : OpenOutputSchema(),
         'opendir' : OpendirOutputSchema(),
         'read'    : ReadOutputSchema(),
+        'pread'   : PreadOutputSchema(),
+        'readv'   : ReadvOutputSchema(),
+        'preadv'  : PreadvOutputSchema(),
         'readdir' : ReaddirOutputSchema(),
         'rmdir'   : RmdirOutputSchema(),
         'write'   : WriteOutputSchema(),
+        'pwrite'  : PwriteOutputSchema(),
+        'writev'  : WritevOutputSchema(),
+        'pwritev' : PwritevOutputSchema(),
         'stat'    : StatOutputSchema(),
         'statx'   : StatxOutputSchema(),
     }
