@@ -62,4 +62,7 @@ pwritev_init(CLI::App& app);
 void
 statx_init(CLI::App& app);
 
+void
+lseek_init(CLI::App& app);
+
 #endif // IO_COMMANDS_HPP

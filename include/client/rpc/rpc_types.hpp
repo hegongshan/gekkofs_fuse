@@ -1012,7 +1012,7 @@ struct get_metadentry_size {
 
     // Mercury callback to serialize output arguments
     constexpr static const auto mercury_out_proc_cb =
-            HG_GEN_PROC_NAME(rpc_err_out_t);
+            HG_GEN_PROC_NAME(rpc_get_metadentry_size_out_t);
 
     class input {
 
