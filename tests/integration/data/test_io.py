@@ -74,7 +74,6 @@ def test_io(gkfs_daemon, gkfs_client):
     
     for i in range (1, 512, 64):
         buf = b''
-        print (i)
         for k in range (0,i):
             value = str(k%10)
             buf += bytes(value, sys.stdout.encoding)
@@ -92,6 +91,9 @@ def test_io(gkfs_daemon, gkfs_client):
         assert ret.buf == buf
 
 
+    for i in range (128192, 2097153, 4096*3):
+        ret = gkfs_client.write_read(file_a, i)
+        assert ret.retval == 1
 
 
     return

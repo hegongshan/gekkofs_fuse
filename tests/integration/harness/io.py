@@ -293,6 +293,17 @@ class LseekOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('LseekReturn', ['retval', 'errno'])(**data)
 
+
+class WriteReadOutputSchema(Schema):
+    """Schema to deserialize the results of a write() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('WriteReadReturn', ['retval', 'errno'])(**data)
+
 class IOParser:
 
     OutputSchemas = {
@@ -312,6 +323,7 @@ class IOParser:
         'stat'    : StatOutputSchema(),
         'statx'   : StatxOutputSchema(),
         'lseek'   : LseekOutputSchema(),
+        'write_read' : WriteReadOutputSchema(),
     }
 
     def parse(self, command, output):
