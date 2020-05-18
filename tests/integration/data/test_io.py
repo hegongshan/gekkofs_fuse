@@ -91,7 +91,7 @@ def test_io(gkfs_daemon, gkfs_client):
         assert ret.buf == buf
 
 
-    for i in range (128192, 2097153, 4096*3):
+    for i in range (128192, 2097153, 4096*9):
         ret = gkfs_client.write_read(file_a, i)
         assert ret.retval == 1
 
