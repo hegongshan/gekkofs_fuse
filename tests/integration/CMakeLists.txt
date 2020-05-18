@@ -31,6 +31,13 @@ gkfs_add_python_test(
 )
 
 gkfs_add_python_test(
+    NAME test_lseek
+    PYTHON_VERSION 3.6
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
+    SOURCE position/test_lseek.py
+)
+
+gkfs_add_python_test(
     NAME test_shell
     PYTHON_VERSION 3.6
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
@@ -70,6 +77,15 @@ if(GKFS_INSTALL_TESTS)
             PATTERN "__pycache__" EXCLUDE
             PATTERN ".pytest_cache" EXCLUDE
     )
+
+    install(DIRECTORY position
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
+
 
     install(DIRECTORY shell
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration

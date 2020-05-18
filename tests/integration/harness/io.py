@@ -283,6 +283,16 @@ class StatxOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('StatxReturn', ['retval', 'statbuf', 'errno'])(**data)
 
+
+class LseekOutputSchema(Schema):
+    """Schema to deserialize the results of an open() execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('LseekReturn', ['retval', 'errno'])(**data)
+
 class IOParser:
 
     OutputSchemas = {
@@ -301,6 +311,7 @@ class IOParser:
         'pwritev' : PwritevOutputSchema(),
         'stat'    : StatOutputSchema(),
         'statx'   : StatxOutputSchema(),
+        'lseek'   : LseekOutputSchema(),
     }
 
     def parse(self, command, output):

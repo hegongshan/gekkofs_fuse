@@ -319,8 +319,14 @@ off_t gkfs_lseek(shared_ptr<gkfs::filemap::OpenFile> gkfs_fd, off_t offset, unsi
         case SEEK_END: {
             off64_t file_size;
             auto err = gkfs::rpc::forward_get_metadentry_size(gkfs_fd->path(), file_size);
+          
             if (err < 0) {
                 errno = err; // Negative numbers are explicitly for error codes
+                return -1;
+            }
+            
+            if (offset < 0 and file_size < -offset) {
+                errno = EINVAL;
                 return -1;
             }
             gkfs_fd->pos(file_size + offset);
