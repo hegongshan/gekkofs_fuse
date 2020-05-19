@@ -217,7 +217,7 @@ test FWD wr:
     - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
-    - cp agios/* /tmp
+    - cp config/GekkoFWD/agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -235,7 +235,7 @@ test FWD directories:
     - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
-    - cp agios/* /tmp
+    - cp config/GekkoFWD/agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -253,7 +253,7 @@ test FWD truncate:
     - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
-    - cp agios/* /tmp
+    - cp config/GekkoFWD/agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -271,7 +271,7 @@ test FWD path resolution:
     - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
-    - cp agios/* /tmp
+    - cp config/GekkoFWD/agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -289,7 +289,7 @@ test FWD lseek:
     - "tests GekkoFWD"
   script:
     - mkdir -p "${LOG_PATH}"
-    - cp agios/* /tmp
+    - cp config/GekkoFWD/agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_FWD_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
