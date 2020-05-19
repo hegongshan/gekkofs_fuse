@@ -456,7 +456,7 @@ ssize_t gkfs_write(int fd, const void* buf, size_t count) {
 ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
-    auto pos = offset; // keep truck of current position
+    auto pos = offset; // keep track of current position
     ssize_t written = 0;
     ssize_t ret;
     for (int i = 0; i < iovcnt; ++i) {
@@ -530,7 +530,7 @@ ssize_t gkfs_read(int fd, void* buf, size_t count) {
 ssize_t gkfs_preadv(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
-    auto pos = offset; // keep truck of current position
+    auto pos = offset; // keep track of current position
     ssize_t read = 0;
     ssize_t ret;
     for (int i = 0; i < iovcnt; ++i) {
