@@ -20,16 +20,24 @@ import ctypes
 import sh
 import sys
 import pytest
+import string
+import random
 from harness.logger import logger
 
 nonexisting = "nonexisting"
+chunksize_start = 128192
+chunksize_end = 2097153
+step = 4096*9
+
+def generate_random_data(size):
+    return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(size)])
 
 
 
 
 #@pytest.mark.xfail(reason="invalid errno returned on success")
-def test_io(gkfs_daemon, gkfs_client):
-    """Test several statx commands"""
+def test_data_integrity(gkfs_daemon, gkfs_client):
+    """Test several data write-read commands and check that the data is correct"""
     topdir = gkfs_daemon.mountdir / "top"
     file_a = topdir / "file_a"
 
@@ -63,20 +71,15 @@ def test_io(gkfs_daemon, gkfs_client):
     assert (ret.statbuf.stx_size == 0)
 
 
-    # Phase 1
-    # from 1 to n data
+    # Step 1 - small sizes
+    
     # Generate writes
     # Read data
     # Compare buffer
-    # delete data
 
-    # from 1 to 2M +1
     
     for i in range (1, 512, 64):
-        buf = b''
-        for k in range (0,i):
-            value = str(k%10)
-            buf += bytes(value, sys.stdout.encoding)
+        buf = bytes(generate_random_data(i), sys.stdout.encoding)
         
         ret = gkfs_client.write(file_a, buf, i)
 
@@ -91,8 +94,9 @@ def test_io(gkfs_daemon, gkfs_client):
         assert ret.buf == buf
 
 
-    for i in range (128192, 2097153, 4096*9):
-        ret = gkfs_client.write_read(file_a, i)
+    # Step 2 - Compare bigger sizes exceeding typical chunksize
+    for i in range (chunksize_start, chunksize_end, step):
+        ret = gkfs_client.write_validate(file_a, i)
         assert ret.retval == 1
 
 

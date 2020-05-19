@@ -68,6 +68,6 @@ void
 lseek_init(CLI::App& app);
 
 void
-write_read_init(CLI::App& app);
+write_validate_init(CLI::App& app);
 
 #endif // IO_COMMANDS_HPP

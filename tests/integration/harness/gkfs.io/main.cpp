@@ -38,7 +38,7 @@ init_commands(CLI::App& app) {
     statx_init(app);
     #endif
     lseek_init(app);
-    write_read_init(app);
+    write_validate_init(app);
 }
 
 

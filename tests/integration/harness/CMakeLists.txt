@@ -26,7 +26,7 @@ add_executable(gkfs.io
     gkfs.io/pwritev.cpp
     gkfs.io/statx.cpp
     gkfs.io/lseek.cpp
-    gkfs.io/write_read.cpp
+    gkfs.io/write_validate.cpp
 )
 
 include(FetchContent)
