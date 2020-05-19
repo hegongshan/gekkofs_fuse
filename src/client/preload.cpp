@@ -129,7 +129,7 @@ void init_ld_environment_() {
 }
 
 #ifdef GKFS_ENABLE_FORWARDING
-void *forwarding_mapper(void *p) {
+void *forwarding_mapper(void* p) {
     while (forwarding_running) {
         try {
             gkfs::util::load_forwarding_map();
