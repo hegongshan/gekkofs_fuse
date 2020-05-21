@@ -32,6 +32,7 @@ using json = nlohmann::json;
                  unsigned int mask, struct statx *statxbuf);
 */
 
+#ifdef STATX_TYPE
 struct statx_options {
     bool verbose;
     int dirfd;
@@ -135,4 +136,4 @@ statx_init(CLI::App& app) {
         statx_exec(*opts); 
     });
 }
-
+#endif

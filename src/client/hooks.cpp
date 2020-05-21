@@ -98,7 +98,7 @@ int hook_stat(const char* path, struct stat* buf) {
     return syscall_no_intercept(SYS_stat, rel_path.c_str(), buf);
 }
 
-
+#ifdef STATX_TYPE
 int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct ::statx* buf) {
 
     LOG(DEBUG, "{}() called with dirfd: '{}', path: \"{}\", flags: '{}', mask: '{}', buf: '{}'",
@@ -127,9 +127,7 @@ int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct
    
     return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask,  buf);
 }
-
-
-
+#endif
 
 int hook_lstat(const char* path, struct stat* buf) {
 

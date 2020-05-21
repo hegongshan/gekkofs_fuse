@@ -466,7 +466,7 @@ int hook(long syscall_number,
                                             reinterpret_cast<struct stat*>(arg1));
             break;
 
-#ifdef SYS_statx
+#ifdef STATX_TYPE
         case SYS_statx:
             *result = gkfs::hook::hook_statx(static_cast<int>(arg0),
                                             reinterpret_cast<char*>(arg1),

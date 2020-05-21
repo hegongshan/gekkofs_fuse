@@ -232,7 +232,7 @@ int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     return 0;
 }
 
-
+#ifdef STATX_TYPE
 int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask, struct statx* buf, bool follow_links) {
     auto md = gkfs::util::get_metadata(path, follow_links);
     if (!md) {
@@ -268,6 +268,7 @@ int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
     
     return 0;
 }
+#endif
 
 int gkfs_statfs(struct statfs* buf) {
     auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
