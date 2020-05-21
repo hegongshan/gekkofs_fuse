@@ -79,5 +79,13 @@ truncate_init(CLI::App& app);
 // UTIL
 void
 file_compare_init(CLI::App& app);
+void
+chdir_init(CLI::App& app);
+
+void
+getcwd_validate_init(CLI::App& app);
+
+void
+symlink_init(CLI::App& app);
 
 #endif // IO_COMMANDS_HPP

@@ -26,8 +26,6 @@ add_executable(gkfs_test_truncate truncate.cpp)
 add_executable(gkfs_test_lseek lseek.cpp)
 add_executable(gkfs_test_symlink symlink_test.cpp)
 
-add_executable(gkfs_test_path_resolution path_resolution.cpp)
-
 find_package(MPI)
 if(${MPI_FOUND})
     set(SOURCE_FILES_MPI main_MPI.cpp)

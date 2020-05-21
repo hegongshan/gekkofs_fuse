@@ -14,7 +14,7 @@ gkfs_add_python_test(
     NAME test_directories
     PYTHON_VERSION 3.6
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
-    SOURCE directories/test_directories.py
+    SOURCE directories/
 )
 
 if (GLIBC_HAS_STATX)
@@ -75,13 +75,25 @@ if(GKFS_INSTALL_TESTS)
             PATTERN "gkfs.io" EXCLUDE
     )
 
-    install(DIRECTORY directories
+    if(SYMLINK_SUPPORT)
+        install(DIRECTORY directories
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
+            FILES_MATCHING
+                REGEX ".*\\.py"
+                PATTERN "__pycache__" EXCLUDE
+                PATTERN ".pytest_cache" EXCLUDE
+        )
+    else()
+        install(DIRECTORY directories
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
         FILES_MATCHING
-            REGEX ".*\\.py"
-            PATTERN "__pycache__" EXCLUDE
-            PATTERN ".pytest_cache" EXCLUDE
+        REGEX ".*\\.py"
+        PATTERN "__pycache__" EXCLUDE
+        PATTERN ".pytest_cache" EXCLUDE
+        PATTERN "test_symlink.py" EXCLUDE
+
     )
+   endif()
 
     install(DIRECTORY status
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration

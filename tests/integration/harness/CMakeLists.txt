@@ -30,6 +30,9 @@ add_executable(gkfs.io
     gkfs.io/write_random.cpp
     gkfs.io/truncate.cpp
     gkfs.io/util/file_compare.cpp
+    gkfs.io/chdir.cpp
+    gkfs.io/getcwd_validate.cpp
+    gkfs.io/symlink.cpp
 )
 
 include(FetchContent)

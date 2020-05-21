@@ -43,6 +43,9 @@ init_commands(CLI::App& app) {
     truncate_init(app);
     // utils
     file_compare_init(app);
+    chdir_init(app);
+    getcwd_validate_init(app);
+    symlink_init(app);
 }
 
 
