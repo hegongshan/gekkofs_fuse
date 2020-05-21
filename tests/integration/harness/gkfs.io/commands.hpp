@@ -59,8 +59,10 @@ writev_init(CLI::App& app);
 void
 pwritev_init(CLI::App& app);
 
+#ifdef STATX_TYPE
 void
 statx_init(CLI::App& app);
+#endif
 
 void
 lseek_init(CLI::App& app);

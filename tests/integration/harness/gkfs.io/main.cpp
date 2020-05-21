@@ -34,7 +34,9 @@ init_commands(CLI::App& app) {
     pwrite_init(app);
     writev_init(app);
     pwritev_init(app);
+    #ifdef STATX_TYPE
     statx_init(app);
+    #endif
     lseek_init(app);
 }
 

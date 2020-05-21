@@ -203,6 +203,18 @@ include_directories(
 )
 
 include(GNUInstallDirs)
+include(CheckSymbolExists)
+
+check_cxx_source_compiles("
+    #include <fcntl.h>
+    #include <sys/stat.h>
+
+    int main() {
+        struct statx buf;
+        statx(AT_FDCWD, \"/foo\", AT_EMPTY_PATH, STATX_BASIC_STATS, &buf);
+        return 0;
+    }
+" GLIBC_HAS_STATX)
 
 # Global components
 add_subdirectory(src/global)
