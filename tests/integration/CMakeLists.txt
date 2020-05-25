@@ -16,12 +16,14 @@ gkfs_add_python_test(
     SOURCE directories/test_directories.py
 )
 
-gkfs_add_python_test(
-    NAME test_status
-    PYTHON_VERSION 3.6
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
-    SOURCE status/test_status.py
-)
+if (GLIBC_HAS_STATX)
+    gkfs_add_python_test(
+        NAME test_status
+        PYTHON_VERSION 3.6
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
+        SOURCE status/test_status.py
+    )
+endif()
 
 gkfs_add_python_test(
     NAME test_operations
@@ -30,12 +32,14 @@ gkfs_add_python_test(
     SOURCE operations/
 )
 
+if (GLIBC_HAS_STATX)
 gkfs_add_python_test(
     NAME test_lseek
     PYTHON_VERSION 3.6
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
     SOURCE position/test_lseek.py
 )
+endif()
 
 gkfs_add_python_test(
     NAME test_shell

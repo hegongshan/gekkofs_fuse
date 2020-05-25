@@ -41,7 +41,9 @@ int gkfs_stat(const std::string& path, struct stat* buf, bool follow_links = tru
 
 // Implementation of statx, it uses the normal stat and maps the information to the statx structure
 // Follow links is true by default 
+#ifdef STATX_TYPE
 int gkfs_statx(int dirfd, const std::string& path, int flags, unsigned int mask,struct statx* buf, bool follow_links = true );
+#endif
 
 int gkfs_statfs(struct statfs* buf);
 

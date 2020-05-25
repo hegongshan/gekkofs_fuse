@@ -142,6 +142,8 @@ void *forwarding_mapper(void* p) {
         // Sleeps for 10 seconds
         sleep(10);
     }
+
+    return nullptr;
 }
 #endif
 

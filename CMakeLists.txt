@@ -142,17 +142,9 @@ if(ENABLE_CLIENT_LOG)
     add_definitions(-DGKFS_ENABLE_LOGGING)
 endif()
 message(STATUS "[gekkofs] Client logging output: ${ENABLE_CLIENT_LOG}")
-option(GKFS_ENABLE_FORWARDING "Enable forwarding mode" OFF)
-if(GKFS_ENABLE_FORWARDING)
-    add_definitions(-DGKFS_ENABLE_FORWARDING)
-endif()
-message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
 
+option(GKFS_ENABLE_FORWARDING "Enable forwarding mode" OFF)
 option(GKFS_ENABLE_AGIOS "Enable AGIOS scheduling library" OFF)
-if(GKFS_ENABLE_AGIOS)
-    add_definitions(-DGKFS_ENABLE_AGIOS)
-endif()
-message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
 set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
 add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
@@ -215,6 +207,18 @@ include_directories(
 )
 
 include(GNUInstallDirs)
+include(CheckSymbolExists)
+
+check_cxx_source_compiles("
+    #include <fcntl.h>
+    #include <sys/stat.h>
+
+    int main() {
+        struct statx buf;
+        statx(AT_FDCWD, \"/foo\", AT_EMPTY_PATH, STATX_BASIC_STATS, &buf);
+        return 0;
+    }
+" GLIBC_HAS_STATX)
 
 # Global components
 add_subdirectory(src/global)

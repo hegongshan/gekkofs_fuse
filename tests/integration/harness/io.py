@@ -318,4 +318,4 @@ class IOParser:
         if command in self.OutputSchemas:
             return self.OutputSchemas[command].loads(output)
         else:
-            raise ValueError(f"Unknown I/O command {cmd}")
+            raise ValueError(f"Unknown I/O command {command}")

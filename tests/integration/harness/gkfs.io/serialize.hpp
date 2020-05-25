@@ -105,6 +105,7 @@ struct adl_serializer<struct ::timespec> {
     }
 };
 
+#ifdef STATX_TYPE
 // ADL specialization for struct ::statx_timestamp type
 template <>
 struct adl_serializer<struct ::statx_timestamp> {
@@ -116,8 +117,7 @@ struct adl_serializer<struct ::statx_timestamp> {
         };
     }
 };
-
-
+#endif
 
 // ADL specialization for struct ::dirent type
 template <>
@@ -162,6 +162,7 @@ struct adl_serializer<struct ::stat> {
     }
 };
 
+#ifdef STATX_TYPE
 // ADL specialization for struct ::statx type
 template <>
 struct adl_serializer<struct ::statx> {
@@ -192,6 +193,7 @@ struct adl_serializer<struct ::statx> {
         };
     }
 };
+#endif
 
 } // namespace nlohmann
 
