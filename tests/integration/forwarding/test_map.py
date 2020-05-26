@@ -16,6 +16,7 @@ from pathlib import Path
 import errno
 import stat
 import os
+import time
 import ctypes
 import sh
 import sys
@@ -25,12 +26,19 @@ from harness.logger import logger
 nonexisting = "nonexisting"
 
 
-def test_read(gkfs_daemon, gkfs_client):
+def test_write_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
+    """Write files from two clients using two daemons"""
 
-    file = gkfs_daemon.mountdir / "file"
+    d00 = gkfwd_daemon_factory.create()
+    d01 = gkfwd_daemon_factory.create()
+
+    c00 = gkfwd_client_factory.create('c-0')
+    c01 = gkfwd_client_factory.create('c-1')
+
+    file = d00.mountdir / "file-c00"
 
     # create a file in gekkofs
-    ret = gkfs_client.open(file,
+    ret = c00.open(file,
                            os.O_CREAT | os.O_WRONLY,
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
@@ -39,13 +47,13 @@ def test_read(gkfs_daemon, gkfs_client):
 
     # write a buffer we know
     buf = b'42'
-    ret = gkfs_client.write(file, buf, len(buf))
+    ret = c00.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
     assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
-    ret = gkfs_client.open(file,
+    ret = c00.open(file,
                            os.O_RDONLY,
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
@@ -53,8 +61,54 @@ def test_read(gkfs_daemon, gkfs_client):
     assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
-    ret = gkfs_client.read(file, len(buf))
+    ret = c00.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+
+    file = d01.mountdir / "file-c01"
+
+    # create a file in gekkofs
+    ret = c01.open(file,
+                           os.O_CREAT | os.O_WRONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 10000
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # write a buffer we know
+    buf = b'42'
+    ret = c01.write(file, buf, len(buf))
+
+    assert ret.retval == len(buf) # Return the number of written bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # open the file to read
+    ret = c01.open(file,
+                           os.O_RDONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 10000
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # read the file
+    ret = c01.read(file, len(buf))
+
+    assert ret.buf == buf
+    assert ret.retval == len(buf) # Return the number of read bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # both files should be there and accessible by the two clients
+    ret = c00.readdir(d00.mountdir)
+
+    assert len(ret.dirents) == 2
+
+    assert ret.dirents[0].d_name == 'file-c00'
+    assert ret.dirents[0].d_type == 8 # DT_REG
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    assert ret.dirents[1].d_name == 'file-c01'
+    assert ret.dirents[1].d_type == 8 # DT_REG
     assert ret.errno == 115 #FIXME: Should be 0!

@@ -20,6 +20,7 @@ from harness.logger import logger, initialize_logging, finalize_logging
 from harness.cli import add_cli_options, set_default_log_formatter
 from harness.workspace import Workspace, FileCreator
 from harness.gkfs import Daemon, Client, ShellClient, FwdDaemon, FwdClient, ShellFwdClient
+from harness.factory import FwdDaemonCreator, FwdClientCreator
 from harness.reporter import report_test_status, report_test_headline, report_assertion_pass
 
 def pytest_configure(config):
@@ -86,12 +87,8 @@ def gkfs_daemon(test_workspace, request):
     """
 
     interface = request.config.getoption('--interface')
+    daemon = Daemon(interface, test_workspace)
 
-    if request.config.getoption('--forwarding') == 'ON':
-        daemon = FwdDaemon(interface, test_workspace)
-    else:
-        daemon = Daemon(interface, test_workspace)
-    
     yield daemon.run()
     daemon.shutdown()
 
@@ -105,9 +102,6 @@ def gkfs_client(test_workspace, request):
 
     interface = request.config.getoption('--interface')
 
-    if request.config.getoption('--forwarding') == 'ON':
-        return FwdClient(test_workspace)
-
     return Client(test_workspace)
 
 @pytest.fixture
@@ -119,9 +113,6 @@ def gkfs_shell(test_workspace, request):
 
     interface = request.config.getoption('--interface')
 
-    if request.config.getoption('--forwarding') == 'ON':
-        return ShellFwdClient(test_workspace)
-
     return ShellClient(test_workspace)
 
 @pytest.fixture
@@ -132,3 +123,24 @@ def file_factory(test_workspace):
     """
 
     return FileCreator(test_workspace)
+
+@pytest.fixture
+def gkfwd_daemon_factory(test_workspace, request):
+    """
+    Returns a factory that can create forwarding daemons
+    in the test workspace.
+    """
+
+    interface = request.config.getoption('--interface')
+
+    return FwdDaemonCreator(interface, test_workspace)
+
+@pytest.fixture
+def gkfwd_client_factory(test_workspace, request):
+    """
+    Sets up a gekkofs client environment so that
+    operations (system calls, library calls, ...) can
+    be requested from a co-running daemon.
+    """
+
+    return FwdClientCreator(test_workspace)

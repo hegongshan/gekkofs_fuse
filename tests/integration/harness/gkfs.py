@@ -26,12 +26,23 @@ gkfs_daemon_cmd = 'gkfs_daemon'
 gkfs_client_cmd = 'gkfs.io'
 gkfs_client_lib_file = 'libgkfs_intercept.so'
 gkfs_hosts_file = 'gkfs_hosts.txt'
-gkfs_forwarding_map_file = 'gkfs_forwarding.map'
 gkfs_daemon_log_file = 'gkfs_daemon.log'
 gkfs_daemon_log_level = '100'
 gkfs_client_log_file = 'gkfs_client.log'
 gkfs_client_log_level = 'all'
 gkfs_daemon_active_log_pattern = r'Startup successful. Daemon is ready.'
+
+gkfwd_daemon_cmd = 'gkfwd_daemon'
+gkfwd_client_cmd = 'gkfs.io'
+gkfwd_client_lib_file = 'libgkfwd_intercept.so'
+gkfwd_hosts_file = 'gkfs_hosts.txt'
+gkfwd_forwarding_map_file = 'gkfs_forwarding.map'
+gkfwd_daemon_log_file = 'gkfwd_daemon.log'
+gkfwd_daemon_log_level = '100'
+gkfwd_client_log_file = 'gkfwd_client.log'
+gkfwd_client_log_level = 'all'
+gkfwd_daemon_active_log_pattern = r'Startup successful. Daemon is ready.'
+
 
 def get_ip_addr(iface):
     return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
@@ -590,7 +601,7 @@ class FwdDaemon:
         self._address = get_ephemeral_address(interface)
         self._workspace = workspace
 
-        self._cmd = sh.Command(gkfs_daemon_cmd, self._workspace.bindirs)
+        self._cmd = sh.Command(gkfwd_daemon_cmd, self._workspace.bindirs)
         self._env = os.environ.copy()
 
         libdirs = ':'.join(
@@ -599,9 +610,9 @@ class FwdDaemon:
 
         self._patched_env = {
             'LD_LIBRARY_PATH'      : libdirs,
-            'GKFS_HOSTS_FILE'      : self.cwd / gkfs_hosts_file,
-            'GKFS_DAEMON_LOG_PATH' : self.logdir / gkfs_daemon_log_file,
-            'GKFS_LOG_LEVEL'       : gkfs_daemon_log_level
+            'GKFS_HOSTS_FILE'      : self.cwd / gkfwd_hosts_file,
+            'GKFS_DAEMON_LOG_PATH' : self.logdir / gkfwd_daemon_log_file,
+            'GKFS_LOG_LEVEL'       : gkfwd_daemon_log_level
         }
         self._env.update(self._patched_env)
 
@@ -668,9 +679,9 @@ class FwdDaemon:
         while perf_counter() - init_time < timeout:
             try:
                 logger.debug(f"checking log file")
-                with open(self.logdir / gkfs_daemon_log_file) as log:
+                with open(self.logdir / gkfwd_daemon_log_file) as log:
                     for line in islice(log, max_lines):
-                        if re.search(gkfs_daemon_active_log_pattern, line) is not None:
+                        if re.search(gkfwd_daemon_active_log_pattern, line) is not None:
                             return
             except FileNotFoundError:
                 # Log is missing, the daemon might have crashed...
@@ -718,6 +729,7 @@ class FwdDaemon:
     def interface(self):
         return self._interface
 
+
 class FwdClient:
     """
     A class to represent a GekkoFS client process with a patched LD_PRELOAD.
@@ -725,15 +737,18 @@ class FwdClient:
     function calls, be them system calls (e.g. read()) or glibc I/O functions
     (e.g. opendir()).
     """
-    def __init__(self, workspace):
+    def __init__(self, workspace, identifier):
         self._parser = IOParser()
         self._workspace = workspace
-        self._cmd = sh.Command(gkfs_client_cmd, self._workspace.bindirs)
+        self._identifier = identifier
+        self._cmd = sh.Command(gkfwd_client_cmd, self._workspace.bindirs)
         self._env = os.environ.copy()
 
+        gkfwd_forwarding_map_file_local = '{}-{}'.format(identifier, gkfwd_forwarding_map_file)
+
         # create the forwarding map file
-        fwd_map_file = open(self.cwd / gkfs_forwarding_map_file, 'w')
-        fwd_map_file.write('{} {}\n'.format(socket.gethostname(), 0))
+        fwd_map_file = open(self.cwd / gkfwd_forwarding_map_file_local, 'w')
+        fwd_map_file.write('{} {}\n'.format(socket.gethostname(), int(identifier.split('-')[1])))
         fwd_map_file.close()
 
         libdirs = ':'.join(
@@ -745,7 +760,7 @@ class FwdClient:
         # it must be found in one (and only one) of the workspace's bindirs
         preloads = []
         for d in self._workspace.bindirs:
-            search_path = Path(d) / gkfs_client_lib_file
+            search_path = Path(d) / gkfwd_client_lib_file
             if search_path.exists():
                 preloads.append(search_path)
 
@@ -765,10 +780,10 @@ class FwdClient:
         self._patched_env = {
             'LD_LIBRARY_PATH'               : libdirs,
             'LD_PRELOAD'                    : self._preload_library,
-            'LIBGKFS_HOSTS_FILE'            : self.cwd / gkfs_hosts_file,
-            'LIBGKFS_FORWARDING_MAP_FILE'   : self.cwd / gkfs_forwarding_map_file,
+            'LIBGKFS_HOSTS_FILE'            : self.cwd / gkfwd_hosts_file,
+            'LIBGKFS_FORWARDING_MAP_FILE'   : self.cwd / gkfwd_forwarding_map_file_local,
             'LIBGKFS_LOG'                   : gkfs_client_log_level,
-            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfs_client_log_file
+            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfwd_client_log_file
         }
 
         self._env.update(self._patched_env)
@@ -817,7 +832,7 @@ class ShellFwdClient:
         self._env = os.environ.copy()
 
         # create the forwarding map file
-        fwd_map_file = open(self.cwd / gkfs_forwarding_map_file, 'w')
+        fwd_map_file = open(self.cwd / gkfwd_forwarding_map_file, 'w')
         fwd_map_file.write('{} {}\n'.format(socket.gethostname(), 0))
         fwd_map_file.close()
 
@@ -830,7 +845,7 @@ class ShellFwdClient:
         # it must be found in one (and only one) of the workspace's bindirs
         preloads = []
         for d in self._workspace.bindirs:
-            search_path = Path(d) / gkfs_client_lib_file
+            search_path = Path(d) / gkfwd_client_lib_file
             if search_path.exists():
                 preloads.append(search_path)
 
@@ -846,10 +861,10 @@ class ShellFwdClient:
         self._patched_env = {
             'LD_LIBRARY_PATH'               : libdirs,
             'LD_PRELOAD'                    : self._preload_library,
-            'LIBGKFS_HOSTS_FILE'            : self.cwd / gkfs_hosts_file,
-            'LIBGKFS_FORWARDING_MAP_FILE'   : self.cwd / gkfs_forwarding_map_file,
-            'LIBGKFS_LOG'                   : gkfs_client_log_level,
-            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfs_client_log_file
+            'LIBGKFS_HOSTS_FILE'            : self.cwd / gkfwd_hosts_file,
+            'LIBGKFS_FORWARDING_MAP_FILE'   : self.cwd / gkfwd_forwarding_map_file,
+            'LIBGKFS_LOG'                   : gkfwd_client_log_level,
+            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfwd_client_log_file
         }
 
         self._env.update(self._patched_env)
@@ -904,7 +919,7 @@ class ShellFwdClient:
 
         intercept_shell: `bool`
             Controls whether the shell executing the script should be
-            executed with LD_PRELOAD=libgkfs_intercept.so (default: True).
+            executed with LD_PRELOAD=libgkfwd_intercept.so (default: True).
 
         timeout: `int`
             How much time, in seconds, we should give the process to complete.
