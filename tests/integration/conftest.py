@@ -100,8 +100,6 @@ def gkfs_client(test_workspace, request):
     be requested from a co-running daemon.
     """
 
-    interface = request.config.getoption('--interface')
-
     return Client(test_workspace)
 
 @pytest.fixture
@@ -110,8 +108,6 @@ def gkfs_shell(test_workspace, request):
     Sets up a gekkofs environment so that shell commands
     (stat, ls, mkdir, etc.) can be issued to a co-running daemon.
     """
-
-    interface = request.config.getoption('--interface')
 
     return ShellClient(test_workspace)
 
