@@ -71,7 +71,8 @@ locate_directory_metadata(const string& path) const {
 ForwarderDistributor::
 ForwarderDistributor(host_t fwhost, unsigned int hosts_size) : 
     fwd_host_(fwhost),
-    hosts_size_(hosts_size)
+    hosts_size_(hosts_size),
+    all_hosts_(hosts_size)
 {}
 
 host_t ForwarderDistributor::
@@ -91,7 +92,7 @@ locate_file_metadata(const std::string& path) const {
 
 std::vector<host_t> ForwarderDistributor::
 locate_directory_metadata(const std::string& path) const {
-    return {fwd_host_};
+    return all_hosts_;
 }
 } // namespace rpc
 } // namespace gkfs

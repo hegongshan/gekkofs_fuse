@@ -72,6 +72,7 @@ public:
 class ForwarderDistributor : public Distributor {
 private:
     host_t fwd_host_;
+    std::vector<host_t> all_hosts_;
     unsigned int hosts_size_;
     std::hash<std::string> str_hash;
 public:

@@ -751,6 +751,13 @@ class FwdClient:
         fwd_map_file.write('{} {}\n'.format(socket.gethostname(), int(identifier.split('-')[1])))
         fwd_map_file.close()
 
+        # record the map so we can modify it latter if needed
+        self._map = self.cwd / gkfwd_forwarding_map_file_local
+
+        # we need to ensure each client will have a distinct log
+        gkfwd_client_log_file_local = '{}-{}'.format(identifier, gkfwd_client_log_file)
+        self._log = self._workspace.logdir / gkfwd_client_log_file_local
+
         libdirs = ':'.join(
                 filter(None, [os.environ.get('LD_LIBRARY_PATH', '')] +
                              [str(p) for p in self._workspace.libdirs]))
@@ -783,7 +790,7 @@ class FwdClient:
             'LIBGKFS_HOSTS_FILE'            : self.cwd / gkfwd_hosts_file,
             'LIBGKFS_FORWARDING_MAP_FILE'   : self.cwd / gkfwd_forwarding_map_file_local,
             'LIBGKFS_LOG'                   : gkfs_client_log_level,
-            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfwd_client_log_file
+            'LIBGKFS_LOG_OUTPUT'            : self._workspace.logdir / gkfwd_client_log_file_local
         }
 
         self._env.update(self._patched_env)
@@ -812,12 +819,21 @@ class FwdClient:
         logger.debug(f"command output: {out.stdout}")
         return self._parser.parse(cmd, out.stdout)
 
+    def remap(self, identifier):
+        fwd_map_file = open(self.cwd / self._map, 'w')
+        fwd_map_file.write('{} {}\n'.format(socket.gethostname(), int(identifier.split('-')[1])))
+        fwd_map_file.close()
+
     def __getattr__(self, name):
         return _proxy_exec(self, name)
 
     @property
     def cwd(self):
         return self._workspace.twd
+
+    @property
+    def log(self):
+        return self._log
 
 class ShellFwdClient:
     """
