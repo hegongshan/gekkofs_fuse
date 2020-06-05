@@ -38,7 +38,7 @@ struct ChunkStat {
 class ChunkStorageException : public std::system_error {
 public:
     ChunkStorageException(const int err_code, const std::string& s) : std::system_error(err_code,
-                                                                                        std::system_category(), s) {};
+                                                                                        std::generic_category(), s) {};
 };
 
 class ChunkStorage {
