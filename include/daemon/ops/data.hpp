@@ -118,7 +118,7 @@ private:
         ABT_eventual eventual;
     };
 
-    std::vector<struct chunk_truncate_args> task_args_;
+    struct chunk_truncate_args task_arg_{};
 
     static void truncate_abt(void* _arg);
 
@@ -128,11 +128,9 @@ public:
 
     explicit ChunkTruncateOperation(const std::string& path);
 
-    ChunkTruncateOperation(const std::string& path, size_t n);
-
     ~ChunkTruncateOperation() = default;
 
-    void truncate(size_t idx, size_t size);
+    void truncate(size_t size);
 
     int wait_for_tasks();
 };

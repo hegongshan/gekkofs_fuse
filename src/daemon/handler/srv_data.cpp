@@ -382,7 +382,7 @@ static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     gkfs::data::ChunkTruncateOperation chunk_op{in.path};
     try {
         // start tasklet for truncate operation
-        chunk_op.truncate(0, in.length);
+        chunk_op.truncate(in.length);
     } catch (const gkfs::data::ChunkMetaOpException& e) {
         // This exception is caused by setup of Argobots variables. If this fails, something is really wrong
         GKFS_DATA->spdlogger()->error("{}() while read_async err '{}'", __func__, e.what());
