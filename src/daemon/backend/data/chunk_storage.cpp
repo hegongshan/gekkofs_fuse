@@ -79,11 +79,12 @@ ChunkStorage::ChunkStorage(string& path, const size_t chunksize) :
     log_ = spdlog::get(LOGGER_NAME);
     assert(log_);
     assert(gkfs::path::is_absolute(root_path_));
-    // Verify that we have sufficient write access
-    // This will throw on error, canceling daemon initialization
-    auto test_file_path = "/.__chunk_dir_test"s;
-    init_chunk_space(test_file_path);
-    destroy_chunk_space(test_file_path);
+    // Verify that we have sufficient access for chunk directories
+    if (access(root_path_.c_str(), W_OK | R_OK) != 0) {
+        auto err_str = fmt::format("{}() Insufficient permissions to create chunk directories in path '{}'", __func__,
+                                   root_path_);
+        throw ChunkStorageException(EPERM, err_str);
+    }
     log_->debug("{}() Chunk storage initialized with path: '{}'", __func__, root_path_);
 }
 
