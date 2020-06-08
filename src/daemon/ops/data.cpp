@@ -177,9 +177,9 @@ ChunkWriteOperation::ChunkWriteOperation(const string& path, size_t n) : ChunkOp
  * @throws ChunkWriteOpException
  */
 void
-ChunkWriteOperation::write_async(size_t idx, const uint64_t chunk_id, const char* bulk_buf_ptr,
-                                 const size_t size,
-                                 const off64_t offset) {
+ChunkWriteOperation::write_nonblock(size_t idx, const uint64_t chunk_id, const char* bulk_buf_ptr,
+                                    const size_t size,
+                                    const off64_t offset) {
     assert(idx < task_args_.size());
     GKFS_DATA->spdlogger()->trace("ChunkWriteOperation::{}() enter: idx '{}' path '{}' size '{}' offset '{}'", __func__,
                                   idx, path_, size, offset);
@@ -300,8 +300,8 @@ ChunkReadOperation::ChunkReadOperation(const string& path, size_t n) : ChunkOper
  * @param offset
  */
 void
-ChunkReadOperation::read_async(size_t idx, const uint64_t chunk_id, char* bulk_buf_ptr, const size_t size,
-                               const off64_t offset) {
+ChunkReadOperation::read_nonblock(size_t idx, const uint64_t chunk_id, char* bulk_buf_ptr, const size_t size,
+                                  const off64_t offset) {
     assert(idx < task_args_.size());
     GKFS_DATA->spdlogger()->trace("ChunkReadOperation::{}() enter: idx '{}' path '{}' size '{}' offset '{}'", __func__,
                                   idx, path_, size, offset);

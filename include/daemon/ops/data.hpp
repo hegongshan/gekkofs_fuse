@@ -161,7 +161,7 @@ public:
 
     ~ChunkWriteOperation() = default;
 
-    void write_async(size_t idx, uint64_t chunk_id, const char* bulk_buf_ptr, size_t size, off64_t offset);
+    void write_nonblock(size_t idx, uint64_t chunk_id, const char* bulk_buf_ptr, size_t size, off64_t offset);
 
     std::pair<int, size_t> wait_for_tasks();
 
@@ -204,7 +204,7 @@ public:
 
     ~ChunkReadOperation() = default;
 
-    void read_async(size_t idx, uint64_t chunk_id, char* bulk_buf_ptr, size_t size, off64_t offset);
+    void read_nonblock(size_t idx, uint64_t chunk_id, char* bulk_buf_ptr, size_t size, off64_t offset);
 
     std::pair<int, size_t>
     wait_for_tasks_and_push_back(const bulk_args& args);

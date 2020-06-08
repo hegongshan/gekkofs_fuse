@@ -167,11 +167,11 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
         }
         try {
             // start tasklet for writing chunk
-            chunk_op.write_async(chnk_id_curr, chnk_ids_host[chnk_id_curr], bulk_buf_ptrs[chnk_id_curr],
-                                 chnk_sizes[chnk_id_curr], (chnk_id_file == in.chunk_start) ? in.offset : 0);
+            chunk_op.write_nonblock(chnk_id_curr, chnk_ids_host[chnk_id_curr], bulk_buf_ptrs[chnk_id_curr],
+                                    chnk_sizes[chnk_id_curr], (chnk_id_file == in.chunk_start) ? in.offset : 0);
         } catch (const gkfs::data::ChunkWriteOpException& e) {
             // This exception is caused by setup of Argobots variables. If this fails, something is really wrong
-            GKFS_DATA->spdlogger()->error("{}() while write_async err '{}'", __func__, e.what());
+            GKFS_DATA->spdlogger()->error("{}() while write_nonblock err '{}'", __func__, e.what());
             return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
         }
         // next chunk
@@ -323,11 +323,11 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
         }
         try {
             // start tasklet for read operation
-            chunk_read_op.read_async(chnk_id_curr, chnk_ids_host[chnk_id_curr], bulk_buf_ptrs[chnk_id_curr],
-                                     chnk_sizes[chnk_id_curr], (chnk_id_file == in.chunk_start) ? in.offset : 0);
+            chunk_read_op.read_nonblock(chnk_id_curr, chnk_ids_host[chnk_id_curr], bulk_buf_ptrs[chnk_id_curr],
+                                        chnk_sizes[chnk_id_curr], (chnk_id_file == in.chunk_start) ? in.offset : 0);
         } catch (const gkfs::data::ChunkReadOpException& e) {
             // This exception is caused by setup of Argobots variables. If this fails, something is really wrong
-            GKFS_DATA->spdlogger()->error("{}() while read_async err '{}'", __func__, e.what());
+            GKFS_DATA->spdlogger()->error("{}() while read_nonblock err '{}'", __func__, e.what());
             return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
         }
         chnk_id_curr++;
@@ -385,7 +385,7 @@ static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
         chunk_op.truncate(in.length);
     } catch (const gkfs::data::ChunkMetaOpException& e) {
         // This exception is caused by setup of Argobots variables. If this fails, something is really wrong
-        GKFS_DATA->spdlogger()->error("{}() while read_async err '{}'", __func__, e.what());
+        GKFS_DATA->spdlogger()->error("{}() while truncate err '{}'", __func__, e.what());
         return gkfs::rpc::cleanup_respond(&handle, &in, &out);
     }
 
