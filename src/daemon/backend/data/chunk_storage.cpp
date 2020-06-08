@@ -11,11 +11,12 @@
   SPDX-License-Identifier: MIT
 */
 
+#include <daemon/backend/data/data_module.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
+#include <daemon/backend/data/file_handle.hpp>
 #include <global/path_util.hpp>
 
 #include <cerrno>
-#include <utility>
 
 #include <boost/filesystem.hpp>
 #include <spdlog/spdlog.h>
@@ -75,8 +76,10 @@ void ChunkStorage::init_chunk_space(const string& file_path) const {
 ChunkStorage::ChunkStorage(string& path, const size_t chunksize) :
         root_path_(path),
         chunksize_(chunksize) {
-    /* Initialize logger */
-    log_ = spdlog::get(LOGGER_NAME);
+    /* Get logger instance and set it for data module and chunk storage */
+    GKFS_DATA_MOD->log(spdlog::get(GKFS_DATA_MOD->LOGGER_NAME));
+    assert(GKFS_DATA_MOD->log());
+    log_ = spdlog::get(GKFS_DATA_MOD->LOGGER_NAME);
     assert(log_);
     assert(gkfs::path::is_absolute(root_path_));
     // Verify that we have sufficient access for chunk directories
@@ -129,25 +132,21 @@ ChunkStorage::write_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id
     init_chunk_space(file_path);
 
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
-    int fd = open(chunk_path.c_str(), O_WRONLY | O_CREAT, 0640);
-    if (fd < 0) {
-        auto err_str = fmt::format("Failed to open chunk file for write. File: '{}', Error: '{}'", chunk_path,
-                                   ::strerror(errno));
+
+    FileHandle fh(open(chunk_path.c_str(), O_WRONLY | O_CREAT, 0640), chunk_path);
+    if (!fh.valid()) {
+        auto err_str = fmt::format("{}() Failed to open chunk file for write. File: '{}', Error: '{}'", __func__,
+                                   chunk_path, ::strerror(errno));
         throw ChunkStorageException(errno, err_str);
     }
 
-    auto wrote = pwrite(fd, buff, size, offset);
+    auto wrote = pwrite(fh.native(), buff, size, offset);
     if (wrote < 0) {
-        auto err_str = fmt::format("Failed to write chunk file. File: '{}', size: '{}', offset: '{}', Error: '{}'",
-                                   chunk_path, size, offset, ::strerror(errno));
+        auto err_str = fmt::format("{}() Failed to write chunk file. File: '{}', size: '{}', offset: '{}', Error: '{}'",
+                                   __func__, chunk_path, size, offset, ::strerror(errno));
         throw ChunkStorageException(errno, err_str);
     }
-
-    // if close fails we just write an entry into the log erroring out
-    if (close(fd) < 0) {
-        log_->warn("Failed to close chunk file after write. File: '{}', Error: '{}'",
-                   chunk_path, ::strerror(errno));
-    }
+    // file is closed via the file handle's destructor.
     return wrote;
 }
 
@@ -169,17 +168,18 @@ ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
                          off64_t offset) const {
     assert((offset + size) <= chunksize_);
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
-    int fd = open(chunk_path.c_str(), O_RDONLY);
-    if (fd < 0) {
-        auto err_str = fmt::format("Failed to open chunk file for read. File: '{}', Error: '{}'", chunk_path,
-                                   ::strerror(errno));
+
+    FileHandle fh(open(chunk_path.c_str(), O_RDONLY), chunk_path);
+    if (!fh.valid()) {
+        auto err_str = fmt::format("{}() Failed to open chunk file for read. File: '{}', Error: '{}'", __func__,
+                                   chunk_path, ::strerror(errno));
         throw ChunkStorageException(errno, err_str);
     }
     size_t tot_read = 0;
     ssize_t read = 0;
 
     do {
-        read = pread64(fd,
+        read = pread64(fh.native(),
                        buf + tot_read,
                        size - tot_read,
                        offset + tot_read);
@@ -209,12 +209,7 @@ ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
         tot_read += read;
     } while (tot_read != size);
 
-
-    // if close fails we just write an entry into the log erroring out
-    if (close(fd) < 0) {
-        log_->warn("Failed to close chunk file after read. File: '{}', Error: '{}'",
-                   chunk_path, ::strerror(errno));
-    }
+    // file is closed via the file handle's destructor.
     return tot_read;
 }
 

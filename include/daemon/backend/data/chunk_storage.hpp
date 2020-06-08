@@ -43,7 +43,6 @@ public:
 
 class ChunkStorage {
 private:
-    static constexpr const char* LOGGER_NAME = "ChunkStorage";
 
     std::shared_ptr<spdlog::logger> log_;
 
