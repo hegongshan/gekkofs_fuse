@@ -63,7 +63,7 @@ public:
     void destroy_chunk_space(const std::string& file_path) const;
 
     ssize_t
-    write_chunk(const std::string& file_path, gkfs::rpc::chnk_id_t chunk_id, const char* buff, size_t size,
+    write_chunk(const std::string& file_path, gkfs::rpc::chnk_id_t chunk_id, const char* buf, size_t size,
                 off64_t offset) const;
 
     ssize_t read_chunk(const std::string& file_path, gkfs::rpc::chnk_id_t chunk_id, char* buf, size_t size,

@@ -117,14 +117,14 @@ void ChunkStorage::destroy_chunk_space(const string& file_path) const {
  *
  * @param file_path
  * @param chunk_id
- * @param buff
+ * @param buf
  * @param size
  * @param offset
  * @param eventual
  * @throws ChunkStorageException (caller will handle eventual signalling)
  */
 ssize_t
-ChunkStorage::write_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id, const char* buff, size_t size,
+ChunkStorage::write_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id, const char* buf, size_t size,
                           off64_t offset) const {
 
     assert((offset + size) <= chunksize_);
@@ -140,14 +140,29 @@ ChunkStorage::write_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id
         throw ChunkStorageException(errno, err_str);
     }
 
-    auto wrote = pwrite(fh.native(), buff, size, offset);
-    if (wrote < 0) {
-        auto err_str = fmt::format("{}() Failed to write chunk file. File: '{}', size: '{}', offset: '{}', Error: '{}'",
-                                   __func__, chunk_path, size, offset, ::strerror(errno));
-        throw ChunkStorageException(errno, err_str);
-    }
+    size_t wrote_total{};
+    ssize_t wrote{};
+
+    do {
+        wrote = pwrite(fh.native(),
+                       buf + wrote_total,
+                       size - wrote_total,
+                       offset + wrote_total);
+
+        if (wrote < 0) {
+            // retry if a signal or anything else has interrupted the read system call
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                continue;
+            auto err_str = fmt::format(
+                    "{}() Failed to write chunk file. File: '{}', size: '{}', offset: '{}', Error: '{}'",
+                    __func__, chunk_path, size, offset, ::strerror(errno));
+            throw ChunkStorageException(errno, err_str);
+        }
+        wrote_total += wrote;
+    } while (wrote_total != size);
+
     // file is closed via the file handle's destructor.
-    return wrote;
+    return wrote_total;
 }
 
 /**
@@ -175,14 +190,14 @@ ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
                                    chunk_path, ::strerror(errno));
         throw ChunkStorageException(errno, err_str);
     }
-    size_t tot_read = 0;
+    size_t read_total = 0;
     ssize_t read = 0;
 
     do {
         read = pread64(fh.native(),
-                       buf + tot_read,
-                       size - tot_read,
-                       offset + tot_read);
+                       buf + read_total,
+                       size - read_total,
+                       offset + read_total);
         if (read == 0) {
             /*
              * A value of zero indicates end-of-file (except if the value of the size argument is also zero).
@@ -194,23 +209,26 @@ ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
         }
 
         if (read < 0) {
+            // retry if a signal or anything else has interrupted the read system call
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                continue;
             auto err_str = fmt::format("Failed to read chunk file. File: '{}', size: '{}', offset: '{}', Error: '{}'",
                                        chunk_path, size, offset, ::strerror(errno));
             throw ChunkStorageException(errno, err_str);
         }
 
 #ifndef NDEBUG
-        if (tot_read + read < size) {
+        if (read_total + read < size) {
             log_->debug("Read less bytes than requested: '{}'/{}. Total read was '{}'. This is not an error!", read,
-                        size - tot_read, size);
+                        size - read_total, size);
         }
 #endif
         assert(read > 0);
-        tot_read += read;
-    } while (tot_read != size);
+        read_total += read;
+    } while (read_total != size);
 
     // file is closed via the file handle's destructor.
-    return tot_read;
+    return read_total;
 }
 
 /**
