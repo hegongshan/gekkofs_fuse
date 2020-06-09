@@ -619,6 +619,7 @@ class FwdDaemon:
     def run(self):
 
         args = [ '--mountdir', self.mountdir,
+                 '--metadir', self.metadir,
                  '--rootdir', self.rootdir,
                  '-l', self._address ]
 
@@ -716,6 +717,10 @@ class FwdDaemon:
     @property
     def rootdir(self):
         return self._workspace.rootdir
+
+    @property
+    def metadir(self):
+        return self._workspace.metadir
 
     @property
     def mountdir(self):

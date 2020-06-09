@@ -198,3 +198,95 @@ def test_two_io_nodes_remap(gkfwd_daemon_factory, gkfwd_client_factory):
                 ion = line.split()[-1]
 
                 assert ion == '1'
+
+def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
+    """Write files from one client and read in the other using two daemons"""
+
+    d00 = gkfwd_daemon_factory.create()
+    d01 = gkfwd_daemon_factory.create()
+
+    c00 = gkfwd_client_factory.create('c-0')
+    c01 = gkfwd_client_factory.create('c-1')
+
+    file = d00.mountdir / "file-c00"
+
+    # create a file in gekkofs
+    ret = c00.open(file,
+                           os.O_CREAT | os.O_WRONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 10000
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # write a buffer we know
+    buf = b'42'
+    ret = c00.write(file, buf, len(buf))
+
+    assert ret.retval == len(buf) # Return the number of written bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # open the file to read
+    ret = c00.open(file,
+                           os.O_RDONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 10000
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # read the file
+    ret = c00.read(file, len(buf))
+
+    assert ret.buf == buf
+    assert ret.retval == len(buf) # Return the number of read bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # open the file to read
+    ret = c01.open(file,
+                           os.O_RDONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 10000
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # read the file
+    ret = c01.read(file, len(buf))
+
+    assert ret.buf == buf
+    assert ret.retval == len(buf) # Return the number of read bytes
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # the file should be there and accessible by the two clients
+    ret = c00.readdir(d00.mountdir)
+
+    assert len(ret.dirents) == 1
+
+    assert ret.dirents[0].d_name == 'file-c00'
+    assert ret.dirents[0].d_type == 8 # DT_REG
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    # the file should be there and accessible by the two clients
+    ret = c01.readdir(d01.mountdir)
+
+    assert len(ret.dirents) == 1
+
+    assert ret.dirents[0].d_name == 'file-c00'
+    assert ret.dirents[0].d_type == 8 # DT_REG
+    assert ret.errno == 115 #FIXME: Should be 0!
+
+    with open(c00.log) as f:
+        lines = f.readlines()
+
+        for line in lines:
+            if 'Forward to' in line:
+                ion = line.split()[-1]
+
+                assert ion == '0'
+
+    with open(c01.log) as f:
+        lines = f.readlines()
+
+        for line in lines:
+            if 'Forward to' in line:
+                ion = line.split()[-1]
+
+                assert ion == '1'

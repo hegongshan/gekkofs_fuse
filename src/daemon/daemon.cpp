@@ -416,11 +416,26 @@ int main(int argc, const char* argv[]) {
 
     if (vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
+
+        #ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+        #else
         bfs::create_directories(metadir);
         GKFS_DATA->metadir(bfs::canonical(metadir).native());
+        #endif
     } else {
         // use rootdir as metadata dir
+        auto metadir = vm["rootdir"].as<string>();
+
+        #ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+        #else
         GKFS_DATA->metadir(GKFS_DATA->rootdir());
+        #endif
     }
 
     try {

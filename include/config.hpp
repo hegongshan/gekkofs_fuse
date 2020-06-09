@@ -52,11 +52,7 @@ constexpr auto use_blocks = false;
 } // namespace metadata
 
 namespace rpc {
-#ifdef GKFS_ENABLE_FORWARDING
-constexpr auto chunksize = 107374182400; // in bytes (e.g., 107374182400 == 100GB)
-#else
 constexpr auto chunksize = 524288; // in bytes (e.g., 524288 == 512KB)
-#endif
 //size of preallocated buffer to hold directory entries in rpc call
 constexpr auto dirents_buff_size = (8 * 1024 * 1024); // 8 mega
 /*

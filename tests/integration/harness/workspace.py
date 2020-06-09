@@ -48,6 +48,7 @@ class Workspace:
         self._libdirs = libdirs
         self._logdir = self._twd / 'logs'
         self._rootdir = self._twd / 'root'
+        self._metadir = self._twd / 'meta'
         self._mountdir = self._twd / 'mnt'
         self._tmpdir = self._twd / 'tmp'
 
@@ -75,6 +76,10 @@ class Workspace:
     @property
     def rootdir(self):
         return self._rootdir
+
+    @property
+    def metadir(self):
+        return self._metadir
 
     @property
     def mountdir(self):
