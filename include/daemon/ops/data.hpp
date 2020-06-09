@@ -132,7 +132,7 @@ public:
 
     void truncate(size_t size);
 
-    int wait_for_tasks();
+    int wait_for_task();
 };
 
 class ChunkWriteOperation : public ChunkOperation<ChunkWriteOperation> {

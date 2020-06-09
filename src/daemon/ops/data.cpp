@@ -25,7 +25,6 @@ using namespace std;
 namespace gkfs {
 namespace data {
 
-
 /* ------------------------------------------------------------------------
  * -------------------------- TRUNCATE ------------------------------------
  * ------------------------------------------------------------------------*/
@@ -64,7 +63,7 @@ void ChunkTruncateOperation::truncate_abt(void* _arg) {
                                       size);
         err_response = EIO;
     }
-    ABT_eventual_set(arg->eventual, &err_response, sizeof(int));
+    ABT_eventual_set(arg->eventual, &err_response, sizeof(err_response));
 }
 
 void ChunkTruncateOperation::clear_task_args() {
@@ -81,7 +80,7 @@ void ChunkTruncateOperation::truncate(size_t size) {
     assert(!task_eventuals_[0]);
     GKFS_DATA->spdlogger()->trace("ChunkTruncateOperation::{}() enter: path '{}' size '{}'", __func__, path_,
                                   size);
-
+    // sizeof(int) comes from truncate's return type
     auto abt_err = ABT_eventual_create(sizeof(int), &task_eventuals_[0]); // truncate file return value
     if (abt_err != ABT_SUCCESS) {
         auto err_str = fmt::format("ChunkTruncateOperation::{}() Failed to create ABT eventual with abt_err '{}'",
@@ -104,7 +103,7 @@ void ChunkTruncateOperation::truncate(size_t size) {
 }
 
 
-int ChunkTruncateOperation::wait_for_tasks() {
+int ChunkTruncateOperation::wait_for_task() {
     GKFS_DATA->spdlogger()->trace("ChunkTruncateOperation::{}() enter: path '{}'", __func__, path_);
     int trunc_err = 0;
 
@@ -155,7 +154,7 @@ void ChunkWriteOperation::write_file_abt(void* _arg) {
                                       path);
         wrote = -EIO;
     }
-    ABT_eventual_set(arg->eventual, &wrote, sizeof(ssize_t));
+    ABT_eventual_set(arg->eventual, &wrote, sizeof(wrote));
 }
 
 void ChunkWriteOperation::clear_task_args() {
@@ -183,7 +182,7 @@ ChunkWriteOperation::write_nonblock(size_t idx, const uint64_t chunk_id, const c
     assert(idx < task_args_.size());
     GKFS_DATA->spdlogger()->trace("ChunkWriteOperation::{}() enter: idx '{}' path '{}' size '{}' offset '{}'", __func__,
                                   idx, path_, size, offset);
-
+    // sizeof(ssize_t) comes from pwrite's return type
     auto abt_err = ABT_eventual_create(sizeof(ssize_t), &task_eventuals_[idx]); // written file return value
     if (abt_err != ABT_SUCCESS) {
         auto err_str = fmt::format("ChunkWriteOperation::{}() Failed to create ABT eventual with abt_err '{}'",
@@ -279,7 +278,7 @@ void ChunkReadOperation::read_file_abt(void* _arg) {
                                       path);
         read = -EIO;
     }
-    ABT_eventual_set(arg->eventual, &read, sizeof(ssize_t));
+    ABT_eventual_set(arg->eventual, &read, sizeof(read));
 }
 
 void ChunkReadOperation::clear_task_args() {
@@ -305,7 +304,7 @@ ChunkReadOperation::read_nonblock(size_t idx, const uint64_t chunk_id, char* bul
     assert(idx < task_args_.size());
     GKFS_DATA->spdlogger()->trace("ChunkReadOperation::{}() enter: idx '{}' path '{}' size '{}' offset '{}'", __func__,
                                   idx, path_, size, offset);
-
+    // sizeof(ssize_t) comes from pread's return type
     auto abt_err = ABT_eventual_create(sizeof(ssize_t), &task_eventuals_[idx]); // read file return value
     if (abt_err != ABT_SUCCESS) {
         auto err_str = fmt::format("ChunkReadOperation::{}() Failed to create ABT eventual with abt_err '{}'",

@@ -275,7 +275,7 @@ void ChunkStorage::trim_chunk_space(const string& file_path, gkfs::rpc::chnk_id_
 void ChunkStorage::truncate_chunk_file(const string& file_path, gkfs::rpc::chnk_id_t chunk_id, off_t length) {
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
     assert(length > 0 && static_cast<gkfs::rpc::chnk_id_t>(length) <= chunksize_);
-    int ret = truncate(chunk_path.c_str(), length);
+    auto ret = truncate(chunk_path.c_str(), length);
     if (ret == -1) {
         auto err_str = fmt::format("Failed to truncate chunk file. File: '{}', Error: '{}'", chunk_path,
                                    ::strerror(errno));

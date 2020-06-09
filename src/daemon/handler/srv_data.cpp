@@ -390,7 +390,7 @@ static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     }
 
     // wait and get output
-    out.err = chunk_op.wait_for_tasks();
+    out.err = chunk_op.wait_for_task();
 
     GKFS_DATA->spdlogger()->debug("{}() Sending output response '{}'", __func__, out.err);
     return gkfs::rpc::cleanup_respond(&handle, &in, &out);
