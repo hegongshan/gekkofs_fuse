@@ -403,7 +403,12 @@ int main(int argc, const char* argv[]) {
 
     assert(vm.count("rootdir"));
     auto rootdir = vm["rootdir"].as<string>();
+    #ifdef GKFS_ENABLE_FORWARDING
+    // In forwarding mode, the backend is shared
+    auto rootdir_path = bfs::path(rootdir);
+    #else
     auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
+    #endif
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
                                   __func__, rootdir_path.native());
     bfs::create_directories(rootdir_path);

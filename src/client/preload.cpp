@@ -39,6 +39,9 @@ pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 #ifdef GKFS_ENABLE_FORWARDING
 pthread_t mapper;
 bool forwarding_running;
+
+pthread_mutex_t remap_mutex;
+pthread_cond_t remap_signal;
 #endif
 
 inline void exit_error_msg(int errcode, const string& msg) {
@@ -130,6 +133,10 @@ void init_ld_environment_() {
 
 #ifdef GKFS_ENABLE_FORWARDING
 void *forwarding_mapper(void* p) {
+    struct timespec timeout;
+    clock_gettime(CLOCK_REALTIME, &timeout);
+    timeout.tv_sec += 10; // 10 seconds
+
     while (forwarding_running) {
         try {
             gkfs::util::load_forwarding_map();
@@ -140,7 +147,10 @@ void *forwarding_mapper(void* p) {
         }
 
         // Sleeps for 10 seconds
-        sleep(10);
+        // sleep(10);
+        pthread_mutex_lock(&remap_mutex);
+        pthread_cond_timedwait(&remap_signal, &remap_mutex, &timeout);
+        pthread_mutex_unlock(&remap_mutex);
     }
 
     return nullptr;
@@ -158,6 +168,8 @@ void init_forwarding_mapper() {
 #ifdef GKFS_ENABLE_FORWARDING
 void destroy_forwarding_mapper() {
     forwarding_running = false;
+
+    pthread_cond_signal(&remap_signal);
 
     pthread_join(mapper, NULL);
 }

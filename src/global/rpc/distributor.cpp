@@ -72,8 +72,9 @@ ForwarderDistributor::
 ForwarderDistributor(host_t fwhost, unsigned int hosts_size) : 
     fwd_host_(fwhost),
     hosts_size_(hosts_size),
-    all_hosts_(hosts_size)
-{}
+    all_hosts_(hosts_size) {
+    ::iota(all_hosts_.begin(), all_hosts_.end(), 0);
+}
 
 host_t ForwarderDistributor::
 localhost() const {
