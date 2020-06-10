@@ -15,7 +15,9 @@
 #define IO_BINARY_BUFFER_HPP
 
 #include <nlohmann/json.hpp>
+#include <utility>
 #include <fmt/format.h>
+
 
 namespace io {
 
@@ -30,14 +32,16 @@ struct buffer {
         std::copy(s.begin(), s.end(), std::back_inserter(m_data));
     }
 
+    buffer(std::vector<uint8_t> data) : m_data(std::move(data)) {}
+
     bool
-    operator==(nullptr_t) const { 
-        return m_data.size() == 0;
+    operator==(nullptr_t) const {
+        return m_data.empty();
     }
 
     bool
-    operator!=(nullptr_t) const { 
-        return m_data.size() != 0;
+    operator!=(nullptr_t) const {
+        return !m_data.empty();
     }
 
     auto

@@ -66,7 +66,7 @@ write_exec(const write_options& opts) {
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("write(pathname=\"{}\", buf=\"{}\" count={}) = {}, errno: {} [{}]\n", 
+            fmt::print("open(pathname=\"{}\", buf=\"{}\" count={}) = {}, errno: {} [{}]\n",
                     opts.pathname, opts.data, opts.count, fd, errno, ::strerror(errno));
             return;
         }

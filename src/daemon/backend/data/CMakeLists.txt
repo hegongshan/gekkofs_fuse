@@ -16,6 +16,7 @@ target_link_libraries(storage
     PRIVATE
     spdlog
     Boost::filesystem
+    -ldl
     )
 
 #target_include_directories(storage
