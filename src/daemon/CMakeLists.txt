@@ -95,11 +95,9 @@ if(GKFS_ENABLE_FORWARDING)
         )
     add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
 
-    if(GKFS_ENABLE_FORWARDING)
-        set_target_properties(gkfwd_daemon
-            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
-        )
-    endif()
+    set_target_properties(gkfwd_daemon
+        PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
+    )
     message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
 
     if(GKFS_ENABLE_AGIOS)
