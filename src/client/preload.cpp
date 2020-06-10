@@ -146,8 +146,6 @@ void *forwarding_mapper(void* p) {
             exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
         }
 
-        // Sleeps for 10 seconds
-        // sleep(10);
         pthread_mutex_lock(&remap_mutex);
         pthread_cond_timedwait(&remap_signal, &remap_mutex, &timeout);
         pthread_mutex_unlock(&remap_mutex);
