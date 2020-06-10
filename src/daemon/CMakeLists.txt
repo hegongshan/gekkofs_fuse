@@ -95,16 +95,17 @@ if(GKFS_ENABLE_FORWARDING)
         )
     add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
 
-    set_target_properties(gkfwd_daemon
-        PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
-    )
-    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
-
     if(GKFS_ENABLE_AGIOS)
         set_target_properties(gkfwd_daemon
-            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_AGIOS
+            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING -DGKFS_ENABLE_AGIOS
         )
+    else()
+        set_target_properties(gkfwd_daemon
+            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
+        )    
     endif()
+
+    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
     target_link_libraries(gkfwd_daemon
