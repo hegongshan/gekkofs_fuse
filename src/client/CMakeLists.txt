@@ -133,16 +133,20 @@ if(GKFS_ENABLE_FORWARDING)
 
     add_library(gkfwd_intercept SHARED ${FWD_PRELOAD_SRC} ${FWD_PRELOAD_HEADERS})
 
-    set_target_properties(gkfwd_intercept
-        PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
-    )
-    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
-
     if(GKFS_ENABLE_AGIOS)
-        set_target_properties(gkfwd_intercept
-            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_AGIOS
+        target_compile_definitions(gkfwd_daemon
+            PUBLIC
+            GKFS_ENABLE_FORWARDING
+            DGKFS_ENABLE_AGIOS
+        )
+    else()
+        target_compile_definitions(gkfwd_daemon
+            PUBLIC
+            GKFS_ENABLE_FORWARDING
         )
     endif()
+
+    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
     target_link_libraries(gkfwd_intercept
