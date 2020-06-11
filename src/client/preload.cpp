@@ -137,11 +137,17 @@ void *forwarding_mapper(void* p) {
     clock_gettime(CLOCK_REALTIME, &timeout);
     timeout.tv_sec += 10; // 10 seconds
 
+    int previous = -1;
+
     while (forwarding_running) {
         try {
             gkfs::util::load_forwarding_map();
 
-            LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+            if (previous != CTX->fwd_host_id()) {
+                LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+
+                previous = CTX->fwd_host_id();
+            }
         } catch (std::exception& e) {
             exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
         }
