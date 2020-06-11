@@ -97,11 +97,14 @@ if(GKFS_ENABLE_FORWARDING)
 
     if(GKFS_ENABLE_AGIOS)
         set_target_properties(gkfwd_daemon
-            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING -DGKFS_ENABLE_AGIOS
+            PROPERTIES
+            COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
+            COMPILE_FLAGS -DGKFS_ENABLE_AGIOS
         )
     else()
         set_target_properties(gkfwd_daemon
-            PROPERTIES COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
+            PROPERTIES
+            COMPILE_FLAGS -DGKFS_ENABLE_FORWARDING
         )    
     endif()
 
