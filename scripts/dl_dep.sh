@@ -9,7 +9,7 @@ NA_LAYER=""
 DEP_CONFIG=""
 VERBOSE=false
 
-VALID_DEP_OPTIONS="mogon2 mogon1 direct all"
+VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi-verbs" "mercury" "argobots" "margo" "rocksdb"
@@ -21,6 +21,11 @@ MOGON2_DEPS=(
     "syscall_intercept-glibc3" "date" "psm2"
 )
 
+NGIO_DEPS=(
+    "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb"
+    "syscall_intercept" "date" "psm2"
+
+)
 DIRECT_DEPS=(
   "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
@@ -57,19 +62,27 @@ list_dependencies() {
     for d in "${MOGON1_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
     echo -n "  Mogon 2: "
     for d in "${MOGON2_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
+    echo -n "  NGIO: "
+    for d in "${NGIO_DEPS[@]}"; do
+        echo -n "$d "
+    done
+	echo
     echo -n "  Direct GekkoFS dependencies: "
     for d in "${DIRECT_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
     echo -n "  All: "
     for d in "${ALL_DEPS[@]}"; do
         echo -n "$d "
     done
-    echo ""
+    echo 
 }
 
 check_dependency() {
@@ -178,7 +191,7 @@ optional arguments:
                                 defaults to 'ofi'
         -c <CONFIG>, --config <CONFIG>
                                 allows additional configurations, e.g., for specific clusters
-                                supported values: {mogon2, direct, all}
+                                supported values: {mogon2, mogon1, ngio, direct, all}
                                 defaults to 'direct'
         -d <DEPENDENCY>, --dependency <DEPENDENCY>
                                 download a specific dependency and ignore --config setting. If unspecified
@@ -263,6 +276,10 @@ mogon1)
 mogon2)
   DEP_CONFIG=("${MOGON2_DEPS[@]}")
   [[ -z "${DEPENDENCY}" ]] && echo "'Mogon2' dependencies are downloaded"
+  ;;
+ngio)
+  DEP_CONFIG=("${NGIO_DEPS[@]}")
+  [[ -z "${DEPENDENCY}" ]] && echo "'NGIO' dependencies are downloaded"
   ;;
 all)
   DEP_CONFIG=("${ALL_DEPS[@]}")
