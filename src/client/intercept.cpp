@@ -726,6 +726,10 @@ int hook(long syscall_number,
                                               reinterpret_cast<struct statfs*>(arg1));
             break;
 
+        case SYS_fsync:
+            *result = gkfs::hook::hook_fsync(static_cast<unsigned int>(arg0));
+            break;
+
         default:
             // ignore any other syscalls, i.e.: pass them on to the kernel
             // (syscalls forwarded to the kernel that return are logged in 

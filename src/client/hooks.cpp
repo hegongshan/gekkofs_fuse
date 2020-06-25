@@ -814,5 +814,19 @@ int hook_fstatfs(unsigned int fd, struct statfs* buf) {
     return syscall_no_intercept(SYS_fstatfs, fd, buf);
 }
 
+/* The function should broadcast a flush message (pmem_persist i.e.) if the application needs the capabilities*/
+int hook_fsync(unsigned int fd) {
+
+    LOG(DEBUG, "{}() called with fd: {}",
+        __func__, fd);
+
+    if (CTX->file_map()->exist(fd)) {
+        errno = 0;
+        return 0;
+    }
+
+    return syscall_no_intercept(SYS_fsync, fd);
+}
+
 } // namespace hook
 } // namespace gkfs
