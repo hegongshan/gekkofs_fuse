@@ -50,11 +50,11 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
     assert ret.errno == 115 #FIXME: Should be 0!
 
     # test statx on existing dir
-    ret = gkfs_client.statx(0, topdir, 0, 0)
+     # test stat on existing dir
+    ret = gkfs_client.stat(topdir)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
-    assert stat.S_ISDIR(ret.statbuf.stx_mode)
+    assert (stat.S_ISDIR(ret.statbuf.st_mode))
 
     ret = gkfs_client.open(file_a,
                    os.O_CREAT,
@@ -63,13 +63,12 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
     assert ret.retval != -1
 
 
-    # test statx on existing file
-    ret = gkfs_client.statx(0, file_a, 0, 0)
+    # test stat on existing file
+    ret = gkfs_client.stat(file_a)
 
     assert ret.retval == 0
-    assert (stat.S_ISDIR(ret.statbuf.stx_mode)==0)
-    assert (ret.statbuf.stx_size == 0)
-
+    assert (stat.S_ISDIR(ret.statbuf.st_mode)==0)
+    assert (ret.statbuf.st_size == 0)
 
     # Step 1 - small sizes
     
