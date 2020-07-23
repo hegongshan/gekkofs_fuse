@@ -129,24 +129,30 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
 
     // Small files
     if (static_cast<std::size_t>(size / gkfs::config::rpc::chunksize) < CTX->hosts().size()) {
-
-        auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
+        const auto metadata_host_id = CTX->distributor()->locate_file_metadata(path);
+        const auto endp_metadata = CTX->hosts().at(metadata_host_id);
 
         try {
-            LOG(DEBUG, "Sending RPC to host: {}", endp.to_string());
+            LOG(DEBUG, "Sending RPC to host: {}", endp_metadata.to_string());
             gkfs::rpc::remove::input in(path);
-            handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp, in));
+            handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp_metadata, in));
 
             uint64_t chnk_start = 0;
             uint64_t chnk_end = size / gkfs::config::rpc::chunksize;
 
             for (uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
-                const auto target = CTX->hosts().at(
-                        CTX->distributor()->locate_data(path, chnk_id));
+                const auto chnk_host_id = CTX->distributor()->locate_data(path, chnk_id);
+                /*
+                 * If the chnk host matches the metadata host the remove request as already been sent
+                 * as part of the metadata remove request.
+                 */
+                if (chnk_host_id == metadata_host_id)
+                    continue;
+                const auto endp_chnk = CTX->hosts().at(chnk_host_id);
 
-                LOG(DEBUG, "Sending RPC to host: {}", target.to_string());
+                LOG(DEBUG, "Sending RPC to host: {}", endp_chnk.to_string());
 
-                handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(target, in));
+                handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp_chnk, in));
             }
         } catch (const std::exception& ex) {
             LOG(ERROR, "Failed to send reduced remove requests");
