@@ -19,6 +19,7 @@
 #include <client/intercept.hpp>
 
 #include <global/rpc/distributor.hpp>
+#include <global/global_defs.hpp>
 
 #include <fstream>
 
@@ -64,6 +65,9 @@ bool init_hermes_client(const std::string& transport_prefix) {
 #if USE_SHM
         opts |= hermes::use_auto_sm;
 #endif
+        if (gkfs::rpc::protocol::ofi_psm2 == string(RPC_PROTOCOL)) {
+            opts |= hermes::force_no_block_progress;
+        }
 
         ld_network_service =
                 std::make_unique<hermes::async_engine>(
