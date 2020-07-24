@@ -331,6 +331,8 @@ if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
         #libfabric
         CURR=${SOURCE}/libfabric
         prepare_build_dir ${CURR}
+        cd ${CURR}
+        ./autogen.sh
         cd ${CURR}/build
         OFI_CONFIG="../configure --prefix=${INSTALL} --enable-tcp=yes"
         if check_dependency "verbs" "${DEP_CONFIG[@]}"; then
