@@ -82,7 +82,6 @@ check_dependency() {
       if echo "${DEPENDENCY}" | grep -q "${DEP}"; then
         return
       fi
-#      [[ "${DEPENDENCY}" == "${DEP}" ]] && return
   else
       # if not check if dependency is part of dependency config
       for e in "${DEP_CONFIG[@]}"; do
@@ -333,9 +332,13 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     fi
 fi
 
+if check_dependency "psm2" "${DEP_CONFIG[@]}"; then
+    wgetdeps "psm2" "https://github.com/intel/opa-psm2/archive/PSM2_11.2.86.tar.gz" &
+fi
+
 # get Mercury
 if check_dependency "mercury" "${DEP_CONFIG[@]}"; then
-    clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "fd410dfb9852b2b98d21113531f3058f45bfcd64"  "--recurse-submodules" &
+    clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "41caa143a07ed179a3149cac4af0dc7aa3f946fd" "--recurse-submodules" &
 fi
 
 # get Argobots
@@ -345,7 +348,7 @@ fi
 
 # get Margo
 if check_dependency "margo" "${DEP_CONFIG[@]}"; then
-    clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "016dbdce22da3fe4f97b46c20a53bced9370a217" &
+    clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "v0.6.3" &
 fi
 
 # get rocksdb

@@ -18,7 +18,7 @@ MOGON1_DEPS=(
 
 MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date"
+    "syscall_intercept" "date" "psm2"
 )
 
 DIRECT_DEPS=(
@@ -337,6 +337,10 @@ if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
         OFI_CONFIG="../configure --prefix=${INSTALL} --enable-tcp=yes"
         if check_dependency "verbs" "${DEP_CONFIG[@]}"; then
             OFI_CONFIG="${OFI_CONFIG} --enable-verbs=yes"
+        elif check_dependency "psm2" "${DEP_CONFIG[@]}"; then
+            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes --with-psm2-src=${SOURCE}/psm2"
+        elif check_dependency "psm2-system" "${DEP_CONFIG[@]}"; then
+            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes"
         fi
          ${OFI_CONFIG}
         make -j${CORES}
