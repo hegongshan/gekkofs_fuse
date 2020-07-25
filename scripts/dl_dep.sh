@@ -17,8 +17,8 @@ MOGON1_DEPS=(
 )
 
 MOGON2_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date"
+    "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb-experimental"
+    "syscall_intercept-glibc3" "date" "psm2"
 )
 
 DIRECT_DEPS=(
@@ -119,7 +119,7 @@ clonedeps() {
     fi
     # fix the version
     cd "${SOURCE}/${FOLDER}" && git checkout -qf ${COMMIT}
-    echo "${ACTION} ${FOLDER} [$COMMIT]"
+    echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS}'"
 
     # apply patch if provided
     if [[ -n "${PATCH}" ]]; then
@@ -150,7 +150,7 @@ wgetdeps() {
     curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
     tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1
     rm -f "$FILENAME"
-    echo "Downloaded ${FOLDER}"
+    echo "Downloaded '${URL}' to '${FOLDER}'"
 }
 
 usage_short() {
@@ -323,13 +323,13 @@ fi
 # get libfabric
 if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     if check_dependency "ofi-experimental" "${DEP_CONFIG[@]}"; then
-        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.9.1/libfabric-1.9.1.tar.bz2" &
+        clonedeps "libfabric" "https://github.com/ofiwg/libfabric.git" "" "-b v1.9.1" &
     elif check_dependency "ofi-verbs" "${DEP_CONFIG[@]}"; then
         # libibverbs 1.2.1-1 used on mogon 1i (installed on system) which is linked to libfabric
         # libfabric 1.8 random RPCs fail to be send. 1.9 RPC client cannot be started when in an MPI environment
-        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.7.2/libfabric-1.7.2.tar.gz" &
+        clonedeps "libfabric" "https://github.com/ofiwg/libfabric.git" "" "-b v1.7.2" &
     elif check_dependency "ofi" "${DEP_CONFIG[@]}"; then
-        wgetdeps "libfabric" "https://github.com/ofiwg/libfabric/releases/download/v1.8.1/libfabric-1.8.1.tar.bz2" &
+        clonedeps "libfabric" "https://github.com/ofiwg/libfabric.git" "" "-b v1.8.1" &
     fi
 fi
 
@@ -350,14 +350,20 @@ fi
 
 # get rocksdb
 if check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
-    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
-elif check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
-    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.7.3.tar.gz" &
+    if check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
+        wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.11.4.tar.gz" &
+    else
+        wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
+    fi
 fi
 
 # get syscall_intercept
 if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
-    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
+    if check_dependency "syscall_intercept-glibc3" "${DEP_CONFIG[@]}"; then
+        clonedeps "syscall_intercept" "https://github.com/GBuella/syscall_intercept" "ea124fb4ab9eb56bc22a0e94f2b90928c7a88e8c" "-b add_endbr64_and_lea" "syscall_intercept.patch" &
+    else
+        clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
+    fi
 fi
 
 # get date
