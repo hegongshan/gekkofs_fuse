@@ -103,8 +103,7 @@ void init_rpc_server(const string& protocol_port) {
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
-    // IMPORTANT: this struct needs to be zeroed before use
-    struct hg_init_info hg_options = {};
+    struct hg_init_info hg_options = HG_INIT_INFO_INITIALIZER;
 #if USE_SHM
     hg_options.auto_sm = HG_TRUE;
 #else
@@ -112,6 +111,8 @@ void init_rpc_server(const string& protocol_port) {
 #endif
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
+    if (gkfs::rpc::protocol::ofi_psm2 == string(RPC_PROTOCOL))
+        hg_options.na_init_info.progress_mode = NA_NO_BLOCK;
     // Start Margo (this will also initialize Argobots and Mercury internally)
     auto mid = margo_init_opt(protocol_port.c_str(),
                               MARGO_SERVER_MODE,
