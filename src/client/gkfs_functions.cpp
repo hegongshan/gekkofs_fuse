@@ -271,7 +271,13 @@ int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
 #endif
 
 int gkfs_statfs(struct statfs* buf) {
-    auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
+    gkfs::rpc::ChunkStat blk_stat{};
+    try {
+        blk_stat = gkfs::rpc::forward_get_chunk_stat();
+    } catch (const std::exception& e) {
+        LOG(ERROR, "{}() Failure with error: '{}'", e.what());
+        return -1;
+    }
     buf->f_type = 0;
     buf->f_bsize = blk_stat.chunk_size;
     buf->f_blocks = blk_stat.chunk_total;
@@ -288,8 +294,13 @@ int gkfs_statfs(struct statfs* buf) {
 }
 
 int gkfs_statvfs(struct statvfs* buf) {
-    gkfs::preload::init_ld_env_if_needed();
-    auto blk_stat = gkfs::rpc::forward_get_chunk_stat();
+    gkfs::rpc::ChunkStat blk_stat{};
+    try {
+        blk_stat = gkfs::rpc::forward_get_chunk_stat();
+    } catch (const std::exception& e) {
+        LOG(ERROR, "{}() Failure with error: '{}'", e.what());
+        return -1;
+    }
     buf->f_bsize = blk_stat.chunk_size;
     buf->f_blocks = blk_stat.chunk_total;
     buf->f_bfree = blk_stat.chunk_free;

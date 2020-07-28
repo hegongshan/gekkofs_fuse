@@ -269,7 +269,7 @@ void initialize_loggers() {
     auto logger_names = std::vector<std::string>{
             "main",
             "MetadataDB",
-            "ChunkStorage",
+            "DataModule",
     };
 
     gkfs::log::setup(logger_names, level, path);
@@ -347,9 +347,8 @@ int main(int argc, const char* argv[]) {
         }
     } else {
         if (RPC_PROTOCOL != string(gkfs::rpc::protocol::ofi_verbs))
-            addr = get_my_hostname(true);
+            addr = gkfs::rpc::get_my_hostname(true);
     }
-
     GKFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
 
     string hosts_file;
