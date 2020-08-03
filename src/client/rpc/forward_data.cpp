@@ -26,13 +26,25 @@ using namespace std;
 namespace gkfs {
 namespace rpc {
 
+/*
+ * This file includes all metadata RPC calls.
+ * NOTE: No errno is defined here!
+ */
+
 // TODO If we decide to keep this functionality with one segment, the function can be merged mostly.
 // Code is mostly redundant
 
 /**
- * Sends an RPC request to a specific node to pull all chunks that belong to him
+ * Send an RPC request to write from a buffer.
+ * @param path
+ * @param buf
+ * @param append_flag
+ * @param in_offset
+ * @param write_size
+ * @param updated_metadentry_size
+ * @return pair<error code, written size>
  */
-ssize_t forward_write(const string& path, const void* buf, const bool append_flag,
+pair<int, ssize_t> forward_write(const string& path, const void* buf, const bool append_flag,
                       const off64_t in_offset, const size_t write_size,
                       const int64_t updated_metadentry_size) {
 
@@ -90,8 +102,7 @@ ssize_t forward_write(const string& path, const void* buf, const bool append_fla
 
     } catch (const std::exception& ex) {
         LOG(ERROR, "Failed to expose buffers for RMA");
-        errno = EBUSY;
-        return -1;
+        return make_pair(EBUSY, 0);
     }
 
     std::vector<hermes::rpc_handle<gkfs::rpc::write_data>> handles;
@@ -152,15 +163,14 @@ ssize_t forward_write(const string& path, const void* buf, const bool append_fla
         } catch (const std::exception& ex) {
             LOG(ERROR, "Unable to send non-blocking rpc for "
                        "path \"{}\" [peer: {}]", path, target);
-            errno = EBUSY;
-            return -1;
+            return make_pair(EBUSY, 0);
         }
     }
 
     // Wait for RPC responses and then get response and add it to out_size
     // which is the written size All potential outputs are served to free
     // resources regardless of errors, although an errorcode is set.
-    bool error = false;
+    auto err = 0;
     ssize_t out_size = 0;
     std::size_t idx = 0;
 
@@ -172,8 +182,7 @@ ssize_t forward_write(const string& path, const void* buf, const bool append_fla
 
             if (out.err() != 0) {
                 LOG(ERROR, "Daemon reported error: {}", out.err());
-                error = true;
-                errno = out.err();
+                err = out.err();
             }
 
             out_size += static_cast<size_t>(out.io_size());
@@ -181,20 +190,30 @@ ssize_t forward_write(const string& path, const void* buf, const bool append_fla
         } catch (const std::exception& ex) {
             LOG(ERROR, "Failed to get rpc output for path \"{}\" [peer: {}]",
                 path, targets[idx]);
-            error = true;
-            errno = EIO;
+            err = EIO;
         }
 
-        ++idx;
+        idx++;
     }
-
-    return error ? -1 : out_size;
+    /*
+     * Typically file systems return the size even if only a part of it was written.
+     * In our case, we do not keep track which daemon fully wrote its workload. Thus, we always return size 0 on error.
+     */
+    if (err)
+        return make_pair(err, 0);
+    else
+        return make_pair(0, out_size);
 }
 
 /**
- * Sends an RPC request to a specific node to push all chunks that belong to him
+ * Send an RPC request to read to a buffer.
+ * @param path
+ * @param buf
+ * @param offset
+ * @param read_size
+ * @return pair<error code, read size>
  */
-ssize_t forward_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
+pair<int, ssize_t> forward_read(const string& path, void* buf, const off64_t offset, const size_t read_size) {
 
     // Calculate chunkid boundaries and numbers so that daemons know in which
     // interval to look for chunks
@@ -246,8 +265,7 @@ ssize_t forward_read(const string& path, void* buf, const off64_t offset, const 
 
     } catch (const std::exception& ex) {
         LOG(ERROR, "Failed to expose buffers for RMA");
-        errno = EBUSY;
-        return -1;
+        return make_pair(EBUSY, 0);
     }
 
     std::vector<hermes::rpc_handle<gkfs::rpc::read_data>> handles;
@@ -309,15 +327,14 @@ ssize_t forward_read(const string& path, void* buf, const off64_t offset, const 
         } catch (const std::exception& ex) {
             LOG(ERROR, "Unable to send non-blocking rpc for path \"{}\" "
                        "[peer: {}]", path, target);
-            errno = EBUSY;
-            return -1;
+            return make_pair(EBUSY, 0);
         }
     }
 
     // Wait for RPC responses and then get response and add it to out_size
     // which is the read size. All potential outputs are served to free
     // resources regardless of errors, although an errorcode is set.
-    bool error = false;
+    auto err = 0;
     ssize_t out_size = 0;
     std::size_t idx = 0;
 
@@ -329,8 +346,7 @@ ssize_t forward_read(const string& path, void* buf, const off64_t offset, const 
 
             if (out.err() != 0) {
                 LOG(ERROR, "Daemon reported error: {}", out.err());
-                error = true;
-                errno = out.err();
+                err = out.err();
             }
 
             out_size += static_cast<size_t>(out.io_size());
@@ -338,20 +354,30 @@ ssize_t forward_read(const string& path, void* buf, const off64_t offset, const 
         } catch (const std::exception& ex) {
             LOG(ERROR, "Failed to get rpc output for path \"{}\" [peer: {}]",
                 path, targets[idx]);
-            error = true;
-            errno = EIO;
+            err = EIO;
         }
-
-        ++idx;
+        idx++;
     }
-
-    return error ? -1 : out_size;
+    /*
+     * Typically file systems return the size even if only a part of it was read.
+     * In our case, we do not keep track which daemon fully read its workload. Thus, we always return size 0 on error.
+     */
+    if (err)
+        return make_pair(err, 0);
+    else
+        return make_pair(0, out_size);
 }
 
+/**
+ * Send an RPC request to truncate a file to given new size
+ * @param path
+ * @param current_size
+ * @param new_size
+ * @return error code
+ */
 int forward_truncate(const std::string& path, size_t current_size, size_t new_size) {
 
     assert(current_size > new_size);
-    bool error = false;
 
     // Find out which data servers need to delete data chunks in order to
     // contact only them
@@ -365,6 +391,8 @@ int forward_truncate(const std::string& path, size_t current_size, size_t new_si
     }
 
     std::vector<hermes::rpc_handle<gkfs::rpc::trunc_data>> handles;
+
+    auto err = 0;
 
     for (const auto& host: hosts) {
 
@@ -386,43 +414,40 @@ int forward_truncate(const std::string& path, size_t current_size, size_t new_si
             // TODO(amiranda): we should cancel all previously posted requests
             // here, unfortunately, Hermes does not support it yet :/
             LOG(ERROR, "Failed to send request to host: {}", host);
-            errno = EIO;
-            return -1;
+            err = EIO;
+            break; // We need to gather all responses so we can't return here
         }
 
     }
 
     // Wait for RPC responses and then get response
     for (const auto& h : handles) {
-
         try {
             // XXX We might need a timeout here to not wait forever for an
             // output that never comes?
             auto out = h.get().at(0);
 
-            if (out.err() != 0) {
+            if (out.err()) {
                 LOG(ERROR, "received error response: {}", out.err());
-                error = true;
-                errno = EIO;
+                err = EIO;
             }
         } catch (const std::exception& ex) {
             LOG(ERROR, "while getting rpc output");
-            error = true;
-            errno = EIO;
+            err = EIO;
         }
     }
-
-    return error ? -1 : 0;
+    return err ? err : 0;
 }
 
 /**
- * Performs a chunk stat RPC to all hosts
- * @return rpc::ChunkStat
- * @throws std::runtime_error
+ * Send an RPC request to chunk stat all hosts
+ * @return pair<error code, rpc::ChunkStat>
  */
-ChunkStat forward_get_chunk_stat() {
+pair<int, ChunkStat> forward_get_chunk_stat() {
 
     std::vector<hermes::rpc_handle<gkfs::rpc::chunk_stat>> handles;
+
+    auto err = 0;
 
     for (const auto& endp : CTX->hosts()) {
         try {
@@ -441,15 +466,14 @@ ChunkStat forward_get_chunk_stat() {
             // TODO(amiranda): we should cancel all previously posted requests
             // here, unfortunately, Hermes does not support it yet :/
             LOG(ERROR, "Failed to send request to host: {}", endp.to_string());
-            throw std::runtime_error("Failed to forward non-blocking rpc request");
+            err = EBUSY;
+            break; // We need to gather all responses so we can't return here
         }
     }
 
     unsigned long chunk_size = gkfs::config::rpc::chunksize;
     unsigned long chunk_total = 0;
     unsigned long chunk_free = 0;
-
-    int error = 0;
 
     // wait for RPC responses
     for (std::size_t i = 0; i < handles.size(); ++i) {
@@ -461,10 +485,10 @@ ChunkStat forward_get_chunk_stat() {
             // output that never comes?
             out = handles[i].get().at(0);
 
-            if (out.err() != 0) {
-                error = out.err();
+            if (out.err()) {
+                err = out.err();
                 LOG(ERROR, "Host '{}' reported err code '{}' during stat chunk.", CTX->hosts().at(i).to_string(),
-                    error);
+                    err);
                 // we don't break here to ensure all responses are processed
                 continue;
             }
@@ -472,16 +496,14 @@ ChunkStat forward_get_chunk_stat() {
             chunk_total += out.chunk_total();
             chunk_free += out.chunk_free();
         } catch (const std::exception& ex) {
-            errno = EBUSY;
-            throw std::runtime_error(fmt::format("Failed to get RPC output from host: {}", i));
+            LOG(ERROR, "Failed to get RPC output from host: {}", i);
+            err = EBUSY;
         }
     }
-    if (error != 0) {
-        errno = error;
-        throw std::runtime_error("chunk stat failed on one host");
-    }
-
-    return {chunk_size, chunk_total, chunk_free};
+    if (err)
+        return make_pair(err, ChunkStat{});
+    else
+        return make_pair(0, ChunkStat{chunk_size, chunk_total, chunk_free});
 }
 
 } // namespace rpc

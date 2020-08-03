@@ -40,12 +40,12 @@ int forward_decr_size(const std::string& path, size_t length);
 int forward_update_metadentry(const std::string& path, const gkfs::metadata::Metadata& md,
                               const gkfs::metadata::MetadentryUpdateFlags& md_flags);
 
-int forward_update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
-                                   off64_t& ret_size);
+std::pair<int, off64_t>
+forward_update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag);
 
-int forward_get_metadentry_size(const std::string& path, off64_t& ret_size);
+std::pair<int, off64_t> forward_get_metadentry_size(const std::string& path);
 
-void forward_get_dirents(gkfs::filemap::OpenDir& open_dir);
+int forward_get_dirents(gkfs::filemap::OpenDir& open_dir);
 
 #ifdef HAS_SYMLINKS
 

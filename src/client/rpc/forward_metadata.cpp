@@ -27,9 +27,19 @@ using namespace std;
 namespace gkfs {
 namespace rpc {
 
+/*
+ * This file includes all metadata RPC calls.
+ * NOTE: No errno is defined here!
+ */
+
+/**
+ * Send an RPC for a create request
+ * @param path
+ * @param mode
+ * @return error code
+ */
 int forward_create(const std::string& path, const mode_t mode) {
 
-    int err = EUNKNOWN;
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
@@ -40,23 +50,21 @@ int forward_create(const std::string& path, const mode_t mode) {
         // returning one result and a broadcast(endpoint_set) returning a
         // result_set. When that happens we can remove the .at(0) :/
         auto out = ld_network_service->post<gkfs::rpc::create>(endp, path, mode).get().at(0);
-        err = out.err();
-        LOG(DEBUG, "Got response success: {}", err);
+        LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err()) {
-            errno = out.err();
-            return -1;
-        }
-
+        return out.err() ? out.err() : 0;
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
-
-    return err;
 }
 
+/**
+ * Send an RPC for a stat request
+ * @param path
+ * @param attr
+ * @return error code
+ */
 int forward_stat(const std::string& path, string& attr) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
@@ -71,30 +79,32 @@ int forward_stat(const std::string& path, string& attr) {
         auto out = ld_network_service->post<gkfs::rpc::stat>(endp, path).get().at(0);
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
+        if (out.err())
+            return out.err();
 
         attr = out.db_val();
-        return 0;
-
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
-
     return 0;
 }
 
+/**
+ * Send an RPC for a remove request. This removes metadata and all data chunks possible distributed across many daemons.
+ * Optimizations are in place for small files (file_size / chunk_size) < number_of_daemons where no broadcast to all
+ * daemons is used to remove all chunks. Otherwise, a broadcast to all daemons is used.
+ * @param path
+ * @param remove_metadentry_only
+ * @param size
+ * @return error code
+ */
 int forward_remove(const std::string& path, const bool remove_metadentry_only, const ssize_t size) {
 
     // if only the metadentry should be removed, send one rpc to the
     // metadentry's responsible node to remove the metadata
     // else, send an rpc to all hosts and thus broadcast chunk_removal.
     if (remove_metadentry_only) {
-
         auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
         try {
@@ -109,20 +119,11 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
 
             LOG(DEBUG, "Got response success: {}", out.err());
 
-            if (out.err() != 0) {
-                errno = out.err();
-                return -1;
-            }
-
-            return 0;
-
+            return out.err() ? out.err() : 0;
         } catch (const std::exception& ex) {
             LOG(ERROR, "while getting rpc output");
-            errno = EBUSY;
-            return -1;
+            return EBUSY;
         }
-
-        return 0;
     }
 
     std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
@@ -155,9 +156,8 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
                 handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp_chnk, in));
             }
         } catch (const std::exception& ex) {
-            LOG(ERROR, "Failed to send reduced remove requests");
-            throw std::runtime_error(
-                    "Failed to forward non-blocking rpc request");
+            LOG(ERROR, "Failed to forward non-blocking rpc request reduced remove requests");
+            return EBUSY;
         }
     } else {    // "Big" files
         for (const auto& endp : CTX->hosts()) {
@@ -179,18 +179,15 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
             } catch (const std::exception& ex) {
                 // TODO(amiranda): we should cancel all previously posted requests
                 // here, unfortunately, Hermes does not support it yet :/
-                LOG(ERROR, "Failed to send request to host: {}",
+                LOG(ERROR, "Failed to forward non-blocking rpc request to host: {}",
                     endp.to_string());
-                throw std::runtime_error(
-                        "Failed to forward non-blocking rpc request");
+                return EBUSY;
             }
         }
     }
     // wait for RPC responses
-    bool got_error = false;
-
+    auto err = 0;
     for (const auto& h : handles) {
-
         try {
             // XXX We might need a timeout here to not wait forever for an
             // output that never comes?
@@ -198,25 +195,27 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
 
             if (out.err() != 0) {
                 LOG(ERROR, "received error response: {}", out.err());
-                got_error = true;
-                errno = out.err();
+                err = out.err();
             }
         } catch (const std::exception& ex) {
             LOG(ERROR, "while getting rpc output");
-            got_error = true;
-            errno = EBUSY;
+            err = EBUSY;
         }
     }
-
-    return got_error ? -1 : 0;
+    return err;
 }
 
+/**
+ * Send an RPC for a decrement file size request. This is for example used during a truncate() call.
+ * @param path
+ * @param length
+ * @return error code
+ */
 int forward_decr_size(const std::string& path, size_t length) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
-
         LOG(DEBUG, "Sending RPC ...");
         // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
         // retry for RPC_TRIES (see old commits with margo)
@@ -227,27 +226,28 @@ int forward_decr_size(const std::string& path, size_t length) {
 
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
-
-        return 0;
-
+        return out.err() ? out.err() : 0;
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
 }
 
+
+/**
+ * Send an RPC for an update metadentry request.
+ * NOTE: Currently unused.
+ * @param path
+ * @param md
+ * @param md_flags
+ * @return error code
+ */
 int forward_update_metadentry(const string& path, const gkfs::metadata::Metadata& md,
                               const gkfs::metadata::MetadentryUpdateFlags& md_flags) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
-
         LOG(DEBUG, "Sending RPC ...");
         // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
         // retry for RPC_TRIES (see old commits with margo)
@@ -276,28 +276,27 @@ int forward_update_metadentry(const string& path, const gkfs::metadata::Metadata
 
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
-
-        return 0;
-
+        return out.err() ? out.err() : 0;
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
 }
 
-int
-forward_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag,
-                               off64_t& ret_size) {
+/**
+ * Send an RPC request for an update to the file size.
+ * This is called during a write() call or similar
+ * @param path
+ * @param size
+ * @param offset
+ * @param append_flag
+ * @return pair<error code, size after update>
+ */
+pair<int, off64_t>
+forward_update_metadentry_size(const string& path, const size_t size, const off64_t offset, const bool append_flag) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
-
     try {
-
         LOG(DEBUG, "Sending RPC ...");
         // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
         // retry for RPC_TRIES (see old commits with margo)
@@ -310,30 +309,27 @@ forward_update_metadentry_size(const string& path, const size_t size, const off6
 
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
-
-        ret_size = out.ret_size();
-        return out.err();
-
-        return 0;
-
+        if (out.err())
+            return make_pair(out.err(), 0);
+        else
+            return make_pair(0, out.ret_size());
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        ret_size = 0;
-        return EUNKNOWN;
+        return make_pair(EBUSY, 0);
     }
 }
 
-int forward_get_metadentry_size(const std::string& path, off64_t& ret_size) {
+/**
+ * Send an RPC request to get the current file size.
+ * This is called during a lseek() call
+ * @param path
+ * @return pair<error code, file size>
+ */
+pair<int, off64_t> forward_get_metadentry_size(const std::string& path) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
-
         LOG(DEBUG, "Sending RPC ...");
         // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
         // retry for RPC_TRIES (see old commits with margo)
@@ -344,21 +340,24 @@ int forward_get_metadentry_size(const std::string& path, off64_t& ret_size) {
 
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        ret_size = out.ret_size();
-        return out.err();
-
+        if (out.err())
+            return make_pair(out.err(), 0);
+        else
+            return make_pair(0, out.ret_size());
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        ret_size = 0;
-        return EUNKNOWN;
+        return make_pair(EBUSY, 0);
     }
 }
 
 /**
- * Sends an RPC request to a specific node to push all chunks that belong to him
+ * Send an RPC request to receive all entries of a directory.
+ * @param open_dir
+ * @return error code
  */
-void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
+int forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
+
+    LOG(DEBUG, "{}() enter for path '{}'", __func__, open_dir.path())
 
     auto const root_dir = open_dir.path();
     auto const targets = CTX->distributor()->locate_directory_metadata(root_dir);
@@ -389,7 +388,8 @@ void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
                     },
                     hermes::access_mode::write_only));
         } catch (const std::exception& ex) {
-            throw std::runtime_error("Failed to expose buffers for RMA");
+            LOG(ERROR, "{}() Failed to expose buffers for RMA. err '{}'", __func__, ex.what());
+            return EBUSY;
         }
     }
 
@@ -398,24 +398,26 @@ void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
 
     for (std::size_t i = 0; i < targets.size(); ++i) {
 
-        LOG(DEBUG, "target_host: {}", targets[i]);
-
         // Setup rpc input parameters for each host
         auto endp = CTX->hosts().at(targets[i]);
 
         gkfs::rpc::get_dirents::input in(root_dir, exposed_buffers[i]);
 
         try {
-
-            LOG(DEBUG, "Sending RPC to host: {}", targets[i]);
+            LOG(DEBUG, "{}() Sending RPC to host: '{}'", __func__, targets[i]);
             handles.emplace_back(ld_network_service->post<gkfs::rpc::get_dirents>(endp, in));
         } catch (const std::exception& ex) {
-            LOG(ERROR, "Unable to send non-blocking get_dirents() "
-                       "on {} [peer: {}]", root_dir, targets[i]);
-            throw std::runtime_error("Failed to post non-blocking RPC request");
+            LOG(ERROR, "{}() Unable to send non-blocking get_dirents() on {} [peer: {}] err '{}'", __func__, root_dir,
+                targets[i], ex.what());
+            return EBUSY;
         }
     }
 
+    LOG(INFO,
+        "{}() path '{}' send rpc_srv_get_dirents() rpc to '{}' targets. per_host_buff_size '{}' Waiting on reply next and deserialize",
+        __func__, open_dir.path(), targets.size(), per_host_buff_size);
+
+    auto err = 0;
     // wait for RPC responses
     for (std::size_t i = 0; i < handles.size(); ++i) {
 
@@ -427,15 +429,19 @@ void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
             out = handles[i].get().at(0);
 
             if (out.err() != 0) {
-                throw std::runtime_error(
-                        fmt::format("Failed to retrieve dir entries from "
-                                    "host '{}'. Error '{}', path '{}'",
-                                    targets[i], strerror(out.err()), root_dir));
+                LOG(ERROR, "{}() Failed to retrieve dir entries from host '{}'. Error '{}', path '{}'", __func__,
+                    targets[i],
+                    strerror(out.err()), root_dir);
+                err = out.err();
+                // We need to gather all responses before exiting
+                continue;
             }
         } catch (const std::exception& ex) {
-            throw std::runtime_error(
-                    fmt::format("Failed to get rpc output.. [path: {}, "
-                                "target host: {}]", root_dir, targets[i]));
+            LOG(ERROR, "{}() Failed to get rpc output.. [path: {}, target host: {}] err '{}'", __func__, root_dir,
+                targets[i], ex.what());
+            err = EBUSY;
+            // We need to gather all responses before exiting
+            continue;
         }
 
         // each server wrote information to its pre-defined region in
@@ -445,8 +451,7 @@ void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
         void* base_ptr = exposed_buffers[i].begin()->data();
 
         bool* bool_ptr = reinterpret_cast<bool*>(base_ptr);
-        char* names_ptr = reinterpret_cast<char*>(base_ptr) +
-                          (out.dirents_size() * sizeof(bool));
+        char* names_ptr = reinterpret_cast<char*>(base_ptr) + (out.dirents_size() * sizeof(bool));
 
         for (std::size_t j = 0; j < out.dirents_size(); j++) {
 
@@ -459,21 +464,28 @@ void forward_get_dirents(gkfs::filemap::OpenDir& open_dir) {
             assert(static_cast<unsigned long int>(names_ptr - reinterpret_cast<char*>(base_ptr)) < per_host_buff_size);
 
             auto name = std::string(names_ptr);
+            // number of characters in entry + \0 terminator
             names_ptr += name.size() + 1;
 
             open_dir.add(name, ftype);
         }
     }
+    return err;
 }
 
 #ifdef HAS_SYMLINKS
 
+/**
+ * Send an RPC request to create a symlink.
+ * @param path
+ * @param target_path
+ * @return error code
+ */
 int forward_mk_symlink(const std::string& path, const std::string& target_path) {
 
     auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
 
     try {
-
         LOG(DEBUG, "Sending RPC ...");
         // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can
         // retry for RPC_TRIES (see old commits with margo)
@@ -484,17 +496,10 @@ int forward_mk_symlink(const std::string& path, const std::string& target_path) 
 
         LOG(DEBUG, "Got response success: {}", out.err());
 
-        if (out.err() != 0) {
-            errno = out.err();
-            return -1;
-        }
-
-        return 0;
-
+        return out.err() ? out.err() : 0;
     } catch (const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
-        errno = EBUSY;
-        return -1;
+        return EBUSY;
     }
 }
 
