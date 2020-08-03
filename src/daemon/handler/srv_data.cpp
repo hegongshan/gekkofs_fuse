@@ -32,12 +32,18 @@
 
 using namespace std;
 
+/*
+ * This file contains all Margo RPC handlers that are concerning management operations
+ */
+
+namespace {
+
 /**
  * RPC handler for an incoming write RPC
  * @param handle
  * @return
  */
-static hg_return_t rpc_srv_write(hg_handle_t handle) {
+hg_return_t rpc_srv_write(hg_handle_t handle) {
     /*
      * 1. Setup
      */
@@ -182,7 +188,7 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
             // origin offset of a chunk is dependent on a given offset in a write operation
             if (in.offset > 0)
                 origin_offset = (gkfs::config::rpc::chunksize - in.offset) +
-                                ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
+                        ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
             else
                 origin_offset = (chnk_id_file - in.chunk_start) * gkfs::config::rpc::chunksize;
             // last chunk might have different transfer_size
@@ -245,14 +251,12 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_write)
-
 /**
  * RPC handler for an incoming read RPC
  * @param handle
  * @return
  */
-static hg_return_t rpc_srv_read(hg_handle_t handle) {
+hg_return_t rpc_srv_read(hg_handle_t handle) {
     /*
      * 1. Setup
      */
@@ -438,14 +442,13 @@ static hg_return_t rpc_srv_read(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_read)
 
 /**
  * RPC handler for an incoming truncate RPC
  * @param handle
  * @return
  */
-static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
+hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     rpc_trunc_in_t in{};
     rpc_err_out_t out{};
     out.err = EIO;
@@ -474,14 +477,13 @@ static hg_return_t rpc_srv_truncate(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out);
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_truncate)
 
 /**
  * RPC handler for an incoming chunk stat RPC
  * @param handle
  * @return
  */
-static hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
+hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug("{}() enter", __func__);
     rpc_chunk_stat_out_t out{};
     out.err = EIO;
@@ -503,6 +505,13 @@ static hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &out);
 }
 
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_write)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_read)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_truncate)
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
 #ifdef GKFS_ENABLE_AGIOS

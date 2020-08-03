@@ -22,7 +22,13 @@
 
 using namespace std;
 
-static hg_return_t rpc_srv_create(hg_handle_t handle) {
+/*
+ * This file contains all Margo RPC handlers that are concerning metadata operations
+ */
+
+namespace {
+
+hg_return_t rpc_srv_create(hg_handle_t handle) {
     rpc_mk_node_in_t in;
     rpc_err_out_t out;
 
@@ -52,9 +58,8 @@ static hg_return_t rpc_srv_create(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_create)
 
-static hg_return_t rpc_srv_stat(hg_handle_t handle) {
+hg_return_t rpc_srv_stat(hg_handle_t handle) {
     rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
     auto ret = margo_get_input(handle, &in);
@@ -89,9 +94,8 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
-static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
+hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
     rpc_trunc_in_t in{};
     rpc_err_out_t out{};
 
@@ -123,9 +127,8 @@ static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-static hg_return_t rpc_srv_remove(hg_handle_t handle) {
+hg_return_t rpc_srv_remove(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
 
@@ -162,10 +165,8 @@ static hg_return_t rpc_srv_remove(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
 
-
-static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
+hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
 
@@ -211,9 +212,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
-static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
+hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     rpc_update_metadentry_size_in_t in{};
     rpc_update_metadentry_size_out_t out{};
 
@@ -251,9 +251,8 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 
-static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
+hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     rpc_path_only_in_t in{};
     rpc_get_metadentry_size_out_t out{};
 
@@ -288,9 +287,8 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
 
-static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
+hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     rpc_get_dirents_in_t in{};
     rpc_get_dirents_out_t out{};
     out.err = EIO;
@@ -392,7 +390,8 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, out_size);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error(
-                "{}() Failed push '{}' dirents on path '{}' to client with bulk size '{}' and out_size '{}'", __func__,
+                "{}() Failed to push '{}' dirents on path '{}' to client with bulk size '{}' and out_size '{}'",
+                __func__,
                 entries.size(), in.path, bulk_size, out_size);
         out.err = EBUSY;
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
@@ -406,11 +405,11 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
+
 
 #ifdef HAS_SYMLINKS
 
-static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
+hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     rpc_mk_symlink_in_t in{};
     rpc_err_out_t out{};
 
@@ -440,6 +439,28 @@ static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     margo_destroy(handle);
     return HG_SUCCESS;
 }
+
+#endif
+
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_create)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
+
+#ifdef HAS_SYMLINKS
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)
 
