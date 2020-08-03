@@ -171,8 +171,6 @@ int forward_remove(const std::string& path, const bool remove_metadentry_only, c
                 // TODO(amiranda): hermes will eventually provide a post(endpoint)
                 // returning one result and a broadcast(endpoint_set) returning a
                 // result_set. When that happens we can remove the .at(0) :/
-                //
-                //
 
                 handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(endp, in));
 

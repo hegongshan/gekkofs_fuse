@@ -72,7 +72,13 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
 namespace gkfs {
 namespace util {
 
-
+/**
+ * Retrieve metadata from daemon
+ * errno may be set
+ * @param path
+ * @param follow_links
+ * @return shared_ptr for metadata, nullptr else
+ */
 std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const string& path, bool follow_links) {
     std::string attr;
     auto err = gkfs::rpc::forward_stat(path, attr);

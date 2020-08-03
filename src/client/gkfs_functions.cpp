@@ -61,6 +61,12 @@ struct linux_dirent64 {
 
 namespace {
 
+/**
+ * Checks if metadata for parent directory exists (can be disabled with CREATE_CHECK_PARENTS).
+ * errno may be set
+ * @param path
+ * @return 0 on success, -1 on failure
+ */
 int check_parent_dir(const std::string& path) {
 #if CREATE_CHECK_PARENTS
     auto p_comp = gkfs::path::dirname(path);
@@ -86,6 +92,14 @@ int check_parent_dir(const std::string& path) {
 namespace gkfs {
 namespace syscall {
 
+/**
+ * gkfs wrapper for open() system calls
+ * errno may be set
+ * @param path
+ * @param mode
+ * @param flags
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_open(const std::string& path, mode_t mode, int flags) {
 
     if (flags & O_PATH) {
@@ -171,6 +185,13 @@ int gkfs_open(const std::string& path, mode_t mode, int flags) {
     return CTX->file_map()->add(std::make_shared<gkfs::filemap::OpenFile>(path, flags));
 }
 
+/**
+ * Wrapper function for file/directory creation
+ * errno may be set
+ * @param path
+ * @param mode
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_create(const std::string& path, mode_t mode) {
 
     //file type must be set
@@ -206,9 +227,10 @@ int gkfs_create(const std::string& path, mode_t mode) {
 }
 
 /**
- * This sends internally a broadcast (i.e. n RPCs) to clean their chunk folders for that path
+ * gkfs wrapper for unlink() system calls
+ * errno may be set
  * @param path
- * @return
+ * @return 0 on success, -1 on failure
  */
 int gkfs_remove(const std::string& path) {
     auto md = gkfs::util::get_metadata(path);
@@ -224,6 +246,14 @@ int gkfs_remove(const std::string& path) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for access() system calls
+ * errno may be set
+ * @param path
+ * @param mask
+ * @param follow_links
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_access(const std::string& path, const int mask, bool follow_links) {
     auto md = gkfs::util::get_metadata(path, follow_links);
     if (!md) {
@@ -233,6 +263,14 @@ int gkfs_access(const std::string& path, const int mask, bool follow_links) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for stat() system calls
+ * errno may be set
+ * @param path
+ * @param buf
+ * @param follow_links
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     auto md = gkfs::util::get_metadata(path, follow_links);
     if (!md) {
@@ -243,6 +281,18 @@ int gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
 }
 
 #ifdef STATX_TYPE
+
+/**
+ * gkfs wrapper for statx() system calls
+ * errno may be set
+ * @param dirfs
+ * @param path
+ * @param flags
+ * @param mask
+ * @param buf
+ * @param follow_links
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask, struct statx* buf, bool follow_links) {
     auto md = gkfs::util::get_metadata(path, follow_links);
     if (!md) {
@@ -270,16 +320,22 @@ int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
 
     buf->stx_mtime.tv_sec = tmp.st_mtim.tv_sec;
     buf->stx_mtime.tv_nsec = tmp.st_mtim.tv_nsec;
-    
+
     buf->stx_ctime.tv_sec = tmp.st_ctim.tv_sec;
     buf->stx_ctime.tv_nsec = tmp.st_ctim.tv_nsec;
 
     buf->stx_btime = buf->stx_atime;
-    
+
     return 0;
 }
 #endif
 
+/**
+ * gkfs wrapper for statfs() system calls
+ * errno may be set
+ * @param buf
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_statfs(struct statfs* buf) {
 
     auto ret = gkfs::rpc::forward_get_chunk_stat();
@@ -305,6 +361,15 @@ int gkfs_statfs(struct statfs* buf) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for statvfs() system calls
+ * errno may be set
+ *
+ * NOTE: Currently unused.
+ *
+ * @param buf
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_statvfs(struct statvfs* buf) {
     auto ret = gkfs::rpc::forward_get_chunk_stat();
     auto err = ret.first;
@@ -329,10 +394,26 @@ int gkfs_statvfs(struct statvfs* buf) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for lseek() system calls with available file descriptor
+ * errno may be set
+ * @param fd
+ * @param offset
+ * @param whence
+ * @return 0 on success, -1 on failure
+ */
 off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
     return gkfs_lseek(CTX->file_map()->get(fd), offset, whence);
 }
 
+/**
+ * gkfs wrapper for lseek() system calls with available shared ptr to gkfs FileMap
+ * errno may be set
+ * @param gkfs_fd
+ * @param offset
+ * @param whence
+ * @return 0 on success, -1 on failure
+ */
 off_t gkfs_lseek(shared_ptr<gkfs::filemap::OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
@@ -375,6 +456,14 @@ off_t gkfs_lseek(shared_ptr<gkfs::filemap::OpenFile> gkfs_fd, off_t offset, unsi
     return gkfs_fd->pos();
 }
 
+/**
+ * wrapper function for gkfs_truncate
+ * errno may be set
+ * @param path
+ * @param old_size
+ * @param new_size
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     assert(new_size >= 0);
     assert(new_size <= old_size);
@@ -398,6 +487,13 @@ int gkfs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for truncate() system calls
+ * errno may be set
+ * @param path
+ * @param length
+ * @return 0 on success, -1 on failure
+ */
 int gkfs_truncate(const std::string& path, off_t length) {
     /* TODO CONCURRENCY:
      * At the moment we first ask the length to the metadata-server in order to
@@ -426,14 +522,36 @@ int gkfs_truncate(const std::string& path, off_t length) {
     return gkfs_truncate(path, size, length);
 }
 
+/**
+ * gkfs wrapper for dup() system calls
+ * errno may be set
+ * @param oldfd
+ * @return file descriptor int or -1 on error
+ */
 int gkfs_dup(const int oldfd) {
     return CTX->file_map()->dup(oldfd);
 }
 
+/**
+ * gkfs wrapper for dup2() system calls
+ * errno may be set
+ * @param oldfd
+ * @param newfd
+ * @return file descriptor int or -1 on error
+ */
 int gkfs_dup2(const int oldfd, const int newfd) {
     return CTX->file_map()->dup2(oldfd, newfd);
 }
 
+/**
+ * Wrapper function for all gkfs write operations
+ * errno may be set
+ * @param file
+ * @param buf
+ * @param count
+ * @param offset
+ * @return written size or -1 on error
+ */
 ssize_t gkfs_pwrite(std::shared_ptr<gkfs::filemap::OpenFile> file, const char* buf, size_t count, off64_t offset) {
     if (file->type() != gkfs::filemap::FileType::regular) {
         assert(file->type() == gkfs::filemap::FileType::directory);
@@ -463,16 +581,28 @@ ssize_t gkfs_pwrite(std::shared_ptr<gkfs::filemap::OpenFile> file, const char* b
     return ret_write.second; // return written size
 }
 
+/**
+ * gkfs wrapper for pwrite() system calls
+ * errno may be set
+ * @param fd
+ * @param buf
+ * @param count
+ * @param offset
+ * @return written size or -1 on error
+ */
 ssize_t gkfs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     auto file = CTX->file_map()->get(fd);
     return gkfs_pwrite(file, reinterpret_cast<const char*>(buf), count, offset);
 }
 
-/* Write counts bytes starting from current file position
- * It also update the file position accordingly
- *
- * Same as write syscall.
-*/
+/**
+ * gkfs wrapper for write() system calls
+ * errno may be set
+ * @param fd
+ * @param buf
+ * @param count
+ * @return written size or -1 on error
+ */
 ssize_t gkfs_write(int fd, const void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); //retrieve the current offset
@@ -486,6 +616,15 @@ ssize_t gkfs_write(int fd, const void* buf, size_t count) {
     return ret;
 }
 
+/**
+ * gkfs wrapper for pwritev() system calls
+ * errno may be set
+ * @param fd
+ * @param iov
+ * @param iovcnt
+ * @param offset
+ * @return written size or -1 on error
+ */
 ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
@@ -516,6 +655,14 @@ ssize_t gkfs_pwritev(int fd, const struct iovec* iov, int iovcnt, off_t offset) 
     return written;
 }
 
+/**
+ * gkfs wrapper for writev() system calls
+ * errno may be set
+ * @param fd
+ * @param iov
+ * @param iovcnt
+ * @return written size or -1 on error
+ */
 ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
 
     auto gkfs_fd = CTX->file_map()->get(fd);
@@ -529,6 +676,14 @@ ssize_t gkfs_writev(int fd, const struct iovec* iov, int iovcnt) {
     return ret;
 }
 
+/**
+ * Wrapper function for all gkfs read operations
+ * @param file
+ * @param buf
+ * @param count
+ * @param offset
+ * @return read size or -1 on error
+ */
 ssize_t gkfs_pread(std::shared_ptr<gkfs::filemap::OpenFile> file, char* buf, size_t count, off64_t offset) {
     if (file->type() != gkfs::filemap::FileType::regular) {
         assert(file->type() == gkfs::filemap::FileType::directory);
@@ -552,6 +707,14 @@ ssize_t gkfs_pread(std::shared_ptr<gkfs::filemap::OpenFile> file, char* buf, siz
     return ret.second; // return read size
 }
 
+/**
+ * gkfs wrapper for read() system calls
+ * errno may be set
+ * @param fd
+ * @param buf
+ * @param count
+ * @return read size or -1 on error
+ */
 ssize_t gkfs_read(int fd, void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); //retrieve the current offset
@@ -563,6 +726,15 @@ ssize_t gkfs_read(int fd, void* buf, size_t count) {
     return ret;
 }
 
+/**
+ * gkfs wrapper for preadv() system calls
+ * errno may be set
+ * @param fd
+ * @param iov
+ * @param iovcnt
+ * @param offset
+ * @return read size or -1 on error
+ */
 ssize_t gkfs_preadv(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
 
     auto file = CTX->file_map()->get(fd);
@@ -593,6 +765,14 @@ ssize_t gkfs_preadv(int fd, const struct iovec* iov, int iovcnt, off_t offset) {
     return read;
 }
 
+/**
+ * gkfs wrapper for readv() system calls
+ * errno may be set
+ * @param fd
+ * @param iov
+ * @param iovcnt
+ * @return read size or -1 on error
+ */
 ssize_t gkfs_readv(int fd, const struct iovec* iov, int iovcnt) {
 
     auto gkfs_fd = CTX->file_map()->get(fd);
@@ -606,11 +786,26 @@ ssize_t gkfs_readv(int fd, const struct iovec* iov, int iovcnt) {
     return ret;
 }
 
+/**
+ * gkfs wrapper for pread() system calls
+ * errno may be set
+ * @param fd
+ * @param buf
+ * @param count
+ * @param offset
+ * @return read size or -1 on error
+ */
 ssize_t gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     return gkfs_pread(gkfs_fd, reinterpret_cast<char*>(buf), count, offset);
 }
 
+/**
+ * wrapper function for opening directories
+ * errno may be set
+ * @param path
+ * @return 0 on success or -1 on error
+ */
 int gkfs_opendir(const std::string& path) {
 
     auto md = gkfs::util::get_metadata(path);
@@ -632,6 +827,12 @@ int gkfs_opendir(const std::string& path) {
     return CTX->file_map()->add(open_dir);
 }
 
+/**
+ * gkfs wrapper for rmdir() system calls
+ * errno may be set
+ * @param path
+ * @return 0 on success or -1 on error
+ */
 int gkfs_rmdir(const std::string& path) {
     auto md = gkfs::util::get_metadata(path);
     if (!md) {
@@ -663,6 +864,14 @@ int gkfs_rmdir(const std::string& path) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for getdents() system calls
+ * errno may be set
+ * @param fd
+ * @param dirp
+ * @param count
+ * @return 0 on success or -1 on error
+ */
 int gkfs_getdents(unsigned int fd,
                   struct linux_dirent* dirp,
                   unsigned int count) {
@@ -725,7 +934,14 @@ int gkfs_getdents(unsigned int fd,
     return written;
 }
 
-
+/**
+ * gkfs wrapper for getdents64() system calls
+ * errno may be set
+ * @param fd
+ * @param dirp
+ * @param count
+ * @return 0 on success or -1 on error
+ */
 int gkfs_getdents64(unsigned int fd,
                     struct linux_dirent64* dirp,
                     unsigned int count) {
@@ -786,6 +1002,16 @@ int gkfs_getdents64(unsigned int fd,
 
 #ifdef HAS_SYMLINKS
 
+/**
+ * gkfs wrapper for make symlink() system calls
+ * errno may be set
+ *
+ * * NOTE: Currently unused
+ *
+ * @param path
+ * @param target_path
+ * @return 0 on success or -1 on error
+ */
 int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
     gkfs::preload::init_ld_env_if_needed();
     /* The following check is not POSIX compliant.
@@ -822,6 +1048,17 @@ int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
     return 0;
 }
 
+/**
+ * gkfs wrapper for reading symlinks
+ * errno may be set
+ *
+ * NOTE: Currently unused
+ *
+ * @param path
+ * @param buf
+ * @param bufsize
+ * @return 0 on success or -1 on error
+ */
 int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
     gkfs::preload::init_ld_env_if_needed();
     auto md = gkfs::util::get_metadata(path, false);
