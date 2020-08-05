@@ -24,6 +24,8 @@ struct ChunkStat {
     unsigned long chunk_free;
 };
 
+// TODO once we have LEAF, remove all the error code returns and throw them as an exception.
+
 std::pair<int, ssize_t> forward_write(const std::string& path, const void* buf, bool append_flag, off64_t in_offset,
                                       size_t write_size, int64_t updated_metadentry_size);
 

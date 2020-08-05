@@ -16,6 +16,7 @@
 #define GEKKOFS_CLIENT_FORWARD_METADATA_HPP
 
 #include <string>
+#include <memory>
 
 /* Forward declaration */
 namespace gkfs {
@@ -26,6 +27,8 @@ namespace metadata {
 struct MetadentryUpdateFlags;
 class Metadata;
 }
+
+// TODO once we have LEAF, remove all the error code returns and throw them as an exception.
 
 namespace rpc {
 
@@ -45,7 +48,7 @@ forward_update_metadentry_size(const std::string& path, size_t size, off64_t off
 
 std::pair<int, off64_t> forward_get_metadentry_size(const std::string& path);
 
-int forward_get_dirents(gkfs::filemap::OpenDir& open_dir);
+std::pair<int, std::shared_ptr<gkfs::filemap::OpenDir>> forward_get_dirents(const std::string& path);
 
 #ifdef HAS_SYMLINKS
 

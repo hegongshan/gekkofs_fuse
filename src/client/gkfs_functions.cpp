@@ -818,13 +818,14 @@ int gkfs_opendir(const std::string& path) {
         return -1;
     }
 
-    auto open_dir = std::make_shared<gkfs::filemap::OpenDir>(path);
-    auto err = gkfs::rpc::forward_get_dirents(*open_dir);
+    auto ret = gkfs::rpc::forward_get_dirents(path);
+    auto err = ret.first;
     if (err) {
         errno = err;
         return -1;
     }
-    return CTX->file_map()->add(open_dir);
+    assert(ret.second);
+    return CTX->file_map()->add(ret.second);
 }
 
 /**
@@ -846,12 +847,14 @@ int gkfs_rmdir(const std::string& path) {
         return -1;
     }
 
-    auto open_dir = std::make_shared<gkfs::filemap::OpenDir>(path);
-    auto err = gkfs::rpc::forward_get_dirents(*open_dir);
+    auto ret = gkfs::rpc::forward_get_dirents(path);
+    auto err = ret.first;
     if (err) {
         errno = err;
         return -1;
     }
+    assert(ret.second);
+    auto open_dir = ret.second;
     if (open_dir->size() != 0) {
         errno = ENOTEMPTY;
         return -1;
