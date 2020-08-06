@@ -38,7 +38,7 @@ class FsData {
 private:
     FsData() {}
 
-    //logger
+    // logger
     std::shared_ptr<spdlog::logger> spdlogger_;
 
     // paths
@@ -46,8 +46,11 @@ private:
     std::string mountdir_;
     std::string metadir_;
 
+    // RPC management
+    std::string rpc_protocol_;
     std::string bind_addr_;
     std::string hosts_file_;
+    bool use_auto_sm_;
 
     // Database
     std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
@@ -99,11 +102,19 @@ public:
 
     void storage(const std::shared_ptr<gkfs::data::ChunkStorage>& storage);
 
+    const std::string& rpc_protocol() const;
+
+    void rpc_protocol(const std::string& rpc_protocol);
+
     const std::string& bind_addr() const;
 
     void bind_addr(const std::string& addr);
 
     const std::string& hosts_file() const;
+
+    bool use_auto_sm() const;
+
+    void use_auto_sm(bool use_auto_sm);
 
     void hosts_file(const std::string& lookup_file);
 

@@ -59,10 +59,12 @@ std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const std::string& path, 
 
 int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr);
 
-std::vector<std::pair<std::string, std::string>> load_hostfile(const std::string& lfpath);
-
 void load_hosts();
 void load_forwarding_map();
+
+std::vector<std::pair<std::string, std::string>> read_hosts_file();
+
+void connect_to_hosts(const std::vector<std::pair<std::string, std::string>>& hosts);
 
 } // namespace util
 } // namespace gkfs

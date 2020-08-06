@@ -128,6 +128,23 @@ uint64_t PreloadContext::fwd_host_id() const {
 void PreloadContext::fwd_host_id(uint64_t id) {
     fwd_host_id_ = id;
 }
+
+const std::string& PreloadContext::rpc_protocol() const {
+    return rpc_protocol_;
+}
+
+void PreloadContext::rpc_protocol(const std::string& rpc_protocol) {
+    rpc_protocol_ = rpc_protocol;
+}
+
+bool PreloadContext::auto_sm() const {
+    return auto_sm_;
+}
+
+void PreloadContext::auto_sm(bool auto_sm) {
+    PreloadContext::auto_sm_ = auto_sm;
+}
+
 RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
                                                     const char* raw_path,
                                                     std::string& relative_path,
