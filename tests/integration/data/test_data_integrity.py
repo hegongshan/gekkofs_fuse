@@ -49,8 +49,7 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
     assert ret.retval == 0
     assert ret.errno == 115 #FIXME: Should be 0!
 
-    # test statx on existing dir
-     # test stat on existing dir
+    # test stat on existing dir
     ret = gkfs_client.stat(topdir)
 
     assert ret.retval == 0
@@ -83,10 +82,10 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
         ret = gkfs_client.write(file_a, buf, i)
 
         assert ret.retval == i
-        ret = gkfs_client.statx(0, file_a, 0, 0)
+        ret = gkfs_client.stat(file_a)
 
         assert ret.retval == 0
-        assert (ret.statbuf.stx_size == i)
+        assert (ret.statbuf.st_size == i)
 
         ret = gkfs_client.read(file_a, i)
         assert ret.retval== i
