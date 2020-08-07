@@ -19,8 +19,7 @@ from pathlib import Path
 from harness.logger import logger, initialize_logging, finalize_logging
 from harness.cli import add_cli_options, set_default_log_formatter
 from harness.workspace import Workspace, FileCreator
-from harness.gkfs import Daemon, Client, ShellClient, FwdDaemon, FwdClient, ShellFwdClient
-from harness.factory import FwdDaemonCreator, FwdClientCreator
+from harness.gkfs import Daemon, Client, ShellClient, FwdDaemon, FwdClient, ShellFwdClient, FwdDaemonCreator, FwdClientCreator
 from harness.reporter import report_test_status, report_test_headline, report_assertion_pass
 
 def pytest_configure(config):

@@ -140,6 +140,49 @@ def _process_exists(pid):
 
     return True
 
+class FwdDaemonCreator:
+    """
+    Factory that allows tests to create forwarding daemons in a workspace.
+    """
+
+    def __init__(self, interface, workspace):
+        self._interface = interface
+        self._workspace = workspace
+
+    def create(self):
+        """
+        Create a forwarding daemon in the tests workspace.
+
+        Returns
+        -------
+        The `FwdDaemon` object to interact with the daemon.
+        """
+
+        daemon = FwdDaemon(self._interface, self._workspace)
+        daemon.run()
+
+        return daemon
+
+class FwdClientCreator:
+    """
+    Factory that allows tests to create forwarding daemons in a workspace.
+    """
+
+    def __init__(self, workspace):
+        self._workspace = workspace
+
+    def create(self, identifier):
+        """
+        Create a forwarding client in the tests workspace.
+
+        Returns
+        -------
+        The `FwdClient` object to interact with the daemon.
+        """
+
+        return FwdClient(self._workspace, identifier)
+
+
 class Daemon:
     def __init__(self, interface, workspace):
 
