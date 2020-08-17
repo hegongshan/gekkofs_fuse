@@ -92,7 +92,7 @@ def gkfs_daemon(test_workspace, request):
     daemon.shutdown()
 
 @pytest.fixture
-def gkfs_client(test_workspace, request):
+def gkfs_client(test_workspace):
     """
     Sets up a gekkofs client environment so that
     operations (system calls, library calls, ...) can
@@ -102,7 +102,7 @@ def gkfs_client(test_workspace, request):
     return Client(test_workspace)
 
 @pytest.fixture
-def gkfs_shell(test_workspace, request):
+def gkfs_shell(test_workspace):
     """
     Sets up a gekkofs environment so that shell commands
     (stat, ls, mkdir, etc.) can be issued to a co-running daemon.
@@ -131,7 +131,7 @@ def gkfwd_daemon_factory(test_workspace, request):
     return FwdDaemonCreator(interface, test_workspace)
 
 @pytest.fixture
-def gkfwd_client_factory(test_workspace, request):
+def gkfwd_client_factory(test_workspace):
     """
     Sets up a gekkofs client environment so that
     operations (system calls, library calls, ...) can

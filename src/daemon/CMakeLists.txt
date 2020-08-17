@@ -63,7 +63,6 @@ install(TARGETS gkfs_daemon
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-
 if(GKFS_ENABLE_FORWARDING)
     set(FWD_DAEMON_SRC
         ../global/rpc/rpc_util.cpp
@@ -71,10 +70,11 @@ if(GKFS_ENABLE_FORWARDING)
         daemon.cpp
         util.cpp
         ops/metadentry.cpp
+        ops/data.cpp
         classes/fs_data.cpp
         classes/rpc_data.cpp
-        handler/srv_metadata.cpp
         handler/srv_data.cpp
+        handler/srv_metadata.cpp
         handler/srv_management.cpp
         scheduler/agios.cpp
         )
@@ -89,6 +89,7 @@ if(GKFS_ENABLE_FORWARDING)
         ../../include/daemon/daemon.hpp
         ../../include/daemon/util.hpp
         ../../include/daemon/scheduler/agios.hpp
+        ../../include/daemon/ops/data.hpp
         ../../include/daemon/ops/metadentry.hpp
         ../../include/daemon/classes/fs_data.hpp
         ../../include/daemon/classes/rpc_data.hpp

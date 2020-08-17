@@ -56,9 +56,9 @@ static hg_return_t rpc_srv_write(hg_handle_t handle) {
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
-
-    GKFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}", __func__,
-                                  in.path, bulk_size, in.offset);
+    GKFS_DATA->spdlogger()->debug(
+            "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
+            __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n, in.total_chunk_size, bulk_size, in.offset);
     #ifdef GKFS_ENABLE_AGIOS
     int *data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
