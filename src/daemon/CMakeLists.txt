@@ -12,7 +12,6 @@ set(DAEMON_SRC
     handler/srv_metadata.cpp
     handler/srv_data.cpp
     handler/srv_management.cpp
-    scheduler/agios.cpp
     )
 set(DAEMON_HEADERS
     ../../include/config.hpp
@@ -24,7 +23,6 @@ set(DAEMON_HEADERS
     ../../include/global/path_util.hpp
     ../../include/daemon/daemon.hpp
     ../../include/daemon/util.hpp
-    ../../include/daemon/scheduler/agios.hpp
     ../../include/daemon/ops/metadentry.hpp
     ../../include/daemon/classes/fs_data.hpp
     ../../include/daemon/classes/rpc_data.hpp
@@ -42,7 +40,6 @@ target_link_libraries(gkfs_daemon
     env_util
     spdlog
     fmt::fmt
-    ${AGIOS_LIBRARIES}
     # margo libs
     ${ABT_LIBRARIES}
     mercury
@@ -56,7 +53,6 @@ target_link_libraries(gkfs_daemon
 
 target_include_directories(gkfs_daemon
     PRIVATE
-    ${AGIOS_INCLUDE_DIRS}
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )

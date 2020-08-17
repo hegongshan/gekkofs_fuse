@@ -644,19 +644,11 @@ static hg_return_t rpc_srv_get_chunk_stat(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
 #ifdef GKFS_ENABLE_AGIOS
-<<<<<<< Updated upstream
 void *agios_eventual_callback(int64_t request_id, void* info) {
     GKFS_DATA->spdlogger()->debug("{}() custom callback request {} is ready", __func__, request_id);
 
     ABT_eventual_set((ABT_eventual) info, &request_id, sizeof(int64_t));
 
-=======
-void *agios_eventual_callback(int64_t request_id, void *info) {
-    GKFS_DATA->spdlogger()->debug("{}() custom callback request {} is ready", __func__, request_id);
-
-    ABT_eventual_set((ABT_eventual) info, &request_id, sizeof(int64_t));
-    
->>>>>>> Stashed changes
     return 0;
 }
 #endif
