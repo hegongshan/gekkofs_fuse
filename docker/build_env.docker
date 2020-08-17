@@ -80,6 +80,7 @@ RUN yum -y -q update  && yum -y -q install \
 	automake \
 	cmake \
 	cmake3 \
+	sudo \
 	gcc \
 	gcc-c++ \
 	openssl-devel \

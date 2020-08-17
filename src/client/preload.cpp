@@ -36,6 +36,7 @@ namespace {
 // make sure that things are only initialized once
 pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
+<<<<<<< Updated upstream
 #ifdef GKFS_ENABLE_FORWARDING
 pthread_t mapper;
 bool forwarding_running;
@@ -43,6 +44,10 @@ bool forwarding_running;
 pthread_mutex_t remap_mutex;
 pthread_cond_t remap_signal;
 #endif
+=======
+pthread_t mapper;
+bool forwarding_running;
+>>>>>>> Stashed changes
 
 inline void exit_error_msg(int errcode, const string& msg) {
 
@@ -132,6 +137,7 @@ void init_ld_environment_() {
 }
 
 #ifdef GKFS_ENABLE_FORWARDING
+<<<<<<< Updated upstream
 void *forwarding_mapper(void* p) {
     struct timespec timeout;
     clock_gettime(CLOCK_REALTIME, &timeout);
@@ -139,10 +145,14 @@ void *forwarding_mapper(void* p) {
 
     int previous = -1;
 
+=======
+void *forwarding_mapper(void *p) {
+>>>>>>> Stashed changes
     while (forwarding_running) {
         try {
             gkfs::util::load_forwarding_map();
 
+<<<<<<< Updated upstream
             if (previous != CTX->fwd_host_id()) {
                 LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
 
@@ -162,11 +172,25 @@ void *forwarding_mapper(void* p) {
 #endif
 
 #ifdef GKFS_ENABLE_FORWARDING
+=======
+            LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+        } catch (std::exception& e){
+            exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+        }
+
+        // Sleeps for 10 seconds
+        sleep(10);
+    }
+}
+#endif
+
+>>>>>>> Stashed changes
 void init_forwarding_mapper() {
     forwarding_running = true;
 
     pthread_create(&mapper, NULL, forwarding_mapper, NULL);
 }
+<<<<<<< Updated upstream
 #endif
 
 #ifdef GKFS_ENABLE_FORWARDING
@@ -178,6 +202,14 @@ void destroy_forwarding_mapper() {
     pthread_join(mapper, NULL);
 }
 #endif
+=======
+
+void destroy_forwarding_mapper() {
+    forwarding_running = false;
+
+    pthread_join(mapper, NULL);
+}
+>>>>>>> Stashed changes
 
 void log_prog_name() {
     std::string line;
@@ -238,9 +270,13 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
+<<<<<<< Updated upstream
     #ifdef GKFS_ENABLE_FORWARDING
     init_forwarding_mapper();
     #endif
+=======
+    init_forwarding_mapper();
+>>>>>>> Stashed changes
 
     gkfs::preload::start_interception();
 }
@@ -249,9 +285,13 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+<<<<<<< Updated upstream
     #ifdef GKFS_ENABLE_FORWARDING
     destroy_forwarding_mapper();
     #endif
+=======
+    destroy_forwarding_mapper();
+>>>>>>> Stashed changes
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");
