@@ -38,6 +38,11 @@ init_commands(CLI::App& app) {
     statx_init(app);
     #endif
     lseek_init(app);
+    write_validate_init(app);
+    write_random_init(app);
+    truncate_init(app);
+    // util
+    file_compare_init(app);
 }
 
 

@@ -9,7 +9,7 @@ SOURCE=""
 INSTALL=""
 DEP_CONFIG=""
 
-VALID_DEP_OPTIONS="mogon2 mogon1 direct all"
+VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
@@ -18,7 +18,12 @@ MOGON1_DEPS=(
 
 MOGON2_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "agios"
+    "syscall_intercept" "date" "agios" "psm2"
+)
+
+NGIO_DEPS=(
+    "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
+    "syscall_intercept" "date" "agios" "psm2"
 )
 
 DIRECT_DEPS=(
@@ -57,7 +62,7 @@ optional arguments:
                 defaults to 'all'
     -c <CONFIG>, --config <CONFIG>
                 allows additional configurations, e.g., for specific clusters
-                supported values: {mogon1, mogon2, direct, all}
+                supported values: {mogon1, mogon2, ngio, direct, all}
                 defaults to 'direct'
     -d <DEPENDENCY>, --dependency <DEPENDENCY>
                 download a specific dependency and ignore --config setting. If unspecified
@@ -78,19 +83,27 @@ list_dependencies() {
     for d in "${MOGON1_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
     echo -n "  Mogon 2: "
     for d in "${MOGON2_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
+    echo -n "  NGIO: "
+    for d in "${NGIO_DEPS[@]}"; do
+        echo -n "$d "
+    done
+	echo
     echo -n "  Direct GekkoFS dependencies: "
     for d in "${DIRECT_DEPS[@]}"; do
         echo -n "$d "
     done
+	echo
     echo -n "  All: "
     for d in "${ALL_DEPS[@]}"; do
         echo -n "$d "
     done
-    echo ""
+    echo
 }
 
 check_dependency() {
@@ -233,6 +246,10 @@ mogon2)
   DEP_CONFIG=("${MOGON2_DEPS[@]}")
   echo "'Mogon2' dependencies are compiled"
   ;;
+ngio)
+  DEP_CONFIG=("${NGIO_DEPS[@]}")
+  echo "'NGIO' dependencies are compiled"
+  ;;
 all)
   DEP_CONFIG=("${ALL_DEPS[@]}")
   echo "'All' dependencies are compiled"
@@ -260,6 +277,7 @@ set -e
 
 export CPATH="${CPATH}:${INSTALL}/include"
 export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL}/lib:${INSTALL}/lib64"
+export PKG_CONFIG_PATH="${INSTALL}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 ## Third party dependencies
 
@@ -331,10 +349,16 @@ if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
         #libfabric
         CURR=${SOURCE}/libfabric
         prepare_build_dir ${CURR}
+        cd ${CURR}
+        ./autogen.sh
         cd ${CURR}/build
         OFI_CONFIG="../configure --prefix=${INSTALL} --enable-tcp=yes"
         if check_dependency "verbs" "${DEP_CONFIG[@]}"; then
             OFI_CONFIG="${OFI_CONFIG} --enable-verbs=yes"
+        elif check_dependency "psm2" "${DEP_CONFIG[@]}"; then
+            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes --with-psm2-src=${SOURCE}/psm2"
+        elif check_dependency "psm2-system" "${DEP_CONFIG[@]}"; then
+            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes"
         fi
          ${OFI_CONFIG}
         make -j${CORES}

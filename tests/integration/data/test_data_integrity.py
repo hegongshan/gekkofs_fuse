@@ -20,29 +20,25 @@ import ctypes
 import sh
 import sys
 import pytest
+import string
+import random
 from harness.logger import logger
 
 nonexisting = "nonexisting"
+chunksize_start = 128192
+chunksize_end = 2097153
+step = 4096*9
 
+def generate_random_data(size):
+    return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(size)])
 
-
-#TESTING LSEEK
-
-
-#SEEK_SET: int
-#SEEK_CUR: int
-#SEEK_END: int
-
-# 1. LSeek on empty file
-# 2. LSeek on non-empty file
 
 
 
 #@pytest.mark.xfail(reason="invalid errno returned on success")
-def test_lseek(gkfs_daemon, gkfs_client):
-    """Test several statx commands"""
+def test_data_integrity(gkfs_daemon, gkfs_client):
+    """Test several data write-read commands and check that the data is correct"""
     topdir = gkfs_daemon.mountdir / "top"
-    longer = Path(topdir.parent, topdir.name + "_plus")
     file_a = topdir / "file_a"
 
     # create topdir
@@ -53,74 +49,55 @@ def test_lseek(gkfs_daemon, gkfs_client):
     assert ret.retval == 0
     assert ret.errno == 115 #FIXME: Should be 0!
 
-     # test stat on existing dir
+    # test stat on existing dir
     ret = gkfs_client.stat(topdir)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
-    assert stat.S_ISDIR(ret.statbuf.st_mode)
+    assert (stat.S_ISDIR(ret.statbuf.st_mode))
 
     ret = gkfs_client.open(file_a,
-                           os.O_CREAT,
-                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+                   os.O_CREAT,
+                   stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval != -1
 
-    # LSeek on empty file
 
-    ret = gkfs_client.lseek(file_a, 0, os.SEEK_SET)
-
-    assert ret.retval == 0
-
-    ret = gkfs_client.lseek(file_a, -1, os.SEEK_SET)
-    assert ret.retval == -1
-    assert ret.errno == 115 #FIXME: Should be 22
-
-    # We can go further an empty file
-
-    ret = gkfs_client.lseek(file_a, 5, os.SEEK_SET)
-    assert ret.retval == 5
-    assert ret.errno == 115 #FIXME: Should be 0
-
-    # Size needs to be 0 
+    # test stat on existing file
     ret = gkfs_client.stat(file_a)
 
     assert ret.retval == 0
     assert (stat.S_ISDIR(ret.statbuf.st_mode)==0)
     assert (ret.statbuf.st_size == 0)
 
+    # Step 1 - small sizes
+    
+    # Generate writes
+    # Read data
+    # Compare buffer
 
-    # next commands write at the end of the file (pos0), as the filedescriptor is not shared
-    buf = b'42'
-    ret = gkfs_client.write(file_a, buf, 2)
+    
+    for i in range (1, 512, 64):
+        buf = bytes(generate_random_data(i), sys.stdout.encoding)
+        
+        ret = gkfs_client.write(file_a, buf, i)
 
-    assert ret.retval == 2
+        assert ret.retval == i
+        ret = gkfs_client.stat(file_a)
 
-    # Size should be 2
-    ret = gkfs_client.stat(file_a)
+        assert ret.retval == 0
+        assert (ret.statbuf.st_size == i)
 
-    assert ret.retval == 0
-    assert (stat.S_ISDIR(ret.statbuf.st_mode)==0)
-    assert (ret.statbuf.st_size == 2)
-
-
-    ret = gkfs_client.lseek(file_a, 0, os.SEEK_END)
-    assert ret.retval == 2                      #FAILS
-    assert ret.errno == 115 #FIXME: Should be 0 
-
-    ret = gkfs_client.lseek(file_a, -2, os.SEEK_END)
-    assert ret.retval == 0                     #FAILS
-    assert ret.errno == 115 #FIXME: Should be 0 
-
-    ret = gkfs_client.lseek(file_a, -3, os.SEEK_END)
-    assert ret.retval == -1                     #FAILS
-    assert ret.errno == 22 
+        ret = gkfs_client.read(file_a, i)
+        assert ret.retval== i
+        assert ret.buf == buf
 
 
+    # Step 2 - Compare bigger sizes exceeding typical chunksize
+    for i in range (chunksize_start, chunksize_end, step):
+        ret = gkfs_client.write_validate(file_a, i)
+        assert ret.retval == 1
 
 
-
-  
     return
 
 

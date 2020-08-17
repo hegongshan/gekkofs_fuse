@@ -105,6 +105,8 @@ int hook_statfs(const char* path, struct statfs* buf);
 
 int hook_fstatfs(unsigned int fd, struct statfs* buf);
 
+int hook_fsync(unsigned int fd);
+
 } // namespace hook
 } // namespace gkfs
 

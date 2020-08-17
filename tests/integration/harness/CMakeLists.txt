@@ -26,6 +26,10 @@ add_executable(gkfs.io
     gkfs.io/pwritev.cpp
     gkfs.io/statx.cpp
     gkfs.io/lseek.cpp
+    gkfs.io/write_validate.cpp
+    gkfs.io/write_random.cpp
+    gkfs.io/truncate.cpp
+    gkfs.io/util/file_compare.cpp
 )
 
 include(FetchContent)

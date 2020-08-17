@@ -11,27 +11,18 @@
   SPDX-License-Identifier: MIT
 */
 
-
-#ifndef GEKKOFS_GLOBAL_RPC_UTILS_HPP
-#define GEKKOFS_GLOBAL_RPC_UTILS_HPP
-
-extern "C" {
-#include <mercury_types.h>
-#include <mercury_proc_string.h>
-}
-
-#include <string>
+#include <daemon/backend/data/data_module.hpp>
 
 namespace gkfs {
-namespace rpc {
+namespace data {
 
-hg_bool_t bool_to_merc_bool(bool state);
+const std::shared_ptr<spdlog::logger>& DataModule::log() const {
+    return log_;
+}
 
-std::string get_my_hostname(bool short_hostname = false);
+void DataModule::log(const std::shared_ptr<spdlog::logger>& log) {
+    DataModule::log_ = log;
+}
 
-std::string get_host_by_name(const std::string& hostname);
-
-} // namespace rpc
+} // namespace data
 } // namespace gkfs
-
-#endif //GEKKOFS_GLOBAL_RPC_UTILS_HPP

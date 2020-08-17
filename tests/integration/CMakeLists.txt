@@ -55,6 +55,13 @@ gkfs_add_python_test(
     SOURCE forwarding/
 )
 
+gkfs_add_python_test(
+    NAME test_data
+    PYTHON_VERSION 3.6
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
+    SOURCE data/
+)
+
 if(GKFS_INSTALL_TESTS)
     install(DIRECTORY harness
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
@@ -90,6 +97,14 @@ if(GKFS_INSTALL_TESTS)
     )
 
     install(DIRECTORY position
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
+
+    install(DIRECTORY data
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
         FILES_MATCHING
             REGEX ".*\\.py"

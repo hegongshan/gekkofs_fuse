@@ -67,4 +67,17 @@ statx_init(CLI::App& app);
 void
 lseek_init(CLI::App& app);
 
+void
+write_validate_init(CLI::App& app);
+
+void
+write_random_init(CLI::App& app);
+
+void
+truncate_init(CLI::App& app);
+
+// UTIL
+void
+file_compare_init(CLI::App& app);
+
 #endif // IO_COMMANDS_HPP

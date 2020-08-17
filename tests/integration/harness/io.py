@@ -273,7 +273,7 @@ class StatOutputSchema(Schema):
 
 
 class StatxOutputSchema(Schema):
-    """Schema to deserialize the results of a stat() execution"""
+    """Schema to deserialize the results of a statx() execution"""
 
     retval = fields.Integer(required=True)
     statbuf = fields.Nested(StructStatxSchema, required=True)
@@ -285,13 +285,56 @@ class StatxOutputSchema(Schema):
 
 
 class LseekOutputSchema(Schema):
-    """Schema to deserialize the results of an open() execution"""
+    """Schema to deserialize the results of an lseek() execution"""
     retval = fields.Integer(required=True)
     errno = Errno(data_key='errnum', required=True)
 
     @post_load
     def make_object(self, data, **kwargs):
         return namedtuple('LseekReturn', ['retval', 'errno'])(**data)
+
+
+class WriteValidateOutputSchema(Schema):
+    """Schema to deserialize the results of a write() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('WriteValidateReturn', ['retval', 'errno'])(**data)
+
+
+class WriteRandomOutputSchema(Schema):
+    """Schema to deserialize the results of a write() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('WriteRandomReturn', ['retval', 'errno'])(**data)
+
+
+class TruncateOutputSchema(Schema):
+    """Schema to deserialize the results of an truncate() execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('TruncateReturn', ['retval', 'errno'])(**data)
+
+
+# UTIL
+class FileCompareOutputSchema(Schema):
+    """Schema to deserialize the results of comparing two files execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('FileCompareReturn', ['retval', 'errno'])(**data)
 
 class IOParser:
 
@@ -312,6 +355,11 @@ class IOParser:
         'stat'    : StatOutputSchema(),
         'statx'   : StatxOutputSchema(),
         'lseek'   : LseekOutputSchema(),
+        'write_random': WriteRandomOutputSchema(),
+        'write_validate' : WriteValidateOutputSchema(),
+        'truncate': TruncateOutputSchema(),
+        # UTIL
+        'file_compare': FileCompareOutputSchema(),
     }
 
     def parse(self, command, output):
