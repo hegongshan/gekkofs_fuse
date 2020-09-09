@@ -37,6 +37,13 @@ namespace {
 // make sure that things are only initialized once
 pthread_once_t init_env_thread = PTHREAD_ONCE_INIT;
 
+#ifdef GKFS_ENABLE_FORWARDING
+pthread_t mapper;
+bool forwarding_running;
+
+pthread_mutex_t remap_mutex;
+pthread_cond_t remap_signal;
+#endif
 
 inline void exit_error_msg(int errcode, const string& msg) {
 
@@ -102,9 +109,22 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
+    #ifdef GKFS_ENABLE_FORWARDING
+    try {
+        gkfs::util::load_forwarding_map();
+
+        LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+    } catch (std::exception& e){
+        exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+    }
+    
+    auto forwarder_dist = std::make_shared<gkfs::rpc::ForwarderDistributor>(CTX->fwd_host_id(), CTX->hosts().size());
+    CTX->distributor(forwarder_dist);
+    #else
     auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(CTX->local_host_id(),
                                                                                CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
+    #endif
 
     LOG(INFO, "Retrieving file system configuration...");
 
@@ -114,6 +134,54 @@ void init_ld_environment_() {
 
     LOG(INFO, "Environment initialization successful.");
 }
+
+#ifdef GKFS_ENABLE_FORWARDING
+void *forwarding_mapper(void* p) {
+    struct timespec timeout;
+    clock_gettime(CLOCK_REALTIME, &timeout);
+    timeout.tv_sec += 10; // 10 seconds
+
+    int previous = -1;
+
+    while (forwarding_running) {
+        try {
+            gkfs::util::load_forwarding_map();
+
+            if (previous != CTX->fwd_host_id()) {
+                LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
+
+                previous = CTX->fwd_host_id();
+            }
+        } catch (std::exception& e) {
+            exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+        }
+
+        pthread_mutex_lock(&remap_mutex);
+        pthread_cond_timedwait(&remap_signal, &remap_mutex, &timeout);
+        pthread_mutex_unlock(&remap_mutex);
+    }
+
+    return nullptr;
+}
+#endif
+
+#ifdef GKFS_ENABLE_FORWARDING
+void init_forwarding_mapper() {
+    forwarding_running = true;
+
+    pthread_create(&mapper, NULL, forwarding_mapper, NULL);
+}
+#endif
+
+#ifdef GKFS_ENABLE_FORWARDING
+void destroy_forwarding_mapper() {
+    forwarding_running = false;
+
+    pthread_cond_signal(&remap_signal);
+
+    pthread_join(mapper, NULL);
+}
+#endif
 
 void log_prog_name() {
     std::string line;
@@ -174,6 +242,10 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
+    #ifdef GKFS_ENABLE_FORWARDING
+    init_forwarding_mapper();
+    #endif
+
     gkfs::preload::start_interception();
 }
 
@@ -181,6 +253,9 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
+    #ifdef GKFS_ENABLE_FORWARDING
+    destroy_forwarding_mapper();
+    #endif
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");

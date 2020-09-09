@@ -24,6 +24,9 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
+#ifdef GKFS_ENABLE_AGIOS
+#include <daemon/scheduler/agios.hpp>
+#endif
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -160,6 +163,20 @@ void init_environment() {
         throw;
     }
 
+    #ifdef GKFS_ENABLE_FORWARDING
+    GKFS_DATA->spdlogger()->debug("{}() Enable I/O forwarding mode", __func__);
+    #endif
+
+    #ifdef GKFS_ENABLE_AGIOS
+    // Initialize AGIOS scheduler
+    GKFS_DATA->spdlogger()->debug("{}() Initializing AGIOS scheduler: '{}'", __func__, "/tmp/agios.conf");
+    try {
+        agios_initialize();    
+    } catch (const std::exception & e) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: {}", __func__, e.what());
+        throw;
+    }
+    #endif
     // Initialize data backend
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
@@ -210,6 +227,22 @@ void init_environment() {
     }
     GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
+#ifdef GKFS_ENABLE_AGIOS
+/**
+ * Initialize the AGIOS scheduling library
+ */
+void agios_initialize() {
+    char configuration[] = "/tmp/agios.conf";
+    
+    if (!agios_init(NULL, NULL, configuration, 0)) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: '{}'", __func__, configuration);   
+
+        agios_exit();
+
+        throw;
+    }
+}
+#endif
 
 /**
  * Destroys the margo, argobots, and mercury environments
@@ -370,7 +403,12 @@ int main(int argc, const char* argv[]) {
 
     assert(vm.count("rootdir"));
     auto rootdir = vm["rootdir"].as<string>();
+    #ifdef GKFS_ENABLE_FORWARDING
+    // In forwarding mode, the backend is shared
+    auto rootdir_path = bfs::path(rootdir);
+    #else
     auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
+    #endif
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
                                   __func__, rootdir_path.native());
     bfs::create_directories(rootdir_path);
@@ -378,11 +416,29 @@ int main(int argc, const char* argv[]) {
 
     if (vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
-        bfs::create_directories(metadir);
-        GKFS_DATA->metadir(bfs::canonical(metadir).native());
+
+        #ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+        #else
+        auto metadir_path = bfs::path(metadir);
+        #endif
+
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+
+        GKFS_DATA->spdlogger()->debug("{}() Meta directory: '{}'",
+                                  __func__, metadir_path.native());
     } else {
         // use rootdir as metadata dir
+        auto metadir = vm["rootdir"].as<string>();
+
+        #ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+        #else
         GKFS_DATA->metadir(GKFS_DATA->rootdir());
+        #endif
     }
 
     try {

@@ -84,6 +84,7 @@ find_package(Snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
+find_package(AGIOS REQUIRED)
 # margo dependencies
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
@@ -141,6 +142,9 @@ if(ENABLE_CLIENT_LOG)
     add_definitions(-DGKFS_ENABLE_LOGGING)
 endif()
 message(STATUS "[gekkofs] Client logging output: ${ENABLE_CLIENT_LOG}")
+
+option(GKFS_ENABLE_FORWARDING "Enable forwarding mode" OFF)
+option(GKFS_ENABLE_AGIOS "Enable AGIOS scheduling library" OFF)
 
 set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
 add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
@@ -232,6 +236,15 @@ if(GKFS_BUILD_TESTS)
     message(STATUS "[gekkofs] Preparing tests...")
     set(GKFS_TESTS_INTERFACE "lo" CACHE STRING "Network interface to use when running tests (default: lo)")
     message(STATUS "[gekkofs] Network interface for tests: ${GKFS_TESTS_INTERFACE}")
+
+    message(STATUS "[gekkofs] Check for forwarding tests...")
+    if(ENABLE_FORWARDING)
+        set(GKFS_TESTS_FORWARDING "ON" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
+    else()
+        set(GKFS_TESTS_FORWARDING "OFF" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
+    endif()
+    message(STATUS "[gekkofs] Forwarding tests: ${GKFS_TESTS_FORWARDING}")
+
     add_subdirectory(tests)
 else()
     unset(GKFS_TESTS_INTERFACE CACHE)
