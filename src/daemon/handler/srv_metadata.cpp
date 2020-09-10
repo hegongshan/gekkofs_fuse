@@ -22,7 +22,13 @@
 
 using namespace std;
 
-static hg_return_t rpc_srv_create(hg_handle_t handle) {
+/*
+ * This file contains all Margo RPC handlers that are concerning metadata operations
+ */
+
+namespace {
+
+hg_return_t rpc_srv_create(hg_handle_t handle) {
     rpc_mk_node_in_t in;
     rpc_err_out_t out;
 
@@ -52,9 +58,8 @@ static hg_return_t rpc_srv_create(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_create)
 
-static hg_return_t rpc_srv_stat(hg_handle_t handle) {
+hg_return_t rpc_srv_stat(hg_handle_t handle) {
     rpc_path_only_in_t in{};
     rpc_stat_out_t out{};
     auto ret = margo_get_input(handle, &in);
@@ -89,9 +94,8 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
-static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
+hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
     rpc_trunc_in_t in{};
     rpc_err_out_t out{};
 
@@ -123,9 +127,8 @@ static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-static hg_return_t rpc_srv_remove(hg_handle_t handle) {
+hg_return_t rpc_srv_remove(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
 
@@ -162,10 +165,8 @@ static hg_return_t rpc_srv_remove(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
 
-
-static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
+hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
 
@@ -211,9 +212,8 @@ static hg_return_t rpc_srv_update_metadentry(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
-static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
+hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     rpc_update_metadentry_size_in_t in{};
     rpc_update_metadentry_size_out_t out{};
 
@@ -251,9 +251,8 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 
-static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
+hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     rpc_path_only_in_t in{};
     rpc_get_metadentry_size_out_t out{};
 
@@ -288,11 +287,12 @@ static hg_return_t rpc_srv_get_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
 
-static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
+hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     rpc_get_dirents_in_t in{};
     rpc_get_dirents_out_t out{};
+    out.err = EIO;
+    out.dirents_size = 0;
     hg_bulk_t bulk_handle = nullptr;
 
     // Get input parmeters
@@ -300,24 +300,31 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error(
                 "{}() Could not get RPC input data with err '{}'", __func__, ret);
-        return ret;
+        out.err = EBUSY;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
     }
 
     // Retrieve size of source buffer
     auto hgi = margo_get_info(handle);
     auto mid = margo_hg_info_get_instance(hgi);
-    GKFS_DATA->spdlogger()->debug(
-            "{}() Got dirents RPC with path '{}'", __func__, in.path);
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
+    GKFS_DATA->spdlogger()->debug("{}() Got RPC: path '{}' bulk_size '{}' ", __func__, in.path, bulk_size);
 
     //Get directory entries from local DB
-    std::vector<std::pair<std::string, bool>> entries = gkfs::metadata::get_dirents(in.path);
+    vector<pair<string, bool>> entries{};
+    try {
+        entries = gkfs::metadata::get_dirents(in.path);
+    } catch (const ::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Error during get_dirents(): '{}'", __func__, e.what());
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
 
-    out.dirents_size = entries.size();
+    GKFS_DATA->spdlogger()->trace("{}() path '{}' Read database with '{}' entries", __func__, in.path,
+                                 entries.size());
 
     if (entries.empty()) {
         out.err = 0;
-        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
     }
 
     //Calculate total output size
@@ -327,61 +334,82 @@ static hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
         tot_names_size += e.first.size();
     }
 
+    // tot_names_size (# characters in entry) + # entries * (bool size + char size for \0 character)
     size_t out_size = tot_names_size + entries.size() * (sizeof(bool) + sizeof(char));
     if (bulk_size < out_size) {
         //Source buffer is smaller than total output size
-        GKFS_DATA->spdlogger()->error("{}() Entries do not fit source buffer", __func__);
+        GKFS_DATA->spdlogger()->error(
+                "{}() Entries do not fit source buffer. bulk_size '{}' < out_size '{}' must be satisfied!", __func__,
+                bulk_size, out_size);
         out.err = ENOBUFS;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
+
+    void* bulk_buf; //buffer for bulk transfer
+    // create bulk handle and allocated memory for buffer with out_size information
+    ret = margo_bulk_create(mid, 1, nullptr, &out_size, HG_BULK_READ_ONLY, &bulk_handle);
+    if (ret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+    // access the internally allocated memory buffer and put it into bulk_buf
+    uint32_t actual_count; // number of segments. we use one here because we push the whole buffer at once
+    ret = margo_bulk_access(bulk_handle, 0, out_size, HG_BULK_READ_ONLY, 1, &bulk_buf,
+                            &out_size, &actual_count);
+    if (ret != HG_SUCCESS || actual_count != 1) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
-    //Serialize output data on local buffer
-    auto out_buff = std::make_unique<char[]>(out_size);
-    char* out_buff_ptr = out_buff.get();
+    GKFS_DATA->spdlogger()->trace(
+            "{}() path '{}' entries '{}' out_size '{}'. Set up local read only bulk handle and allocated buffer with size '{}'",
+            __func__, in.path, entries.size(), out_size, out_size);
 
+    //Serialize output data on local buffer
+    auto out_buff_ptr = static_cast<char*>(bulk_buf);
     auto bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
-    char* names_ptr = out_buff_ptr + entries.size();
+    auto names_ptr = out_buff_ptr + entries.size();
+
     for (auto const& e: entries) {
+        if (e.first.empty()) {
+            GKFS_DATA->spdlogger()->warn("{}() Entry in readdir() empty. If this shows up, something else is very wrong.", __func__);
+        }
         *bool_ptr = e.second;
         bool_ptr++;
 
-        const char* name = e.first.c_str();
-        std::strcpy(names_ptr, name);
+        const auto name = e.first.c_str();
+        ::strcpy(names_ptr, name);
+        // number of characters + \0 terminator
         names_ptr += e.first.size() + 1;
     }
 
-    ret = margo_bulk_create(mid, 1, reinterpret_cast<void**>(&out_buff_ptr), &out_size, HG_BULK_READ_ONLY,
-                            &bulk_handle);
-    if (ret != HG_SUCCESS) {
-        GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle", __func__);
-        out.err = EBUSY;
-        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
-    }
+    GKFS_DATA->spdlogger()->trace(
+            "{}() path '{}' entries '{}' out_size '{}'. Copied data to bulk_buffer. NEXT bulk_transfer", __func__,
+            in.path, entries.size(), out_size);
 
-    ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr,
-                              in.bulk_handle, 0,
-                              bulk_handle, 0,
-                              out_size);
+    ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, 0, bulk_handle, 0, out_size);
     if (ret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error(
-                "{}() Failed push dirents on path '{}' to client",
-                __func__, in.path
-        );
+                "{}() Failed to push '{}' dirents on path '{}' to client with bulk size '{}' and out_size '{}'",
+                __func__,
+                entries.size(), in.path, bulk_size, out_size);
+        out.err = EBUSY;
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
 
     out.dirents_size = entries.size();
     out.err = 0;
-    GKFS_DATA->spdlogger()->debug(
-            "{}() Sending output response", __func__);
+    GKFS_DATA->spdlogger()->debug("{}() Sending output response err '{}' dirents_size '{}'. DONE", __func__,
+                                 out.err,
+                                 out.dirents_size);
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
+
 
 #ifdef HAS_SYMLINKS
 
-static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
+hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     rpc_mk_symlink_in_t in{};
     rpc_err_out_t out{};
 
@@ -411,6 +439,28 @@ static hg_return_t rpc_srv_mk_symlink(hg_handle_t handle) {
     margo_destroy(handle);
     return HG_SUCCESS;
 }
+
+#endif
+
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_create)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
+
+#ifdef HAS_SYMLINKS
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)
 
