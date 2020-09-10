@@ -13,12 +13,12 @@ VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "verbs" "agios"
+    "syscall_intercept" "date" "verbs"
 )
 
 MOGON2_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "agios" "psm2"
+    "bzip2" "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
+    "syscall_intercept" "date" "psm2"
 )
 
 NGIO_DEPS=(
@@ -27,11 +27,11 @@ NGIO_DEPS=(
 )
 
 DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
+  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
 
 ALL_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
+    "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
      "syscall_intercept" "date" "agios"
 )
 
@@ -312,6 +312,14 @@ if check_dependency "snappy" "${DEP_CONFIG[@]}"; then
     $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j"${CORES}"
     make install
+fi
+
+# build bzip2 for rocksdb
+if check_dependency "bzip2" "${DEP_CONFIG[@]}"; then
+    echo "############################################################ Installing:  bzip2"
+    CURR=${SOURCE}/bzip2
+    cd "${CURR}"
+    make install PREFIX="${INSTALL}"
 fi
 
 # build capstone for syscall-intercept

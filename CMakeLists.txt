@@ -84,7 +84,7 @@ find_package(Snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
-find_package(AGIOS REQUIRED)
+find_package(AGIOS) # optional
 # margo dependencies
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
