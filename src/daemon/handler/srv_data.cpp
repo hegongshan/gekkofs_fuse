@@ -65,7 +65,7 @@ hg_return_t rpc_srv_write(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug(
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n, in.total_chunk_size, bulk_size, in.offset);
-    #ifdef GKFS_ENABLE_AGIOS
+#ifdef GKFS_ENABLE_AGIOS
     int *data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
 
@@ -94,7 +94,7 @@ hg_return_t rpc_srv_write(hg_handle_t handle) {
     if (!agios_release_request(agios_path, AGIOS_WRITE, in.total_chunk_size, in.offset)) {
         GKFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
     }
-    #endif
+#endif
 
     /*
      * 2. Set up buffers for pull bulk transfers
@@ -152,14 +152,14 @@ hg_return_t rpc_srv_write(hg_handle_t handle) {
     for (auto chnk_id_file = in.chunk_start;
          chnk_id_file <= in.chunk_end && chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        #ifndef GKFS_ENABLE_FORWARDING
+#ifndef GKFS_ENABLE_FORWARDING
         if (distributor.locate_data(in.path, chnk_id_file) != host_id) {
             GKFS_DATA->spdlogger()->trace(
                     "{}() chunkid '{}' ignored as it does not match to this host with id '{}'. chnk_id_curr '{}'",
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
-        #endif
+#endif
 
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
@@ -188,7 +188,7 @@ hg_return_t rpc_srv_write(hg_handle_t handle) {
             // origin offset of a chunk is dependent on a given offset in a write operation
             if (in.offset > 0)
                 origin_offset = (gkfs::config::rpc::chunksize - in.offset) +
-                        ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
+                                ((chnk_id_file - in.chunk_start) - 1) * gkfs::config::rpc::chunksize;
             else
                 origin_offset = (chnk_id_file - in.chunk_start) * gkfs::config::rpc::chunksize;
             // last chunk might have different transfer_size
@@ -279,7 +279,7 @@ hg_return_t rpc_srv_read(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug(
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n, in.total_chunk_size, bulk_size, in.offset);
-    #ifdef GKFS_ENABLE_AGIOS
+#ifdef GKFS_ENABLE_AGIOS
     int *data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
 
@@ -308,7 +308,7 @@ hg_return_t rpc_srv_read(hg_handle_t handle) {
     if (!agios_release_request(agios_path, AGIOS_READ, in.total_chunk_size, in.offset)) {
         GKFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
     }
-    #endif
+#endif
 
     /*
      * 2. Set up buffers for pull bulk transfers
@@ -329,11 +329,11 @@ hg_return_t rpc_srv_read(hg_handle_t handle) {
         GKFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
-    #ifndef GKFS_ENABLE_FORWARDING
+#ifndef GKFS_ENABLE_FORWARDING
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
     gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
-    #endif
+#endif
 
     // chnk_ids used by this host
     vector<uint64_t> chnk_ids_host(in.chunk_n);
@@ -359,14 +359,14 @@ hg_return_t rpc_srv_read(hg_handle_t handle) {
     for (auto chnk_id_file = in.chunk_start;
          chnk_id_file <= in.chunk_end && chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        #ifndef GKFS_ENABLE_FORWARDING
+#ifndef GKFS_ENABLE_FORWARDING
         if (distributor.locate_data(in.path, chnk_id_file) != host_id) {
             GKFS_DATA->spdlogger()->trace(
                     "{}() chunkid '{}' ignored as it does not match to this host with id '{}'. chnk_id_curr '{}'",
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
-        #endif
+#endif
 
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host
@@ -512,6 +512,7 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_write)
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_read)
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_truncate)
+
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
 #ifdef GKFS_ENABLE_AGIOS

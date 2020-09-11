@@ -99,6 +99,7 @@ int hook_stat(const char* path, struct stat* buf) {
 }
 
 #ifdef STATX_TYPE
+
 int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct ::statx* buf) {
 
     LOG(DEBUG, "{}() called with dirfd: '{}', path: \"{}\", flags: '{}', mask: '{}', buf: '{}'",
@@ -108,25 +109,26 @@ int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct
     auto rstatus = CTX->relativize_fd_path(dirfd, path, resolved);
     switch (rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask,  buf);
+            return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask, buf);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_statx, dirfd, resolved.c_str(), flags, mask,  buf);
+            return syscall_no_intercept(SYS_statx, dirfd, resolved.c_str(), flags, mask, buf);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            return with_errno(gkfs::syscall::gkfs_statx(dirfd, resolved.c_str() , flags, mask, buf));
+            return with_errno(gkfs::syscall::gkfs_statx(dirfd, resolved.c_str(), flags, mask, buf));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
             return -EINVAL;
 
     }
-   
-    return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask,  buf);
+
+    return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask, buf);
 }
+
 #endif
 
 int hook_lstat(const char* path, struct stat* buf) {
@@ -219,7 +221,7 @@ int hook_readv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) 
 }
 
 int hook_preadv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
-                 unsigned long pos_l, unsigned long pos_h) {
+                unsigned long pos_l, unsigned long pos_h) {
 
     LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}, "
                "pos_l: {}," "pos_h: {}",

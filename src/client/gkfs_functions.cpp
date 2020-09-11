@@ -309,8 +309,8 @@ int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
     buf->stx_nlink = tmp.st_nlink;
     buf->stx_uid = tmp.st_uid;
     buf->stx_gid = tmp.st_gid;
-    buf->stx_mode =  tmp.st_mode;
-    buf->stx_ino =  tmp.st_ino;
+    buf->stx_mode = tmp.st_mode;
+    buf->stx_ino = tmp.st_ino;
     buf->stx_size = tmp.st_size;
     buf->stx_blocks = tmp.st_blocks;
     buf->stx_attributes_mask = 0;
@@ -328,6 +328,7 @@ int gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
 
     return 0;
 }
+
 #endif
 
 /**

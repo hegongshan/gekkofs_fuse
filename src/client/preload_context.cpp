@@ -347,7 +347,7 @@ PreloadContext::protect_user_fds() {
     const auto fd_is_open = [](int fd) -> bool {
         const int ret = ::syscall_no_intercept(SYS_fcntl, fd, F_GETFD);
         return ::syscall_error_code(ret) == 0 ||
-                ::syscall_error_code(ret) != EBADF;
+               ::syscall_error_code(ret) != EBADF;
     };
 
     for (int fd = 0; fd < MAX_USER_FDS; ++fd) {

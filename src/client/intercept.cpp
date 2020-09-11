@@ -446,7 +446,7 @@ int hook(long syscall_number,
         case SYS_creat:
             *result = gkfs::hook::hook_openat(AT_FDCWD,
                                               reinterpret_cast<const char*>(arg0),
-                                  O_WRONLY | O_CREAT | O_TRUNC,
+                                              O_WRONLY | O_CREAT | O_TRUNC,
                                               static_cast<mode_t>(arg1));
             break;
 
@@ -469,10 +469,10 @@ int hook(long syscall_number,
 #ifdef STATX_TYPE
         case SYS_statx:
             *result = gkfs::hook::hook_statx(static_cast<int>(arg0),
-                                            reinterpret_cast<char*>(arg1),
-                                            static_cast<int>(arg2),
-                                            static_cast<unsigned int>(arg3),
-                                            reinterpret_cast<struct statx*>(arg4));
+                                             reinterpret_cast<char*>(arg1),
+                                             static_cast<int>(arg2),
+                                             static_cast<unsigned int>(arg3),
+                                             reinterpret_cast<struct statx*>(arg4));
             break;
 #endif
 
@@ -508,16 +508,16 @@ int hook(long syscall_number,
 
         case SYS_readv:
             *result = gkfs::hook::hook_readv(static_cast<unsigned long>(arg0),
-                                              reinterpret_cast<const struct iovec*>(arg1),
-                                              static_cast<unsigned long>(arg2));
+                                             reinterpret_cast<const struct iovec*>(arg1),
+                                             static_cast<unsigned long>(arg2));
             break;
 
         case SYS_preadv:
             *result = gkfs::hook::hook_preadv(static_cast<unsigned long>(arg0),
-                                               reinterpret_cast<const struct iovec*>(arg1),
-                                               static_cast<unsigned long>(arg2),
-                                               static_cast<unsigned long>(arg3),
-                                               static_cast<unsigned long>(arg4));
+                                              reinterpret_cast<const struct iovec*>(arg1),
+                                              static_cast<unsigned long>(arg2),
+                                              static_cast<unsigned long>(arg3),
+                                              static_cast<unsigned long>(arg4));
             break;
 
         case SYS_pwrite64:

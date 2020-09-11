@@ -68,7 +68,7 @@ bool init_hermes_client() {
 
         hermes::engine_options opts{};
 
-        if(CTX->auto_sm())
+        if (CTX->auto_sm())
             opts |= hermes::use_auto_sm;
         if (gkfs::rpc::protocol::ofi_psm2 == CTX->rpc_protocol()) {
             opts |= hermes::force_no_block_progress;
@@ -114,7 +114,7 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     try {
         gkfs::util::load_forwarding_map();
 
@@ -125,11 +125,11 @@ void init_ld_environment_() {
     
     auto forwarder_dist = std::make_shared<gkfs::rpc::ForwarderDistributor>(CTX->fwd_host_id(), CTX->hosts().size());
     CTX->distributor(forwarder_dist);
-    #else
+#else
     auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(CTX->local_host_id(),
                                                                                CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
-    #endif
+#endif
 
     LOG(INFO, "Retrieving file system configuration...");
 
@@ -247,9 +247,9 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     init_forwarding_mapper();
-    #endif
+#endif
 
     gkfs::preload::start_interception();
 }
@@ -258,9 +258,9 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     destroy_forwarding_mapper();
-    #endif
+#endif
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");

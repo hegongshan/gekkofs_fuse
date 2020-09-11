@@ -24,6 +24,7 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
+
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
 #endif
@@ -159,11 +160,11 @@ void init_environment() {
         throw;
     }
 
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     GKFS_DATA->spdlogger()->debug("{}() Enable I/O forwarding mode", __func__);
-    #endif
+#endif
 
-    #ifdef GKFS_ENABLE_AGIOS
+#ifdef GKFS_ENABLE_AGIOS
     // Initialize AGIOS scheduler
     GKFS_DATA->spdlogger()->debug("{}() Initializing AGIOS scheduler: '{}'", __func__, "/tmp/agios.conf");
     try {
@@ -172,7 +173,7 @@ void init_environment() {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: {}", __func__, e.what());
         throw;
     }
-    #endif
+#endif
     // Initialize data backend
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
@@ -222,6 +223,7 @@ void init_environment() {
     }
     GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
+
 #ifdef GKFS_ENABLE_AGIOS
 /**
  * Initialize the AGIOS scheduling library

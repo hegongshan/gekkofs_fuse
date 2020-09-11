@@ -61,9 +61,9 @@ target_include_directories(gkfs_daemon
 
 install(TARGETS gkfs_daemon
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+    )
 
-if(GKFS_ENABLE_FORWARDING)
+if (GKFS_ENABLE_FORWARDING)
     set(FWD_DAEMON_SRC
         ../global/rpc/rpc_util.cpp
         ../global/path_util.cpp
@@ -98,18 +98,18 @@ if(GKFS_ENABLE_FORWARDING)
         )
     add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
 
-    if(GKFS_ENABLE_AGIOS)
+    if (GKFS_ENABLE_AGIOS)
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
             DGKFS_ENABLE_AGIOS
-        )
-    else()
+            )
+    else ()
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
-        )
-    endif()
+            )
+    endif ()
 
     message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
@@ -145,5 +145,5 @@ if(GKFS_ENABLE_FORWARDING)
 
     install(TARGETS gkfwd_daemon
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-endif()
+        )
+endif ()

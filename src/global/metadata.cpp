@@ -252,7 +252,8 @@ void Metadata::target_path(const std::string& target_path) {
 bool Metadata::is_link() const {
     return S_ISLNK(mode_);
 }
-#endif 
+
+#endif
 
 } // namespace metadata
 } // namespace gkfs

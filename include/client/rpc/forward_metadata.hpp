@@ -25,6 +25,7 @@ class OpenDir;
 }
 namespace metadata {
 struct MetadentryUpdateFlags;
+
 class Metadata;
 }
 

@@ -45,8 +45,8 @@ namespace rpc {
  * @return pair<error code, written size>
  */
 pair<int, ssize_t> forward_write(const string& path, const void* buf, const bool append_flag,
-                      const off64_t in_offset, const size_t write_size,
-                      const int64_t updated_metadentry_size) {
+                                 const off64_t in_offset, const size_t write_size,
+                                 const int64_t updated_metadentry_size) {
 
     assert(write_size > 0);
 
