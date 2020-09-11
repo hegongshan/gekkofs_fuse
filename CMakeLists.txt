@@ -84,7 +84,7 @@ find_package(Snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
-find_package(AGIOS REQUIRED)
+find_package(AGIOS) # optional
 # margo dependencies
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
@@ -101,19 +101,6 @@ find_package(Boost 1.53 REQUIRED
 find_package(Threads REQUIRED)
 
 find_package(Date REQUIRED)
-
-set(RPC_PROTOCOL "ofi+sockets" CACHE STRING "Communication plugin used for RPCs")
-set_property(CACHE RPC_PROTOCOL PROPERTY STRINGS
-   "bmi+tcp"
-   "ofi+sockets"
-   "ofi+tcp"
-   "ofi+verbs"
-   "ofi+psm2"
-)
-message(STATUS "[gekkofs] RPC protocol: '${RPC_PROTOCOL}'")
-
-option(USE_SHM "Use shared memory for intra-node communication" OFF)
-message(STATUS "[gekkofs] Shared-memory communication: ${USE_SHM}")
 
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
 message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")

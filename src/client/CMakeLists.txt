@@ -65,7 +65,7 @@ target_link_libraries(gkfs_intercept
     Boost::boost # needed for tokenizer header
     Threads::Threads
     Date::TZ
-)
+    )
 
 target_include_directories(gkfs_intercept
     PRIVATE
@@ -77,9 +77,9 @@ install(TARGETS gkfs_intercept
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
-)
+    )
 
-if(GKFS_ENABLE_FORWARDING)
+if (GKFS_ENABLE_FORWARDING)
     set(FWD_PRELOAD_SRC
         gkfs_functions.cpp
         hooks.cpp
@@ -133,18 +133,18 @@ if(GKFS_ENABLE_FORWARDING)
 
     add_library(gkfwd_intercept SHARED ${FWD_PRELOAD_SRC} ${FWD_PRELOAD_HEADERS})
 
-    if(GKFS_ENABLE_AGIOS)
+    if (GKFS_ENABLE_AGIOS)
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
             DGKFS_ENABLE_AGIOS
-        )
-    else()
+            )
+    else ()
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
-        )
-    endif()
+            )
+    endif ()
 
     message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
@@ -163,7 +163,7 @@ if(GKFS_ENABLE_FORWARDING)
         Boost::boost # needed for tokenizer header
         Threads::Threads
         Date::TZ
-    )
+        )
 
     target_include_directories(gkfwd_intercept
         PRIVATE
@@ -175,5 +175,5 @@ if(GKFS_ENABLE_FORWARDING)
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
-    )
-endif()
+        )
+endif ()

@@ -72,6 +72,14 @@ void FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
 }
 
+const std::string& FsData::rpc_protocol() const {
+    return rpc_protocol_;
+}
+
+void FsData::rpc_protocol(const std::string& rpc_protocol) {
+    rpc_protocol_ = rpc_protocol;
+}
+
 const std::string& FsData::bind_addr() const {
     return bind_addr_;
 }
@@ -86,6 +94,14 @@ const std::string& FsData::hosts_file() const {
 
 void FsData::hosts_file(const std::string& lookup_file) {
     hosts_file_ = lookup_file;
+}
+
+bool FsData::use_auto_sm() const {
+    return use_auto_sm_;
+}
+
+void FsData::use_auto_sm(bool use_auto_sm) {
+    use_auto_sm_ = use_auto_sm;
 }
 
 bool FsData::atime_state() const {

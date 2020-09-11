@@ -320,7 +320,7 @@ hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     }
 
     GKFS_DATA->spdlogger()->trace("{}() path '{}' Read database with '{}' entries", __func__, in.path,
-                                 entries.size());
+                                  entries.size());
 
     if (entries.empty()) {
         out.err = 0;
@@ -372,7 +372,8 @@ hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
 
     for (auto const& e: entries) {
         if (e.first.empty()) {
-            GKFS_DATA->spdlogger()->warn("{}() Entry in readdir() empty. If this shows up, something else is very wrong.", __func__);
+            GKFS_DATA->spdlogger()->warn(
+                    "{}() Entry in readdir() empty. If this shows up, something else is very wrong.", __func__);
         }
         *bool_ptr = e.second;
         bool_ptr++;
@@ -400,11 +401,10 @@ hg_return_t rpc_srv_get_dirents(hg_handle_t handle) {
     out.dirents_size = entries.size();
     out.err = 0;
     GKFS_DATA->spdlogger()->debug("{}() Sending output response err '{}' dirents_size '{}'. DONE", __func__,
-                                 out.err,
-                                 out.dirents_size);
+                                  out.err,
+                                  out.dirents_size);
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
-
 
 
 #ifdef HAS_SYMLINKS

@@ -24,6 +24,7 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
+
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
 #endif
@@ -39,7 +40,7 @@
 
 extern "C" {
 #include <unistd.h>
-#include <stdlib.h>
+#include <cstdlib>
 }
 
 using namespace std;
@@ -50,7 +51,7 @@ static condition_variable shutdown_please;
 static mutex mtx;
 
 void init_io_tasklet_pool() {
-    assert(gkfs::config::rpc::daemon_io_xstreams >= 0);
+    static_assert(gkfs::config::rpc::daemon_io_xstreams >= 0, "Daemon IO Execution streams must be higher than 0!");
     unsigned int xstreams_num = gkfs::config::rpc::daemon_io_xstreams;
 
     //retrieve the pool of the just created scheduler
@@ -102,22 +103,18 @@ void register_server_rpcs(margo_instance_id mid) {
                    rpc_srv_get_chunk_stat);
 }
 
-void init_rpc_server(const string& protocol_port) {
+void init_rpc_server() {
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
     struct hg_init_info hg_options = HG_INIT_INFO_INITIALIZER;
-#if USE_SHM
-    hg_options.auto_sm = HG_TRUE;
-#else
-    hg_options.auto_sm = HG_FALSE;
-#endif
+    hg_options.auto_sm = GKFS_DATA->use_auto_sm() ? HG_TRUE : HG_FALSE;
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
-    if (gkfs::rpc::protocol::ofi_psm2 == string(RPC_PROTOCOL))
+    if (gkfs::rpc::protocol::ofi_psm2 == GKFS_DATA->rpc_protocol())
         hg_options.na_init_info.progress_mode = NA_NO_BLOCK;
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init_opt(protocol_port.c_str(),
+    auto mid = margo_init_opt(GKFS_DATA->bind_addr().c_str(),
                               MARGO_SERVER_MODE,
                               &hg_options,
                               HG_TRUE,
@@ -163,20 +160,20 @@ void init_environment() {
         throw;
     }
 
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     GKFS_DATA->spdlogger()->debug("{}() Enable I/O forwarding mode", __func__);
-    #endif
+#endif
 
-    #ifdef GKFS_ENABLE_AGIOS
+#ifdef GKFS_ENABLE_AGIOS
     // Initialize AGIOS scheduler
     GKFS_DATA->spdlogger()->debug("{}() Initializing AGIOS scheduler: '{}'", __func__, "/tmp/agios.conf");
     try {
-        agios_initialize();    
+        agios_initialize();
     } catch (const std::exception & e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: {}", __func__, e.what());
         throw;
     }
-    #endif
+#endif
     // Initialize data backend
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'", __func__, chunk_storage_path);
@@ -190,10 +187,9 @@ void init_environment() {
     }
 
     // Init margo for RPC
-    GKFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'",
-                                  __func__, GKFS_DATA->bind_addr());
+    GKFS_DATA->spdlogger()->debug("{}() Initializing RPC server: '{}'", __func__, GKFS_DATA->bind_addr());
     try {
-        init_rpc_server(GKFS_DATA->bind_addr());
+        init_rpc_server();
     } catch (const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to initialize RPC server: {}", __func__, e.what());
         throw;
@@ -227,15 +223,16 @@ void init_environment() {
     }
     GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
+
 #ifdef GKFS_ENABLE_AGIOS
 /**
  * Initialize the AGIOS scheduling library
  */
 void agios_initialize() {
     char configuration[] = "/tmp/agios.conf";
-    
+
     if (!agios_init(NULL, NULL, configuration, 0)) {
-        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: '{}'", __func__, configuration);   
+        GKFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: '{}'", __func__, configuration);
 
         agios_exit();
 
@@ -308,9 +305,115 @@ void initialize_loggers() {
     gkfs::log::setup(logger_names, level, path);
 }
 
+/**
+ *
+ * @param vm
+ * @throws runtime_error
+ */
+void parse_input(const po::variables_map& vm) {
+    auto rpc_protocol = string(gkfs::rpc::protocol::ofi_sockets);
+    if (vm.count("rpc_protocol")) {
+        rpc_protocol = vm["rpc_protocol"].as<string>();
+        if (rpc_protocol != gkfs::rpc::protocol::ofi_verbs &&
+            rpc_protocol != gkfs::rpc::protocol::ofi_sockets &&
+            rpc_protocol != gkfs::rpc::protocol::ofi_psm2) {
+            throw runtime_error(
+                    fmt::format("Given RPC protocol '{}' not supported. Check --help for supported protocols.",
+                                rpc_protocol));
+        }
+    }
+
+    auto use_auto_sm = false;
+    if (vm.count("auto_sm")) {
+        use_auto_sm = true;
+    }
+    GKFS_DATA->use_auto_sm(use_auto_sm);
+    GKFS_DATA->spdlogger()->debug("{}() Shared memory (auto_sm) for intra-node communication (IPCs) set to '{}'.",
+                                  __func__, use_auto_sm);
+
+    string addr{};
+    if (vm.count("listen")) {
+        addr = vm["listen"].as<string>();
+        // ofi+verbs requires an empty addr to bind to the ib interface
+        if (rpc_protocol == gkfs::rpc::protocol::ofi_verbs) {
+            /*
+             * FI_VERBS_IFACE : The prefix or the full name of the network interface associated with the verbs device (default: ib)
+             * Mercury does not allow to bind to an address when ofi+verbs is used
+             */
+            if (!secure_getenv("FI_VERBS_IFACE"))
+                setenv("FI_VERBS_IFACE", addr.c_str(), 1);
+            addr = ""s;
+        }
+    } else {
+        if (rpc_protocol != gkfs::rpc::protocol::ofi_verbs)
+            addr = gkfs::rpc::get_my_hostname(true);
+    }
+
+    GKFS_DATA->rpc_protocol(rpc_protocol);
+    GKFS_DATA->bind_addr(fmt::format("{}://{}", rpc_protocol, addr));
+
+    string hosts_file;
+    if (vm.count("hosts-file")) {
+        hosts_file = vm["hosts-file"].as<string>();
+    } else {
+        hosts_file = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
+    }
+    GKFS_DATA->hosts_file(hosts_file);
+
+    assert(vm.count("mountdir"));
+    auto mountdir = vm["mountdir"].as<string>();
+    // Create mountdir. We use this dir to get some information on the underlying fs with statfs in gkfs_statfs
+    bfs::create_directories(mountdir);
+    GKFS_DATA->mountdir(bfs::canonical(mountdir).native());
+
+    assert(vm.count("rootdir"));
+    auto rootdir = vm["rootdir"].as<string>();
+
+#ifdef GKFS_ENABLE_FORWARDING
+    // In forwarding mode, the backend is shared
+    auto rootdir_path = bfs::path(rootdir);
+#else
+    auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
+#endif
+
+    GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
+                                  __func__, rootdir_path.native());
+    bfs::create_directories(rootdir_path);
+    GKFS_DATA->rootdir(rootdir_path.native());
+
+    if (vm.count("metadir")) {
+        auto metadir = vm["metadir"].as<string>();
+
+#ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+#else
+        auto metadir_path = bfs::path(metadir);
+#endif
+
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+
+        GKFS_DATA->spdlogger()->debug("{}() Meta directory: '{}'",
+                                      __func__, metadir_path.native());
+    } else {
+        // use rootdir as metadata dir
+        auto metadir = vm["rootdir"].as<string>();
+
+#ifdef GKFS_ENABLE_FORWARDING
+        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
+        bfs::create_directories(metadir_path);
+        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+#else
+        GKFS_DATA->metadir(GKFS_DATA->rootdir());
+#endif
+    }
+
+
+}
+
 int main(int argc, const char* argv[]) {
 
-    // Parse input
+    // Define arg parsing
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
@@ -324,8 +427,14 @@ int main(int argc, const char* argv[]) {
             ("hosts-file,H", po::value<string>(),
              "Shared file used by deamons to register their "
              "enpoints. (default './gkfs_hosts.txt')")
+            ("rpc_protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
+                                                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for (TCP, Infiniband, "
+                                                    "and Omni-Path, respectively. (Default ofi+sockets)\n"
+                                                    "Libfabric must have enabled support verbs or psm2")
+            ("auto_sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
+                        "instead of using the RPC protocol. (Default off)")
             ("version", "print version and exit");
-    po::variables_map vm;
+    po::variables_map vm{};
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
     if (vm.count("help")) {
@@ -339,12 +448,6 @@ int main(int argc, const char* argv[]) {
         cout << "Debug: ON" << endl;
 #else
         cout << "Debug: OFF" << endl;
-#endif
-        cout << "RPC protocol: " << RPC_PROTOCOL << endl;
-#if USE_SHM
-        cout << "Shared-memory comm: ON" << endl;
-#else
-        cout << "Shared-memory comm: OFF" << endl;
 #endif
 #if CREATE_CHECK_PARENTS
         cout << "Create check parents: ON" << endl;
@@ -362,86 +465,23 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
+    // intitialize logging framework
     initialize_loggers();
     GKFS_DATA->spdlogger(spdlog::get("main"));
 
-    string addr{};
-    if (vm.count("listen")) {
-        addr = vm["listen"].as<string>();
-        // ofi+verbs requires an empty addr to bind to the ib interface
-        if (RPC_PROTOCOL == string(gkfs::rpc::protocol::ofi_verbs)) {
-            /*
-             * FI_VERBS_IFACE : The prefix or the full name of the network interface associated with the verbs device (default: ib)
-             * Mercury does not allow to bind to an address when ofi+verbs is used
-             */
-            if (!secure_getenv("FI_VERBS_IFACE"))
-                setenv("FI_VERBS_IFACE", addr.c_str(), 1);
-            addr = ""s;
-        }
-    } else {
-        if (RPC_PROTOCOL != string(gkfs::rpc::protocol::ofi_verbs))
-            addr = gkfs::rpc::get_my_hostname(true);
-    }
-    GKFS_DATA->bind_addr(fmt::format("{}://{}", RPC_PROTOCOL, addr));
-
-    string hosts_file;
-    if (vm.count("hosts-file")) {
-        hosts_file = vm["hosts-file"].as<string>();
-    } else {
-        hosts_file =
-                gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
-    }
-    GKFS_DATA->hosts_file(hosts_file);
-
-    GKFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
-
-    assert(vm.count("mountdir"));
-    auto mountdir = vm["mountdir"].as<string>();
-    // Create mountdir. We use this dir to get some information on the underlying fs with statfs in gkfs_statfs
-    bfs::create_directories(mountdir);
-    GKFS_DATA->mountdir(bfs::canonical(mountdir).native());
-
-    assert(vm.count("rootdir"));
-    auto rootdir = vm["rootdir"].as<string>();
-    #ifdef GKFS_ENABLE_FORWARDING
-    // In forwarding mode, the backend is shared
-    auto rootdir_path = bfs::path(rootdir);
-    #else
-    auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
-    #endif
-    GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'",
-                                  __func__, rootdir_path.native());
-    bfs::create_directories(rootdir_path);
-    GKFS_DATA->rootdir(rootdir_path.native());
-
-    if (vm.count("metadir")) {
-        auto metadir = vm["metadir"].as<string>();
-
-        #ifdef GKFS_ENABLE_FORWARDING
-        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
-        #else
-        auto metadir_path = bfs::path(metadir);
-        #endif
-
-        bfs::create_directories(metadir_path);
-        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
-
-        GKFS_DATA->spdlogger()->debug("{}() Meta directory: '{}'",
-                                  __func__, metadir_path.native());
-    } else {
-        // use rootdir as metadata dir
-        auto metadir = vm["rootdir"].as<string>();
-
-        #ifdef GKFS_ENABLE_FORWARDING
-        auto metadir_path = bfs::path(metadir) / fmt::format_int(getpid()).str();
-        bfs::create_directories(metadir_path);
-        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
-        #else
-        GKFS_DATA->metadir(GKFS_DATA->rootdir());
-        #endif
-    }
-
+    // parse all input parameters and populate singleton structures
     try {
+        parse_input(vm);
+    } catch (const std::exception& e) {
+        cerr << fmt::format("Parsing arguments failed: '{}'. Exiting.", e.what());
+        exit(EXIT_FAILURE);
+    }
+
+    /*
+     * Initialize environment and start daemon. Wait until signaled to cancel before shutting down
+     */
+    try {
+        GKFS_DATA->spdlogger()->info("{}() Initializing environment", __func__);
         init_environment();
     } catch (const std::exception& e) {
         auto emsg = fmt::format("Failed to initialize environment: {}", e.what());

@@ -83,6 +83,8 @@ private:
     std::vector<hermes::endpoint> hosts_;
     uint64_t local_host_id_;
     uint64_t fwd_host_id_;
+    std::string rpc_protocol_;
+    bool auto_sm_{false};
 
     bool interception_enabled_;
 
@@ -119,7 +121,6 @@ public:
 
     void clear_hosts();
 
-
     uint64_t local_host_id() const;
 
     void local_host_id(uint64_t id);
@@ -127,6 +128,14 @@ public:
     uint64_t fwd_host_id() const;
 
     void fwd_host_id(uint64_t id);
+
+    const std::string& rpc_protocol() const;
+
+    void rpc_protocol(const std::string& rpc_protocol);
+
+    bool auto_sm() const;
+
+    void auto_sm(bool auto_sm);
 
     RelativizeStatus relativize_fd_path(int dirfd,
                                         const char* raw_path,

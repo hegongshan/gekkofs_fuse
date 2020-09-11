@@ -13,25 +13,25 @@ VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi-verbs" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "agios"
+    "syscall_intercept" "date"
 )
 
 MOGON2_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb-experimental"
-    "syscall_intercept-glibc3" "date" "agios" "psm2"
+    "bzip2" "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb-experimental"
+    "syscall_intercept-glibc3" "date" "psm2"
 )
 
 NGIO_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "psm2"
+    "syscall_intercept" "date" "psm2" "agios"
 
 )
 DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
+  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
 
 ALL_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
+    "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
      "syscall_intercept" "date" "agios"
 )
 
@@ -322,6 +322,11 @@ if check_dependency "snappy" "${DEP_CONFIG[@]}"; then
     wgetdeps "snappy" "https://github.com/google/snappy/archive/1.1.7.tar.gz" &
 fi
 
+# get bzip2 for rocksdb
+if check_dependency "bzip2" "${DEP_CONFIG[@]}"; then
+    wgetdeps "bzip2" "https://sourceforge.net/projects/bzip2/files/bzip2-1.0.6.tar.gz" &
+fi
+
 # get capstone for syscall-intercept
 if check_dependency "capstone" "${DEP_CONFIG[@]}"; then
     wgetdeps "capstone" "https://github.com/aquynh/capstone/archive/4.0.1.tar.gz" &
@@ -369,21 +374,17 @@ if check_dependency "margo" "${DEP_CONFIG[@]}"; then
 fi
 
 # get rocksdb
-if check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
-    if check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
-        wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.11.4.tar.gz" &
-    else
-        wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
-    fi
+if check_dependency "rocksdb-experimental" "${DEP_CONFIG[@]}"; then
+    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.11.4.tar.gz" &
+elif check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
+    wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
 fi
 
 # get syscall_intercept
-if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
-    if check_dependency "syscall_intercept-glibc3" "${DEP_CONFIG[@]}"; then
-        clonedeps "syscall_intercept" "https://github.com/GBuella/syscall_intercept" "ea124fb4ab9eb56bc22a0e94f2b90928c7a88e8c" "-b add_endbr64_and_lea" "syscall_intercept.patch" &
-    else
-        clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
-    fi
+if check_dependency "syscall_intercept-glibc3" "${DEP_CONFIG[@]}"; then
+    clonedeps "syscall_intercept" "https://github.com/GBuella/syscall_intercept" "ea124fb4ab9eb56bc22a0e94f2b90928c7a88e8c" "-b add_endbr64_and_lea" "syscall_intercept.patch" &
+elif check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
+    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
 fi
 
 # get AGIOS

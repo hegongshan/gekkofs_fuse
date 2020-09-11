@@ -128,6 +128,23 @@ uint64_t PreloadContext::fwd_host_id() const {
 void PreloadContext::fwd_host_id(uint64_t id) {
     fwd_host_id_ = id;
 }
+
+const std::string& PreloadContext::rpc_protocol() const {
+    return rpc_protocol_;
+}
+
+void PreloadContext::rpc_protocol(const std::string& rpc_protocol) {
+    rpc_protocol_ = rpc_protocol;
+}
+
+bool PreloadContext::auto_sm() const {
+    return auto_sm_;
+}
+
+void PreloadContext::auto_sm(bool auto_sm) {
+    PreloadContext::auto_sm_ = auto_sm;
+}
+
 RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
                                                     const char* raw_path,
                                                     std::string& relative_path,
@@ -330,7 +347,7 @@ PreloadContext::protect_user_fds() {
     const auto fd_is_open = [](int fd) -> bool {
         const int ret = ::syscall_no_intercept(SYS_fcntl, fd, F_GETFD);
         return ::syscall_error_code(ret) == 0 ||
-                ::syscall_error_code(ret) != EBADF;
+               ::syscall_error_code(ret) != EBADF;
     };
 
     for (int fd = 0; fd < MAX_USER_FDS; ++fd) {

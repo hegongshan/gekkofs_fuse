@@ -60,25 +60,23 @@ inline void exit_error_msg(int errcode, const string& msg) {
 
 /**
  * Initializes the Hermes client for a given transport prefix
- * @param transport_prefix
- * @return true if succesfully initialized; false otherwise
+ * @return true if successfully initialized; false otherwise
  */
-bool init_hermes_client(const std::string& transport_prefix) {
+bool init_hermes_client() {
 
     try {
 
         hermes::engine_options opts{};
 
-#if USE_SHM
-        opts |= hermes::use_auto_sm;
-#endif
-        if (gkfs::rpc::protocol::ofi_psm2 == string(RPC_PROTOCOL)) {
+        if (CTX->auto_sm())
+            opts |= hermes::use_auto_sm;
+        if (gkfs::rpc::protocol::ofi_psm2 == CTX->rpc_protocol()) {
             opts |= hermes::force_no_block_progress;
         }
 
         ld_network_service =
                 std::make_unique<hermes::async_engine>(
-                        hermes::get_transport_type(transport_prefix), opts);
+                        hermes::get_transport_type(CTX->rpc_protocol()), opts);
         ld_network_service->run();
     } catch (const std::exception& ex) {
         fmt::print(stderr, "Failed to initialize Hermes RPC client {}\n",
@@ -94,22 +92,29 @@ bool init_hermes_client(const std::string& transport_prefix) {
  */
 void init_ld_environment_() {
 
-    // initialize Hermes interface to Mercury
-    LOG(INFO, "Initializing RPC subsystem...");
-
-    if (!init_hermes_client(RPC_PROTOCOL)) {
-        exit_error_msg(EXIT_FAILURE, "Unable to initialize RPC subsystem");
-    }
-
+    vector<pair<string, string>> hosts{};
     try {
         LOG(INFO, "Loading peer addresses...");
-        gkfs::util::load_hosts();
+        hosts = gkfs::util::read_hosts_file();
     } catch (const std::exception& e) {
         exit_error_msg(EXIT_FAILURE, "Failed to load hosts addresses: "s + e.what());
     }
 
+    // initialize Hermes interface to Mercury
+    LOG(INFO, "Initializing RPC subsystem...");
+
+    if (!init_hermes_client()) {
+        exit_error_msg(EXIT_FAILURE, "Unable to initialize RPC subsystem");
+    }
+
+    try {
+        gkfs::util::connect_to_hosts(hosts);
+    } catch (const std::exception& e) {
+        exit_error_msg(EXIT_FAILURE, "Failed to connect to hosts: "s + e.what());
+    }
+
     /* Setup distributor */
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     try {
         gkfs::util::load_forwarding_map();
 
@@ -120,11 +125,11 @@ void init_ld_environment_() {
     
     auto forwarder_dist = std::make_shared<gkfs::rpc::ForwarderDistributor>(CTX->fwd_host_id(), CTX->hosts().size());
     CTX->distributor(forwarder_dist);
-    #else
+#else
     auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(CTX->local_host_id(),
                                                                                CTX->hosts().size());
     CTX->distributor(simple_hash_dist);
-    #endif
+#endif
 
     LOG(INFO, "Retrieving file system configuration...");
 
@@ -242,9 +247,9 @@ void init_preload() {
 
     CTX->unprotect_user_fds();
 
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     init_forwarding_mapper();
-    #endif
+#endif
 
     gkfs::preload::start_interception();
 }
@@ -253,9 +258,9 @@ void init_preload() {
  * Called last when preload library is used with the LD_PRELOAD environment variable
  */
 void destroy_preload() {
-    #ifdef GKFS_ENABLE_FORWARDING
+#ifdef GKFS_ENABLE_FORWARDING
     destroy_forwarding_mapper();
-    #endif
+#endif
 
     CTX->clear_hosts();
     LOG(DEBUG, "Peer information deleted");

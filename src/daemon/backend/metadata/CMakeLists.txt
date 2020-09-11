@@ -17,4 +17,4 @@ target_link_libraries(metadata_db
     metadata
     RocksDB
     spdlog
-)
+    )
