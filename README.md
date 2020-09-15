@@ -157,28 +157,30 @@ Further options:
 ```bash
 Allowed options:
   -h [ --help ]             Help message
-  -m [ --mountdir ] arg     pseudo mountdir
-  -r [ --rootdir ] arg      data directory
-  -i [ --metadir ] arg      metadata directory, if not set rootdir is used for
-                            metadata
-  -l [ --listen ] arg       Address or interface to bind the daemon on.
+  -m [ --mountdir ] arg     Virtual mounting directory where GekkoFS is 
+                            available.
+  -r [ --rootdir ] arg      Local data directory where GekkoFS data for this 
+                            daemon is stored.
+  -i [ --metadir ] arg      Metadata directory where GekkoFS' RocksDB data 
+                            directory is located. If not set, rootdir is used.
+  -l [ --listen ] arg       Address or interface to bind the daemon to. 
                             Default: local hostname.
-                            When used with ofi+verbs the FI_VERBS_IFACE
-                            environment variable is set accordingly which
-                            associates the verbs device with the network
-                            interface. In case FI_VERBS_IFACE is already
+                            When used with ofi+verbs the FI_VERBS_IFACE 
+                            environment variable is set accordingly which 
+                            associates the verbs device with the network 
+                            interface. In case FI_VERBS_IFACE is already 
                             defined, the argument is ignored. Default 'ib'.
-  -H [ --hosts-file ] arg   Shared file used by deamons to register their
-                            enpoints. (default './gkfs_hosts.txt')
-  -P [ --rpc_protocol ] arg Used RPC protocol for inter-node communication.
-                            Available: {ofi+sockets, ofi+verbs, ofi+psm2} for
-                            (TCP, Infiniband, and Omni-Path, respectively.
+  -H [ --hosts-file ] arg   Shared file used by deamons to register their 
+                            endpoints. (default './gkfs_hosts.txt')
+  -P [ --rpc-protocol ] arg Used RPC protocol for inter-node communication.
+                            Available: {ofi+sockets, ofi+verbs, ofi+psm2} for 
+                            TCP, Infiniband, and Omni-Path, respectively. 
                             (Default ofi+sockets)
-                            Libfabric must have verbs or psm2 support enabled.
-  --auto_sm                 Enables intra-node communication (IPCs) via the
-                            `na+sm` (shared memory) protocol, instead of using
+                            Libfabric must have enabled support verbs or psm2.
+  --auto-sm                 Enables intra-node communication (IPCs) via the 
+                            `na+sm` (shared memory) protocol, instead of using 
                             the RPC protocol. (Default off)
-  --version                 print version and exit
+  --version                 Print version and exit.
 ```
 
 Shut it down by gracefully killing the process (SIGTERM).

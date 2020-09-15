@@ -312,8 +312,8 @@ void initialize_loggers() {
  */
 void parse_input(const po::variables_map& vm) {
     auto rpc_protocol = string(gkfs::rpc::protocol::ofi_sockets);
-    if (vm.count("rpc_protocol")) {
-        rpc_protocol = vm["rpc_protocol"].as<string>();
+    if (vm.count("rpc-protocol")) {
+        rpc_protocol = vm["rpc-protocol"].as<string>();
         if (rpc_protocol != gkfs::rpc::protocol::ofi_verbs &&
             rpc_protocol != gkfs::rpc::protocol::ofi_sockets &&
             rpc_protocol != gkfs::rpc::protocol::ofi_psm2) {
@@ -323,10 +323,7 @@ void parse_input(const po::variables_map& vm) {
         }
     }
 
-    auto use_auto_sm = false;
-    if (vm.count("auto_sm")) {
-        use_auto_sm = true;
-    }
+    auto use_auto_sm = vm.count("auto-sm") != 0;
     GKFS_DATA->use_auto_sm(use_auto_sm);
     GKFS_DATA->spdlogger()->debug("{}() Shared memory (auto_sm) for intra-node communication (IPCs) set to '{}'.",
                                   __func__, use_auto_sm);
@@ -417,23 +414,25 @@ int main(int argc, const char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
-            ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
-            ("rootdir,r", po::value<string>()->required(), "data directory")
-            ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
-            ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname.\n"
+            ("mountdir,m", po::value<string>()->required(), "Virtual mounting directory where GekkoFS is available.")
+            ("rootdir,r", po::value<string>()->required(),
+             "Local data directory where GekkoFS data for this daemon is stored.")
+            ("metadir,i", po::value<string>(),
+             "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.")
+            ("listen,l", po::value<string>(), "Address or interface to bind the daemon to. Default: local hostname.\n"
                                               "When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly "
                                               "which associates the verbs device with the network interface. In case FI_VERBS_IFACE "
                                               "is already defined, the argument is ignored. Default 'ib'.")
             ("hosts-file,H", po::value<string>(),
              "Shared file used by deamons to register their "
-             "enpoints. (default './gkfs_hosts.txt')")
-            ("rpc_protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
-                                                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for (TCP, Infiniband, "
+             "endpoints. (default './gkfs_hosts.txt')")
+            ("rpc-protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
+                                                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, "
                                                     "and Omni-Path, respectively. (Default ofi+sockets)\n"
-                                                    "Libfabric must have enabled support verbs or psm2")
-            ("auto_sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
+                                                    "Libfabric must have enabled support verbs or psm2.")
+            ("auto-sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                         "instead of using the RPC protocol. (Default off)")
-            ("version", "print version and exit");
+            ("version", "Print version and exit.");
     po::variables_map vm{};
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
