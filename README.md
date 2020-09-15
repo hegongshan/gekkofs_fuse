@@ -1,4 +1,8 @@
 # GekkoFS
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![pipeline status](https://storage.bsc.es/gitlab/hpc/gekkofs/badges/master/pipeline.svg)](https://storage.bsc.es/gitlab/hpc/gekkofs/commits/master)
+
 GekkoFS is a file system capable of aggregating the local I/O capacity and performance of each compute node
 in a HPC cluster to produce a high-performance storage space that can be accessed in a distributed manner.
 This storage space allows HPC applications and simulations to run in isolation from each other with regards 
@@ -161,7 +165,7 @@ Allowed options:
                             available.
   -r [ --rootdir ] arg      Local data directory where GekkoFS data for this 
                             daemon is stored.
-  -i [ --metadir ] arg      Metadata directory where GekkoFS' RocksDB data 
+  -i [ --metadir ] arg      Metadata directory where GekkoFS RocksDB data
                             directory is located. If not set, rootdir is used.
   -l [ --listen ] arg       Address or interface to bind the daemon to. 
                             Default: local hostname.
