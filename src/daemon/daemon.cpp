@@ -312,8 +312,8 @@ void initialize_loggers() {
  */
 void parse_input(const po::variables_map& vm) {
     auto rpc_protocol = string(gkfs::rpc::protocol::ofi_sockets);
-    if (vm.count("rpc_protocol")) {
-        rpc_protocol = vm["rpc_protocol"].as<string>();
+    if (vm.count("rpc-protocol")) {
+        rpc_protocol = vm["rpc-protocol"].as<string>();
         if (rpc_protocol != gkfs::rpc::protocol::ofi_verbs &&
             rpc_protocol != gkfs::rpc::protocol::ofi_sockets &&
             rpc_protocol != gkfs::rpc::protocol::ofi_psm2) {
@@ -323,10 +323,7 @@ void parse_input(const po::variables_map& vm) {
         }
     }
 
-    auto use_auto_sm = false;
-    if (vm.count("auto_sm")) {
-        use_auto_sm = true;
-    }
+    auto use_auto_sm = vm.count("auto-sm") != 0;
     GKFS_DATA->use_auto_sm(use_auto_sm);
     GKFS_DATA->spdlogger()->debug("{}() Shared memory (auto_sm) for intra-node communication (IPCs) set to '{}'.",
                                   __func__, use_auto_sm);
@@ -426,12 +423,12 @@ int main(int argc, const char* argv[]) {
                                               "is already defined, the argument is ignored. Default 'ib'.")
             ("hosts-file,H", po::value<string>(),
              "Shared file used by deamons to register their "
-             "enpoints. (default './gkfs_hosts.txt')")
-            ("rpc_protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
+             "endpoints. (default './gkfs_hosts.txt')")
+            ("rpc-protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
                                                     "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for (TCP, Infiniband, "
                                                     "and Omni-Path, respectively. (Default ofi+sockets)\n"
                                                     "Libfabric must have enabled support verbs or psm2")
-            ("auto_sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
+            ("auto-sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                         "instead of using the RPC protocol. (Default off)")
             ("version", "print version and exit");
     po::variables_map vm{};

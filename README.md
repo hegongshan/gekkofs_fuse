@@ -170,12 +170,12 @@ Allowed options:
                             defined, the argument is ignored. Default 'ib'.
   -H [ --hosts-file ] arg   Shared file used by deamons to register their
                             enpoints. (default './gkfs_hosts.txt')
-  -P [ --rpc_protocol ] arg Used RPC protocol for inter-node communication.
+  -P [ --rpc-protocol ] arg Used RPC protocol for inter-node communication.
                             Available: {ofi+sockets, ofi+verbs, ofi+psm2} for
                             (TCP, Infiniband, and Omni-Path, respectively.
                             (Default ofi+sockets)
                             Libfabric must have verbs or psm2 support enabled.
-  --auto_sm                 Enables intra-node communication (IPCs) via the
+  --auto-sm                 Enables intra-node communication (IPCs) via the
                             `na+sm` (shared memory) protocol, instead of using
                             the RPC protocol. (Default off)
   --version                 print version and exit
