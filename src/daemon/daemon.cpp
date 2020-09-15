@@ -414,10 +414,12 @@ int main(int argc, const char* argv[]) {
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help,h", "Help message")
-            ("mountdir,m", po::value<string>()->required(), "User Fuse mountdir")
-            ("rootdir,r", po::value<string>()->required(), "data directory")
-            ("metadir,i", po::value<string>(), "metadata directory, if not set rootdir is used for metadata ")
-            ("listen,l", po::value<string>(), "Address or interface to bind the daemon on. Default: local hostname.\n"
+            ("mountdir,m", po::value<string>()->required(), "Virtual mounting directory where GekkoFS is available.")
+            ("rootdir,r", po::value<string>()->required(),
+             "Local data directory where GekkoFS data for this daemon is stored.")
+            ("metadir,i", po::value<string>(),
+             "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.")
+            ("listen,l", po::value<string>(), "Address or interface to bind the daemon to. Default: local hostname.\n"
                                               "When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly "
                                               "which associates the verbs device with the network interface. In case FI_VERBS_IFACE "
                                               "is already defined, the argument is ignored. Default 'ib'.")
@@ -425,12 +427,12 @@ int main(int argc, const char* argv[]) {
              "Shared file used by deamons to register their "
              "endpoints. (default './gkfs_hosts.txt')")
             ("rpc-protocol,P", po::value<string>(), "Used RPC protocol for inter-node communication.\n"
-                                                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for (TCP, Infiniband, "
+                                                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, "
                                                     "and Omni-Path, respectively. (Default ofi+sockets)\n"
-                                                    "Libfabric must have enabled support verbs or psm2")
+                                                    "Libfabric must have enabled support verbs or psm2.")
             ("auto-sm", "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                         "instead of using the RPC protocol. (Default off)")
-            ("version", "print version and exit");
+            ("version", "Print version and exit.");
     po::variables_map vm{};
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
