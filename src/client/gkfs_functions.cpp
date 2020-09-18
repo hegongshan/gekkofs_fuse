@@ -418,6 +418,10 @@ off_t gkfs_lseek(unsigned int fd, off_t offset, unsigned int whence) {
 off_t gkfs_lseek(shared_ptr<gkfs::filemap::OpenFile> gkfs_fd, off_t offset, unsigned int whence) {
     switch (whence) {
         case SEEK_SET:
+            if (offset < 0) {
+                errno = EINVAL;
+                return -1;
+            }
             gkfs_fd->pos(offset);
             break;
         case SEEK_CUR:
