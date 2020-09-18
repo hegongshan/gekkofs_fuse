@@ -1017,7 +1017,6 @@ int gkfs_getdents64(unsigned int fd,
  * @return 0 on success or -1 on error
  */
 int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
-    gkfs::preload::init_ld_env_if_needed();
     /* The following check is not POSIX compliant.
      * In POSIX the target is not checked at all.
     *  Here if the target is a directory we raise a NOTSUP error.
@@ -1064,7 +1063,6 @@ int gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
  * @return 0 on success or -1 on error
  */
 int gkfs_readlink(const std::string& path, char* buf, int bufsize) {
-    gkfs::preload::init_ld_env_if_needed();
     auto md = gkfs::util::get_metadata(path, false);
     if (md == nullptr) {
         LOG(DEBUG, "Named link doesn't exist");

@@ -32,6 +32,7 @@ extern "C" {
 
 namespace {
 
+// TODO replace all internal gkfs errno variable usage with LEAF
 inline int with_errno(int ret) {
     return (ret < 0) ? -errno : ret;
 }
