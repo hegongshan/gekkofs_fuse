@@ -43,13 +43,11 @@ def test_statx(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # test statx on existing dir
     ret = gkfs_client.statx(0, topdir, 0, 0)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
     assert stat.S_ISDIR(ret.statbuf.stx_mode)
 
     ret = gkfs_client.open(file_a,

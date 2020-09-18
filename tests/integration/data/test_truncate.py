@@ -37,11 +37,9 @@ def test_truncate(gkfs_daemon, gkfs_client):
     ret = gkfs_client.write_random(truncfile, buf_length)
 
     assert ret.retval == buf_length
-    assert ret.errno == 115  # FIXME: Should be 0!
 
     ret = gkfs_client.stat(truncfile)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.statbuf.st_size == buf_length
 
     # truncate it
@@ -49,12 +47,10 @@ def test_truncate(gkfs_daemon, gkfs_client):
     trunc_size = buf_length // 2
     ret = gkfs_client.truncate(truncfile, trunc_size)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.retval == 0
     # check file length
     ret = gkfs_client.stat(truncfile)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.statbuf.st_size == trunc_size
 
     # verify contents by writing a new file (random content is seeded) and checksum both
@@ -69,30 +65,25 @@ def test_truncate(gkfs_daemon, gkfs_client):
     ret = gkfs_client.write_random(truncfile_verify, trunc_size)
 
     assert ret.retval == trunc_size
-    assert ret.errno == 115  # FIXME: Should be 0!
 
     ret = gkfs_client.stat(truncfile_verify)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.statbuf.st_size == trunc_size
 
     ret = gkfs_client.file_compare(truncfile, truncfile_verify, trunc_size)
 
     assert ret.retval == 0
-    assert ret.errno == 115  # FIXME: Should be 0!
 
     # trunc at byte 712345 (middle of chunk)
     # TODO feed chunksize into test to make sure it is always in the middle of the chunk
     trunc_size = 712345
     ret = gkfs_client.truncate(truncfile, trunc_size)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.retval == 0
 
     # check file length
     ret = gkfs_client.stat(truncfile)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.statbuf.st_size == trunc_size
 
     # verify contents by writing a new file (random content is seeded) and checksum both
@@ -107,14 +98,11 @@ def test_truncate(gkfs_daemon, gkfs_client):
     ret = gkfs_client.write_random(truncfile_verify_2, trunc_size)
 
     assert ret.retval == trunc_size
-    assert ret.errno == 115  # FIXME: Should be 0!
 
     ret = gkfs_client.stat(truncfile_verify_2)
 
-    assert ret.errno == 115  # FIXME: Should be 0!
     assert ret.statbuf.st_size == trunc_size
 
     ret = gkfs_client.file_compare(truncfile, truncfile_verify_2, trunc_size)
 
     assert ret.retval == 0
-    assert ret.errno == 115  # FIXME: Should be 0!

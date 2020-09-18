@@ -35,14 +35,12 @@ def test_read(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = gkfs_client.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = gkfs_client.open(file,
@@ -50,14 +48,12 @@ def test_read(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = gkfs_client.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_pread(gkfs_daemon, gkfs_client):
 
@@ -69,14 +65,12 @@ def test_pread(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = gkfs_client.pwrite(file, buf, len(buf), 1024)
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = gkfs_client.open(file,
@@ -84,14 +78,12 @@ def test_pread(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file at offset 1024
     ret = gkfs_client.pread(file, len(buf), 1024)
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_readv(gkfs_daemon, gkfs_client):
 
@@ -103,7 +95,6 @@ def test_readv(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf_0 = b'42'
@@ -111,7 +102,6 @@ def test_readv(gkfs_daemon, gkfs_client):
     ret = gkfs_client.writev(file, buf_0, buf_1, 2)
 
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = gkfs_client.open(file,
@@ -119,7 +109,6 @@ def test_readv(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = gkfs_client.readv(file, len(buf_0), len(buf_1))
@@ -127,7 +116,6 @@ def test_readv(gkfs_daemon, gkfs_client):
     assert ret.buf_0 == buf_0
     assert ret.buf_1 == buf_1
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_preadv(gkfs_daemon, gkfs_client):
 
@@ -139,7 +127,6 @@ def test_preadv(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf_0 = b'42'
@@ -147,7 +134,6 @@ def test_preadv(gkfs_daemon, gkfs_client):
     ret = gkfs_client.pwritev(file, buf_0, buf_1, 2, 1024)
 
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = gkfs_client.open(file,
@@ -155,7 +141,6 @@ def test_preadv(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = gkfs_client.preadv(file, len(buf_0), len(buf_1), 1024)
@@ -163,4 +148,3 @@ def test_preadv(gkfs_daemon, gkfs_client):
     assert ret.buf_0 == buf_0
     assert ret.buf_1 == buf_1
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!

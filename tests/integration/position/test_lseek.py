@@ -51,13 +51,11 @@ def test_lseek(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
      # test stat on existing dir
     ret = gkfs_client.stat(topdir)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
     assert stat.S_ISDIR(ret.statbuf.st_mode)
 
     ret = gkfs_client.open(file_a,
@@ -74,13 +72,12 @@ def test_lseek(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.lseek(file_a, -1, os.SEEK_SET)
     assert ret.retval == -1
-    assert ret.errno == 115 #FIXME: Should be 22
+    assert ret.errno == 22
 
     # We can go further an empty file
 
     ret = gkfs_client.lseek(file_a, 5, os.SEEK_SET)
     assert ret.retval == 5
-    assert ret.errno == 115 #FIXME: Should be 0
 
     # Size needs to be 0 
     ret = gkfs_client.stat(file_a)
@@ -106,11 +103,9 @@ def test_lseek(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.lseek(file_a, 0, os.SEEK_END)
     assert ret.retval == 2                      #FAILS
-    assert ret.errno == 115 #FIXME: Should be 0 
 
     ret = gkfs_client.lseek(file_a, -2, os.SEEK_END)
     assert ret.retval == 0                     #FAILS
-    assert ret.errno == 115 #FIXME: Should be 0 
 
     ret = gkfs_client.lseek(file_a, -3, os.SEEK_END)
     assert ret.retval == -1                     #FAILS
