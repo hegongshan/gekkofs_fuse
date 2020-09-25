@@ -42,19 +42,16 @@ def test_mkdir(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # test stat on existing dir
     ret = gkfs_client.stat(topdir)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
     assert stat.S_ISDIR(ret.statbuf.st_mode)
 
     # open topdir
     ret = gkfs_client.open(topdir, os.O_DIRECTORY)
     assert ret.retval != -1
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 
     # read and write should be impossible on directories
@@ -77,19 +74,16 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     ret = gkfs_client.opendir(topdir)
 
     assert ret.dirp is not None
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     ret = gkfs_client.readdir(topdir)
 
     # XXX: This might change in the future if we add '.' and '..'
     assert len(ret.dirents) == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # close directory
     # TODO: disabled for now because we have no way to keep DIR* alive
     # between gkfs.io executions
     # ret = gkfs_client.opendir(XXX)
-    # assert ret.errno == 115 #FIXME: Should be 0!
 
 
     # populate top directory
@@ -99,14 +93,12 @@ def test_mkdir(gkfs_daemon, gkfs_client):
                 stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
         assert ret.retval == 0
-        assert ret.errno == 115 #FIXME: Should be 0!
 
     ret = gkfs_client.open(file_a,
                            os.O_CREAT,
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval != -1
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     ret = gkfs_client.readdir(gkfs_daemon.mountdir)
 
@@ -114,7 +106,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     assert len(ret.dirents) == 1
     assert ret.dirents[0].d_name == 'top'
     assert ret.dirents[0].d_type == 4 # DT_DIR
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     expected = [
         ( dir_a.name,  4 ), # DT_DIR
@@ -124,7 +115,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.readdir(topdir)
     assert len(ret.dirents) == len(expected)
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     for d,e in zip(ret.dirents, expected):
         assert d.d_name == e[0]
@@ -141,7 +131,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     expected = [
         ( topdir.name,  4 ), # DT_DIR
@@ -150,7 +139,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.readdir(gkfs_daemon.mountdir)
     assert len(ret.dirents) == len(expected)
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     for d,e in zip(ret.dirents, expected):
         assert d.d_name == e[0]
@@ -162,7 +150,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     expected = [
         ( topdir.name,  4 ), # DT_DIR
@@ -171,7 +158,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.readdir(gkfs_daemon.mountdir)
     assert len(ret.dirents) == len(expected)
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     for d,e in zip(ret.dirents, expected):
         assert d.d_name == e[0]
@@ -184,7 +170,6 @@ def test_mkdir(gkfs_daemon, gkfs_client):
     ret = gkfs_client.readdir(dir_a)
 
     assert len(ret.dirents) == len(expected)
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     for d,e in zip(ret.dirents, expected):
         assert d.d_name == e[0]

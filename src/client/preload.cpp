@@ -220,6 +220,8 @@ void init_ld_env_if_needed() {
  * Called initially ONCE when preload library is used with the LD_PRELOAD environment variable
  */
 void init_preload() {
+    // The original errno value will be restored after initialization to not leak internal error codes
+    auto oerrno = errno;
 
     CTX->enable_interception();
     gkfs::preload::start_self_interception();
@@ -252,6 +254,7 @@ void init_preload() {
 #endif
 
     gkfs::preload::start_interception();
+    errno = oerrno;
 }
 
 /**

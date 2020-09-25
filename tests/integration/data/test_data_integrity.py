@@ -47,7 +47,6 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
             stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 0
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # test stat on existing dir
     ret = gkfs_client.stat(topdir)

@@ -44,14 +44,12 @@ def test_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = c00.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = c00.open(file,
@@ -59,14 +57,12 @@ def test_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = c00.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 
     file = d01.mountdir / "file-c01"
@@ -77,14 +73,12 @@ def test_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = c01.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = c01.open(file,
@@ -92,14 +86,12 @@ def test_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = c01.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # both files should be there and accessible by the two clients
     ret = c00.readdir(d00.mountdir)
@@ -108,11 +100,9 @@ def test_two_io_nodes(gkfwd_daemon_factory, gkfwd_client_factory):
 
     assert ret.dirents[0].d_name == 'file-c00'
     assert ret.dirents[0].d_type == 8 # DT_REG
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     assert ret.dirents[1].d_name == 'file-c01'
     assert ret.dirents[1].d_type == 8 # DT_REG
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     with open(c00.log) as f:
         lines = f.readlines()
@@ -149,14 +139,12 @@ def test_two_io_nodes_remap(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = c00.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     with open(c00.log) as f:
         lines = f.readlines()
@@ -181,14 +169,12 @@ def test_two_io_nodes_remap(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     buf = b'24'
     ret = c00.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     with open(c00.log) as f:
         lines = f.readlines()
@@ -216,14 +202,12 @@ def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # write a buffer we know
     buf = b'42'
     ret = c00.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = c00.open(file,
@@ -231,14 +215,12 @@ def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = c00.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # open the file to read
     ret = c01.open(file,
@@ -246,14 +228,12 @@ def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # read the file
     ret = c01.read(file, len(buf))
 
     assert ret.buf == buf
     assert ret.retval == len(buf) # Return the number of read bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # the file should be there and accessible by the two clients
     ret = c00.readdir(d00.mountdir)
@@ -262,7 +242,6 @@ def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
 
     assert ret.dirents[0].d_name == 'file-c00'
     assert ret.dirents[0].d_type == 8 # DT_REG
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     # the file should be there and accessible by the two clients
     ret = c01.readdir(d01.mountdir)
@@ -271,7 +250,6 @@ def test_two_io_nodes_operations(gkfwd_daemon_factory, gkfwd_client_factory):
 
     assert ret.dirents[0].d_name == 'file-c00'
     assert ret.dirents[0].d_type == 8 # DT_REG
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     with open(c00.log) as f:
         lines = f.readlines()

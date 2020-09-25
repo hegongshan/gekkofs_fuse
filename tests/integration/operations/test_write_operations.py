@@ -34,13 +34,11 @@ def test_write(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     buf = b'42'
     ret = gkfs_client.write(file, buf, len(buf))
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_pwrite(gkfs_daemon, gkfs_client):
 
@@ -51,14 +49,12 @@ def test_pwrite(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     buf = b'42'
     # write at the offset 1024
     ret = gkfs_client.pwrite(file, buf, len(buf), 1024)
 
     assert ret.retval == len(buf) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_writev(gkfs_daemon, gkfs_client):
 
@@ -69,14 +65,12 @@ def test_writev(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     buf_0 = b'42'
     buf_1 = b'24'
     ret = gkfs_client.writev(file, buf_0, buf_1, 2)
 
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
 
 def test_pwritev(gkfs_daemon, gkfs_client):
 
@@ -87,11 +81,9 @@ def test_pwritev(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
-    assert ret.errno == 115 #FIXME: Should be 0!
 
     buf_0 = b'42'
     buf_1 = b'24'
     ret = gkfs_client.pwritev(file, buf_0, buf_1, 2, 1024)
 
     assert ret.retval == len(buf_0) + len(buf_1) # Return the number of written bytes
-    assert ret.errno == 115 #FIXME: Should be 0!
