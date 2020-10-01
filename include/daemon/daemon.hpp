@@ -44,6 +44,7 @@ extern "C" {
 
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/classes/rpc_data.hpp>
+#include <global/rpc/distributor.hpp>
 
 #define GKFS_DATA                                                              \
     (static_cast<gkfs::daemon::FsData*>(gkfs::daemon::FsData::getInstance()))

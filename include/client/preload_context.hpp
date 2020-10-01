@@ -36,6 +36,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <config.hpp>
 
 #include <bitset>
 
@@ -102,6 +103,7 @@ private:
     mutable std::mutex internal_fds_mutex_;
     bool internal_fds_must_relocate_;
     std::bitset<MAX_USER_FDS> protected_fds_;
+    std::string hostname;
 
 public:
     static PreloadContext*
@@ -210,6 +212,9 @@ public:
 
     void
     unprotect_user_fds();
+
+    std::string
+    get_hostname();
 };
 
 } // namespace preload

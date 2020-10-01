@@ -180,6 +180,14 @@ mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
+option(GKFS_USE_GUIDED_DISTRIBUTION "Use guided data distributor " OFF)
+message(STATUS "[gekkofs] Guided data distributor: ${GKFS_USE_GUIDED_DISTRIBUTION}")
+
+set(GKFS_USE_GUIDED_DISTRIBUTION_PATH "/tmp/guided.txt" CACHE STRING "File Path for guided distributor")
+set_property(CACHE GKFS_USE_GUIDED_DISTRIBUTION_PATH PROPERTY STRINGS)
+message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
+
+
 # Imported target
 add_library(RocksDB INTERFACE IMPORTED GLOBAL)
 target_link_libraries(RocksDB

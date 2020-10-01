@@ -47,7 +47,7 @@ if(NOT catch2_POPULATED)
     add_subdirectory(${catch2_SOURCE_DIR} ${catch2_BINARY_DIR})
 endif()
 
-# create a convenience library with Catch2's main 
+# create a convenience library with Catch2's main
 # to speed up test compilation
 add_library(catch2_main
     STATIC catch_main.cpp
@@ -57,18 +57,20 @@ target_link_libraries(catch2_main
     Catch2::Catch2
 )
 
-# define executables for tests and make them depend on the convenience 
+# define executables for tests and make them depend on the convenience
 # library (and Catch2 transitively) and fmt
 add_executable(tests
     test_example_00.cpp
     test_example_01.cpp
-  test_utils_arithmetic.cpp
+    test_utils_arithmetic.cpp
+    test_guided_distributor.cpp
 )
 
 target_link_libraries(tests
     catch2_main
     fmt::fmt
-  arithmetic
+    arithmetic
+    distributor
 )
 
 # Catch2's contrib folder includes some helper functions

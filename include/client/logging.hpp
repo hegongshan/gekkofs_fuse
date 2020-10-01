@@ -47,7 +47,7 @@
 
 namespace gkfs::log {
 
-enum class log_level : short {
+enum class log_level : unsigned int {
     print_syscalls = 1 << 0,
     print_syscalls_entry = 1 << 1,
     print_info = 1 << 2,
@@ -57,6 +57,7 @@ enum class log_level : short {
     print_hermes = 1 << 6,
     print_mercury = 1 << 7,
     print_debug = 1 << 8,
+    print_trace_reads = 1 << 9,
 
     // for internal use
     print_none = 0,
@@ -117,6 +118,7 @@ static const auto constexpr warning = log_level::print_warnings;
 static const auto constexpr hermes = log_level::print_hermes;
 static const auto constexpr mercury = log_level::print_mercury;
 static const auto constexpr debug = log_level::print_debug;
+static const auto constexpr trace_reads = log_level::print_trace_reads;
 static const auto constexpr none = log_level::print_none;
 static const auto constexpr most = log_level::print_most;
 static const auto constexpr all = log_level::print_all;
@@ -125,7 +127,8 @@ static const auto constexpr help = log_level::print_help;
 static const auto constexpr level_names = utils::make_array(
         "syscall",
         "syscall", // sycall_entry uses the same name as syscall
-        "info", "critical", "error", "warning", "hermes", "mercury", "debug");
+        "info", "critical", "error", "warning", "hermes", "mercury", "debug",
+        "trace_reads");
 
 inline constexpr auto
 lookup_level_name(log_level l) {
@@ -530,6 +533,14 @@ static_buffer::grow(std::size_t size) {
         if(gkfs::log::get_global_logger()) {                                   \
             gkfs::log::get_global_logger()->log(gkfs::log::mercury, __func__,  \
                                                 __LINE__, __VA_ARGS__);        \
+        }                                                                      \
+    } while(0);
+
+#define LOG_TRACE_READS(...)                                                   \
+    do {                                                                       \
+        if(gkfs::log::get_global_logger()) {                                   \
+            gkfs::log::get_global_logger()->log(                               \
+                    gkfs::log::trace_reads, __func__, __LINE__, __VA_ARGS__);  \
         }                                                                      \
     } while(0);
 
