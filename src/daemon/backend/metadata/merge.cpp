@@ -12,6 +12,7 @@
 */
 
 #include <daemon/backend/metadata/merge.hpp>
+#include <stdexcept>
 
 using namespace std;
 
