@@ -9,7 +9,7 @@ NA_LAYER=""
 DEP_CONFIG=""
 VERBOSE=false
 
-VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
+VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all ci"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi-verbs" "mercury" "argobots" "margo" "rocksdb"
@@ -33,6 +33,10 @@ DIRECT_DEPS=(
 ALL_DEPS=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
      "syscall_intercept" "date" "agios"
+)
+
+CI_DEPS=(
+    "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
 )
 
 # Stop all backround jobs on interruption.
@@ -82,7 +86,12 @@ list_dependencies() {
     for d in "${ALL_DEPS[@]}"; do
         echo -n "$d "
     done
-    echo 
+    echo
+    echo -n "  ci: "
+    for d in "${CI_DEPS[@]}"; do
+        echo -n "$d "
+    done
+	echo
 }
 
 check_dependency() {
@@ -191,7 +200,7 @@ optional arguments:
                                 defaults to 'ofi'
         -c <CONFIG>, --config <CONFIG>
                                 allows additional configurations, e.g., for specific clusters
-                                supported values: {mogon2, mogon1, ngio, direct, all}
+                                supported values: {mogon2, mogon1, ngio, direct, all, ci}
                                 defaults to 'direct'
         -d <DEPENDENCY>, --dependency <DEPENDENCY>
                                 download a specific dependency and ignore --config setting. If unspecified
@@ -284,6 +293,10 @@ ngio)
 all)
   DEP_CONFIG=("${ALL_DEPS[@]}")
   [[ -z "${DEPENDENCY}" ]] && echo "'All' dependencies are downloaded"
+  ;;
+ci)
+  DEP_CONFIG=("${CI_DEPS[@]}")
+  [[ -z "${DEPENDENCY}" ]] && echo "'CI' dependencies are downloaded"
   ;;
 direct | *)
   DEP_CONFIG=("${DIRECT_DEPS[@]}")

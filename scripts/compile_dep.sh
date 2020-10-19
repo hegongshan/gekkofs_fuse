@@ -9,7 +9,7 @@ SOURCE=""
 INSTALL=""
 DEP_CONFIG=""
 
-VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all"
+VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all ci"
 
 MOGON1_DEPS=(
     "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
@@ -33,6 +33,10 @@ DIRECT_DEPS=(
 ALL_DEPS=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
      "syscall_intercept" "date" "agios"
+)
+
+CI_DEPS=(
+    "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
 )
 
 usage_short() {
@@ -62,7 +66,7 @@ optional arguments:
                 defaults to 'all'
     -c <CONFIG>, --config <CONFIG>
                 allows additional configurations, e.g., for specific clusters
-                supported values: {mogon1, mogon2, ngio, direct, all}
+                supported values: {mogon1, mogon2, ngio, direct, all, ci}
                 defaults to 'direct'
     -d <DEPENDENCY>, --dependency <DEPENDENCY>
                 download a specific dependency and ignore --config setting. If unspecified
@@ -104,6 +108,11 @@ list_dependencies() {
         echo -n "$d "
     done
     echo
+    echo -n "  ci: "
+    for d in "${CI_DEPS[@]}"; do
+        echo -n "$d "
+    done
+	echo
 }
 
 check_dependency() {
@@ -253,6 +262,10 @@ ngio)
 all)
   DEP_CONFIG=("${ALL_DEPS[@]}")
   echo "'All' dependencies are compiled"
+  ;;
+ci)
+  DEP_CONFIG=("${CI_DEPS[@]}")
+  echo "'CI' dependencies are compiled"
   ;;
 direct | *)
   DEP_CONFIG=("${DIRECT_DEPS[@]}")
