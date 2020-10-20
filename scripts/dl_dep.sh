@@ -18,7 +18,7 @@ MOGON1_DEPS=(
 
 MOGON2_DEPS=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "ofi-experimental" "mercury" "argobots" "margo" "rocksdb-experimental"
-    "syscall_intercept-glibc3" "date" "psm2"
+    "syscall_intercept" "date" "psm2"
 )
 
 NGIO_DEPS=(
@@ -27,12 +27,12 @@ NGIO_DEPS=(
 
 )
 DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+    "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
 
 ALL_DEPS=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
-     "syscall_intercept" "date" "agios"
+    "syscall_intercept" "date" "agios"
 )
 
 CI_DEPS=(
@@ -66,22 +66,22 @@ list_dependencies() {
     for d in "${MOGON1_DEPS[@]}"; do
         echo -n "$d "
     done
-	echo
+    echo
     echo -n "  Mogon 2: "
     for d in "${MOGON2_DEPS[@]}"; do
         echo -n "$d "
     done
-	echo
+    echo
     echo -n "  NGIO: "
     for d in "${NGIO_DEPS[@]}"; do
         echo -n "$d "
     done
-	echo
+    echo
     echo -n "  Direct GekkoFS dependencies: "
     for d in "${DIRECT_DEPS[@]}"; do
         echo -n "$d "
     done
-	echo
+    echo
     echo -n "  All: "
     for d in "${ALL_DEPS[@]}"; do
         echo -n "$d "
@@ -91,28 +91,28 @@ list_dependencies() {
     for d in "${CI_DEPS[@]}"; do
         echo -n "$d "
     done
-	echo
+    echo
 }
 
 check_dependency() {
-  local DEP=$1
-  shift
-  local DEP_CONFIG=("$@")
-  # ignore template when specific dependency is set
-  if [[ -n "${DEPENDENCY}" ]]; then
-      # check if specific dependency was set and return from function
-      if echo "${DEPENDENCY}" | grep -q "${DEP}"; then
-        return
-      fi
-  else
-      # if not check if dependency is part of dependency config
-      for e in "${DEP_CONFIG[@]}"; do
-        if [[ "${DEP}" == "${e}" ]]; then
-          return
+    local DEP=$1
+    shift
+    local DEP_CONFIG=("$@")
+    # ignore template when specific dependency is set
+    if [[ -n "${DEPENDENCY}" ]]; then
+        # check if specific dependency was set and return from function
+        if echo "${DEPENDENCY}" | grep -q "${DEP}"; then
+            return
         fi
-      done
-  fi
-  false
+    else
+        # if not check if dependency is part of dependency config
+        for e in "${DEP_CONFIG[@]}"; do
+            if [[ "${DEP}" == "${e}" ]]; then
+                return
+            fi
+        done
+    fi
+    false
 }
 
 clonedeps() {
@@ -175,7 +175,7 @@ wgetdeps() {
 }
 
 usage_short() {
-	echo "
+    echo "
 usage: dl_dep.sh [-h] [-l] [-n <NAPLUGIN>] [-c <CONFIG>] [-d <DEPENDENCY>]
                     source_path
 	"
@@ -279,29 +279,29 @@ fi
 # enable predefined dependency template
 case ${TMP_DEP_CONF} in
 mogon1)
-  DEP_CONFIG=("${MOGON1_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'Mogon1' dependencies are downloaded"
-  ;;
+    DEP_CONFIG=("${MOGON1_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'Mogon1' dependencies are downloaded"
+    ;;
 mogon2)
-  DEP_CONFIG=("${MOGON2_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'Mogon2' dependencies are downloaded"
-  ;;
+    DEP_CONFIG=("${MOGON2_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'Mogon2' dependencies are downloaded"
+    ;;
 ngio)
-  DEP_CONFIG=("${NGIO_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'NGIO' dependencies are downloaded"
-  ;;
+    DEP_CONFIG=("${NGIO_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'NGIO' dependencies are downloaded"
+    ;;
 all)
-  DEP_CONFIG=("${ALL_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'All' dependencies are downloaded"
-  ;;
+    DEP_CONFIG=("${ALL_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'All' dependencies are downloaded"
+    ;;
 ci)
-  DEP_CONFIG=("${CI_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'CI' dependencies are downloaded"
-  ;;
+    DEP_CONFIG=("${CI_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'CI' dependencies are downloaded"
+    ;;
 direct | *)
-  DEP_CONFIG=("${DIRECT_DEPS[@]}")
-  [[ -z "${DEPENDENCY}" ]] && echo "'Direct' GekkoFS dependencies are downloaded (default)"
-  ;;
+    DEP_CONFIG=("${DIRECT_DEPS[@]}")
+    [[ -z "${DEPENDENCY}" ]] && echo "'Direct' GekkoFS dependencies are downloaded (default)"
+    ;;
 esac
 
 # sanity checks
@@ -394,15 +394,13 @@ elif check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
 fi
 
 # get syscall_intercept
-if check_dependency "syscall_intercept-glibc3" "${DEP_CONFIG[@]}"; then
-    clonedeps "syscall_intercept" "https://github.com/GBuella/syscall_intercept" "ea124fb4ab9eb56bc22a0e94f2b90928c7a88e8c" "-b add_endbr64_and_lea" "syscall_intercept.patch" &
-elif check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
-    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" "" "syscall_intercept.patch" &
+if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
+    clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "f7cebb7b7e7512a19b78a31ce236ad6ca22636dd" "" "syscall_intercept.patch" &
 fi
 
 # get AGIOS
 if check_dependency "agios" "${DEP_CONFIG[@]}"; then
-clonedeps "agios" "https://github.com/francielizanon/agios.git" "c26a6544200f823ebb8f890dd94e653d148bf226" "-b development" &
+    clonedeps "agios" "https://github.com/francielizanon/agios.git" "c26a6544200f823ebb8f890dd94e653d148bf226" "-b development" &
 fi
 
 # get date
