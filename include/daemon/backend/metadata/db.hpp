@@ -17,6 +17,7 @@
 #include <memory>
 #include <rocksdb/db.h>
 #include <daemon/backend/exceptions.hpp>
+#include <tuple>
 
 namespace rdb = rocksdb;
 
@@ -62,6 +63,9 @@ public:
 
     std::vector<std::pair<std::string, bool>>
     get_dirents(const std::string& dir) const;
+
+    std::vector<std::tuple<std::string, bool, size_t, time_t>>
+    get_dirents_extended(const std::string& dir) const;
 
     void
     iterate_all();

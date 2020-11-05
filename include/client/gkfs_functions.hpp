@@ -135,4 +135,8 @@ gkfs_rmdir(const std::string& path);
 
 } // namespace gkfs::syscall
 
+// gkfs_getsingleserverdir is using extern "C" to demangle it for C usage
+extern "C" int
+gkfs_getsingleserverdir(const char* path, struct dirent_extended* dirp,
+                        unsigned int count, int server);
 #endif // GEKKOFS_GKFS_FUNCTIONS_HPP

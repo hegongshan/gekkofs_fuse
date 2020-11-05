@@ -39,6 +39,7 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry_size)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
 
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_dirents_extended)
 #ifdef HAS_SYMLINKS
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)

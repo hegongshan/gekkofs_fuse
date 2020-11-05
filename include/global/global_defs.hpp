@@ -31,6 +31,7 @@ constexpr auto update_metadentry = "rpc_srv_update_metadentry";
 constexpr auto get_metadentry_size = "rpc_srv_get_metadentry_size";
 constexpr auto update_metadentry_size = "rpc_srv_update_metadentry_size";
 constexpr auto get_dirents = "rpc_srv_get_dirents";
+constexpr auto get_dirents_extended = "rpc_srv_get_dirents_extended";
 #ifdef HAS_SYMLINKS
 constexpr auto mk_symlink = "rpc_srv_mk_symlink";
 #endif

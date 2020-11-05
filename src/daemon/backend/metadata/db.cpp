@@ -24,7 +24,6 @@ extern "C" {
 
 namespace gkfs::metadata {
 
-
 MetadataDB::MetadataDB(const std::string& path) : path(path) {
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
     options.IncreaseParallelism();
@@ -186,6 +185,63 @@ MetadataDB::get_dirents(const std::string& dir) const {
     return entries;
 }
 
+/**
+ * Return all the first-level entries of the directory @dir
+ *
+ * @return vector of pair <std::string name, bool is_dir - size - ctime>,
+ *         where name is the name of the entries and is_dir
+ *         is true in the case the entry is a directory.
+ */
+std::vector<std::tuple<std::string, bool, size_t, time_t>>
+MetadataDB::get_dirents_extended(const std::string& dir) const {
+    auto root_path = dir;
+    assert(gkfs::path::is_absolute(root_path));
+    // add trailing slash if missing
+    if(!gkfs::path::has_trailing_slash(root_path) && root_path.size() != 1) {
+        // add trailing slash only if missing and is not the root_folder "/"
+        root_path.push_back('/');
+    }
+
+    rocksdb::ReadOptions ropts;
+    auto it = db->NewIterator(ropts);
+
+    std::vector<std::tuple<std::string, bool, size_t, time_t>> entries;
+
+    for(it->Seek(root_path); it->Valid() && it->key().starts_with(root_path);
+        it->Next()) {
+
+        if(it->key().size() == root_path.size()) {
+            // we skip this path cause it is exactly the root_path
+            continue;
+        }
+
+        /***** Get File name *****/
+        auto name = it->key().ToString();
+        if(name.find_first_of('/', root_path.size()) != std::string::npos) {
+            // skip stuff deeper then one level depth
+            continue;
+        }
+        // remove prefix
+        name = name.substr(root_path.size());
+
+        // relative path of directory entries must not be empty
+        assert(!name.empty());
+
+        Metadata md(it->value().ToString());
+        auto is_dir = S_ISDIR(md.mode());
+
+        entries.emplace_back(std::forward_as_tuple(std::move(name), is_dir,
+                                                   md.size(), md.ctime()));
+    }
+    assert(it->status().ok());
+    return entries;
+}
+
+
+/**
+ * Code example for iterating all entries in KV store. This is for debug only as
+ * it is too expensive
+ */
 void
 MetadataDB::iterate_all() {
     std::string key;

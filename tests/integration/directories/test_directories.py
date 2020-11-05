@@ -178,6 +178,54 @@ def test_mkdir(gkfs_daemon, gkfs_client):
 
     return
 
+def test_extended(gkfs_daemon, gkfs_shell, gkfs_client):
+    topdir = gkfs_daemon.mountdir / "test_extended"
+    longer = Path(topdir.parent, topdir.name + "_plus")
+    dir_a  = topdir / "dir_a"
+    dir_b  = topdir / "dir_b"
+    file_a = topdir / "file_a"
+    subdir_a  = dir_a / "subdir_a"
+
+    # create topdir
+    ret = gkfs_client.mkdir(
+            topdir,
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 0
+
+    ret = gkfs_client.mkdir(
+            dir_a,
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 0
+
+    ret = gkfs_client.mkdir(
+            dir_b,
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 0
+
+    ret = gkfs_client.mkdir(
+            subdir_a,
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 0
+
+    ret = gkfs_client.open(file_a,
+                           os.O_CREAT,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+    assert ret.retval != -1
+
+    buf = b'42'
+    ret = gkfs_client.write(file_a, buf, 1)
+
+    assert ret.retval == 1
+    preload = 'LIBGKFS_HOSTS_FILE='+str(gkfs_client._patched_env['LIBGKFS_HOSTS_FILE'])+' LD_PRELOAD='+str(gkfs_client._preload_library)
+    stream = os.popen(preload+' '+str(gkfs_daemon._workspace.bindirs[1])+'/sfind '+str(topdir)+' -M '+str(gkfs_daemon.mountdir)+' -S 1 -name "*_k*"');
+    output = stream.read()
+    assert output == "MATCHED 0/4\n"
+    
+
 @pytest.mark.skip(reason="invalid errno returned on success")
 @pytest.mark.parametrize("directory_path",
     [ nonexisting ])
