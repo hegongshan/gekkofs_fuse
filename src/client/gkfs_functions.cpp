@@ -94,8 +94,7 @@ check_parent_dir(const std::string& path) {
 }
 } // namespace
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 /**
  * gkfs wrapper for open() system calls
@@ -1146,5 +1145,4 @@ gkfs_readlink(const std::string& path, char* buf, int bufsize) {
 
 #endif
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall

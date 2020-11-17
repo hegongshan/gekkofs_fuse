@@ -16,8 +16,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace daemon {
+namespace gkfs::daemon {
 
 // Getter/Setter
 
@@ -61,5 +60,4 @@ RPCData::self_addr_str(const std::string& addr_str) {
     self_addr_str_ = addr_str;
 }
 
-} // namespace daemon
-} // namespace gkfs
+} // namespace gkfs::daemon

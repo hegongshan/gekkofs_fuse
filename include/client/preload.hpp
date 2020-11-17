@@ -19,12 +19,10 @@
 #define EUNKNOWN (-1)
 
 #define CTX gkfs::preload::PreloadContext::getInstance()
-namespace gkfs {
-namespace preload {
+namespace gkfs::preload {
 void
 init_ld_env_if_needed();
-} // namespace preload
-} // namespace gkfs
+} // namespace gkfs::preload
 
 void
 init_preload() __attribute__((constructor));

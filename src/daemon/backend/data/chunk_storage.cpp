@@ -28,8 +28,7 @@ extern "C" {
 namespace fs = std::filesystem;
 using namespace std;
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 // private functions
 
@@ -340,5 +339,4 @@ ChunkStorage::chunk_stat() const {
     return {chunksize_, bytes_total / chunksize_, bytes_free / chunksize_};
 }
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data

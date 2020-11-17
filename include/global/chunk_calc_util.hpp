@@ -16,8 +16,7 @@
 
 #include <cassert>
 
-namespace gkfs {
-namespace util {
+namespace gkfs::util {
 
 /**
  * Compute the base2 logarithm for 64 bit integers
@@ -123,7 +122,6 @@ chnk_count_for_offset(const off64_t offset, const size_t count,
                                  (chnk_start >> log2(chnk_size)) + 1);
 }
 
-} // namespace util
-} // namespace gkfs
+} // namespace gkfs::util
 
 #endif

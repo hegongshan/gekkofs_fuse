@@ -23,8 +23,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 /*
  * This file includes all metadata RPC calls.
@@ -535,5 +534,4 @@ forward_get_chunk_stat() {
         return make_pair(0, ChunkStat{chunk_size, chunk_total, chunk_free});
 }
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc

@@ -40,8 +40,7 @@ with_errno(int ret) {
 
 } // namespace
 
-namespace gkfs {
-namespace hook {
+namespace gkfs::hook {
 
 int
 hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
@@ -891,5 +890,4 @@ hook_fsync(unsigned int fd) {
     return syscall_no_intercept(SYS_fsync, fd);
 }
 
-} // namespace hook
-} // namespace gkfs
+} // namespace gkfs::hook

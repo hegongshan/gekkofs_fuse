@@ -22,8 +22,7 @@ extern "C" {
 #include <sys/stat.h>
 }
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 
 MetadataDB::MetadataDB(const std::string& path) : path(path) {
@@ -204,5 +203,4 @@ MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
     options.max_successive_merges = 128;
 }
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata

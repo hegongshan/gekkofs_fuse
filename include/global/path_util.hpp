@@ -17,8 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace gkfs {
-namespace path {
+namespace gkfs::path {
 
 constexpr unsigned int max_length = 4096; // 4k chars
 
@@ -46,7 +45,6 @@ dirname(const std::string& path);
 std::vector<std::string>
 split_path(const std::string& path);
 
-} // namespace path
-} // namespace gkfs
+} // namespace gkfs::path
 
 #endif // GEKKOFS_PATH_UTIL_HPP

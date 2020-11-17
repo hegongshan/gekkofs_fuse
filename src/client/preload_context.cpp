@@ -30,8 +30,7 @@ extern "C" {
 #include <syscall.h>
 }
 
-namespace gkfs {
-namespace preload {
+namespace gkfs::preload {
 
 decltype(PreloadContext::MIN_INTERNAL_FD) constexpr PreloadContext::
         MIN_INTERNAL_FD;
@@ -410,5 +409,4 @@ PreloadContext::unprotect_user_fds() {
     internal_fds_must_relocate_ = true;
 }
 
-} // namespace preload
-} // namespace gkfs
+} // namespace gkfs::preload

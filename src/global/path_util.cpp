@@ -19,8 +19,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace path {
+namespace gkfs::path {
 
 bool
 is_relative(const string& path) {
@@ -156,5 +155,4 @@ dirname(const string& path) {
     return path.substr(0, parent_path_size);
 }
 
-} // namespace path
-} // namespace gkfs
+} // namespace gkfs::path

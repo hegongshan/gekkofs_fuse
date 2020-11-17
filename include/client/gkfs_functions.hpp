@@ -22,8 +22,7 @@ struct statvfs;
 struct linux_dirent;
 struct linux_dirent64;
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 int
 gkfs_open(const std::string& path, mode_t mode, int flags);
@@ -134,7 +133,6 @@ gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp,
 int
 gkfs_rmdir(const std::string& path);
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall
 
 #endif // GEKKOFS_GKFS_FUNCTIONS_HPP

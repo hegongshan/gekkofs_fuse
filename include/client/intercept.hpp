@@ -14,8 +14,7 @@
 #ifndef GEKKOFS_INTERCEPT_HPP
 #define GEKKOFS_INTERCEPT_HPP
 
-namespace gkfs {
-namespace preload {
+namespace gkfs::preload {
 
 int
 internal_hook_guard_wrapper(long syscall_number, long arg0, long arg1,
@@ -35,7 +34,6 @@ start_interception();
 void
 stop_interception();
 
-} // namespace preload
-} // namespace gkfs
+} // namespace gkfs::preload
 
 #endif

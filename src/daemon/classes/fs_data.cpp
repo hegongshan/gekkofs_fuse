@@ -15,8 +15,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace gkfs {
-namespace daemon {
+namespace gkfs::daemon {
 
 // getter/setter
 
@@ -175,5 +174,4 @@ FsData::blocks_state(bool blocks_state) {
     FsData::blocks_state_ = blocks_state;
 }
 
-} // namespace daemon
-} // namespace gkfs
+} // namespace gkfs::daemon

@@ -24,8 +24,7 @@ extern "C" {
 
 using namespace std;
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 /**
  * converts std bool to mercury bool
@@ -90,5 +89,4 @@ get_host_by_name(const string& hostname) {
     return addr_str;
 }
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc

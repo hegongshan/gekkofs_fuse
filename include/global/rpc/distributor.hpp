@@ -18,8 +18,7 @@
 #include <string>
 #include <numeric>
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 using chunkid_t = unsigned int;
 using host_t = unsigned int;
@@ -109,7 +108,6 @@ public:
     locate_directory_metadata(const std::string& path) const override;
 };
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_RPC_LOCATOR_HPP

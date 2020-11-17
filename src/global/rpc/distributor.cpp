@@ -15,8 +15,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 SimpleHashDistributor::SimpleHashDistributor(host_t localhost,
                                              unsigned int hosts_size)
@@ -95,5 +94,4 @@ std::vector<host_t>
 ForwarderDistributor::locate_directory_metadata(const std::string& path) const {
     return all_hosts_;
 }
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc

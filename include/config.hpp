@@ -20,8 +20,7 @@
 #define CLIENT_ENV_PREFIX "LIBGKFS_"
 #define DAEMON_ENV_PREFIX "GKFS_"
 
-namespace gkfs {
-namespace config {
+namespace gkfs::config {
 
 constexpr auto hostfile_path = "./gkfs_hosts.txt";
 constexpr auto forwarding_file_path = "./gkfs_forwarding.map";
@@ -70,7 +69,6 @@ namespace rocksdb {
 constexpr auto use_write_ahead_log = false;
 } // namespace rocksdb
 
-} // namespace config
-} // namespace gkfs
+} // namespace gkfs::config
 
 #endif // GEKKOFS_CONFIG_HPP

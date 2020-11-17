@@ -29,8 +29,7 @@
 #include <bitset>
 #endif
 
-namespace gkfs {
-namespace log {
+namespace gkfs::log {
 
 enum class log_level : short {
     print_syscalls = 1 << 0,
@@ -437,8 +436,7 @@ static_buffer::grow(std::size_t size) {
     abort();
 }
 
-} // namespace log
-} // namespace gkfs
+} // namespace gkfs::log
 
 #define LOG(XXX, ...) LOG_##XXX(__VA_ARGS__)
 

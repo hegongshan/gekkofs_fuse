@@ -24,8 +24,7 @@ extern "C" {
 #include <ctime>
 #include <cassert>
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 static const char MSP = '|'; // metadata separator
 
@@ -265,5 +264,4 @@ Metadata::is_link() const {
 
 #endif
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata

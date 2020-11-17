@@ -15,8 +15,7 @@
 #ifndef GEKKOFS_CLIENT_FORWARD_DATA_HPP
 #define GEKKOFS_CLIENT_FORWARD_DATA_HPP
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 struct ChunkStat {
     unsigned long chunk_size;
@@ -42,7 +41,6 @@ forward_truncate(const std::string& path, size_t current_size, size_t new_size);
 std::pair<int, ChunkStat>
 forward_get_chunk_stat();
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_CLIENT_FORWARD_DATA_HPP

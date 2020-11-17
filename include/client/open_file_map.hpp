@@ -20,8 +20,7 @@
 #include <memory>
 #include <atomic>
 
-namespace gkfs {
-namespace filemap {
+namespace gkfs::filemap {
 
 /* Forward declaration */
 class OpenDir;
@@ -139,7 +138,6 @@ public:
     get_fd_idx();
 };
 
-} // namespace filemap
-} // namespace gkfs
+} // namespace gkfs::filemap
 
 #endif // GEKKOFS_OPEN_FILE_MAP_HPP

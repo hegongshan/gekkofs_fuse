@@ -20,8 +20,7 @@
 
 #include <client/open_file_map.hpp>
 
-namespace gkfs {
-namespace filemap {
+namespace gkfs::filemap {
 
 class DirEntry {
 private:
@@ -56,7 +55,6 @@ public:
     size();
 };
 
-} // namespace filemap
-} // namespace gkfs
+} // namespace gkfs::filemap
 
 #endif // GEKKOFS_OPEN_DIR_HPP
