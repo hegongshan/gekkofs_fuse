@@ -15,7 +15,8 @@ target_sources(storage
 target_link_libraries(storage
     PRIVATE
     spdlog
-    Boost::filesystem
+    # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
+    stdc++fs
     -ldl
     )
 

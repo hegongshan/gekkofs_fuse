@@ -29,10 +29,10 @@
 #include <daemon/scheduler/agios.hpp>
 #endif
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <csignal>
@@ -45,7 +45,7 @@ extern "C" {
 
 using namespace std;
 namespace po = boost::program_options;
-namespace bfs = boost::filesystem;
+namespace fs = std::filesystem;
 
 static condition_variable shutdown_please;
 static mutex mtx;
@@ -206,7 +206,7 @@ init_environment() {
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'",
                                   __func__, chunk_storage_path);
-    bfs::create_directories(chunk_storage_path);
+    fs::create_directories(chunk_storage_path);
     try {
         GKFS_DATA->storage(std::make_shared<gkfs::data::ChunkStorage>(
                 chunk_storage_path, gkfs::config::rpc::chunksize));
@@ -287,8 +287,8 @@ agios_initialize() {
 void
 destroy_enviroment() {
     GKFS_DATA->spdlogger()->debug("{}() Removing mount directory", __func__);
-    boost::system::error_code ecode;
-    bfs::remove_all(GKFS_DATA->mountdir(), ecode);
+    std::error_code ecode;
+    fs::remove_all(GKFS_DATA->mountdir(), ecode);
     GKFS_DATA->spdlogger()->debug("{}() Freeing I/O executions streams",
                                   __func__);
     for(unsigned int i = 0; i < RPC_DATA->io_streams().size(); i++) {
@@ -300,7 +300,7 @@ destroy_enviroment() {
         GKFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
         try {
             gkfs::util::destroy_hosts_file();
-        } catch(const bfs::filesystem_error& e) {
+        } catch(const fs::filesystem_error& e) {
             GKFS_DATA->spdlogger()->debug("{}() hosts file not found",
                                           __func__);
         }
@@ -413,36 +413,35 @@ parse_input(const po::variables_map& vm) {
     auto mountdir = vm["mountdir"].as<string>();
     // Create mountdir. We use this dir to get some information on the
     // underlying fs with statfs in gkfs_statfs
-    bfs::create_directories(mountdir);
-    GKFS_DATA->mountdir(bfs::canonical(mountdir).native());
+    fs::create_directories(mountdir);
+    GKFS_DATA->mountdir(fs::canonical(mountdir).native());
 
     assert(vm.count("rootdir"));
     auto rootdir = vm["rootdir"].as<string>();
 
 #ifdef GKFS_ENABLE_FORWARDING
     // In forwarding mode, the backend is shared
-    auto rootdir_path = bfs::path(rootdir);
+    auto rootdir_path = fs::path(rootdir);
 #else
-    auto rootdir_path = bfs::path(rootdir) / fmt::format_int(getpid()).str();
+    auto rootdir_path = fs::path(rootdir) / fmt::format_int(getpid()).str();
 #endif
 
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
                                   rootdir_path.native());
-    bfs::create_directories(rootdir_path);
+    fs::create_directories(rootdir_path);
     GKFS_DATA->rootdir(rootdir_path.native());
 
     if(vm.count("metadir")) {
         auto metadir = vm["metadir"].as<string>();
 
 #ifdef GKFS_ENABLE_FORWARDING
-        auto metadir_path =
-                bfs::path(metadir) / fmt::format_int(getpid()).str();
+        auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
 #else
-        auto metadir_path = bfs::path(metadir);
+        auto metadir_path = fs::path(metadir);
 #endif
 
-        bfs::create_directories(metadir_path);
-        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+        fs::create_directories(metadir_path);
+        GKFS_DATA->metadir(fs::canonical(metadir_path).native());
 
         GKFS_DATA->spdlogger()->debug("{}() Meta directory: '{}'", __func__,
                                       metadir_path.native());
@@ -451,10 +450,9 @@ parse_input(const po::variables_map& vm) {
         auto metadir = vm["rootdir"].as<string>();
 
 #ifdef GKFS_ENABLE_FORWARDING
-        auto metadir_path =
-                bfs::path(metadir) / fmt::format_int(getpid()).str();
-        bfs::create_directories(metadir_path);
-        GKFS_DATA->metadir(bfs::canonical(metadir_path).native());
+        auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
+        fs::create_directories(metadir_path);
+        GKFS_DATA->metadir(fs::canonical(metadir_path).native());
 #else
         GKFS_DATA->metadir(GKFS_DATA->rootdir());
 #endif

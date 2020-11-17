@@ -14,6 +14,8 @@
 #ifndef LIBGKFS_UTILS_MAKE_ARRAY_HPP
 #define LIBGKFS_UTILS_MAKE_ARRAY_HPP
 
+#include <array>
+
 namespace gkfs {
 namespace util {
 

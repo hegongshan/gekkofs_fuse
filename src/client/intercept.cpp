@@ -16,7 +16,7 @@
 #include <client/hooks.hpp>
 #include <client/logging.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <fmt/format.h>
 
 #include <cerrno>

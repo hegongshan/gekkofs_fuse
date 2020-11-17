@@ -17,9 +17,9 @@
 #include <libsyscall_intercept_hook_point.h>
 
 #include <type_traits>
-#include <boost/optional.hpp>
 #include <client/make_array.hpp>
 #include <client/syscalls.hpp>
+#include <optional>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <date/tz.h>
@@ -375,7 +375,7 @@ struct logger {
 
     void
     log_syscall(syscall::info info, const long syscall_number,
-                const long args[6], boost::optional<long> result = boost::none);
+                const long args[6], std::optional<long> result = {});
 
     static std::shared_ptr<logger>&
     global_logger() {

@@ -90,10 +90,9 @@ find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
 
-# boost dependencies, system is required for filesystem
+# boost dependencies
 find_package(Boost 1.53 REQUIRED
     COMPONENTS
-    filesystem
     program_options
     )
 

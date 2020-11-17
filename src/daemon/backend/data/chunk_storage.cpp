@@ -18,14 +18,14 @@
 
 #include <cerrno>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 #include <spdlog/spdlog.h>
 
 extern "C" {
 #include <sys/statfs.h>
 }
 
-namespace bfs = boost::filesystem;
+namespace fs = std::filesystem;
 using namespace std;
 
 namespace gkfs {
@@ -108,10 +108,10 @@ ChunkStorage::destroy_chunk_space(const string& file_path) const {
     auto chunk_dir = absolute(get_chunks_dir(file_path));
     try {
         // Note: remove_all does not throw an error when path doesn't exist.
-        auto n = bfs::remove_all(chunk_dir);
+        auto n = fs::remove_all(chunk_dir);
         log_->debug("{}() Removed '{}' files from '{}'", __func__, n,
                     chunk_dir);
-    } catch(const bfs::filesystem_error& e) {
+    } catch(const fs::filesystem_error& e) {
         auto err_str = fmt::format(
                 "{}() Failed to remove chunk directory. Path: '{}', Error: '{}'",
                 __func__, chunk_dir, e.what());
@@ -268,9 +268,9 @@ ChunkStorage::trim_chunk_space(const string& file_path,
                                gkfs::rpc::chnk_id_t chunk_start) {
 
     auto chunk_dir = absolute(get_chunks_dir(file_path));
-    const bfs::directory_iterator end;
+    const fs::directory_iterator end;
     auto err_flag = false;
-    for(bfs::directory_iterator chunk_file(chunk_dir); chunk_file != end;
+    for(fs::directory_iterator chunk_file(chunk_dir); chunk_file != end;
         ++chunk_file) {
         auto chunk_path = chunk_file->path();
         auto chunk_id = std::stoul(chunk_path.filename().c_str());
