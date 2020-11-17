@@ -83,7 +83,9 @@ target_link_libraries(gkfs.io
     CLI11::CLI11
     nlohmann_json::nlohmann_json
     fmt::fmt
-)
+    # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
+    stdc++fs
+    )
 
 if(GKFS_INSTALL_TESTS)
     install(TARGETS gkfs.io
