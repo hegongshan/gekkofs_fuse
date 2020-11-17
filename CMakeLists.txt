@@ -14,7 +14,7 @@ if(NOT CMAKE_COMPILER_IS_GNUCXX)
     message(FATAL_ERROR "The choosen C++ compiler is not g++ and is not supported")
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
