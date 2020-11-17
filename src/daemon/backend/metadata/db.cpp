@@ -34,7 +34,7 @@ MetadataDB::MetadataDB(const std::string& path) : path(path) {
     options.merge_operator.reset(new MetadataMergeOperator);
     MetadataDB::optimize_rocksdb_options(options);
     write_opts.disableWAL = !(gkfs::config::rocksdb::use_write_ahead_log);
-    rdb::DB* rdb_ptr;
+    rdb::DB* rdb_ptr = nullptr;
     auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
     if(!s.ok()) {
         throw std::runtime_error("Failed to open RocksDB: " + s.ToString());
