@@ -48,6 +48,11 @@ constexpr auto use_ctime = false;
 constexpr auto use_mtime = false;
 constexpr auto use_link_cnt = false;
 constexpr auto use_blocks = false;
+
+// metadata logic
+// Check for existence of file metadata before create. This done on RocksDB
+// level
+constexpr auto create_exist_check = true;
 } // namespace metadata
 
 namespace rpc {

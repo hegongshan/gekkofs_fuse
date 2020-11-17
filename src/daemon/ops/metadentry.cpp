@@ -78,6 +78,7 @@ get_dirents_extended(const std::string& dir) {
  * Creates metadata (if required) and dentry at the same time
  * @param path
  * @param mode
+ * @throws DBException
  */
 void
 create(const std::string& path, Metadata& md) {
@@ -95,7 +96,11 @@ create(const std::string& path, Metadata& md) {
         if(GKFS_DATA->ctime_state())
             md.ctime(time);
     }
-    GKFS_DATA->mdb()->put(path, md.serialize());
+    if(gkfs::config::metadata::create_exist_check) {
+        GKFS_DATA->mdb()->put_no_exist(path, md.serialize());
+    } else {
+        GKFS_DATA->mdb()->put(path, md.serialize());
+    }
 }
 
 /**

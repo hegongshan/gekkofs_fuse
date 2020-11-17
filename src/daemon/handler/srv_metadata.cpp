@@ -15,10 +15,10 @@
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/handler/rpc_util.hpp>
 #include <daemon/backend/metadata/db.hpp>
+#include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/ops/metadentry.hpp>
 
 #include <global/rpc/rpc_types.hpp>
-#include <daemon/backend/data/chunk_storage.hpp>
 
 using namespace std;
 
@@ -46,6 +46,8 @@ rpc_srv_create(hg_handle_t handle) {
         // create metadentry
         gkfs::metadata::create(in.path, md);
         out.err = 0;
+    } catch(const gkfs::metadata::ExistsException& e) {
+        out.err = EEXIST;
     } catch(const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Failed to create metadentry: '{}'",
                                       __func__, e.what());
@@ -193,6 +195,7 @@ rpc_srv_remove(hg_handle_t handle) {
 
 hg_return_t
 rpc_srv_update_metadentry(hg_handle_t handle) {
+    // Note: Currently this handler is not called by the client.
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
 

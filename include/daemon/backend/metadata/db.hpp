@@ -37,13 +37,16 @@ public:
     static inline void
     throw_rdb_status_excpt(const rdb::Status& s);
 
-    MetadataDB(const std::string& path);
+    explicit MetadataDB(const std::string& path);
 
     std::string
     get(const std::string& key) const;
 
     void
     put(const std::string& key, const std::string& val);
+
+    void
+    put_no_exist(const std::string& key, const std::string& val);
 
     void
     remove(const std::string& key);

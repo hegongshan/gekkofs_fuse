@@ -128,74 +128,74 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         errno = ENOTSUP;
         return -1;
     }
-
-    bool exists = true;
-    auto md = gkfs::utils::get_metadata(path);
-    if(!md) {
-        if(errno == ENOENT) {
-            exists = false;
-        } else {
-            LOG(ERROR, "Error while retriving stat to file");
-            return -1;
-        }
-    }
-
-    if(!exists) {
-        if(!(flags & O_CREAT)) {
-            // file doesn't exists and O_CREAT was not set
-            errno = ENOENT;
-            return -1;
-        }
-
-        /***   CREATION    ***/
-        assert(flags & O_CREAT);
-
+    // metadata pointer assigned during create or stat
+    std::shared_ptr<gkfs::metadata::Metadata> md = nullptr;
+    if(flags & O_CREAT) {
         if(flags & O_DIRECTORY) {
             LOG(ERROR, "O_DIRECTORY use with O_CREAT. NOT SUPPORTED");
             errno = ENOTSUP;
             return -1;
         }
-
         // no access check required here. If one is using our FS they have the
         // permissions.
-        if(gkfs_create(path, mode | S_IFREG)) {
-            LOG(ERROR, "Error creating non-existent file: '{}'",
-                strerror(errno));
-            return -1;
+        int err = gkfs_create(path, mode | S_IFREG);
+        if(err) {
+            if(errno == EEXIST) {
+                // file exists, O_CREAT was set
+                if(flags & O_EXCL) {
+                    // File exists and O_EXCL & O_CREAT was set
+                    errno = EEXIST;
+                    return -1;
+                }
+                // file exists, O_CREAT was set O_EXCL wasnt, so function does
+                // not fail this case is actually undefined as per `man 2 open`
+                md = gkfs::util::get_metadata(path);
+            } else {
+                LOG(ERROR, "Error creating file: '{}'", strerror(errno));
+                return -1;
+            }
+        } else {
+            // file was successfully created. Add to filemap
+            return CTX->file_map()->add(
+                    std::make_shared<gkfs::filemap::OpenFile>(path, flags));
         }
     } else {
-        /* File already exists */
-
-        if(flags & O_EXCL) {
-            // File exists and O_EXCL was set
-            errno = EEXIST;
-            return -1;
+        md = gkfs::util::get_metadata(path);
+        if(!md) {
+            if(errno == ENOENT) {
+                // file doesn't exists and O_CREAT was not set
+                return -1;
+            } else {
+                LOG(ERROR, "Error stating existing file");
+                return -1;
+            }
         }
+    }
+    assert(md);
 
 #ifdef HAS_SYMLINKS
-        if(md->is_link()) {
-            if(flags & O_NOFOLLOW) {
-                LOG(WARNING, "Symlink found and O_NOFOLLOW flag was specified");
-                errno = ELOOP;
-                return -1;
-            }
-            return gkfs_open(md->target_path(), mode, flags);
+    if(md->is_link()) {
+        if(flags & O_NOFOLLOW) {
+            LOG(WARNING, "Symlink found and O_NOFOLLOW flag was specified");
+            errno = ELOOP;
+            return -1;
         }
+        return gkfs_open(md->target_path(), mode, flags);
+    }
 #endif
 
-        if(S_ISDIR(md->mode())) {
-            return gkfs_opendir(path);
-        }
+    if(S_ISDIR(md->mode())) {
+        return gkfs_opendir(path);
+    }
 
 
-        /*** Regular file exists ***/
-        assert(S_ISREG(md->mode()));
+    /*** Regular file exists ***/
+    assert(S_ISREG(md->mode()));
 
-        if((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
-            if(gkfs_truncate(path, md->size(), 0)) {
-                LOG(ERROR, "Error truncating file");
-                return -1;
-            }
+    if((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
+        if(gkfs_truncate(path, md->size(), 0)) {
+            LOG(ERROR, "Error truncating file");
+            return -1;
         }
     }
 
