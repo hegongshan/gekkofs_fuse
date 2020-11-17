@@ -11,7 +11,7 @@ set(Snappy_INCLUDE_DIRS ${Snappy_INCLUDE_DIR})
 
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(snappy DEFAULT_MSG Snappy_LIBRARY Snappy_INCLUDE_DIR)
+find_package_handle_standard_args(Snappy DEFAULT_MSG Snappy_LIBRARY Snappy_INCLUDE_DIR)
 
 mark_as_advanced(
         Snappy_LIBRARY

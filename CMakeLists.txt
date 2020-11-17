@@ -151,7 +151,7 @@ target_link_libraries(RocksDB
     ${Snappy_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${BZIP2_LIBRARIES}
-    ${ZSTD_LIBRARIES}
+    ${ZStd_LIBRARIES}
     ${LZ4_LIBRARIES}
 )
 
