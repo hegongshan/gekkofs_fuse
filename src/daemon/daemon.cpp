@@ -93,8 +93,10 @@ register_server_rpcs(margo_instance_id mid) {
                    rpc_stat_out_t, rpc_srv_stat);
     MARGO_REGISTER(mid, gkfs::rpc::tag::decr_size, rpc_trunc_in_t,
                    rpc_err_out_t, rpc_srv_decr_size);
-    MARGO_REGISTER(mid, gkfs::rpc::tag::remove, rpc_rm_node_in_t, rpc_err_out_t,
-                   rpc_srv_remove);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::remove_metadata, rpc_rm_node_in_t,
+                   rpc_rm_metadata_out_t, rpc_srv_remove_metadata);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::remove_data, rpc_rm_node_in_t,
+                   rpc_err_out_t, rpc_srv_remove_data);
     MARGO_REGISTER(mid, gkfs::rpc::tag::update_metadentry,
                    rpc_update_metadentry_in_t, rpc_err_out_t,
                    rpc_srv_update_metadentry);

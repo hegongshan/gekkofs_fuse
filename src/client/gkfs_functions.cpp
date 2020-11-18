@@ -261,10 +261,7 @@ gkfs_remove(const std::string& path) {
     if(!md) {
         return -1;
     }
-    gkfs::metadata::Metadata md{attr.value()};
-
-    bool has_data = S_ISREG(md.mode()) && (md.size() != 0);
-    auto err = gkfs::rpc::forward_remove(path, !has_data, md.size());
+    auto err = gkfs::rpc::forward_remove(path);
     if(err) {
         errno = err;
         return -1;
@@ -920,7 +917,7 @@ gkfs_rmdir(const std::string& path) {
         errno = ENOTEMPTY;
         return -1;
     }
-    err = gkfs::rpc::forward_remove(path, true, 0);
+    err = gkfs::rpc::forward_remove(path);
     if(err) {
         errno = err;
         return -1;

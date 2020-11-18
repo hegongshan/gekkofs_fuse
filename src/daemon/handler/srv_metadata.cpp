@@ -148,7 +148,49 @@ rpc_srv_decr_size(hg_handle_t handle) {
 
 
 hg_return_t
-rpc_srv_remove(hg_handle_t handle) {
+rpc_srv_remove_metadata(hg_handle_t handle) {
+    rpc_rm_node_in_t in{};
+    rpc_rm_metadata_out_t out{};
+
+    auto ret = margo_get_input(handle, &in);
+    if(ret != HG_SUCCESS)
+        GKFS_DATA->spdlogger()->error(
+                "{}() Failed to retrieve input from handle", __func__);
+    assert(ret == HG_SUCCESS);
+    GKFS_DATA->spdlogger()->debug("{}() Got remove metadata RPC with path '{}'",
+                                  __func__, in.path);
+
+    // Remove metadentry if exists on the node
+    try {
+        auto md = gkfs::metadata::get(in.path);
+        gkfs::metadata::remove(in.path);
+        out.err = 0;
+        out.mode = md.mode();
+        out.size = md.size();
+    } catch(const gkfs::metadata::DBException& e) {
+        GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
+                                      in.path, e.what());
+        out.err = EIO;
+    } catch(const std::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() path '{}' message '{}'", __func__,
+                                      in.path, e.what());
+        out.err = EBUSY;
+    }
+
+    GKFS_DATA->spdlogger()->debug("{}() Sending output '{}'", __func__,
+                                  out.err);
+    auto hret = margo_respond(handle, &out);
+    if(hret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+    }
+    // Destroy handle when finished
+    margo_free_input(handle, &in);
+    margo_destroy(handle);
+    return HG_SUCCESS;
+}
+
+hg_return_t
+rpc_srv_remove_data(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};
 
@@ -157,18 +199,13 @@ rpc_srv_remove(hg_handle_t handle) {
         GKFS_DATA->spdlogger()->error(
                 "{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    GKFS_DATA->spdlogger()->debug("{}() Got remove node RPC with path '{}'",
+    GKFS_DATA->spdlogger()->debug("{}() Got remove data RPC with path '{}'",
                                   __func__, in.path);
 
-    // Remove metadentry if exists on the node and remove all chunks for that
-    // file
+    // Remove all chunks for that file
     try {
-        gkfs::metadata::remove(in.path);
+        GKFS_DATA->storage()->destroy_chunk_space(in.path);
         out.err = 0;
-    } catch(const gkfs::metadata::DBException& e) {
-        GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
-                                      in.path, e.what());
-        out.err = EIO;
     } catch(const gkfs::data::ChunkStorageException& e) {
         GKFS_DATA->spdlogger()->error(
                 "{}(): path '{}' errcode '{}' message '{}'", __func__, in.path,
@@ -669,7 +706,9 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove)
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove_metadata)
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_remove_data)
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 

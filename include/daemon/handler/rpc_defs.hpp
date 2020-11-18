@@ -29,7 +29,7 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
 
-DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove)
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_metadata)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_update_metadentry)
 
@@ -48,6 +48,8 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)
 
 
 // data
+DECLARE_MARGO_RPC_HANDLER(rpc_srv_remove_data)
+
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_read)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_write)

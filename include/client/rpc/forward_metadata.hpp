@@ -41,8 +41,7 @@ int
 forward_stat(const std::string& path, std::string& attr);
 
 int
-forward_remove(const std::string& path, bool remove_metadentry_only,
-               ssize_t size);
+forward_remove(const std::string& path);
 
 int
 forward_decr_size(const std::string& path, size_t length);
