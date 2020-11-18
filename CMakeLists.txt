@@ -196,18 +196,6 @@ include_directories(
 )
 
 include(GNUInstallDirs)
-include(CheckSymbolExists)
-
-check_cxx_source_compiles("
-    #include <fcntl.h>
-    #include <sys/stat.h>
-
-    int main() {
-        struct statx buf;
-        statx(AT_FDCWD, \"/foo\", AT_EMPTY_PATH, STATX_BASIC_STATS, &buf);
-        return 0;
-    }
-" GLIBC_HAS_STATX)
 
 # Global components
 add_subdirectory(src/global)
@@ -221,17 +209,32 @@ option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
 include(CMakeDependentOption)
 cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
-if(GKFS_BUILD_TESTS)
+if (GKFS_BUILD_TESTS)
+    # check symbols exists doesn't work for statx. This is a workaround
+    check_cxx_source_compiles("
+        #include <fcntl.h>
+        #include <sys/stat.h>
+
+        int main() {
+            struct statx buf;
+            statx(AT_FDCWD, \"/foo\", AT_EMPTY_PATH, STATX_BASIC_STATS, &buf);
+            return 0;
+        }
+        " GLIBC_HAS_STATX)
+    # STATX_TYPE must be set for c++17 for statx() to be found for tests
+    if (GLIBC_HAS_STATX)
+        add_definitions(-DSTATX_TYPE=1)
+    endif ()
     message(STATUS "[gekkofs] Preparing tests...")
     set(GKFS_TESTS_INTERFACE "lo" CACHE STRING "Network interface to use when running tests (default: lo)")
     message(STATUS "[gekkofs] Network interface for tests: ${GKFS_TESTS_INTERFACE}")
 
     message(STATUS "[gekkofs] Check for forwarding tests...")
-    if(ENABLE_FORWARDING)
+    if (ENABLE_FORWARDING)
         set(GKFS_TESTS_FORWARDING "ON" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
-    else()
+    else ()
         set(GKFS_TESTS_FORWARDING "OFF" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
-    endif()
+    endif ()
     message(STATUS "[gekkofs] Forwarding tests: ${GKFS_TESTS_FORWARDING}")
 
     add_subdirectory(tests)
