@@ -169,12 +169,15 @@ forward_remove(const std::string& path) {
             for(uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
                 const auto chnk_host_id =
                         CTX->distributor()->locate_data(path, chnk_id);
-                /*
-                 * If the chnk host matches the metadata host the remove request
-                 * as already been sent as part of the metadata remove request.
-                 */
-                if(chnk_host_id == metadata_host_id)
-                    continue;
+                if constexpr(gkfs::config::metadata::implicit_data_removal) {
+                    /*
+                     * If the chnk host matches the metadata host the remove
+                     * request as already been sent as part of the metadata
+                     * remove request.
+                     */
+                    if(chnk_host_id == metadata_host_id)
+                        continue;
+                }
                 const auto endp_chnk = CTX->hosts().at(chnk_host_id);
 
                 LOG(DEBUG, "Sending RPC to host: {}", endp_chnk.to_string());

@@ -167,10 +167,19 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
         out.err = 0;
         out.mode = md.mode();
         out.size = md.size();
+        if constexpr(gkfs::config::metadata::implicit_data_removal) {
+            if(S_ISREG(md.mode()) && (md.size() != 0))
+                GKFS_DATA->storage()->destroy_chunk_space(in.path);
+        }
     } catch(const gkfs::metadata::DBException& e) {
         GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
                                       in.path, e.what());
         out.err = EIO;
+    } catch(const gkfs::data::ChunkStorageException& e) {
+        GKFS_DATA->spdlogger()->error(
+                "{}(): path '{}' errcode '{}' message '{}'", __func__, in.path,
+                e.code().value(), e.what());
+        out.err = e.code().value();
     } catch(const std::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() path '{}' message '{}'", __func__,
                                       in.path, e.what());
