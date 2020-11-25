@@ -26,13 +26,17 @@ using host_t = unsigned int;
 
 class Distributor {
 public:
-    virtual host_t localhost() const = 0;
+    virtual host_t
+    localhost() const = 0;
 
-    virtual host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const = 0;
+    virtual host_t
+    locate_data(const std::string& path, const chunkid_t& chnk_id) const = 0;
 
-    virtual host_t locate_file_metadata(const std::string& path) const = 0;
+    virtual host_t
+    locate_file_metadata(const std::string& path) const = 0;
 
-    virtual std::vector<host_t> locate_directory_metadata(const std::string& path) const = 0;
+    virtual std::vector<host_t>
+    locate_directory_metadata(const std::string& path) const = 0;
 };
 
 
@@ -42,31 +46,43 @@ private:
     unsigned int hosts_size_;
     std::vector<host_t> all_hosts_;
     std::hash<std::string> str_hash;
+
 public:
     SimpleHashDistributor(host_t localhost, unsigned int hosts_size);
 
-    host_t localhost() const override;
+    host_t
+    localhost() const override;
 
-    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override;
+    host_t
+    locate_data(const std::string& path,
+                const chunkid_t& chnk_id) const override;
 
-    host_t locate_file_metadata(const std::string& path) const override;
+    host_t
+    locate_file_metadata(const std::string& path) const override;
 
-    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
+    std::vector<host_t>
+    locate_directory_metadata(const std::string& path) const override;
 };
 
 class LocalOnlyDistributor : public Distributor {
 private:
     host_t localhost_;
+
 public:
     explicit LocalOnlyDistributor(host_t localhost);
 
-    host_t localhost() const override;
+    host_t
+    localhost() const override;
 
-    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override;
+    host_t
+    locate_data(const std::string& path,
+                const chunkid_t& chnk_id) const override;
 
-    host_t locate_file_metadata(const std::string& path) const override;
+    host_t
+    locate_file_metadata(const std::string& path) const override;
 
-    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
+    std::vector<host_t>
+    locate_directory_metadata(const std::string& path) const override;
 };
 
 class ForwarderDistributor : public Distributor {
@@ -75,19 +91,25 @@ private:
     unsigned int hosts_size_;
     std::vector<host_t> all_hosts_;
     std::hash<std::string> str_hash;
+
 public:
     ForwarderDistributor(host_t fwhost, unsigned int hosts_size);
 
-    host_t localhost() const override final;
+    host_t
+    localhost() const override final;
 
-    host_t locate_data(const std::string& path, const chunkid_t& chnk_id) const override final;
+    host_t
+    locate_data(const std::string& path,
+                const chunkid_t& chnk_id) const override final;
 
-    host_t locate_file_metadata(const std::string& path) const override;
+    host_t
+    locate_file_metadata(const std::string& path) const override;
 
-    std::vector<host_t> locate_directory_metadata(const std::string& path) const override;
+    std::vector<host_t>
+    locate_directory_metadata(const std::string& path) const override;
 };
 
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_RPC_LOCATOR_HPP
+#endif // GEKKOFS_RPC_LOCATOR_HPP

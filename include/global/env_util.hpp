@@ -19,7 +19,8 @@
 namespace gkfs {
 namespace env {
 
-std::string get_var(const std::string& name, const std::string& default_value = "");
+std::string
+get_var(const std::string& name, const std::string& default_value = "");
 
 } // namespace env
 } // namespace gkfs

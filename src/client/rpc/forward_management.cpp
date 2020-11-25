@@ -22,23 +22,25 @@ namespace gkfs {
 namespace rpc {
 
 /**
-* Gets fs configuration information from the running daemon and transfers it to the memory of the library
-* @return
-*/
-bool forward_get_fs_config() {
+ * Gets fs configuration information from the running daemon and transfers it to
+ * the memory of the library
+ * @return
+ */
+bool
+forward_get_fs_config() {
 
     auto endp = CTX->hosts().at(CTX->local_host_id());
     gkfs::rpc::fs_config::output out;
 
     try {
         LOG(DEBUG, "Retrieving file system configurations from daemon");
-        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we can retry
-        // for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
         // TODO(amiranda): hermes will eventually provide a post(endpoint)
         // returning one result and a broadcast(endpoint_set) returning a
         // result_set. When that happens we can remove the .at(0) :/
         out = ld_network_service->post<gkfs::rpc::fs_config>(endp).get().at(0);
-    } catch (const std::exception& ex) {
+    } catch(const std::exception& ex) {
         LOG(ERROR, "Retrieving fs configurations from daemon");
         return false;
     }

@@ -1,6 +1,7 @@
 #include <daemon/scheduler/agios.hpp>
 
-unsigned long long int generate_unique_id() {
+unsigned long long int
+generate_unique_id() {
     // Calculates the hash of this request
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);

@@ -11,6 +11,9 @@
   SPDX-License-Identifier: MIT
 */
 
+// This file uses special C formatting for a better overview
+// clang-format off
+
 #define _GNU_SOURCE
 #include <syscall.h>
 #include <stdbool.h>
@@ -477,17 +480,16 @@ requires_mode_arg(int flags) {
 
 #include <signal.h>
 
-/** 
- * get_syscall_info - Return a syscall descriptor 
+/**
+ * get_syscall_info - Return a syscall descriptor
  *
- * This function returns a pointer to a syscall_info structure that 
+ * This function returns a pointer to a syscall_info structure that
  * appropriately describes the system call identified by 'syscall_number'.
  */
-const struct syscall_info *
-get_syscall_info(const long syscall_number, 
-                 const long* argv) {
+const struct syscall_info*
+get_syscall_info(const long syscall_number, const long* argv) {
 
-    if(syscall_number < 0 || 
+    if(syscall_number < 0 ||
        syscall_number >= (long) ARRAY_SIZE(syscall_table)) {
         return &unknown_syscall;
     }
@@ -512,8 +514,8 @@ get_syscall_info(const long syscall_number,
 }
 
 struct named_syscall_entry {
-    const char * s_name;
-    const struct syscall_info * s_info;
+    const char* s_name;
+    const struct syscall_info* s_info;
 };
 
 #define SYSCALL_BY_NAME(id)            \
@@ -888,18 +890,18 @@ const struct named_syscall_entry syscalls_by_name[] = {
 };
 
 static int
-compare_named_entries(const void *k, const void *e) {
+compare_named_entries(const void* k, const void* e) {
     const char* name = (const char*) k;
     struct named_syscall_entry* entry = (struct named_syscall_entry*) e;
     return strcmp(name, entry->s_name);
 }
 
-const struct syscall_info *
+const struct syscall_info*
 get_syscall_info_by_name(const char* syscall_name) {
 
-    struct named_syscall_entry* res = 
-        bsearch(syscall_name, &syscalls_by_name[0], ARRAY_SIZE(syscalls_by_name),
-                sizeof(struct named_syscall_entry), compare_named_entries);
+    struct named_syscall_entry* res = bsearch(
+            syscall_name, &syscalls_by_name[0], ARRAY_SIZE(syscalls_by_name),
+            sizeof(struct named_syscall_entry), compare_named_entries);
 
     if(res == NULL) {
         return &unknown_syscall;
@@ -908,14 +910,12 @@ get_syscall_info_by_name(const char* syscall_name) {
     return res->s_info;
 }
 
-#define RETURN_TYPE(scinfo) \
-    (scinfo)->s_return_type.r_type
+#define RETURN_TYPE(scinfo) (scinfo)->s_return_type.r_type
 
 bool
 syscall_never_returns(long syscall_number) {
     return RETURN_TYPE(get_syscall_info(syscall_number, NULL)) == rnone;
 }
-
 
 
 #undef SYSCALL
@@ -925,3 +925,5 @@ syscall_never_returns(long syscall_number) {
 #undef S_RET
 #undef SYSCALL_BY_NAME
 #undef ARRAY_SIZE
+
+// clang-format on

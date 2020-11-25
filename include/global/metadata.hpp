@@ -28,15 +28,17 @@ constexpr mode_t LINK_MODE = ((S_IRWXU | S_IRWXG | S_IRWXO) | S_IFLNK);
 
 class Metadata {
 private:
-    time_t atime_;         // access time. gets updated on file access unless mounted with noatime
-    time_t mtime_;         // modify time. gets updated when file content is modified.
-    time_t ctime_;         // change time. gets updated when the file attributes are changed AND when file content is modified.
+    time_t atime_; // access time. gets updated on file access unless mounted
+                   // with noatime
+    time_t mtime_; // modify time. gets updated when file content is modified.
+    time_t ctime_; // change time. gets updated when the file attributes are
+                   // changed AND when file content is modified.
     mode_t mode_;
-    nlink_t link_count_;   // number of names for this inode (hardlinks)
-    size_t size_;          // size_ in bytes, might be computed instead of stored
-    blkcnt_t blocks_;      // allocated file system blocks_
+    nlink_t link_count_; // number of names for this inode (hardlinks)
+    size_t size_;        // size_ in bytes, might be computed instead of stored
+    blkcnt_t blocks_;    // allocated file system blocks_
 #ifdef HAS_SYMLINKS
-    std::string target_path_;  // For links this is the path of the target file
+    std::string target_path_; // For links this is the path of the target file
 #endif
 
 
@@ -54,48 +56,68 @@ public:
     // Construct from a binary representation of the object
     explicit Metadata(const std::string& binary_str);
 
-    std::string serialize() const;
+    std::string
+    serialize() const;
 
-    void init_ACM_time();
+    void
+    init_ACM_time();
 
-    void update_ACM_time(bool a, bool c, bool m);
+    void
+    update_ACM_time(bool a, bool c, bool m);
 
-    //Getter and Setter
-    time_t atime() const;
+    // Getter and Setter
+    time_t
+    atime() const;
 
-    void atime(time_t atime_);
+    void
+    atime(time_t atime_);
 
-    time_t mtime() const;
+    time_t
+    mtime() const;
 
-    void mtime(time_t mtime_);
+    void
+    mtime(time_t mtime_);
 
-    time_t ctime() const;
+    time_t
+    ctime() const;
 
-    void ctime(time_t ctime_);
+    void
+    ctime(time_t ctime_);
 
-    mode_t mode() const;
+    mode_t
+    mode() const;
 
-    void mode(mode_t mode_);
+    void
+    mode(mode_t mode_);
 
-    nlink_t link_count() const;
+    nlink_t
+    link_count() const;
 
-    void link_count(nlink_t link_count_);
+    void
+    link_count(nlink_t link_count_);
 
-    size_t size() const;
+    size_t
+    size() const;
 
-    void size(size_t size_);
+    void
+    size(size_t size_);
 
-    blkcnt_t blocks() const;
+    blkcnt_t
+    blocks() const;
 
-    void blocks(blkcnt_t blocks_);
+    void
+    blocks(blkcnt_t blocks_);
 
 #ifdef HAS_SYMLINKS
 
-    std::string target_path() const;
+    std::string
+    target_path() const;
 
-    void target_path(const std::string& target_path);
+    void
+    target_path(const std::string& target_path);
 
-    bool is_link() const;
+    bool
+    is_link() const;
 
 #endif
 };
@@ -104,4 +126,4 @@ public:
 } // namespace gkfs
 
 
-#endif //FS_METADATA_H
+#endif // FS_METADATA_H

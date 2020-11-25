@@ -11,6 +11,9 @@
   SPDX-License-Identifier: MIT
 */
 
+// This file uses special C formatting for a better overview
+// clang-format off
+
 #ifndef GKFS_SYSCALLS_ARGS_HPP
 #define GKFS_SYSCALLS_ARGS_HPP
 
@@ -73,7 +76,7 @@ static constexpr auto generic       = type::generic;
 
 /** An argument value with an optional size */
 struct printable_arg {
-    const char * const name;
+    const char* const name;
     const long value;
     boost::optional<long> size;
 };
@@ -81,9 +84,7 @@ struct printable_arg {
 
 /** All arg formatters must follow this prototype */
 template <typename FmtBuffer>
-using formatter = 
-    std::add_pointer_t<void(FmtBuffer&, const printable_arg&)>;
-
+using formatter = std::add_pointer_t<void(FmtBuffer&, const printable_arg&)>;
 
 
 /** forward declare formatters */
@@ -105,7 +106,7 @@ format_open_flags_to(FmtBuffer& buffer, const printable_arg& parg);
 template <typename FmtBuffer> inline void
 format_octal_mode_to(FmtBuffer& buffer, const printable_arg& parg);
 
-template <typename FmtBuffer> inline void 
+template <typename FmtBuffer> inline void
 format_ptr_arg_to(FmtBuffer& buffer, const printable_arg& parg);
 
 template <typename FmtBuffer> inline void
@@ -161,7 +162,7 @@ std::array<formatter<FmtBuffer>, arg_type_max> formatters = {
 
 /** An argument descriptor */
 struct desc {
-    arg::type   type_;
+    arg::type type_;
     const char* name_;
 
     arg::type
@@ -206,13 +207,11 @@ typedef struct {
 
 template <typename FmtBuffer, typename FlagDescriptorArray>
 static void
-format_flag(FmtBuffer& buffer, 
-            long flag,
-		    FlagDescriptorArray&& desc) {
+format_flag(FmtBuffer& buffer, long flag, FlagDescriptorArray&& desc) {
 
     // we assume that if a flag value is zero, its printable
     // name will always be at position 0 in the array
-	if(flag == 0 && desc[0].flag_ == 0) {
+    if(flag == 0 && desc[0].flag_ == 0) {
         fmt::format_to(buffer, "{}", desc[0].name_);
         return;
     }
@@ -234,62 +233,59 @@ format_flag(FmtBuffer& buffer,
 
 template <typename FmtBuffer, typename FlagDescriptorArray>
 static void
-format_flag_set(FmtBuffer& buffer, 
-                long flags,
-		        FlagDescriptorArray&& desc) {
+format_flag_set(FmtBuffer& buffer, long flags, FlagDescriptorArray&& desc) {
 
     // we assume that if a flag value is zero, its printable
     // name will always be at position 0 in the array
-	if(flags == 0 && desc[0].flag_ == 0) {
+    if(flags == 0 && desc[0].flag_ == 0) {
         fmt::format_to(buffer, "{}", desc[0].name_);
         return;
     }
 
     std::size_t i = 0;
-	const auto buffer_start = buffer.size();
+    const auto buffer_start = buffer.size();
 
-	while(flags != 0 && i < desc.size()) {
+    while(flags != 0 && i < desc.size()) {
 
-	    if(desc[i].name_ == nullptr) {
+        if(desc[i].name_ == nullptr) {
             ++i;
-	        continue;
+            continue;
         }
 
         if((flags & desc[i].flag_) != 0) {
-            fmt::format_to(buffer, "{}{}", 
-                    buffer.size() != buffer_start ? "|" : "",
-                    desc[i].name_);
+            fmt::format_to(buffer, "{}{}",
+                           buffer.size() != buffer_start ? "|" : "",
+                           desc[i].name_);
             flags &= ~desc[i].flag_;
         }
 
         ++i;
     }
 
-	if(flags != 0) {
-		if(buffer.size() != buffer_start) {
+    if(flags != 0) {
+        if(buffer.size() != buffer_start) {
             fmt::format_to(buffer, "|");
         }
 
         fmt::format_to(buffer, "{:#x}", flags);
         return;
-	}
+    }
 
-	if(buffer_start == buffer.size()) {
+    if(buffer_start == buffer.size()) {
         fmt::format_to(buffer, "0x0");
     }
 }
 
-/** 
+/**
  * format_whence_arg_to - format a 'whence' argument
  *
  * Format a 'whence' argument from the lseek() syscall, modifying the provided
  * buffer by appending to it a string representation of the form:
- *   name = formatted_val  
+ *   name = formatted_val
  */
-template <typename FmtBuffer> 
+template <typename FmtBuffer>
 inline void
-format_whence_arg_to(FmtBuffer& buffer, 
-                     const printable_arg& parg) {
+format_whence_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for lseek() whence arg */
     const auto flag_names =
@@ -304,16 +300,15 @@ format_whence_arg_to(FmtBuffer& buffer,
 }
 
 
-/** 
+/**
  * format_mmap_prot_arg_to - format a 'prot' argument
  *
  * Format a 'prot' argument (such as those passed to mmap())
  * and append the resulting string to the provided buffer.
  */
-template <typename FmtBuffer> 
+template <typename FmtBuffer>
 inline void
-format_mmap_prot_arg_to(FmtBuffer& buffer, 
-                        const printable_arg& parg) {
+format_mmap_prot_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for mmap() prot arg */
     const auto flag_names =
@@ -330,16 +325,15 @@ format_mmap_prot_arg_to(FmtBuffer& buffer,
 }
 
 
-/** 
+/**
  * format_mmap_flags_arg_to - format a 'flags' argument
  *
  * Format a 'flags' argument (such as those passed to mmap())
  * and append the resulting string to the provided buffer.
  */
-template <typename FmtBuffer> 
+template <typename FmtBuffer>
 inline void
-format_mmap_flags_arg_to(FmtBuffer& buffer, 
-                         const printable_arg& parg) {
+format_mmap_flags_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for mmap() flags arg */
     const auto flag_names =
@@ -371,16 +365,15 @@ format_mmap_flags_arg_to(FmtBuffer& buffer,
     return;
 }
 
-/** 
+/**
  * format_clone_flags_arg_to - format a 'flags' argument
  *
  * Format a 'flags' argument (such as those passed to clone())
  * and append the resulting string to the provided buffer.
  */
-template <typename FmtBuffer> 
+template <typename FmtBuffer>
 inline void
-format_clone_flags_arg_to(FmtBuffer& buffer, 
-                          const printable_arg& parg) {
+format_clone_flags_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for clone() flags arg */
     const auto flag_names =
@@ -413,7 +406,7 @@ format_clone_flags_arg_to(FmtBuffer& buffer,
 
     fmt::format_to(buffer, "{}=", parg.name);
 
-    // the low byte in clone flags contains the number of the termination 
+    // the low byte in clone flags contains the number of the termination
     // signal sent to the parent when the child dies
     format_flag_set(buffer, parg.value & ~0x11l, flag_names);
 
@@ -424,7 +417,7 @@ format_clone_flags_arg_to(FmtBuffer& buffer,
     return;
 }
 
-/** 
+/**
  * format_signum_arg_to - format a 'signum' argument
  *
  * Format a 'signum' argument (such as those passed to rt_sigaction())
@@ -432,8 +425,7 @@ format_clone_flags_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_signum_arg_to(FmtBuffer& buffer, 
-                     const printable_arg& parg) {
+format_signum_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for signum args */
     const auto flag_names =
@@ -479,7 +471,7 @@ format_signum_arg_to(FmtBuffer& buffer,
 }
 
 
-/** 
+/**
  * format_sigproc_how_arg_to - format a 'sigproc how' argument
  *
  * Format a 'sigproc how' argument (such as those passed to sigprocmask())
@@ -487,8 +479,7 @@ format_signum_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_sigproc_how_arg_to(FmtBuffer& buffer, 
-                          const printable_arg& parg) {
+format_sigproc_how_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for sigproc how args */
     const auto flag_names =
@@ -510,13 +501,12 @@ format_sigproc_how_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_none_arg_to(FmtBuffer& buffer,
-                   const printable_arg& parg) {
+format_none_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "void");
 }
 
 
-/** 
+/**
  * format_fd_arg_to - format a 'fd' argument
  *
  * Format a 'fd' argument (such as those passed to read())
@@ -524,13 +514,12 @@ format_none_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_fd_arg_to(FmtBuffer& buffer,
-                 const printable_arg& parg) {
+format_fd_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "{}={}", parg.name, static_cast<int>(parg.value));
 }
 
 
-/** 
+/**
  * format_atfd_arg_to - format a 'at_fd' argument
  *
  * Format a 'at_fd' argument (such as those passed to openat())
@@ -538,8 +527,7 @@ format_fd_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_atfd_arg_to(FmtBuffer& buffer,
-                   const printable_arg& parg) {
+format_atfd_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     if(static_cast<int>(parg.value) == AT_FDCWD) {
         fmt::format_to(buffer, "{}=AT_FDCWD", parg.name);
@@ -550,7 +538,7 @@ format_atfd_arg_to(FmtBuffer& buffer,
 }
 
 
-/** 
+/**
  * format_cstr_arg_to - format a 'cstr' argument
  *
  * Format a 'cstr' argument (i.e. a null-terminated C string)
@@ -558,11 +546,10 @@ format_atfd_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_cstr_arg_to(FmtBuffer& buffer,
-                   const printable_arg& parg) {
+format_cstr_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     if(LIKELY(reinterpret_cast<const char*>(parg.value) != nullptr)) {
-        fmt::format_to(buffer, "{}=\"{}\"", parg.name, 
+        fmt::format_to(buffer, "{}=\"{}\"", parg.name,
                        reinterpret_cast<const char*>(parg.value));
         return;
     }
@@ -626,9 +613,9 @@ format_open_flags_to(FmtBuffer& buffer,
     //
     // See O_TMPFILE' definition in fcntl-linux.h :
     //     #define __O_TMPFILE   (020000000 | __O_DIRECTORY)
-	if ((flags & O_TMPFILE) == O_TMPFILE) {
+    if((flags & O_TMPFILE) == O_TMPFILE) {
         format_flag(buffer, O_TMPFILE, flag_names);
-	    flags &= ~O_TMPFILE;
+        flags &= ~O_TMPFILE;
     }
 #endif // !O_TMPFILE
 
@@ -638,7 +625,7 @@ format_open_flags_to(FmtBuffer& buffer,
     }
 }
 
-/** 
+/**
  * format_octal_mode_to - format a 'mode' argument
  *
  * Format a 'mode' argument (such as those passed to open()) and append the
@@ -646,12 +633,11 @@ format_open_flags_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_octal_mode_to(FmtBuffer& buffer,
-                     const printable_arg& parg) {
+format_octal_mode_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "{}={:#04o}", parg.name, parg.value);
 }
 
-/** 
+/**
  * format_ptr_arg_to - format a 'ptr' argument
  *
  * Format a 'ptr' argument (i.e. a C pointer)
@@ -659,11 +645,10 @@ format_octal_mode_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_ptr_arg_to(FmtBuffer& buffer,
-                  const printable_arg& parg) {
+format_ptr_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     if(LIKELY(reinterpret_cast<const void*>(parg.value) != nullptr)) {
-        fmt::format_to(buffer, "{}={}", parg.name, 
+        fmt::format_to(buffer, "{}={}", parg.name,
                        reinterpret_cast<const void*>(parg.value));
         return;
     }
@@ -672,7 +657,7 @@ format_ptr_arg_to(FmtBuffer& buffer,
 }
 
 
-/** 
+/**
  * format_dec_arg_to - format a 'dec' argument
  *
  * Format a 'dec' argument (i.e. an integer of unknwon size)
@@ -680,13 +665,12 @@ format_ptr_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_dec_arg_to(FmtBuffer& buffer,
-                  const printable_arg& parg) {
+format_dec_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "{}={}", parg.name, parg.value);
 }
 
 
-/** 
+/**
  * format_dec32_arg_to - format a 'dec32' argument
  *
  * Format a 'dec32' argument (i.e. a 32-bit integer)
@@ -694,22 +678,20 @@ format_dec_arg_to(FmtBuffer& buffer,
  */
 template <typename FmtBuffer>
 inline void
-format_dec32_arg_to(FmtBuffer& buffer,
-                    const printable_arg& parg) {
+format_dec32_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "{}={}", parg.name, static_cast<int>(parg.value));
 }
 
 
-/** 
+/**
  * format_arg_to - format an arbitrary argument
  *
- * Format an arbitrary argument and append the resulting 
+ * Format an arbitrary argument and append the resulting
  * string to the provided buffer.
  */
 template <typename FmtBuffer>
 inline void
-format_arg_to(FmtBuffer& buffer,
-              const printable_arg& parg) {
+format_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
     fmt::format_to(buffer, "{}={:#x}", parg.name, parg.value);
 }
 
@@ -722,3 +704,5 @@ format_arg_to(FmtBuffer& buffer,
 } // namespace gkfs
 
 #endif // GKFS_SYSCALLS_ARGS_HPP
+
+// clang-format on

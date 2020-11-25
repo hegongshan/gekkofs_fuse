@@ -18,9 +18,10 @@
 namespace gkfs {
 namespace rpc {
 
-bool forward_get_fs_config();
+bool
+forward_get_fs_config();
 
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
+#endif // GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP

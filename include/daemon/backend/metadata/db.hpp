@@ -30,33 +30,45 @@ private:
     rdb::WriteOptions write_opts;
     std::string path;
 
-    static void optimize_rocksdb_options(rdb::Options& options);
+    static void
+    optimize_rocksdb_options(rdb::Options& options);
 
 public:
-    static inline void throw_rdb_status_excpt(const rdb::Status& s);
+    static inline void
+    throw_rdb_status_excpt(const rdb::Status& s);
 
     MetadataDB(const std::string& path);
 
-    std::string get(const std::string& key) const;
+    std::string
+    get(const std::string& key) const;
 
-    void put(const std::string& key, const std::string& val);
+    void
+    put(const std::string& key, const std::string& val);
 
-    void remove(const std::string& key);
+    void
+    remove(const std::string& key);
 
-    bool exists(const std::string& key);
+    bool
+    exists(const std::string& key);
 
-    void update(const std::string& old_key, const std::string& new_key, const std::string& val);
+    void
+    update(const std::string& old_key, const std::string& new_key,
+           const std::string& val);
 
-    void increase_size(const std::string& key, size_t size, bool append);
+    void
+    increase_size(const std::string& key, size_t size, bool append);
 
-    void decrease_size(const std::string& key, size_t size);
+    void
+    decrease_size(const std::string& key, size_t size);
 
-    std::vector<std::pair<std::string, bool>> get_dirents(const std::string& dir) const;
+    std::vector<std::pair<std::string, bool>>
+    get_dirents(const std::string& dir) const;
 
-    void iterate_all();
+    void
+    iterate_all();
 };
 
 } // namespace metadata
 } // namespace gkfs
 
-#endif //GEKKOFS_METADATA_DB_HPP
+#endif // GEKKOFS_METADATA_DB_HPP

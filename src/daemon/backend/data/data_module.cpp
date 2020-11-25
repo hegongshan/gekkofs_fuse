@@ -16,11 +16,13 @@
 namespace gkfs {
 namespace data {
 
-const std::shared_ptr<spdlog::logger>& DataModule::log() const {
+const std::shared_ptr<spdlog::logger>&
+DataModule::log() const {
     return log_;
 }
 
-void DataModule::log(const std::shared_ptr<spdlog::logger>& log) {
+void
+DataModule::log(const std::shared_ptr<spdlog::logger>& log) {
     DataModule::log_ = log;
 }
 

@@ -27,12 +27,15 @@ class DirEntry {
 private:
     std::string name_;
     FileType type_;
+
 public:
     DirEntry(const std::string& name, FileType type);
 
-    const std::string& name();
+    const std::string&
+    name();
 
-    FileType type();
+    FileType
+    type();
 };
 
 class OpenDir : public OpenFile {
@@ -43,14 +46,17 @@ private:
 public:
     explicit OpenDir(const std::string& path);
 
-    void add(const std::string& name, const FileType& type);
+    void
+    add(const std::string& name, const FileType& type);
 
-    const DirEntry& getdent(unsigned int pos);
+    const DirEntry&
+    getdent(unsigned int pos);
 
-    size_t size();
+    size_t
+    size();
 };
 
 } // namespace filemap
 } // namespace gkfs
 
-#endif //GEKKOFS_OPEN_DIR_HPP
+#endif // GEKKOFS_OPEN_DIR_HPP

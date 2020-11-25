@@ -65,82 +65,114 @@ private:
     bool blocks_state_;
 
 public:
-    static FsData* getInstance() {
+    static FsData*
+    getInstance() {
         static FsData instance;
         return &instance;
     }
 
     FsData(FsData const&) = delete;
 
-    void operator=(FsData const&) = delete;
+    void
+    operator=(FsData const&) = delete;
 
     // getter/setter
 
-    const std::shared_ptr<spdlog::logger>& spdlogger() const;
+    const std::shared_ptr<spdlog::logger>&
+    spdlogger() const;
 
-    void spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger_);
+    void
+    spdlogger(const std::shared_ptr<spdlog::logger>& spdlogger_);
 
-    const std::string& rootdir() const;
+    const std::string&
+    rootdir() const;
 
-    void rootdir(const std::string& rootdir_);
+    void
+    rootdir(const std::string& rootdir_);
 
-    const std::string& mountdir() const;
+    const std::string&
+    mountdir() const;
 
-    void mountdir(const std::string& mountdir_);
+    void
+    mountdir(const std::string& mountdir_);
 
-    const std::string& metadir() const;
+    const std::string&
+    metadir() const;
 
-    void metadir(const std::string& metadir_);
+    void
+    metadir(const std::string& metadir_);
 
-    const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb() const;
+    const std::shared_ptr<gkfs::metadata::MetadataDB>&
+    mdb() const;
 
-    void mdb(const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb);
+    void
+    mdb(const std::shared_ptr<gkfs::metadata::MetadataDB>& mdb);
 
-    void close_mdb();
+    void
+    close_mdb();
 
-    const std::shared_ptr<gkfs::data::ChunkStorage>& storage() const;
+    const std::shared_ptr<gkfs::data::ChunkStorage>&
+    storage() const;
 
-    void storage(const std::shared_ptr<gkfs::data::ChunkStorage>& storage);
+    void
+    storage(const std::shared_ptr<gkfs::data::ChunkStorage>& storage);
 
-    const std::string& rpc_protocol() const;
+    const std::string&
+    rpc_protocol() const;
 
-    void rpc_protocol(const std::string& rpc_protocol);
+    void
+    rpc_protocol(const std::string& rpc_protocol);
 
-    const std::string& bind_addr() const;
+    const std::string&
+    bind_addr() const;
 
-    void bind_addr(const std::string& addr);
+    void
+    bind_addr(const std::string& addr);
 
-    const std::string& hosts_file() const;
+    const std::string&
+    hosts_file() const;
 
-    bool use_auto_sm() const;
+    bool
+    use_auto_sm() const;
 
-    void use_auto_sm(bool use_auto_sm);
+    void
+    use_auto_sm(bool use_auto_sm);
 
-    void hosts_file(const std::string& lookup_file);
+    void
+    hosts_file(const std::string& lookup_file);
 
-    bool atime_state() const;
+    bool
+    atime_state() const;
 
-    void atime_state(bool atime_state);
+    void
+    atime_state(bool atime_state);
 
-    bool mtime_state() const;
+    bool
+    mtime_state() const;
 
-    void mtime_state(bool mtime_state);
+    void
+    mtime_state(bool mtime_state);
 
-    bool ctime_state() const;
+    bool
+    ctime_state() const;
 
-    void ctime_state(bool ctime_state);
+    void
+    ctime_state(bool ctime_state);
 
-    bool link_cnt_state() const;
+    bool
+    link_cnt_state() const;
 
-    void link_cnt_state(bool link_cnt_state);
+    void
+    link_cnt_state(bool link_cnt_state);
 
-    bool blocks_state() const;
+    bool
+    blocks_state() const;
 
-    void blocks_state(bool blocks_state);
-
+    void
+    blocks_state(bool blocks_state);
 };
 
 } // namespace daemon
 } // namespace gkfs
 
-#endif //LFS_FS_DATA_H
+#endif // LFS_FS_DATA_H

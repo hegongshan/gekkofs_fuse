@@ -30,5 +30,3 @@ static constexpr auto HOSTS_FILE = ADD_PREFIX("HOSTS_FILE");
 #undef ADD_PREFIX
 
 #endif // GKFS_DAEMON_ENV
-
-

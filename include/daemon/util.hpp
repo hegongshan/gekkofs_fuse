@@ -16,10 +16,12 @@
 
 namespace gkfs {
 namespace util {
-void populate_hosts_file();
+void
+populate_hosts_file();
 
-void destroy_hosts_file();
-}
-}
+void
+destroy_hosts_file();
+} // namespace util
+} // namespace gkfs
 
-#endif //GEKKOFS_DAEMON_UTIL_HPP
+#endif // GEKKOFS_DAEMON_UTIL_HPP

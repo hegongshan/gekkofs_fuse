@@ -25,7 +25,8 @@ using namespace std;
 
 namespace {
 
-hg_return_t rpc_srv_get_fs_config(hg_handle_t handle) {
+hg_return_t
+rpc_srv_get_fs_config(hg_handle_t handle) {
     rpc_config_out_t out{};
 
     GKFS_DATA->spdlogger()->debug("{}() Got config RPC", __func__);
@@ -40,11 +41,13 @@ hg_return_t rpc_srv_get_fs_config(hg_handle_t handle) {
     out.blocks_state = static_cast<hg_bool_t>(GKFS_DATA->blocks_state());
     out.uid = getuid();
     out.gid = getgid();
-    GKFS_DATA->spdlogger()->debug("{}() Sending output configs back to library", __func__);
+    GKFS_DATA->spdlogger()->debug("{}() Sending output configs back to library",
+                                  __func__);
     auto hret = margo_respond(handle, &out);
-    if (hret != HG_SUCCESS) {
-        GKFS_DATA->spdlogger()->error("{}() Failed to respond to client to serve file system configurations",
-                                      __func__);
+    if(hret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error(
+                "{}() Failed to respond to client to serve file system configurations",
+                __func__);
     }
 
     // Destroy handle when finished
@@ -52,7 +55,6 @@ hg_return_t rpc_srv_get_fs_config(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-}
+} // namespace
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_fs_config)
-

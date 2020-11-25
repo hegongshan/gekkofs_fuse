@@ -22,14 +22,17 @@ namespace util {
 /**
  * Compute the base2 logarithm for 64 bit integers
  */
-inline int log2(uint64_t n) {
+inline int
+log2(uint64_t n) {
 
-    /* see http://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers */
+    /* see
+     * http://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
+     */
     static const int table[64] = {
-            0, 58, 1, 59, 47, 53, 2, 60, 39, 48, 27, 54, 33, 42, 3, 61,
-            51, 37, 40, 49, 18, 28, 20, 55, 30, 34, 11, 43, 14, 22, 4, 62,
+            0,  58, 1,  59, 47, 53, 2,  60, 39, 48, 27, 54, 33, 42, 3,  61,
+            51, 37, 40, 49, 18, 28, 20, 55, 30, 34, 11, 43, 14, 22, 4,  62,
             57, 46, 52, 38, 26, 32, 41, 50, 36, 17, 19, 29, 10, 13, 21, 56,
-            45, 25, 31, 35, 16, 9, 12, 44, 24, 15, 8, 23, 7, 6, 5, 63};
+            45, 25, 31, 35, 16, 9,  12, 44, 24, 15, 8,  23, 7,  6,  5,  63};
 
     n |= n >> 1;
     n |= n >> 2;
@@ -45,7 +48,8 @@ inline int log2(uint64_t n) {
 /**
  * Align an @offset to the closest left side chunk boundary
  */
-inline off64_t chnk_lalign(const off64_t offset, const size_t chnk_size) {
+inline off64_t
+chnk_lalign(const off64_t offset, const size_t chnk_size) {
     return offset & ~(chnk_size - 1);
 }
 
@@ -53,7 +57,8 @@ inline off64_t chnk_lalign(const off64_t offset, const size_t chnk_size) {
 /**
  * Align an @offset to the closest right side chunk boundary
  */
-inline off64_t chnk_ralign(const off64_t offset, const size_t chnk_size) {
+inline off64_t
+chnk_ralign(const off64_t offset, const size_t chnk_size) {
     return chnk_lalign(offset + chnk_size, chnk_size);
 }
 
@@ -64,7 +69,8 @@ inline off64_t chnk_ralign(const off64_t offset, const size_t chnk_size) {
  *
  * If @offset is a boundary the resulting padding will be 0
  */
-inline size_t chnk_lpad(const off64_t offset, const size_t chnk_size) {
+inline size_t
+chnk_lpad(const off64_t offset, const size_t chnk_size) {
     return offset % chnk_size;
 }
 
@@ -75,7 +81,8 @@ inline size_t chnk_lpad(const off64_t offset, const size_t chnk_size) {
  *
  * If @offset is a boundary the resulting padding will be 0
  */
-inline size_t chnk_rpad(const off64_t offset, const size_t chnk_size) {
+inline size_t
+chnk_rpad(const off64_t offset, const size_t chnk_size) {
     return (-offset) % chnk_size;
 }
 
@@ -88,13 +95,16 @@ inline size_t chnk_rpad(const off64_t offset, const size_t chnk_size) {
  * chunk_id(2,4) = 0;
  * chunk_id(0,4) = 0;
  */
-inline uint64_t chnk_id_for_offset(const off64_t offset, const size_t chnk_size) {
+inline uint64_t
+chnk_id_for_offset(const off64_t offset, const size_t chnk_size) {
     /*
-     * This does not work for offsets that use the 64th bit, i.e., 9223372036854775808.
-     * 9223372036854775808 - 1 uses 63 bits and still works. `offset / chnk_size` works with the 64th bit.
-     * With this number we can address more than 19,300,000 exabytes of data though. Hi future me?
+     * This does not work for offsets that use the 64th bit, i.e.,
+     * 9223372036854775808. 9223372036854775808 - 1 uses 63 bits and still
+     * works. `offset / chnk_size` works with the 64th bit. With this number we
+     * can address more than 19,300,000 exabytes of data though. Hi future me?
      */
-    return static_cast<uint64_t>(chnk_lalign(offset, chnk_size) >> log2(chnk_size));
+    return static_cast<uint64_t>(chnk_lalign(offset, chnk_size) >>
+                                 log2(chnk_size));
 }
 
 
@@ -102,7 +112,9 @@ inline uint64_t chnk_id_for_offset(const off64_t offset, const size_t chnk_size)
  * Return the number of chunks involved in an operation that operates
  * from @offset for a certain amount of bytes (@count).
  */
-inline uint64_t chnk_count_for_offset(const off64_t offset, const size_t count, const size_t chnk_size) {
+inline uint64_t
+chnk_count_for_offset(const off64_t offset, const size_t count,
+                      const size_t chnk_size) {
 
     off64_t chnk_start = chnk_lalign(offset, chnk_size);
     off64_t chnk_end = chnk_lalign(offset + count - 1, chnk_size);

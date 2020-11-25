@@ -17,7 +17,8 @@
 //==============================================================================
 // register request types so that they can be used by users and the engine
 //
-void hermes::detail::register_user_request_types() {
+void
+hermes::detail::register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::fs_config>();
     (void) registered_requests().add<gkfs::rpc::create>();
     (void) registered_requests().add<gkfs::rpc::stat>();
@@ -36,5 +37,4 @@ void hermes::detail::register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::trunc_data>();
     (void) registered_requests().add<gkfs::rpc::get_dirents>();
     (void) registered_requests().add<gkfs::rpc::chunk_stat>();
-
 }

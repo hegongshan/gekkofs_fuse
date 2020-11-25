@@ -20,34 +20,39 @@
 
 using namespace std;
 
-spdlog::level::level_enum gkfs::log::get_level(string level_str) {
+spdlog::level::level_enum
+gkfs::log::get_level(string level_str) {
     char* parse_end;
     auto level = strtoul(level_str.c_str(), &parse_end, 10);
-    if (parse_end != (level_str.c_str() + level_str.size())) {
+    if(parse_end != (level_str.c_str() + level_str.size())) {
         // no conversion could be performed. Must be a string then
-        ::transform(level_str.begin(), level_str.end(), level_str.begin(), ::tolower);
-        if (level_str == "off"s)
+        ::transform(level_str.begin(), level_str.end(), level_str.begin(),
+                    ::tolower);
+        if(level_str == "off"s)
             return spdlog::level::off;
-        else if (level_str == "critical"s)
+        else if(level_str == "critical"s)
             return spdlog::level::critical;
-        else if (level_str == "err"s)
+        else if(level_str == "err"s)
             return spdlog::level::err;
-        else if (level_str == "warn"s)
+        else if(level_str == "warn"s)
             return spdlog::level::warn;
-        else if (level_str == "info"s)
+        else if(level_str == "info"s)
             return spdlog::level::info;
-        else if (level_str == "debug"s)
+        else if(level_str == "debug"s)
             return spdlog::level::debug;
-        else if (level_str == "trace"s)
+        else if(level_str == "trace"s)
             return spdlog::level::trace;
         else
-            throw runtime_error(fmt::format("Error: log level '{}' is invalid. Check help/readme.", level_str));
+            throw runtime_error(fmt::format(
+                    "Error: log level '{}' is invalid. Check help/readme.",
+                    level_str));
     } else
         return get_level(level);
 }
 
-spdlog::level::level_enum gkfs::log::get_level(unsigned long level) {
-    switch (level) {
+spdlog::level::level_enum
+gkfs::log::get_level(unsigned long level) {
+    switch(level) {
         case 0:
             return spdlog::level::off;
         case 1:
@@ -65,22 +70,23 @@ spdlog::level::level_enum gkfs::log::get_level(unsigned long level) {
     }
 }
 
-void gkfs::log::setup(const vector<string>& loggers_name,
-                      spdlog::level::level_enum level, const string& path) {
+void
+gkfs::log::setup(const vector<string>& loggers_name,
+                 spdlog::level::level_enum level, const string& path) {
 
     /* Create common sink */
     auto file_sink = make_shared<spdlog::sinks::basic_file_sink_mt>(path);
 
     /* Create and configure loggers */
     auto loggers = list<shared_ptr<spdlog::logger>>();
-    for (const auto& name: loggers_name) {
+    for(const auto& name : loggers_name) {
         auto logger = make_shared<spdlog::logger>(name, file_sink);
         logger->flush_on(spdlog::level::trace);
         loggers.push_back(logger);
     }
 
     /* register loggers */
-    for (const auto& logger: loggers) {
+    for(const auto& logger : loggers) {
         spdlog::register_logger(logger);
     }
 
