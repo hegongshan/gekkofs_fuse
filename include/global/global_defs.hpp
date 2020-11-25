@@ -16,7 +16,8 @@
 
 namespace gkfs {
 
-// These constexpr set the RPC's identity and which handler the receiver end should use
+// These constexpr set the RPC's identity and which handler the receiver end
+// should use
 namespace rpc {
 
 using chnk_id_t = unsigned long;
@@ -52,4 +53,4 @@ constexpr auto na_sm = "na+sm";
 
 } // namespace gkfs
 
-#endif //GEKKOFS_GLOBAL_DEFS_HPP
+#endif // GEKKOFS_GLOBAL_DEFS_HPP

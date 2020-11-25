@@ -33,14 +33,13 @@ extern "C" {
 namespace gkfs {
 namespace preload {
 
-decltype(PreloadContext::MIN_INTERNAL_FD) constexpr
-        PreloadContext::MIN_INTERNAL_FD;
-decltype(PreloadContext::MAX_USER_FDS) constexpr
-        PreloadContext::MAX_USER_FDS;
+decltype(PreloadContext::MIN_INTERNAL_FD) constexpr PreloadContext::
+        MIN_INTERNAL_FD;
+decltype(PreloadContext::MAX_USER_FDS) constexpr PreloadContext::MAX_USER_FDS;
 
-PreloadContext::PreloadContext() :
-        ofm_(std::make_shared<gkfs::filemap::OpenFileMap>()),
-        fs_conf_(std::make_shared<FsConfig>()) {
+PreloadContext::PreloadContext()
+    : ofm_(std::make_shared<gkfs::filemap::OpenFileMap>()),
+      fs_conf_(std::make_shared<FsConfig>()) {
 
     internal_fds_.set();
     internal_fds_must_relocate_ = true;
@@ -49,11 +48,11 @@ PreloadContext::PreloadContext() :
 void
 PreloadContext::init_logging() {
 
-    const std::string log_opts =
-            gkfs::env::get_var(gkfs::env::LOG, gkfs::config::log::client_log_level);
+    const std::string log_opts = gkfs::env::get_var(
+            gkfs::env::LOG, gkfs::config::log::client_log_level);
 
-    const std::string log_output =
-            gkfs::env::get_var(gkfs::env::LOG_OUTPUT, gkfs::config::log::client_log_path);
+    const std::string log_output = gkfs::env::get_var(
+            gkfs::env::LOG_OUTPUT, gkfs::config::log::client_log_path);
 
 #ifdef GKFS_DEBUG_BUILD
     // atoi returns 0 if no int conversion can be performed, which works
@@ -73,84 +72,102 @@ PreloadContext::init_logging() {
 
     gkfs::log::create_global_logger(log_opts, log_output, log_trunc
 #ifdef GKFS_DEBUG_BUILD
-            , log_filter, log_verbosity
+                                    ,
+                                    log_filter, log_verbosity
 #endif
     );
 }
 
-void PreloadContext::mountdir(const std::string& path) {
+void
+PreloadContext::mountdir(const std::string& path) {
     assert(gkfs::path::is_absolute(path));
     assert(!gkfs::path::has_trailing_slash(path));
     mountdir_components_ = gkfs::path::split_path(path);
     mountdir_ = path;
 }
 
-const std::string& PreloadContext::mountdir() const {
+const std::string&
+PreloadContext::mountdir() const {
     return mountdir_;
 }
 
-const std::vector<std::string>& PreloadContext::mountdir_components() const {
+const std::vector<std::string>&
+PreloadContext::mountdir_components() const {
     return mountdir_components_;
 }
 
-void PreloadContext::cwd(const std::string& path) {
+void
+PreloadContext::cwd(const std::string& path) {
     cwd_ = path;
 }
 
-const std::string& PreloadContext::cwd() const {
+const std::string&
+PreloadContext::cwd() const {
     return cwd_;
 }
 
-const std::vector<hermes::endpoint>& PreloadContext::hosts() const {
+const std::vector<hermes::endpoint>&
+PreloadContext::hosts() const {
     return hosts_;
 }
 
-void PreloadContext::hosts(const std::vector<hermes::endpoint>& endpoints) {
+void
+PreloadContext::hosts(const std::vector<hermes::endpoint>& endpoints) {
     hosts_ = endpoints;
 }
 
-void PreloadContext::clear_hosts() {
+void
+PreloadContext::clear_hosts() {
     hosts_.clear();
 }
 
-uint64_t PreloadContext::local_host_id() const {
+uint64_t
+PreloadContext::local_host_id() const {
     return local_host_id_;
 }
 
-void PreloadContext::local_host_id(uint64_t id) {
+void
+PreloadContext::local_host_id(uint64_t id) {
     local_host_id_ = id;
 }
 
-uint64_t PreloadContext::fwd_host_id() const {
+uint64_t
+PreloadContext::fwd_host_id() const {
     return fwd_host_id_;
 }
 
-void PreloadContext::fwd_host_id(uint64_t id) {
+void
+PreloadContext::fwd_host_id(uint64_t id) {
     fwd_host_id_ = id;
 }
 
-const std::string& PreloadContext::rpc_protocol() const {
+const std::string&
+PreloadContext::rpc_protocol() const {
     return rpc_protocol_;
 }
 
-void PreloadContext::rpc_protocol(const std::string& rpc_protocol) {
+void
+PreloadContext::rpc_protocol(const std::string& rpc_protocol) {
     rpc_protocol_ = rpc_protocol;
 }
 
-bool PreloadContext::auto_sm() const {
+bool
+PreloadContext::auto_sm() const {
     return auto_sm_;
 }
 
-void PreloadContext::auto_sm(bool auto_sm) {
+void
+PreloadContext::auto_sm(bool auto_sm) {
     PreloadContext::auto_sm_ = auto_sm;
 }
 
-RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
-                                                    const char* raw_path,
-                                                    std::string& relative_path,
-                                                    bool resolve_last_link) const {
+RelativizeStatus
+PreloadContext::relativize_fd_path(int dirfd, const char* raw_path,
+                                   std::string& relative_path,
+                                   bool resolve_last_link) const {
 
-    // Relativize path should be called only after the library constructor has been executed
+    // Relativize path should be called only after the library constructor has
+    // been executed
     assert(interception_enabled_);
     // If we run the constructor we also already setup the mountdir
     assert(!mountdir_.empty());
@@ -160,18 +177,18 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
 
     std::string path;
 
-    if (raw_path[0] != gkfs::path::separator) {
+    if(raw_path[0] != gkfs::path::separator) {
         // path is relative
-        if (dirfd == AT_FDCWD) {
+        if(dirfd == AT_FDCWD) {
             // path is relative to cwd
             path = gkfs::path::prepend_path(cwd_, raw_path);
         } else {
-            if (!ofm_->exist(dirfd)) {
+            if(!ofm_->exist(dirfd)) {
                 return RelativizeStatus::fd_unknown;
             }
             // path is relative to fd
             auto dir = ofm_->get_dir(dirfd);
-            if (dir == nullptr) {
+            if(dir == nullptr) {
                 return RelativizeStatus::fd_not_a_dir;
             }
             path = mountdir_;
@@ -183,14 +200,18 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
         path = raw_path;
     }
 
-    if (gkfs::path::resolve(path, relative_path, resolve_last_link)) {
+    if(gkfs::path::resolve(path, relative_path, resolve_last_link)) {
         return RelativizeStatus::internal;
     }
     return RelativizeStatus::external;
 }
 
-bool PreloadContext::relativize_path(const char* raw_path, std::string& relative_path, bool resolve_last_link) const {
-    // Relativize path should be called only after the library constructor has been executed
+bool
+PreloadContext::relativize_path(const char* raw_path,
+                                std::string& relative_path,
+                                bool resolve_last_link) const {
+    // Relativize path should be called only after the library constructor has
+    // been executed
     assert(interception_enabled_);
     // If we run the constructor we also already setup the mountdir
     assert(!mountdir_.empty());
@@ -200,7 +221,7 @@ bool PreloadContext::relativize_path(const char* raw_path, std::string& relative
 
     std::string path;
 
-    if (raw_path[0] != gkfs::path::separator) {
+    if(raw_path[0] != gkfs::path::separator) {
         /* Path is not absolute, we need to prepend CWD;
          * First reserve enough space to minimize memory copy
          */
@@ -211,39 +232,47 @@ bool PreloadContext::relativize_path(const char* raw_path, std::string& relative
     return gkfs::path::resolve(path, relative_path, resolve_last_link);
 }
 
-const std::shared_ptr<gkfs::filemap::OpenFileMap>& PreloadContext::file_map() const {
+const std::shared_ptr<gkfs::filemap::OpenFileMap>&
+PreloadContext::file_map() const {
     return ofm_;
 }
 
-void PreloadContext::distributor(std::shared_ptr<gkfs::rpc::Distributor> d) {
+void
+PreloadContext::distributor(std::shared_ptr<gkfs::rpc::Distributor> d) {
     distributor_ = d;
 }
 
-std::shared_ptr<gkfs::rpc::Distributor> PreloadContext::distributor() const {
+std::shared_ptr<gkfs::rpc::Distributor>
+PreloadContext::distributor() const {
     return distributor_;
 }
 
-const std::shared_ptr<FsConfig>& PreloadContext::fs_conf() const {
+const std::shared_ptr<FsConfig>&
+PreloadContext::fs_conf() const {
     return fs_conf_;
 }
 
-void PreloadContext::enable_interception() {
+void
+PreloadContext::enable_interception() {
     interception_enabled_ = true;
 }
 
-void PreloadContext::disable_interception() {
+void
+PreloadContext::disable_interception() {
     interception_enabled_ = false;
 }
 
-bool PreloadContext::interception_enabled() const {
+bool
+PreloadContext::interception_enabled() const {
     return interception_enabled_;
 }
 
-int PreloadContext::register_internal_fd(int fd) {
+int
+PreloadContext::register_internal_fd(int fd) {
 
     assert(fd >= 0);
 
-    if (!internal_fds_must_relocate_) {
+    if(!internal_fds_must_relocate_) {
         LOG(DEBUG, "registering fd {} as internal (no relocation needed)", fd);
         assert(fd >= MIN_INTERNAL_FD);
         internal_fds_.reset(fd - MIN_INTERNAL_FD);
@@ -255,7 +284,7 @@ int PreloadContext::register_internal_fd(int fd) {
     std::lock_guard<std::mutex> lock(internal_fds_mutex_);
     const int pos = internal_fds_._Find_first();
 
-    if (static_cast<std::size_t>(pos) == internal_fds_.size()) {
+    if(static_cast<std::size_t>(pos) == internal_fds_.size()) {
         throw std::runtime_error(
                 "Internal GekkoFS file descriptors exhausted, increase MAX_INTERNAL_FDS in "
                 "CMake, rebuild GekkoFS and try again.");
@@ -268,18 +297,16 @@ int PreloadContext::register_internal_fd(int fd) {
 #endif
 
     LOG(SYSCALL,
-        gkfs::syscall::from_internal_code |
-        gkfs::syscall::to_kernel |
-        gkfs::syscall::not_executed,
+        gkfs::syscall::from_internal_code | gkfs::syscall::to_kernel |
+                gkfs::syscall::not_executed,
         SYS_dup3, args);
 
-    const int ifd =
-            ::syscall_no_intercept(SYS_dup3, fd, pos + MIN_INTERNAL_FD, O_CLOEXEC);
+    const int ifd = ::syscall_no_intercept(SYS_dup3, fd, pos + MIN_INTERNAL_FD,
+                                           O_CLOEXEC);
 
     LOG(SYSCALL,
-        gkfs::syscall::from_internal_code |
-        gkfs::syscall::to_kernel |
-        gkfs::syscall::executed,
+        gkfs::syscall::from_internal_code | gkfs::syscall::to_kernel |
+                gkfs::syscall::executed,
         SYS_dup3, args, ifd);
 
     assert(::syscall_error_code(ifd) == 0);
@@ -289,9 +316,8 @@ int PreloadContext::register_internal_fd(int fd) {
 #endif
 
     LOG(SYSCALL,
-        gkfs::syscall::from_internal_code |
-        gkfs::syscall::to_kernel |
-        gkfs::syscall::not_executed,
+        gkfs::syscall::from_internal_code | gkfs::syscall::to_kernel |
+                gkfs::syscall::not_executed,
         SYS_close, args2);
 
 #if defined(GKFS_ENABLE_LOGGING) && defined(GKFS_DEBUG_BUILD)
@@ -301,9 +327,8 @@ int PreloadContext::register_internal_fd(int fd) {
 #endif
 
     LOG(SYSCALL,
-        gkfs::syscall::from_internal_code |
-        gkfs::syscall::to_kernel |
-        gkfs::syscall::executed,
+        gkfs::syscall::from_internal_code | gkfs::syscall::to_kernel |
+                gkfs::syscall::executed,
         SYS_close, args2, rv);
 
     LOG(DEBUG, "    (fd {} relocated to ifd {})", fd, ifd);
@@ -311,7 +336,8 @@ int PreloadContext::register_internal_fd(int fd) {
     return ifd;
 }
 
-void PreloadContext::unregister_internal_fd(int fd) {
+void
+PreloadContext::unregister_internal_fd(int fd) {
 
     LOG(DEBUG, "unregistering internal fd {}", fd);
 
@@ -323,9 +349,10 @@ void PreloadContext::unregister_internal_fd(int fd) {
     internal_fds_.set(pos);
 }
 
-bool PreloadContext::is_internal_fd(int fd) const {
+bool
+PreloadContext::is_internal_fd(int fd) const {
 
-    if (fd < MIN_INTERNAL_FD) {
+    if(fd < MIN_INTERNAL_FD) {
         return false;
     }
 
@@ -350,8 +377,8 @@ PreloadContext::protect_user_fds() {
                ::syscall_error_code(ret) != EBADF;
     };
 
-    for (int fd = 0; fd < MAX_USER_FDS; ++fd) {
-        if (fd_is_open(fd)) {
+    for(int fd = 0; fd < MAX_USER_FDS; ++fd) {
+        if(fd_is_open(fd)) {
             LOG(DEBUG, "  fd {} was already in use, skipping", fd);
             continue;
         }
@@ -367,15 +394,15 @@ PreloadContext::protect_user_fds() {
 void
 PreloadContext::unprotect_user_fds() {
 
-    for (std::size_t fd = 0; fd < protected_fds_.size(); ++fd) {
-        if (!protected_fds_[fd]) {
+    for(std::size_t fd = 0; fd < protected_fds_.size(); ++fd) {
+        if(!protected_fds_[fd]) {
             continue;
         }
 
         const int ret =
                 ::syscall_error_code(::syscall_no_intercept(SYS_close, fd));
 
-        if (ret != 0) {
+        if(ret != 0) {
             LOG(ERROR, "Failed to unprotect fd")
         }
     }

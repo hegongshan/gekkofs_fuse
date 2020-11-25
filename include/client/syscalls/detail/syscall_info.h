@@ -11,6 +11,9 @@
   SPDX-License-Identifier: MIT
 */
 
+// This file uses special C formatting for a better overview
+// clang-format off
+
 #ifndef SYSCALLS_DETAIL_SYSCALL_INFO_H
 #define SYSCALLS_DETAIL_SYSCALL_INFO_H
 
@@ -83,3 +86,5 @@ syscall_never_returns(long);
 #endif // __cplusplus
 
 #endif // SYSCALLS_DETAIL_SYSCALL_INFO_H
+
+// clang-format on

@@ -26,8 +26,7 @@
 #include <hermes.hpp>
 
 #ifndef HG_GEN_PROC_NAME
-#define HG_GEN_PROC_NAME(struct_type_name) \
-    hg_proc_ ## struct_type_name
+#define HG_GEN_PROC_NAME(struct_type_name) hg_proc_##struct_type_name
 #endif
 
 
@@ -37,8 +36,7 @@
 namespace hermes {
 namespace detail {
 
-struct hg_void_t {
-};
+struct hg_void_t {};
 
 static HG_INLINE hg_return_t
 hg_proc_void_t(hg_proc_t proc, void* data) {
@@ -48,8 +46,8 @@ hg_proc_void_t(hg_proc_t proc, void* data) {
     return HG_SUCCESS;
 }
 
-}
-} // namespace hermes::detail
+} // namespace detail
+} // namespace hermes
 
 namespace gkfs {
 namespace rpc {
@@ -95,8 +93,9 @@ struct fs_config {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
         input() {}
@@ -105,71 +104,57 @@ struct fs_config {
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
-        explicit
-        input(const hermes::detail::hg_void_t& other) {}
+        explicit input(const hermes::detail::hg_void_t& other) {}
 
-        explicit
-        operator hermes::detail::hg_void_t() {
+        explicit operator hermes::detail::hg_void_t() {
             return {};
         }
     };
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_mountdir(),
-                m_rootdir(),
-                m_atime_state(),
-                m_mtime_state(),
-                m_ctime_state(),
-                m_link_cnt_state(),
-                m_blocks_state(),
-                m_uid(),
-                m_gid() {}
+        output()
+            : m_mountdir(), m_rootdir(), m_atime_state(), m_mtime_state(),
+              m_ctime_state(), m_link_cnt_state(), m_blocks_state(), m_uid(),
+              m_gid() {}
 
-        output(const std::string& mountdir,
-               const std::string& rootdir,
-               bool atime_state,
-               bool mtime_state,
-               bool ctime_state,
-               bool link_cnt_state,
-               bool blocks_state,
-               uint32_t uid,
-               uint32_t gid) :
-                m_mountdir(mountdir),
-                m_rootdir(rootdir),
-                m_atime_state(atime_state),
-                m_mtime_state(mtime_state),
-                m_ctime_state(ctime_state),
-                m_link_cnt_state(link_cnt_state),
-                m_blocks_state(blocks_state),
-                m_uid(uid),
-                m_gid(gid) {}
+        output(const std::string& mountdir, const std::string& rootdir,
+               bool atime_state, bool mtime_state, bool ctime_state,
+               bool link_cnt_state, bool blocks_state, uint32_t uid,
+               uint32_t gid)
+            : m_mountdir(mountdir), m_rootdir(rootdir),
+              m_atime_state(atime_state), m_mtime_state(mtime_state),
+              m_ctime_state(ctime_state), m_link_cnt_state(link_cnt_state),
+              m_blocks_state(blocks_state), m_uid(uid), m_gid(gid) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_config_out_t& out) {
+        explicit output(const rpc_config_out_t& out) {
 
-            if (out.mountdir != nullptr) {
+            if(out.mountdir != nullptr) {
                 m_mountdir = out.mountdir;
             }
 
-            if (out.rootdir != nullptr) {
+            if(out.rootdir != nullptr) {
                 m_rootdir = out.rootdir;
             }
 
@@ -282,22 +267,23 @@ struct create {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              uint32_t mode) :
-                m_path(path),
-                m_mode(mode) {}
+        input(const std::string& path, uint32_t mode)
+            : m_path(path), m_mode(mode) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -309,13 +295,10 @@ struct create {
             return m_mode;
         }
 
-        explicit
-        input(const rpc_mk_node_in_t& other) :
-                m_path(other.path),
-                m_mode(other.mode) {}
+        explicit input(const rpc_mk_node_in_t& other)
+            : m_path(other.path), m_mode(other.mode) {}
 
-        explicit
-        operator rpc_mk_node_in_t() {
+        explicit operator rpc_mk_node_in_t() {
             return {m_path.c_str(), m_mode};
         }
 
@@ -326,26 +309,26 @@ struct create {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -400,32 +383,31 @@ struct stat {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path) :
-                m_path(path) {}
+        input(const std::string& path) : m_path(path) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
             return m_path;
         }
 
-        explicit
-        input(const rpc_path_only_in_t& other) :
-                m_path(other.path) {}
+        explicit input(const rpc_path_only_in_t& other) : m_path(other.path) {}
 
-        explicit
-        operator rpc_path_only_in_t() {
+        explicit operator rpc_path_only_in_t() {
             return {m_path.c_str()};
         }
 
@@ -435,31 +417,30 @@ struct stat {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_db_val() {}
+        output() : m_err(), m_db_val() {}
 
-        output(int32_t err, const std::string& db_val) :
-                m_err(err),
-                m_db_val(db_val) {}
+        output(int32_t err, const std::string& db_val)
+            : m_err(err), m_db_val(db_val) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_stat_out_t& out) {
+        explicit output(const rpc_stat_out_t& out) {
             m_err = out.err;
 
-            if (out.db_val != nullptr) {
+            if(out.db_val != nullptr) {
                 m_db_val = out.db_val;
             }
         }
@@ -521,32 +502,31 @@ struct remove {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path) :
-                m_path(path) {}
+        input(const std::string& path) : m_path(path) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
             return m_path;
         }
 
-        explicit
-        input(const rpc_rm_node_in_t& other) :
-                m_path(other.path) {}
+        explicit input(const rpc_rm_node_in_t& other) : m_path(other.path) {}
 
-        explicit
-        operator rpc_rm_node_in_t() {
+        explicit operator rpc_rm_node_in_t() {
             return {m_path.c_str()};
         }
 
@@ -556,26 +536,26 @@ struct remove {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -630,21 +610,23 @@ struct decr_size {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path, uint64_t length) :
-                m_path(path),
-                m_length(length) {}
+        input(const std::string& path, uint64_t length)
+            : m_path(path), m_length(length) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -656,13 +638,10 @@ struct decr_size {
             return m_length;
         }
 
-        explicit
-        input(const rpc_trunc_in_t& other) :
-                m_path(other.path),
-                m_length(other.length) {}
+        explicit input(const rpc_trunc_in_t& other)
+            : m_path(other.path), m_length(other.length) {}
 
-        explicit
-        operator rpc_trunc_in_t() {
+        explicit operator rpc_trunc_in_t() {
             return {m_path.c_str(), m_length};
         }
 
@@ -673,26 +652,26 @@ struct decr_size {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -747,52 +726,32 @@ struct update_metadentry {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              uint64_t nlink,
-              uint32_t mode,
-              uint32_t uid,
-              uint32_t gid,
-              int64_t size,
-              int64_t blocks,
-              int64_t atime,
-              int64_t mtime,
-              int64_t ctime,
-              bool nlink_flag,
-              bool mode_flag,
-              bool size_flag,
-              bool block_flag,
-              bool atime_flag,
-              bool mtime_flag,
-              bool ctime_flag) :
-                m_path(path),
-                m_nlink(nlink),
-                m_mode(mode),
-                m_uid(uid),
-                m_gid(gid),
-                m_size(size),
-                m_blocks(blocks),
-                m_atime(atime),
-                m_mtime(mtime),
-                m_ctime(ctime),
-                m_nlink_flag(nlink_flag),
-                m_mode_flag(mode_flag),
-                m_size_flag(size_flag),
-                m_block_flag(block_flag),
-                m_atime_flag(atime_flag),
-                m_mtime_flag(mtime_flag),
-                m_ctime_flag(ctime_flag) {}
+        input(const std::string& path, uint64_t nlink, uint32_t mode,
+              uint32_t uid, uint32_t gid, int64_t size, int64_t blocks,
+              int64_t atime, int64_t mtime, int64_t ctime, bool nlink_flag,
+              bool mode_flag, bool size_flag, bool block_flag, bool atime_flag,
+              bool mtime_flag, bool ctime_flag)
+            : m_path(path), m_nlink(nlink), m_mode(mode), m_uid(uid),
+              m_gid(gid), m_size(size), m_blocks(blocks), m_atime(atime),
+              m_mtime(mtime), m_ctime(ctime), m_nlink_flag(nlink_flag),
+              m_mode_flag(mode_flag), m_size_flag(size_flag),
+              m_block_flag(block_flag), m_atime_flag(atime_flag),
+              m_mtime_flag(mtime_flag), m_ctime_flag(ctime_flag) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -879,44 +838,21 @@ struct update_metadentry {
             return m_ctime_flag;
         }
 
-        explicit
-        input(const rpc_update_metadentry_in_t& other) :
-                m_path(other.path),
-                m_nlink(other.nlink),
-                m_mode(other.mode),
-                m_uid(other.uid),
-                m_gid(other.gid),
-                m_size(other.size),
-                m_blocks(other.blocks),
-                m_atime(other.atime),
-                m_mtime(other.mtime),
-                m_ctime(other.ctime),
-                m_nlink_flag(other.nlink_flag),
-                m_mode_flag(other.mode_flag),
-                m_size_flag(other.size_flag),
-                m_block_flag(other.block_flag),
-                m_atime_flag(other.atime_flag),
-                m_mtime_flag(other.mtime_flag),
-                m_ctime_flag(other.ctime_flag) {}
+        explicit input(const rpc_update_metadentry_in_t& other)
+            : m_path(other.path), m_nlink(other.nlink), m_mode(other.mode),
+              m_uid(other.uid), m_gid(other.gid), m_size(other.size),
+              m_blocks(other.blocks), m_atime(other.atime),
+              m_mtime(other.mtime), m_ctime(other.ctime),
+              m_nlink_flag(other.nlink_flag), m_mode_flag(other.mode_flag),
+              m_size_flag(other.size_flag), m_block_flag(other.block_flag),
+              m_atime_flag(other.atime_flag), m_mtime_flag(other.mtime_flag),
+              m_ctime_flag(other.ctime_flag) {}
 
-        explicit
-        operator rpc_update_metadentry_in_t() {
-            return {m_path.c_str(),
-                    m_nlink,
-                    m_mode,
-                    m_uid,
-                    m_gid,
-                    m_size,
-                    m_blocks,
-                    m_atime,
-                    m_mtime,
-                    m_ctime,
-                    m_nlink_flag,
-                    m_mode_flag,
-                    m_size_flag,
-                    m_block_flag,
-                    m_atime_flag,
-                    m_mtime_flag,
+        explicit operator rpc_update_metadentry_in_t() {
+            return {m_path.c_str(), m_nlink,      m_mode,       m_uid,
+                    m_gid,          m_size,       m_blocks,     m_atime,
+                    m_mtime,        m_ctime,      m_nlink_flag, m_mode_flag,
+                    m_size_flag,    m_block_flag, m_atime_flag, m_mtime_flag,
                     m_ctime_flag};
         }
 
@@ -942,26 +878,26 @@ struct update_metadentry {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -1016,32 +952,31 @@ struct get_metadentry_size {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path) :
-                m_path(path) {}
+        input(const std::string& path) : m_path(path) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
             return m_path;
         }
 
-        explicit
-        input(const rpc_path_only_in_t& other) :
-                m_path(other.path) {}
+        explicit input(const rpc_path_only_in_t& other) : m_path(other.path) {}
 
-        explicit
-        operator rpc_path_only_in_t() {
+        explicit operator rpc_path_only_in_t() {
             return {m_path.c_str()};
         }
 
@@ -1051,28 +986,27 @@ struct get_metadentry_size {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_ret_size() {}
+        output() : m_err(), m_ret_size() {}
 
-        output(int32_t err, int64_t ret_size) :
-                m_err(err),
-                m_ret_size(ret_size) {}
+        output(int32_t err, int64_t ret_size)
+            : m_err(err), m_ret_size(ret_size) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_get_metadentry_size_out_t& out) {
+        explicit output(const rpc_get_metadentry_size_out_t& out) {
             m_err = out.err;
             m_ret_size = out.ret_size;
         }
@@ -1134,26 +1068,24 @@ struct update_metadentry_size {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              uint64_t size,
-              int64_t offset,
-              bool append) :
-                m_path(path),
-                m_size(size),
-                m_offset(offset),
-                m_append(append) {}
+        input(const std::string& path, uint64_t size, int64_t offset,
+              bool append)
+            : m_path(path), m_size(size), m_offset(offset), m_append(append) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1175,15 +1107,11 @@ struct update_metadentry_size {
             return m_append;
         }
 
-        explicit
-        input(const rpc_update_metadentry_size_in_t& other) :
-                m_path(other.path),
-                m_size(other.size),
-                m_offset(other.offset),
-                m_append(other.append) {}
+        explicit input(const rpc_update_metadentry_size_in_t& other)
+            : m_path(other.path), m_size(other.size), m_offset(other.offset),
+              m_append(other.append) {}
 
-        explicit
-        operator rpc_update_metadentry_size_in_t() {
+        explicit operator rpc_update_metadentry_size_in_t() {
             return {m_path.c_str(), m_size, m_offset, m_append};
         }
 
@@ -1196,28 +1124,27 @@ struct update_metadentry_size {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_ret_size() {}
+        output() : m_err(), m_ret_size() {}
 
-        output(int32_t err, int64_t ret_size) :
-                m_err(err),
-                m_ret_size(ret_size) {}
+        output(int32_t err, int64_t ret_size)
+            : m_err(err), m_ret_size(ret_size) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_update_metadentry_size_out_t& out) {
+        explicit output(const rpc_update_metadentry_size_out_t& out) {
             m_err = out.err;
             m_ret_size = out.ret_size;
         }
@@ -1281,22 +1208,23 @@ struct mk_symlink {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              const std::string& target_path) :
-                m_path(path),
-                m_target_path(target_path) {}
+        input(const std::string& path, const std::string& target_path)
+            : m_path(path), m_target_path(target_path) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1308,13 +1236,10 @@ struct mk_symlink {
             return m_target_path;
         }
 
-        explicit
-        input(const rpc_mk_symlink_in_t& other) :
-                m_path(other.path),
-                m_target_path(other.target_path) {}
+        explicit input(const rpc_mk_symlink_in_t& other)
+            : m_path(other.path), m_target_path(other.target_path) {}
 
-        explicit
-        operator rpc_mk_symlink_in_t() {
+        explicit operator rpc_mk_symlink_in_t() {
             return {m_path.c_str(), m_target_path.c_str()};
         }
 
@@ -1325,26 +1250,26 @@ struct mk_symlink {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -1401,36 +1326,29 @@ struct write_data {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              int64_t offset,
-              uint64_t host_id,
-              uint64_t host_size,
-              uint64_t chunk_n,
-              uint64_t chunk_start,
-              uint64_t chunk_end,
-              uint64_t total_chunk_size,
-              const hermes::exposed_memory& buffers) :
-                m_path(path),
-                m_offset(offset),
-                m_host_id(host_id),
-                m_host_size(host_size),
-                m_chunk_n(chunk_n),
-                m_chunk_start(chunk_start),
-                m_chunk_end(chunk_end),
-                m_total_chunk_size(total_chunk_size),
-                m_buffers(buffers) {}
+        input(const std::string& path, int64_t offset, uint64_t host_id,
+              uint64_t host_size, uint64_t chunk_n, uint64_t chunk_start,
+              uint64_t chunk_end, uint64_t total_chunk_size,
+              const hermes::exposed_memory& buffers)
+            : m_path(path), m_offset(offset), m_host_id(host_id),
+              m_host_size(host_size), m_chunk_n(chunk_n),
+              m_chunk_start(chunk_start), m_chunk_end(chunk_end),
+              m_total_chunk_size(total_chunk_size), m_buffers(buffers) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1477,31 +1395,18 @@ struct write_data {
             return m_buffers;
         }
 
-        explicit
-        input(const rpc_write_data_in_t& other) :
-                m_path(other.path),
-                m_offset(other.offset),
-                m_host_id(other.host_id),
-                m_host_size(other.host_size),
-                m_chunk_n(other.chunk_n),
-                m_chunk_start(other.chunk_start),
-                m_chunk_end(other.chunk_end),
-                m_total_chunk_size(other.total_chunk_size),
-                m_buffers(other.bulk_handle) {}
+        explicit input(const rpc_write_data_in_t& other)
+            : m_path(other.path), m_offset(other.offset),
+              m_host_id(other.host_id), m_host_size(other.host_size),
+              m_chunk_n(other.chunk_n), m_chunk_start(other.chunk_start),
+              m_chunk_end(other.chunk_end),
+              m_total_chunk_size(other.total_chunk_size),
+              m_buffers(other.bulk_handle) {}
 
-        explicit
-        operator rpc_write_data_in_t() {
-            return {
-                    m_path.c_str(),
-                    m_offset,
-                    m_host_id,
-                    m_host_size,
-                    m_chunk_n,
-                    m_chunk_start,
-                    m_chunk_end,
-                    m_total_chunk_size,
-                    hg_bulk_t(m_buffers)
-            };
+        explicit operator rpc_write_data_in_t() {
+            return {m_path.c_str(), m_offset,           m_host_id,
+                    m_host_size,    m_chunk_n,          m_chunk_start,
+                    m_chunk_end,    m_total_chunk_size, hg_bulk_t(m_buffers)};
         }
 
     private:
@@ -1518,28 +1423,26 @@ struct write_data {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_io_size() {}
+        output() : m_err(), m_io_size() {}
 
-        output(int32_t err, size_t io_size) :
-                m_err(err),
-                m_io_size(io_size) {}
+        output(int32_t err, size_t io_size) : m_err(err), m_io_size(io_size) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_data_out_t& out) {
+        explicit output(const rpc_data_out_t& out) {
             m_err = out.err;
             m_io_size = out.io_size;
         }
@@ -1601,36 +1504,29 @@ struct read_data {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              int64_t offset,
-              uint64_t host_id,
-              uint64_t host_size,
-              uint64_t chunk_n,
-              uint64_t chunk_start,
-              uint64_t chunk_end,
-              uint64_t total_chunk_size,
-              const hermes::exposed_memory& buffers) :
-                m_path(path),
-                m_offset(offset),
-                m_host_id(host_id),
-                m_host_size(host_size),
-                m_chunk_n(chunk_n),
-                m_chunk_start(chunk_start),
-                m_chunk_end(chunk_end),
-                m_total_chunk_size(total_chunk_size),
-                m_buffers(buffers) {}
+        input(const std::string& path, int64_t offset, uint64_t host_id,
+              uint64_t host_size, uint64_t chunk_n, uint64_t chunk_start,
+              uint64_t chunk_end, uint64_t total_chunk_size,
+              const hermes::exposed_memory& buffers)
+            : m_path(path), m_offset(offset), m_host_id(host_id),
+              m_host_size(host_size), m_chunk_n(chunk_n),
+              m_chunk_start(chunk_start), m_chunk_end(chunk_end),
+              m_total_chunk_size(total_chunk_size), m_buffers(buffers) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1677,31 +1573,18 @@ struct read_data {
             return m_buffers;
         }
 
-        explicit
-        input(const rpc_read_data_in_t& other) :
-                m_path(other.path),
-                m_offset(other.offset),
-                m_host_id(other.host_id),
-                m_host_size(other.host_size),
-                m_chunk_n(other.chunk_n),
-                m_chunk_start(other.chunk_start),
-                m_chunk_end(other.chunk_end),
-                m_total_chunk_size(other.total_chunk_size),
-                m_buffers(other.bulk_handle) {}
+        explicit input(const rpc_read_data_in_t& other)
+            : m_path(other.path), m_offset(other.offset),
+              m_host_id(other.host_id), m_host_size(other.host_size),
+              m_chunk_n(other.chunk_n), m_chunk_start(other.chunk_start),
+              m_chunk_end(other.chunk_end),
+              m_total_chunk_size(other.total_chunk_size),
+              m_buffers(other.bulk_handle) {}
 
-        explicit
-        operator rpc_read_data_in_t() {
-            return {
-                    m_path.c_str(),
-                    m_offset,
-                    m_host_id,
-                    m_host_size,
-                    m_chunk_n,
-                    m_chunk_start,
-                    m_chunk_end,
-                    m_total_chunk_size,
-                    hg_bulk_t(m_buffers)
-            };
+        explicit operator rpc_read_data_in_t() {
+            return {m_path.c_str(), m_offset,           m_host_id,
+                    m_host_size,    m_chunk_n,          m_chunk_start,
+                    m_chunk_end,    m_total_chunk_size, hg_bulk_t(m_buffers)};
         }
 
     private:
@@ -1718,28 +1601,26 @@ struct read_data {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_io_size() {}
+        output() : m_err(), m_io_size() {}
 
-        output(int32_t err, size_t io_size) :
-                m_err(err),
-                m_io_size(io_size) {}
+        output(int32_t err, size_t io_size) : m_err(err), m_io_size(io_size) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_data_out_t& out) {
+        explicit output(const rpc_data_out_t& out) {
             m_err = out.err;
             m_io_size = out.io_size;
         }
@@ -1801,22 +1682,23 @@ struct trunc_data {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              uint64_t length) :
-                m_path(path),
-                m_length(length) {}
+        input(const std::string& path, uint64_t length)
+            : m_path(path), m_length(length) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1828,13 +1710,10 @@ struct trunc_data {
             return m_length;
         }
 
-        explicit
-        input(const rpc_trunc_in_t& other) :
-                m_path(other.path),
-                m_length(other.length) {}
+        explicit input(const rpc_trunc_in_t& other)
+            : m_path(other.path), m_length(other.length) {}
 
-        explicit
-        operator rpc_trunc_in_t() {
+        explicit operator rpc_trunc_in_t() {
             return {
                     m_path.c_str(),
                     m_length,
@@ -1848,26 +1727,26 @@ struct trunc_data {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err() {}
+        output() : m_err() {}
 
-        output(int32_t err) :
-                m_err(err) {}
+        output(int32_t err) : m_err(err) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_err_out_t& out) {
+        explicit output(const rpc_err_out_t& out) {
             m_err = out.err;
         }
 
@@ -1922,22 +1801,23 @@ struct get_dirents {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(const std::string& path,
-              const hermes::exposed_memory& buffers) :
-                m_path(path),
-                m_buffers(buffers) {}
+        input(const std::string& path, const hermes::exposed_memory& buffers)
+            : m_path(path), m_buffers(buffers) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         std::string
         path() const {
@@ -1949,17 +1829,11 @@ struct get_dirents {
             return m_buffers;
         }
 
-        explicit
-        input(const rpc_get_dirents_in_t& other) :
-                m_path(other.path),
-                m_buffers(other.bulk_handle) {}
+        explicit input(const rpc_get_dirents_in_t& other)
+            : m_path(other.path), m_buffers(other.bulk_handle) {}
 
-        explicit
-        operator rpc_get_dirents_in_t() {
-            return {
-                    m_path.c_str(),
-                    hg_bulk_t(m_buffers)
-            };
+        explicit operator rpc_get_dirents_in_t() {
+            return {m_path.c_str(), hg_bulk_t(m_buffers)};
         }
 
     private:
@@ -1969,28 +1843,27 @@ struct get_dirents {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_dirents_size() {}
+        output() : m_err(), m_dirents_size() {}
 
-        output(int32_t err, size_t dirents_size) :
-                m_err(err),
-                m_dirents_size(dirents_size) {}
+        output(int32_t err, size_t dirents_size)
+            : m_err(err), m_dirents_size(dirents_size) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_get_dirents_out_t& out) {
+        explicit output(const rpc_get_dirents_out_t& out) {
             m_err = out.err;
             m_dirents_size = out.dirents_size;
         }
@@ -2052,32 +1925,32 @@ struct chunk_stat {
 
     class input {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        input(int32_t dummy) :
-                m_dummy(dummy) {}
+        input(int32_t dummy) : m_dummy(dummy) {}
 
         input(input&& rhs) = default;
 
         input(const input& other) = default;
 
-        input& operator=(input&& rhs) = default;
+        input&
+        operator=(input&& rhs) = default;
 
-        input& operator=(const input& other) = default;
+        input&
+        operator=(const input& other) = default;
 
         int32_t
         dummy() const {
             return m_dummy;
         }
 
-        explicit
-        input(const rpc_chunk_stat_in_t& other) :
-                m_dummy(other.dummy) {}
+        explicit input(const rpc_chunk_stat_in_t& other)
+            : m_dummy(other.dummy) {}
 
-        explicit
-        operator rpc_chunk_stat_in_t() {
+        explicit operator rpc_chunk_stat_in_t() {
             return {m_dummy};
         }
 
@@ -2087,32 +1960,29 @@ struct chunk_stat {
 
     class output {
 
-        template<typename ExecutionContext>
-        friend hg_return_t hermes::detail::post_to_mercury(ExecutionContext*);
+        template <typename ExecutionContext>
+        friend hg_return_t
+        hermes::detail::post_to_mercury(ExecutionContext*);
 
     public:
-        output() :
-                m_err(),
-                m_chunk_size(),
-                m_chunk_total(),
-                m_chunk_free() {}
+        output() : m_err(), m_chunk_size(), m_chunk_total(), m_chunk_free() {}
 
-        output(int32_t err, uint64_t chunk_size, uint64_t chunk_total, uint64_t chunk_free) :
-                m_err(err),
-                m_chunk_size(chunk_size),
-                m_chunk_total(chunk_total),
-                m_chunk_free(chunk_free) {}
+        output(int32_t err, uint64_t chunk_size, uint64_t chunk_total,
+               uint64_t chunk_free)
+            : m_err(err), m_chunk_size(chunk_size), m_chunk_total(chunk_total),
+              m_chunk_free(chunk_free) {}
 
         output(output&& rhs) = default;
 
         output(const output& other) = default;
 
-        output& operator=(output&& rhs) = default;
+        output&
+        operator=(output&& rhs) = default;
 
-        output& operator=(const output& other) = default;
+        output&
+        operator=(const output& other) = default;
 
-        explicit
-        output(const rpc_chunk_stat_out_t& out) {
+        explicit output(const rpc_chunk_stat_out_t& out) {
             m_err = out.err;
             m_chunk_size = out.chunk_size;
             m_chunk_total = out.chunk_total;

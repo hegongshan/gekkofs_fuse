@@ -11,6 +11,9 @@
   SPDX-License-Identifier: MIT
 */
 
+// This file uses special C formatting for a better overview
+// clang-format off
+
 #ifndef GKFS_SYSCALLS_RETS_HPP
 #define GKFS_SYSCALLS_RETS_HPP
 
@@ -134,3 +137,5 @@ format_dec_ret_to(FmtBuffer& buffer,
 } // namespace gkfs
 
 #endif // GKFS_SYSCALLS_RETS_HPP
+
+// clang-format on

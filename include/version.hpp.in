@@ -10,6 +10,7 @@
 
   SPDX-License-Identifier: MIT
 */
+// clang-format off
 #ifndef __GKFS_VERSION_HPP
 #define __GKFS_VERSION_HPP
 
@@ -19,3 +20,4 @@
 #define GKFS_VERSION_STRING "@GKFS_VERSION_STRING@"
 
 #endif /* __GKFS_VERSION_HPP */
+// clang-format on

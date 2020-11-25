@@ -44,8 +44,8 @@ namespace {
  * @return hermes endpoint, if successful
  * @throws std::runtime_error
  */
-hermes::endpoint lookup_endpoint(const std::string& uri,
-                                 std::size_t max_retries = 3) {
+hermes::endpoint
+lookup_endpoint(const std::string& uri, std::size_t max_retries = 3) {
 
     LOG(DEBUG, "Looking up address \"{}\"", uri);
 
@@ -56,19 +56,20 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
     do {
         try {
             return ld_network_service->lookup(uri);
-        } catch (const exception& ex) {
+        } catch(const exception& ex) {
             error_msg = ex.what();
 
-            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]",
-                uri, attempts + 1, max_retries);
+            LOG(WARNING, "Failed to lookup address '{}'. Attempts [{}/{}]", uri,
+                attempts + 1, max_retries);
 
             // Wait a random amount of time and try again
             std::mt19937 g(rd()); // seed the random generator
-            std::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
+            std::uniform_int_distribution<> distr(
+                    50, 50 * (attempts + 2)); // define the range
             std::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
             continue;
         }
-    } while (++attempts < max_retries);
+    } while(++attempts < max_retries);
 
     throw std::runtime_error(
             fmt::format("Endpoint for address '{}' could not be found ({})",
@@ -80,47 +81,55 @@ hermes::endpoint lookup_endpoint(const std::string& uri,
  * @param uri
  * @throws std::runtime_error
  */
-void extract_protocol(const string& uri) {
-    if (uri.rfind("://") == string::npos) {
+void
+extract_protocol(const string& uri) {
+    if(uri.rfind("://") == string::npos) {
         // invalid format. kill client
         throw runtime_error(fmt::format("Invalid format for URI: '{}'", uri));
     }
     string protocol{};
 
-    if (uri.find(gkfs::rpc::protocol::ofi_sockets) != string::npos) {
+    if(uri.find(gkfs::rpc::protocol::ofi_sockets) != string::npos) {
         protocol = gkfs::rpc::protocol::ofi_sockets;
-    } else if (uri.find(gkfs::rpc::protocol::ofi_psm2) != string::npos) {
+    } else if(uri.find(gkfs::rpc::protocol::ofi_psm2) != string::npos) {
         protocol = gkfs::rpc::protocol::ofi_psm2;
-    } else if (uri.find(gkfs::rpc::protocol::ofi_verbs) != string::npos) {
+    } else if(uri.find(gkfs::rpc::protocol::ofi_verbs) != string::npos) {
         protocol = gkfs::rpc::protocol::ofi_verbs;
     }
-    // check for shared memory protocol. Can be plain shared memory or real ofi protocol + auto_sm
-    if (uri.find(gkfs::rpc::protocol::na_sm) != string::npos) {
-        if (protocol.empty())
+    // check for shared memory protocol. Can be plain shared memory or real ofi
+    // protocol + auto_sm
+    if(uri.find(gkfs::rpc::protocol::na_sm) != string::npos) {
+        if(protocol.empty())
             protocol = gkfs::rpc::protocol::na_sm;
         else
             CTX->auto_sm(true);
     }
-    if (protocol.empty()) {
+    if(protocol.empty()) {
         // unsupported protocol. kill client
-        throw runtime_error(fmt::format("Unsupported RPC protocol found in hosts file with URI: '{}'", uri));
+        throw runtime_error(fmt::format(
+                "Unsupported RPC protocol found in hosts file with URI: '{}'",
+                uri));
     }
-    LOG(INFO, "RPC protocol '{}' extracted from hosts file. Using auto_sm is '{}'", protocol, CTX->auto_sm());
+    LOG(INFO,
+        "RPC protocol '{}' extracted from hosts file. Using auto_sm is '{}'",
+        protocol, CTX->auto_sm());
     CTX->rpc_protocol(protocol);
 }
 
 /**
- * Reads the daemon generator hosts file by a given path, returning hosts and URI addresses
+ * Reads the daemon generator hosts file by a given path, returning hosts and
+ * URI addresses
  * @param path to hosts file
  * @return vector<pair<hosts, URI>>
  * @throws std::runtime_error
  */
-vector<pair<string, string>> load_hostfile(const std::string& path) {
+vector<pair<string, string>>
+load_hostfile(const std::string& path) {
 
     LOG(DEBUG, "Loading hosts file: \"{}\"", path);
 
     ifstream lf(path);
-    if (!lf) {
+    if(!lf) {
         throw runtime_error(fmt::format("Failed to open hosts file '{}': {}",
                                         path, strerror(errno)));
     }
@@ -131,8 +140,8 @@ vector<pair<string, string>> load_hostfile(const std::string& path) {
     string host;
     string uri;
     std::smatch match;
-    while (getline(lf, line)) {
-        if (!regex_match(line, match, line_re)) {
+    while(getline(lf, line)) {
+        if(!regex_match(line, match, line_re)) {
 
             LOG(ERROR, "Unrecognized line format: [path: '{}', line: '{}']",
                 path, line);
@@ -144,8 +153,9 @@ vector<pair<string, string>> load_hostfile(const std::string& path) {
         uri = match[2];
         hosts.emplace_back(host, uri);
     }
-    if (hosts.empty()) {
-        throw runtime_error("Hosts file found but no suitable addresses could be extracted");
+    if(hosts.empty()) {
+        throw runtime_error(
+                "Hosts file found but no suitable addresses could be extracted");
     }
     extract_protocol(hosts[0].second);
     return hosts;
@@ -163,19 +173,20 @@ namespace util {
  * @param follow_links
  * @return shared_ptr for metadata, nullptr else
  */
-std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const string& path, bool follow_links) {
+std::shared_ptr<gkfs::metadata::Metadata>
+get_metadata(const string& path, bool follow_links) {
     std::string attr;
     auto err = gkfs::rpc::forward_stat(path, attr);
-    if (err) {
+    if(err) {
         errno = err;
         return nullptr;
     }
 #ifdef HAS_SYMLINKS
-    if (follow_links) {
+    if(follow_links) {
         gkfs::metadata::Metadata md{attr};
-        while (md.is_link()) {
+        while(md.is_link()) {
             err = gkfs::rpc::forward_stat(md.target_path(), attr);
-            if (err) {
+            if(err) {
                 errno = err;
                 return nullptr;
             }
@@ -193,7 +204,9 @@ std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const string& path, bool 
  * @param attr
  * @return
  */
-int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr) {
+int
+metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md,
+                 struct stat& attr) {
 
     /* Populate default values */
     attr.st_dev = makedev(0, 0);
@@ -212,38 +225,41 @@ int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md
     attr.st_mode = md.mode();
 
 #ifdef HAS_SYMLINKS
-    if (md.is_link())
+    if(md.is_link())
         attr.st_size = md.target_path().size() + CTX->mountdir().size();
     else
 #endif
         attr.st_size = md.size();
 
-    if (CTX->fs_conf()->atime_state) {
+    if(CTX->fs_conf()->atime_state) {
         attr.st_atim.tv_sec = md.atime();
     }
-    if (CTX->fs_conf()->mtime_state) {
+    if(CTX->fs_conf()->mtime_state) {
         attr.st_mtim.tv_sec = md.mtime();
     }
-    if (CTX->fs_conf()->ctime_state) {
+    if(CTX->fs_conf()->ctime_state) {
         attr.st_ctim.tv_sec = md.ctime();
     }
-    if (CTX->fs_conf()->link_cnt_state) {
+    if(CTX->fs_conf()->link_cnt_state) {
         attr.st_nlink = md.link_count();
     }
-    if (CTX->fs_conf()->blocks_state) { // last one will not encounter a delimiter anymore
+    if(CTX->fs_conf()->blocks_state) { // last one will not encounter a
+                                       // delimiter anymore
         attr.st_blocks = md.blocks();
     }
     return 0;
 }
 
 #ifdef GKFS_ENABLE_FORWARDING
-map<string, uint64_t> load_forwarding_map_file(const std::string& lfpath) {
+map<string, uint64_t>
+load_forwarding_map_file(const std::string& lfpath) {
 
     LOG(DEBUG, "Loading forwarding map file file: \"{}\"", lfpath);
 
     ifstream lf(lfpath);
-    if (!lf) {
-        throw runtime_error(fmt::format("Failed to open forwarding map file '{}': {}",
+    if(!lf) {
+        throw runtime_error(
+                fmt::format("Failed to open forwarding map file '{}': {}",
                             lfpath, strerror(errno)));
     }
     map<string, uint64_t> forwarding_map;
@@ -253,8 +269,8 @@ map<string, uint64_t> load_forwarding_map_file(const std::string& lfpath) {
     string host;
     uint64_t forwarder;
     std::smatch match;
-    while (getline(lf, line)) {
-        if (!regex_match(line, match, line_re)) {
+    while(getline(lf, line)) {
+        if(!regex_match(line, match, line_re)) {
 
             LOG(ERROR, "Unrecognized line format: [path: '{}', line: '{}']",
                 lfpath, line);
@@ -271,51 +287,60 @@ map<string, uint64_t> load_forwarding_map_file(const std::string& lfpath) {
 #endif
 
 #ifdef GKFS_ENABLE_FORWARDING
-void load_forwarding_map() {
+void
+load_forwarding_map() {
     string forwarding_map_file;
 
-    forwarding_map_file = gkfs::env::get_var(gkfs::env::FORWARDING_MAP_FILE, gkfs::config::forwarding_file_path);
+    forwarding_map_file = gkfs::env::get_var(
+            gkfs::env::FORWARDING_MAP_FILE, gkfs::config::forwarding_file_path);
 
     map<string, uint64_t> forwarding_map;
 
-    while (forwarding_map.size() == 0) {
+    while(forwarding_map.size() == 0) {
         try {
             forwarding_map = load_forwarding_map_file(forwarding_map_file);
-        } catch (const exception& e) {
-            auto emsg = fmt::format("Failed to load forwarding map file: {}", e.what());
+        } catch(const exception& e) {
+            auto emsg = fmt::format("Failed to load forwarding map file: {}",
+                                    e.what());
             throw runtime_error(emsg);
         }
     }
 
-    //if (forwarding_map.size() == 0) {
-    //    throw runtime_error(fmt::format("Forwarding map file is empty: '{}'", forwarding_map_file));
+    // if (forwarding_map.size() == 0) {
+    //    throw runtime_error(fmt::format("Forwarding map file is empty: '{}'",
+    //    forwarding_map_file));
     //}
 
     auto local_hostname = get_my_hostname(true);
 
-    if (forwarding_map.find(local_hostname) == forwarding_map.end()) {
-        throw runtime_error(fmt::format("Unable to determine the forwarder for host: '{}'", local_hostname));
+    if(forwarding_map.find(local_hostname) == forwarding_map.end()) {
+        throw runtime_error(
+                fmt::format("Unable to determine the forwarder for host: '{}'",
+                            local_hostname));
     }
-    LOG(INFO, "Forwarding map loaded for '{}' as '{}'", local_hostname, forwarding_map[local_hostname]);
+    LOG(INFO, "Forwarding map loaded for '{}' as '{}'", local_hostname,
+        forwarding_map[local_hostname]);
 
     CTX->fwd_host_id(forwarding_map[local_hostname]);
 }
 #endif
 
-vector<pair<string, string>> read_hosts_file() {
+vector<pair<string, string>>
+read_hosts_file() {
     string hostfile;
 
-    hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE, gkfs::config::hostfile_path);
+    hostfile = gkfs::env::get_var(gkfs::env::HOSTS_FILE,
+                                  gkfs::config::hostfile_path);
 
     vector<pair<string, string>> hosts;
     try {
         hosts = load_hostfile(hostfile);
-    } catch (const exception& e) {
+    } catch(const exception& e) {
         auto emsg = fmt::format("Failed to load hosts file: {}", e.what());
         throw runtime_error(emsg);
     }
 
-    if (hosts.empty()) {
+    if(hosts.empty()) {
         throw runtime_error(fmt::format("Hostfile empty: '{}'", hostfile));
     }
 
@@ -329,7 +354,8 @@ vector<pair<string, string>> read_hosts_file() {
  * @param hosts vector<pair<hostname, Mercury URI address>>
  * @throws std::runtime_error through lookup_endpoint()
  */
-void connect_to_hosts(const vector<pair<string, string>>& hosts) {
+void
+connect_to_hosts(const vector<pair<string, string>>& hosts) {
     auto local_hostname = gkfs::rpc::get_my_hostname(true);
     bool local_host_found = false;
 
@@ -346,17 +372,17 @@ void connect_to_hosts(const vector<pair<string, string>>& hosts) {
      * returning error when addr lookup
      */
     ::random_device rd; // obtain a random number from hardware
-    ::mt19937 g(rd()); // seed the random generator
+    ::mt19937 g(rd());  // seed the random generator
     ::shuffle(host_ids.begin(), host_ids.end(), g); // Shuffle hosts vector
     // lookup addresses and put abstract server addresses into rpc_addresses
 
-    for (const auto& id: host_ids) {
+    for(const auto& id : host_ids) {
         const auto& hostname = hosts.at(id).first;
         const auto& uri = hosts.at(id).second;
 
         addrs[id] = lookup_endpoint(uri);
 
-        if (!local_host_found && hostname == local_hostname) {
+        if(!local_host_found && hostname == local_hostname) {
             LOG(DEBUG, "Found local host: {}", hostname);
             CTX->local_host_id(id);
             local_host_found = true;
@@ -365,7 +391,7 @@ void connect_to_hosts(const vector<pair<string, string>>& hosts) {
         LOG(DEBUG, "Found peer: {}", addrs[id].to_string());
     }
 
-    if (!local_host_found) {
+    if(!local_host_found) {
         LOG(WARNING, "Failed to find local host. Using host '0' as local host");
         CTX->local_host_id(0);
     }

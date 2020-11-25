@@ -25,7 +25,8 @@ class RPCData {
 private:
     RPCData() {}
 
-    // Margo IDs. They can also be used to retrieve the Mercury classes and contexts that were created at init time
+    // Margo IDs. They can also be used to retrieve the Mercury classes and
+    // contexts that were created at init time
     margo_instance_id server_rpc_mid_;
 
     // Argobots I/O pools and execution streams
@@ -34,37 +35,45 @@ private:
     std::string self_addr_str_;
 
 public:
-
-    static RPCData* getInstance() {
+    static RPCData*
+    getInstance() {
         static RPCData instance;
         return &instance;
     }
 
     RPCData(RPCData const&) = delete;
 
-    void operator=(RPCData const&) = delete;
+    void
+    operator=(RPCData const&) = delete;
 
     // Getter/Setter
 
-    margo_instance* server_rpc_mid();
+    margo_instance*
+    server_rpc_mid();
 
-    void server_rpc_mid(margo_instance* server_rpc_mid);
+    void
+    server_rpc_mid(margo_instance* server_rpc_mid);
 
-    ABT_pool io_pool() const;
+    ABT_pool
+    io_pool() const;
 
-    void io_pool(ABT_pool io_pool);
+    void
+    io_pool(ABT_pool io_pool);
 
-    std::vector<ABT_xstream>& io_streams();
+    std::vector<ABT_xstream>&
+    io_streams();
 
-    void io_streams(const std::vector<ABT_xstream>& io_streams);
+    void
+    io_streams(const std::vector<ABT_xstream>& io_streams);
 
-    const std::string& self_addr_str() const;
+    const std::string&
+    self_addr_str() const;
 
-    void self_addr_str(const std::string& addr_str);
-
+    void
+    self_addr_str(const std::string& addr_str);
 };
 
 } // namespace daemon
 } // namespace gkfs
 
-#endif //LFS_RPC_DATA_HPP
+#endif // LFS_RPC_DATA_HPP

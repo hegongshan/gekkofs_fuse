@@ -37,54 +37,59 @@ MetadataDB::MetadataDB(const std::string& path) : path(path) {
     write_opts.disableWAL = !(gkfs::config::rocksdb::use_write_ahead_log);
     rdb::DB* rdb_ptr;
     auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
-    if (!s.ok()) {
+    if(!s.ok()) {
         throw std::runtime_error("Failed to open RocksDB: " + s.ToString());
     }
     this->db.reset(rdb_ptr);
 }
 
-void MetadataDB::throw_rdb_status_excpt(const rdb::Status& s) {
+void
+MetadataDB::throw_rdb_status_excpt(const rdb::Status& s) {
     assert(!s.ok());
 
-    if (s.IsNotFound()) {
+    if(s.IsNotFound()) {
         throw NotFoundException(s.ToString());
     } else {
         throw DBException(s.ToString());
     }
 }
 
-std::string MetadataDB::get(const std::string& key) const {
+std::string
+MetadataDB::get(const std::string& key) const {
     std::string val;
     auto s = db->Get(rdb::ReadOptions(), key, &val);
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
     return val;
 }
 
-void MetadataDB::put(const std::string& key, const std::string& val) {
+void
+MetadataDB::put(const std::string& key, const std::string& val) {
     assert(gkfs::path::is_absolute(key));
     assert(key == "/" || !gkfs::path::has_trailing_slash(key));
 
     auto cop = CreateOperand(val);
     auto s = db->Merge(write_opts, key, cop.serialize());
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
 }
 
-void MetadataDB::remove(const std::string& key) {
+void
+MetadataDB::remove(const std::string& key) {
     auto s = db->Delete(write_opts, key);
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
 }
 
-bool MetadataDB::exists(const std::string& key) {
+bool
+MetadataDB::exists(const std::string& key) {
     std::string val;
     auto s = db->Get(rdb::ReadOptions(), key, &val);
-    if (!s.ok()) {
-        if (s.IsNotFound()) {
+    if(!s.ok()) {
+        if(s.IsNotFound()) {
             return false;
         } else {
             MetadataDB::throw_rdb_status_excpt(s);
@@ -100,29 +105,33 @@ bool MetadataDB::exists(const std::string& key) {
  * @param val
  * @return
  */
-void MetadataDB::update(const std::string& old_key, const std::string& new_key, const std::string& val) {
-    //TODO use rdb::Put() method
+void
+MetadataDB::update(const std::string& old_key, const std::string& new_key,
+                   const std::string& val) {
+    // TODO use rdb::Put() method
     rdb::WriteBatch batch;
     batch.Delete(old_key);
     batch.Put(new_key, val);
     auto s = db->Write(write_opts, &batch);
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
 }
 
-void MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
+void
+MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
     auto uop = IncreaseSizeOperand(size, append);
     auto s = db->Merge(write_opts, key, uop.serialize());
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
 }
 
-void MetadataDB::decrease_size(const std::string& key, size_t size) {
+void
+MetadataDB::decrease_size(const std::string& key, size_t size) {
     auto uop = DecreaseSizeOperand(size);
     auto s = db->Merge(write_opts, key, uop.serialize());
-    if (!s.ok()) {
+    if(!s.ok()) {
         MetadataDB::throw_rdb_status_excpt(s);
     }
 }
@@ -134,12 +143,13 @@ void MetadataDB::decrease_size(const std::string& key, size_t size) {
  *         where name is the name of the entries and is_dir
  *         is true in the case the entry is a directory.
  */
-std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::string& dir) const {
+std::vector<std::pair<std::string, bool>>
+MetadataDB::get_dirents(const std::string& dir) const {
     auto root_path = dir;
     assert(gkfs::path::is_absolute(root_path));
-    //add trailing slash if missing
-    if (!gkfs::path::has_trailing_slash(root_path) && root_path.size() != 1) {
-        //add trailing slash only if missing and is not the root_folder "/"
+    // add trailing slash if missing
+    if(!gkfs::path::has_trailing_slash(root_path) && root_path.size() != 1) {
+        // add trailing slash only if missing and is not the root_folder "/"
         root_path.push_back('/');
     }
 
@@ -148,26 +158,24 @@ std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::str
 
     std::vector<std::pair<std::string, bool>> entries;
 
-    for (it->Seek(root_path);
-         it->Valid() &&
-         it->key().starts_with(root_path);
-         it->Next()) {
+    for(it->Seek(root_path); it->Valid() && it->key().starts_with(root_path);
+        it->Next()) {
 
-        if (it->key().size() == root_path.size()) {
-            //we skip this path cause it is exactly the root_path
+        if(it->key().size() == root_path.size()) {
+            // we skip this path cause it is exactly the root_path
             continue;
         }
 
         /***** Get File name *****/
         auto name = it->key().ToString();
-        if (name.find_first_of('/', root_path.size()) != std::string::npos) {
-            //skip stuff deeper then one level depth
+        if(name.find_first_of('/', root_path.size()) != std::string::npos) {
+            // skip stuff deeper then one level depth
             continue;
         }
         // remove prefix
         name = name.substr(root_path.size());
 
-        //relative path of directory entries must not be empty
+        // relative path of directory entries must not be empty
         assert(!name.empty());
 
         Metadata md(it->value().ToString());
@@ -179,18 +187,20 @@ std::vector<std::pair<std::string, bool>> MetadataDB::get_dirents(const std::str
     return entries;
 }
 
-void MetadataDB::iterate_all() {
+void
+MetadataDB::iterate_all() {
     std::string key;
     std::string val;
     // Do RangeScan on parent inode
     auto iter = db->NewIterator(rdb::ReadOptions());
-    for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+    for(iter->SeekToFirst(); iter->Valid(); iter->Next()) {
         key = iter->key().ToString();
         val = iter->value().ToString();
     }
 }
 
-void MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
+void
+MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
     options.max_successive_merges = 128;
 }
 

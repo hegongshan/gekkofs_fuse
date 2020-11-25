@@ -55,4 +55,4 @@ DECLARE_MARGO_RPC_HANDLER(rpc_srv_truncate)
 
 DECLARE_MARGO_RPC_HANDLER(rpc_srv_get_chunk_stat)
 
-#endif //GKFS_DAEMON_RPC_DEFS_HPP
+#endif // GKFS_DAEMON_RPC_DEFS_HPP

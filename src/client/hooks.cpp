@@ -33,7 +33,8 @@ extern "C" {
 namespace {
 
 // TODO replace all internal gkfs errno variable usage with LEAF
-inline int with_errno(int ret) {
+inline int
+with_errno(int ret) {
     return (ret < 0) ? -errno : ret;
 }
 
@@ -42,19 +43,21 @@ inline int with_errno(int ret) {
 namespace gkfs {
 namespace hook {
 
-int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
+int
+hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
 
     LOG(DEBUG, "{}() called with fd: {}, path: \"{}\", flags: {}, mode: {}",
         __func__, dirfd, cpath, flags, mode);
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_openat, dirfd, cpath, flags, mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_openat, dirfd, resolved.c_str(), flags, mode);
+            return syscall_no_intercept(SYS_openat, dirfd, resolved.c_str(),
+                                        flags, mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -68,18 +71,19 @@ int hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
     }
 }
 
-int hook_close(int fd) {
+int
+hook_close(int fd) {
 
     LOG(DEBUG, "{}() called with fd: {}", __func__, fd);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         // No call to the daemon is required
         CTX->file_map()->remove(fd);
         return 0;
     }
 
-    if (CTX->is_internal_fd(fd)) {
-        // the client application (for some reason) is trying to close an 
+    if(CTX->is_internal_fd(fd)) {
+        // the client application (for some reason) is trying to close an
         // internal fd: ignore it
         return 0;
     }
@@ -87,13 +91,14 @@ int hook_close(int fd) {
     return syscall_no_intercept(SYS_close, fd);
 }
 
-int hook_stat(const char* path, struct stat* buf) {
+int
+hook_stat(const char* path, struct stat* buf) {
 
-    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}",
-        __func__, path, fmt::ptr(buf));
+    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}", __func__, path,
+        fmt::ptr(buf));
 
     std::string rel_path;
-    if (CTX->relativize_path(path, rel_path, false)) {
+    if(CTX->relativize_path(path, rel_path, false)) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept(SYS_stat, rel_path.c_str(), buf);
@@ -101,30 +106,35 @@ int hook_stat(const char* path, struct stat* buf) {
 
 #ifdef STATX_TYPE
 
-int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct ::statx* buf) {
+int
+hook_statx(int dirfd, const char* path, int flags, unsigned int mask,
+           struct ::statx* buf) {
 
-    LOG(DEBUG, "{}() called with dirfd: '{}', path: \"{}\", flags: '{}', mask: '{}', buf: '{}'",
+    LOG(DEBUG,
+        "{}() called with dirfd: '{}', path: \"{}\", flags: '{}', mask: '{}', buf: '{}'",
         __func__, dirfd, path, flags, mask, fmt::ptr(buf));
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, path, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask, buf);
+            return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask,
+                                        buf);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_statx, dirfd, resolved.c_str(), flags, mask, buf);
+            return syscall_no_intercept(SYS_statx, dirfd, resolved.c_str(),
+                                        flags, mask, buf);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            return with_errno(gkfs::syscall::gkfs_statx(dirfd, resolved.c_str(), flags, mask, buf));
+            return with_errno(gkfs::syscall::gkfs_statx(dirfd, resolved.c_str(),
+                                                        flags, mask, buf));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
             return -EINVAL;
-
     }
 
     return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask, buf);
@@ -132,48 +142,52 @@ int hook_statx(int dirfd, const char* path, int flags, unsigned int mask, struct
 
 #endif
 
-int hook_lstat(const char* path, struct stat* buf) {
+int
+hook_lstat(const char* path, struct stat* buf) {
 
-    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}",
-        __func__, path, fmt::ptr(buf));
+    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}", __func__, path,
+        fmt::ptr(buf));
 
     std::string rel_path;
-    if (CTX->relativize_path(path, rel_path)) {
+    if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept(SYS_lstat, rel_path.c_str(), buf);
 }
 
-int hook_fstat(unsigned int fd, struct stat* buf) {
+int
+hook_fstat(unsigned int fd, struct stat* buf) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {}",
-        __func__, fd, fmt::ptr(buf));
+    LOG(DEBUG, "{}() called with fd: {}, buf: {}", __func__, fd, fmt::ptr(buf));
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
         return with_errno(gkfs::syscall::gkfs_stat(path, buf));
     }
     return syscall_no_intercept(SYS_fstat, fd, buf);
 }
 
-int hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
+int
+hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
 
     LOG(DEBUG, "{}() called with path: \"{}\", fd: {}, buf: {}, flags: {}",
         __func__, cpath, dirfd, fmt::ptr(buf), flags);
 
-    if (flags & AT_EMPTY_PATH) {
+    if(flags & AT_EMPTY_PATH) {
         LOG(ERROR, "{}() AT_EMPTY_PATH flag not supported", __func__);
         return -ENOTSUP;
     }
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_newfstatat, dirfd, cpath, buf, flags);
+            return syscall_no_intercept(SYS_newfstatat, dirfd, cpath, buf,
+                                        flags);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_newfstatat, dirfd, resolved.c_str(), buf, flags);
+            return syscall_no_intercept(SYS_newfstatat, dirfd, resolved.c_str(),
+                                        buf, flags);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -187,124 +201,140 @@ int hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
     }
 }
 
-int hook_read(unsigned int fd, void* buf, size_t count) {
+int
+hook_read(unsigned int fd, void* buf, size_t count) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {} count: {}",
-        __func__, fd, fmt::ptr(buf), count);
+    LOG(DEBUG, "{}() called with fd: {}, buf: {} count: {}", __func__, fd,
+        fmt::ptr(buf), count);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_read(fd, buf, count));
     }
     return syscall_no_intercept(SYS_read, fd, buf, count);
 }
 
-int hook_pread(unsigned int fd, char* buf, size_t count, loff_t pos) {
+int
+hook_pread(unsigned int fd, char* buf, size_t count, loff_t pos) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count: {}, pos: {}",
-        __func__, fd, fmt::ptr(buf), count, pos);
+    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count: {}, pos: {}", __func__,
+        fd, fmt::ptr(buf), count, pos);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_pread_ws(fd, buf, count, pos));
     }
-    /* Since kernel 2.6: pread() became pread64(), and pwrite() became pwrite64(). */
+    /* Since kernel 2.6: pread() became pread64(), and pwrite() became
+     * pwrite64(). */
     return syscall_no_intercept(SYS_pread64, fd, buf, count, pos);
 }
 
-int hook_readv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
+int
+hook_readv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
 
-    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}",
-        __func__, fd, fmt::ptr(iov), iovcnt);
+    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}", __func__, fd,
+        fmt::ptr(iov), iovcnt);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_readv(fd, iov, iovcnt));
     }
     return syscall_no_intercept(SYS_readv, fd, iov, iovcnt);
 }
 
-int hook_preadv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
-                unsigned long pos_l, unsigned long pos_h) {
+int
+hook_preadv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
+            unsigned long pos_l, unsigned long pos_h) {
 
-    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}, "
-               "pos_l: {}," "pos_h: {}",
+    LOG(DEBUG,
+        "{}() called with fd: {}, iov: {}, iovcnt: {}, "
+        "pos_l: {},"
+        "pos_h: {}",
         __func__, fd, fmt::ptr(iov), iovcnt, pos_l, pos_h);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_preadv(fd, iov, iovcnt, pos_l));
     }
     return syscall_no_intercept(SYS_preadv, fd, iov, iovcnt, pos_l);
 }
 
-int hook_write(unsigned int fd, const char* buf, size_t count) {
+int
+hook_write(unsigned int fd, const char* buf, size_t count) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count {}",
-        __func__, fd, fmt::ptr(buf), count);
+    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count {}", __func__, fd,
+        fmt::ptr(buf), count);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_write(fd, buf, count));
     }
     return syscall_no_intercept(SYS_write, fd, buf, count);
 }
 
-int hook_pwrite(unsigned int fd, const char* buf, size_t count, loff_t pos) {
+int
+hook_pwrite(unsigned int fd, const char* buf, size_t count, loff_t pos) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count: {}, pos: {}",
-        __func__, fd, fmt::ptr(buf), count, pos);
+    LOG(DEBUG, "{}() called with fd: {}, buf: {}, count: {}, pos: {}", __func__,
+        fd, fmt::ptr(buf), count, pos);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_pwrite_ws(fd, buf, count, pos));
     }
-    /* Since kernel 2.6: pread() became pread64(), and pwrite() became pwrite64(). */
+    /* Since kernel 2.6: pread() became pread64(), and pwrite() became
+     * pwrite64(). */
     return syscall_no_intercept(SYS_pwrite64, fd, buf, count, pos);
 }
 
-int hook_writev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
+int
+hook_writev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
 
-    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}",
-        __func__, fd, fmt::ptr(iov), iovcnt);
+    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}", __func__, fd,
+        fmt::ptr(iov), iovcnt);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_writev(fd, iov, iovcnt));
     }
     return syscall_no_intercept(SYS_writev, fd, iov, iovcnt);
 }
 
-int hook_pwritev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
-                 unsigned long pos_l, unsigned long pos_h) {
+int
+hook_pwritev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
+             unsigned long pos_l, unsigned long pos_h) {
 
-    LOG(DEBUG, "{}() called with fd: {}, iov: {}, iovcnt: {}, "
-               "pos_l: {}," "pos_h: {}",
+    LOG(DEBUG,
+        "{}() called with fd: {}, iov: {}, iovcnt: {}, "
+        "pos_l: {},"
+        "pos_h: {}",
         __func__, fd, fmt::ptr(iov), iovcnt, pos_l, pos_h);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_pwritev(fd, iov, iovcnt, pos_l));
     }
     return syscall_no_intercept(SYS_pwritev, fd, iov, iovcnt, pos_l);
 }
 
-int hook_unlinkat(int dirfd, const char* cpath, int flags) {
+int
+hook_unlinkat(int dirfd, const char* cpath, int flags) {
 
-    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", flags: {}",
-        __func__, dirfd, cpath, flags);
+    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", flags: {}", __func__,
+        dirfd, cpath, flags);
 
-    if ((flags & ~AT_REMOVEDIR) != 0) {
+    if((flags & ~AT_REMOVEDIR) != 0) {
         LOG(ERROR, "{}() Flags unknown: {}", __func__, flags);
         return -EINVAL;
     }
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_unlinkat, dirfd, cpath, flags);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_unlinkat, dirfd, resolved.c_str(), flags);
+            return syscall_no_intercept(SYS_unlinkat, dirfd, resolved.c_str(),
+                                        flags);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            if (flags & AT_REMOVEDIR) {
+            if(flags & AT_REMOVEDIR) {
                 return with_errno(gkfs::syscall::gkfs_rmdir(resolved));
             } else {
                 return with_errno(gkfs::syscall::gkfs_remove(resolved));
@@ -316,25 +346,29 @@ int hook_unlinkat(int dirfd, const char* cpath, int flags) {
     }
 }
 
-int hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
+int
+hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
 
     LOG(DEBUG, "{}() called with oldname: \"{}\", newfd: {}, newname: \"{}\"",
         __func__, oldname, newdfd, newname);
 
     std::string oldname_resolved;
-    if (CTX->relativize_path(oldname, oldname_resolved)) {
+    if(CTX->relativize_path(oldname, oldname_resolved)) {
         LOG(WARNING, "{}() operation not supported", __func__);
         return -ENOTSUP;
     }
 
     std::string newname_resolved;
-    auto rstatus = CTX->relativize_fd_path(newdfd, newname, newname_resolved, false);
-    switch (rstatus) {
+    auto rstatus =
+            CTX->relativize_fd_path(newdfd, newname, newname_resolved, false);
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd, newname);
+            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd,
+                                        newname);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd, newname_resolved.c_str());
+            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd,
+                                        newname_resolved.c_str());
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -350,15 +384,15 @@ int hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
 }
 
 
-int hook_access(const char* path, int mask) {
+int
+hook_access(const char* path, int mask) {
 
-    LOG(DEBUG, "{}() called path: \"{}\", mask: {}",
-        __func__, path, mask);
+    LOG(DEBUG, "{}() called path: \"{}\", mask: {}", __func__, path, mask);
 
     std::string rel_path;
-    if (CTX->relativize_path(path, rel_path)) {
+    if(CTX->relativize_path(path, rel_path)) {
         auto ret = gkfs::syscall::gkfs_access(rel_path, mask);
-        if (ret < 0) {
+        if(ret < 0) {
             return -errno;
         }
         return ret;
@@ -366,19 +400,21 @@ int hook_access(const char* path, int mask) {
     return syscall_no_intercept(SYS_access, rel_path.c_str(), mask);
 }
 
-int hook_faccessat(int dirfd, const char* cpath, int mode) {
+int
+hook_faccessat(int dirfd, const char* cpath, int mode) {
 
-    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", mode: {}",
-        __func__, dirfd, cpath, mode);
+    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", mode: {}", __func__,
+        dirfd, cpath, mode);
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_faccessat, dirfd, cpath, mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_faccessat, dirfd, resolved.c_str(), mode);
+            return syscall_no_intercept(SYS_faccessat, dirfd, resolved.c_str(),
+                                        mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -392,16 +428,18 @@ int hook_faccessat(int dirfd, const char* cpath, int mode) {
     }
 }
 
-off_t hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
+off_t
+hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
 
-    LOG(DEBUG, "{}() called with fd: {}, offset: {}, whence: {}",
-        __func__, fd, offset, whence);
+    LOG(DEBUG, "{}() called with fd: {}, offset: {}, whence: {}", __func__, fd,
+        offset, whence);
 
-    if (CTX->file_map()->exist(fd)) {
-        auto off_ret = gkfs::syscall::gkfs_lseek(fd, static_cast<off64_t>(offset), whence);
-        if (off_ret > std::numeric_limits<off_t>::max()) {
+    if(CTX->file_map()->exist(fd)) {
+        auto off_ret = gkfs::syscall::gkfs_lseek(
+                fd, static_cast<off64_t>(offset), whence);
+        if(off_ret > std::numeric_limits<off_t>::max()) {
             return -EOVERFLOW;
-        } else if (off_ret < 0) {
+        } else if(off_ret < 0) {
             return -errno;
         }
         LOG(DEBUG, "{}() returning {}", __func__, off_ret);
@@ -410,58 +448,59 @@ off_t hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
     return syscall_no_intercept(SYS_lseek, fd, offset, whence);
 }
 
-int hook_truncate(const char* path, long length) {
+int
+hook_truncate(const char* path, long length) {
 
-    LOG(DEBUG, "{}() called with path: {}, offset: {}",
-        __func__, path, length);
+    LOG(DEBUG, "{}() called with path: {}, offset: {}", __func__, path, length);
 
     std::string rel_path;
-    if (CTX->relativize_path(path, rel_path)) {
+    if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_truncate(rel_path, length));
     }
     return syscall_no_intercept(SYS_truncate, rel_path.c_str(), length);
 }
 
-int hook_ftruncate(unsigned int fd, unsigned long length) {
+int
+hook_ftruncate(unsigned int fd, unsigned long length) {
 
-    LOG(DEBUG, "{}() called with fd: {}, offset: {}",
-        __func__, fd, length);
+    LOG(DEBUG, "{}() called with fd: {}, offset: {}", __func__, fd, length);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
         return with_errno(gkfs::syscall::gkfs_truncate(path, length));
     }
     return syscall_no_intercept(SYS_ftruncate, fd, length);
 }
 
-int hook_dup(unsigned int fd) {
+int
+hook_dup(unsigned int fd) {
 
-    LOG(DEBUG, "{}() called with oldfd: {}",
-        __func__, fd);
+    LOG(DEBUG, "{}() called with oldfd: {}", __func__, fd);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_dup(fd));
     }
     return syscall_no_intercept(SYS_dup, fd);
 }
 
-int hook_dup2(unsigned int oldfd, unsigned int newfd) {
+int
+hook_dup2(unsigned int oldfd, unsigned int newfd) {
 
-    LOG(DEBUG, "{}() called with oldfd: {}, newfd: {}",
-        __func__, oldfd, newfd);
+    LOG(DEBUG, "{}() called with oldfd: {}, newfd: {}", __func__, oldfd, newfd);
 
-    if (CTX->file_map()->exist(oldfd)) {
+    if(CTX->file_map()->exist(oldfd)) {
         return with_errno(gkfs::syscall::gkfs_dup2(oldfd, newfd));
     }
     return syscall_no_intercept(SYS_dup2, oldfd, newfd);
 }
 
-int hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
+int
+hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
 
-    LOG(DEBUG, "{}() called with oldfd: {}, newfd: {}, flags: {}",
-        __func__, oldfd, newfd, flags);
+    LOG(DEBUG, "{}() called with oldfd: {}, newfd: {}, flags: {}", __func__,
+        oldfd, newfd, flags);
 
-    if (CTX->file_map()->exist(oldfd)) {
+    if(CTX->file_map()->exist(oldfd)) {
         // TODO implement O_CLOEXEC flag first which is used with fcntl(2)
         // It is in glibc since kernel 2.9. So maybe not that important :)
         LOG(WARNING, "{}() Not supported", __func__);
@@ -470,40 +509,45 @@ int hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
     return syscall_no_intercept(SYS_dup3, oldfd, newfd, flags);
 }
 
-int hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count) {
+int
+hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count) {
 
-    LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
-        __func__, fd, fmt::ptr(dirp), count);
+    LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}", __func__, fd,
+        fmt::ptr(dirp), count);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_getdents(fd, dirp, count));
     }
     return syscall_no_intercept(SYS_getdents, fd, dirp, count);
 }
 
 
-int hook_getdents64(unsigned int fd, struct linux_dirent64* dirp, unsigned int count) {
+int
+hook_getdents64(unsigned int fd, struct linux_dirent64* dirp,
+                unsigned int count) {
 
-    LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}",
-        __func__, fd, fmt::ptr(dirp), count);
+    LOG(DEBUG, "{}() called with fd: {}, dirp: {}, count: {}", __func__, fd,
+        fmt::ptr(dirp), count);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_getdents64(fd, dirp, count));
     }
     return syscall_no_intercept(SYS_getdents64, fd, dirp, count);
 }
 
 
-int hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
+int
+hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
 
-    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", mode: {}",
-        __func__, dirfd, cpath, mode);
+    LOG(DEBUG, "{}() called with dirfd: {}, path: \"{}\", mode: {}", __func__,
+        dirfd, cpath, mode);
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_mkdirat, dirfd, resolved.c_str(), mode);
+            return syscall_no_intercept(SYS_mkdirat, dirfd, resolved.c_str(),
+                                        mode);
 
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_mkdirat, dirfd, cpath, mode);
@@ -512,7 +556,8 @@ int hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            return with_errno(gkfs::syscall::gkfs_create(resolved, mode | S_IFDIR));
+            return with_errno(
+                    gkfs::syscall::gkfs_create(resolved, mode | S_IFDIR));
 
         default:
             LOG(ERROR, "{}() relativize status unknown: {}", __func__);
@@ -520,19 +565,21 @@ int hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
     }
 }
 
-int hook_fchmodat(int dirfd, const char* cpath, mode_t mode) {
+int
+hook_fchmodat(int dirfd, const char* cpath, mode_t mode) {
 
-    LOG(DEBUG, "{}() called dirfd: {}, path: \"{}\", mode: {}",
-        __func__, dirfd, cpath, mode);
+    LOG(DEBUG, "{}() called dirfd: {}, path: \"{}\", mode: {}", __func__, dirfd,
+        cpath, mode);
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept(SYS_fchmodat, dirfd, cpath, mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_fchmodat, dirfd, resolved.c_str(), mode);
+            return syscall_no_intercept(SYS_fchmodat, dirfd, resolved.c_str(),
+                                        mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -547,82 +594,82 @@ int hook_fchmodat(int dirfd, const char* cpath, mode_t mode) {
     }
 }
 
-int hook_fchmod(unsigned int fd, mode_t mode) {
+int
+hook_fchmod(unsigned int fd, mode_t mode) {
 
-    LOG(DEBUG, "{}() called with fd: {}, mode: {}",
-        __func__, fd, mode);
+    LOG(DEBUG, "{}() called with fd: {}, mode: {}", __func__, fd, mode);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         LOG(WARNING, "{}() operation not supported", __func__);
         return -ENOTSUP;
     }
     return syscall_no_intercept(SYS_fchmod, fd, mode);
 }
 
-int hook_chdir(const char* path) {
+int
+hook_chdir(const char* path) {
 
-    LOG(DEBUG, "{}() called with path: \"{}\"",
-        __func__, path);
+    LOG(DEBUG, "{}() called with path: \"{}\"", __func__, path);
 
     std::string rel_path;
     bool internal = CTX->relativize_path(path, rel_path);
-    if (internal) {
-        //path falls in our namespace
+    if(internal) {
+        // path falls in our namespace
         auto md = gkfs::util::get_metadata(rel_path);
-        if (md == nullptr) {
+        if(md == nullptr) {
             LOG(ERROR, "{}() path does not exists", __func__);
             return -ENOENT;
         }
-        if (!S_ISDIR(md->mode())) {
+        if(!S_ISDIR(md->mode())) {
             LOG(ERROR, "{}() path is not a directory", __func__);
             return -ENOTDIR;
         }
-        //TODO get complete path from relativize_path instead of
+        // TODO get complete path from relativize_path instead of
         // removing mountdir and then adding again here
         rel_path.insert(0, CTX->mountdir());
-        if (gkfs::path::has_trailing_slash(rel_path)) {
+        if(gkfs::path::has_trailing_slash(rel_path)) {
             // open_dir is '/'
             rel_path.pop_back();
         }
     }
     try {
         gkfs::path::set_cwd(rel_path, internal);
-    } catch (const std::system_error& se) {
+    } catch(const std::system_error& se) {
         return -(se.code().value());
     }
     return 0;
 }
 
-int hook_fchdir(unsigned int fd) {
+int
+hook_fchdir(unsigned int fd) {
 
-    LOG(DEBUG, "{}() called with fd: {}",
-        __func__, fd);
+    LOG(DEBUG, "{}() called with fd: {}", __func__, fd);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         auto open_dir = CTX->file_map()->get_dir(fd);
-        if (open_dir == nullptr) {
-            //Cast did not succeeded: open_file is a regular file
+        if(open_dir == nullptr) {
+            // Cast did not succeeded: open_file is a regular file
             LOG(ERROR, "{}() file descriptor refers to a normal file: '{}'",
                 __func__, open_dir->path());
             return -EBADF;
         }
 
         std::string new_path = CTX->mountdir() + open_dir->path();
-        if (gkfs::path::has_trailing_slash(new_path)) {
+        if(gkfs::path::has_trailing_slash(new_path)) {
             // open_dir is '/'
             new_path.pop_back();
         }
         try {
             gkfs::path::set_cwd(new_path, true);
-        } catch (const std::system_error& se) {
+        } catch(const std::system_error& se) {
             return -(se.code().value());
         }
     } else {
         long ret = syscall_no_intercept(SYS_fchdir, fd);
-        if (ret < 0) {
-            throw std::system_error(syscall_error_code(ret),
-                                    std::system_category(),
-                                    "Failed to change directory (fchdir syscall)");
+        if(ret < 0) {
+            throw std::system_error(
+                    syscall_error_code(ret), std::system_category(),
+                    "Failed to change directory (fchdir syscall)");
         }
         gkfs::path::unset_env_cwd();
         CTX->cwd(gkfs::path::get_sys_cwd());
@@ -630,13 +677,15 @@ int hook_fchdir(unsigned int fd) {
     return 0;
 }
 
-int hook_getcwd(char* buf, unsigned long size) {
+int
+hook_getcwd(char* buf, unsigned long size) {
 
-    LOG(DEBUG, "{}() called with buf: {}, size: {}",
-        __func__, fmt::ptr(buf), size);
+    LOG(DEBUG, "{}() called with buf: {}, size: {}", __func__, fmt::ptr(buf),
+        size);
 
-    if (CTX->cwd().size() + 1 > size) {
-        LOG(ERROR, "{}() buffer too small to host current working dir", __func__);
+    if(CTX->cwd().size() + 1 > size) {
+        LOG(ERROR, "{}() buffer too small to host current working dir",
+            __func__);
         return -ERANGE;
     }
 
@@ -644,19 +693,22 @@ int hook_getcwd(char* buf, unsigned long size) {
     return (CTX->cwd().size() + 1);
 }
 
-int hook_readlinkat(int dirfd, const char* cpath, char* buf, int bufsiz) {
+int
+hook_readlinkat(int dirfd, const char* cpath, char* buf, int bufsiz) {
 
     LOG(DEBUG, "{}() called with dirfd: {}, path \"{}\", buf: {}, bufsize: {}",
         __func__, dirfd, cpath, fmt::ptr(buf), bufsiz);
 
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
-    switch (rstatus) {
+    switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_readlinkat, dirfd, cpath, buf, bufsiz);
+            return syscall_no_intercept(SYS_readlinkat, dirfd, cpath, buf,
+                                        bufsiz);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_readlinkat, dirfd, resolved.c_str(), buf, bufsiz);
+            return syscall_no_intercept(SYS_readlinkat, dirfd, resolved.c_str(),
+                                        buf, bufsiz);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -671,16 +723,17 @@ int hook_readlinkat(int dirfd, const char* cpath, char* buf, int bufsiz) {
     }
 }
 
-int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
+int
+hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
 
-    LOG(DEBUG, "{}() called with fd: {}, cmd: {}, arg: {}",
-        __func__, fd, cmd, arg);
+    LOG(DEBUG, "{}() called with fd: {}, cmd: {}, arg: {}", __func__, fd, cmd,
+        arg);
 
-    if (!CTX->file_map()->exist(fd)) {
+    if(!CTX->file_map()->exist(fd)) {
         return syscall_no_intercept(SYS_fcntl, fd, cmd, arg);
     }
     int ret;
-    switch (cmd) {
+    switch(cmd) {
 
         case F_DUPFD:
             LOG(DEBUG, "{}() F_DUPFD on fd {}", __func__, fd);
@@ -689,16 +742,17 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
         case F_DUPFD_CLOEXEC:
             LOG(DEBUG, "{}() F_DUPFD_CLOEXEC on fd {}", __func__, fd);
             ret = gkfs::syscall::gkfs_dup(fd);
-            if (ret == -1) {
+            if(ret == -1) {
                 return -errno;
             }
-            CTX->file_map()->get(fd)->set_flag(gkfs::filemap::OpenFile_flags::cloexec, true);
+            CTX->file_map()->get(fd)->set_flag(
+                    gkfs::filemap::OpenFile_flags::cloexec, true);
             return ret;
 
         case F_GETFD:
             LOG(DEBUG, "{}() F_GETFD on fd {}", __func__, fd);
-            if (CTX->file_map()->get(fd)
-                    ->get_flag(gkfs::filemap::OpenFile_flags::cloexec)) {
+            if(CTX->file_map()->get(fd)->get_flag(
+                       gkfs::filemap::OpenFile_flags::cloexec)) {
                 return FD_CLOEXEC;
             }
             return 0;
@@ -706,47 +760,49 @@ int hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
         case F_GETFL:
             LOG(DEBUG, "{}() F_GETFL on fd {}", __func__, fd);
             ret = 0;
-            if (CTX->file_map()->get(fd)
-                    ->get_flag(gkfs::filemap::OpenFile_flags::rdonly)) {
+            if(CTX->file_map()->get(fd)->get_flag(
+                       gkfs::filemap::OpenFile_flags::rdonly)) {
                 ret |= O_RDONLY;
             }
-            if (CTX->file_map()->get(fd)
-                    ->get_flag(gkfs::filemap::OpenFile_flags::wronly)) {
+            if(CTX->file_map()->get(fd)->get_flag(
+                       gkfs::filemap::OpenFile_flags::wronly)) {
                 ret |= O_WRONLY;
             }
-            if (CTX->file_map()->get(fd)
-                    ->get_flag(gkfs::filemap::OpenFile_flags::rdwr)) {
+            if(CTX->file_map()->get(fd)->get_flag(
+                       gkfs::filemap::OpenFile_flags::rdwr)) {
                 ret |= O_RDWR;
             }
             return ret;
 
         case F_SETFD:
-            LOG(DEBUG, "{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]",
-                __func__, fd, (arg & FD_CLOEXEC));
-            CTX->file_map()->get(fd)
-                    ->set_flag(gkfs::filemap::OpenFile_flags::cloexec, (arg & FD_CLOEXEC));
+            LOG(DEBUG, "{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]", __func__,
+                fd, (arg & FD_CLOEXEC));
+            CTX->file_map()->get(fd)->set_flag(
+                    gkfs::filemap::OpenFile_flags::cloexec, (arg & FD_CLOEXEC));
             return 0;
 
 
         default:
-            LOG(ERROR, "{}() unrecognized command {} on fd {}",
-                __func__, cmd, fd);
+            LOG(ERROR, "{}() unrecognized command {} on fd {}", __func__, cmd,
+                fd);
             return -ENOTSUP;
     }
 }
 
-int hook_renameat(int olddfd, const char* oldname,
-                  int newdfd, const char* newname,
-                  unsigned int flags) {
+int
+hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
+              unsigned int flags) {
 
-    LOG(DEBUG, "{}() called with olddfd: {}, oldname: \"{}\", newfd: {}, "
-               "newname \"{}\", flags {}",
+    LOG(DEBUG,
+        "{}() called with olddfd: {}, oldname: \"{}\", newfd: {}, "
+        "newname \"{}\", flags {}",
         __func__, olddfd, oldname, newdfd, newname, flags);
 
     const char* oldpath_pass;
     std::string oldpath_resolved;
-    auto oldpath_status = CTX->relativize_fd_path(olddfd, oldname, oldpath_resolved);
-    switch (oldpath_status) {
+    auto oldpath_status =
+            CTX->relativize_fd_path(olddfd, oldname, oldpath_resolved);
+    switch(oldpath_status) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             oldpath_pass = oldname;
             break;
@@ -769,8 +825,9 @@ int hook_renameat(int olddfd, const char* oldname,
 
     const char* newpath_pass;
     std::string newpath_resolved;
-    auto newpath_status = CTX->relativize_fd_path(newdfd, newname, newpath_resolved);
-    switch (newpath_status) {
+    auto newpath_status =
+            CTX->relativize_fd_path(newdfd, newname, newpath_resolved);
+    switch(newpath_status) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             newpath_pass = newname;
             break;
@@ -791,39 +848,42 @@ int hook_renameat(int olddfd, const char* oldname,
             return -EINVAL;
     }
 
-    return syscall_no_intercept(SYS_renameat2, olddfd, oldpath_pass, newdfd, newpath_pass, flags);
+    return syscall_no_intercept(SYS_renameat2, olddfd, oldpath_pass, newdfd,
+                                newpath_pass, flags);
 }
 
-int hook_statfs(const char* path, struct statfs* buf) {
+int
+hook_statfs(const char* path, struct statfs* buf) {
 
-    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}",
-        __func__, path, fmt::ptr(buf));
+    LOG(DEBUG, "{}() called with path: \"{}\", buf: {}", __func__, path,
+        fmt::ptr(buf));
 
     std::string rel_path;
-    if (CTX->relativize_path(path, rel_path)) {
+    if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
     return syscall_no_intercept(SYS_statfs, rel_path.c_str(), buf);
 }
 
-int hook_fstatfs(unsigned int fd, struct statfs* buf) {
+int
+hook_fstatfs(unsigned int fd, struct statfs* buf) {
 
-    LOG(DEBUG, "{}() called with fd: {}, buf: {}",
-        __func__, fd, fmt::ptr(buf));
+    LOG(DEBUG, "{}() called with fd: {}, buf: {}", __func__, fd, fmt::ptr(buf));
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
     return syscall_no_intercept(SYS_fstatfs, fd, buf);
 }
 
-/* The function should broadcast a flush message (pmem_persist i.e.) if the application needs the capabilities*/
-int hook_fsync(unsigned int fd) {
+/* The function should broadcast a flush message (pmem_persist i.e.) if the
+ * application needs the capabilities*/
+int
+hook_fsync(unsigned int fd) {
 
-    LOG(DEBUG, "{}() called with fd: {}",
-        __func__, fd);
+    LOG(DEBUG, "{}() called with fd: {}", __func__, fd);
 
-    if (CTX->file_map()->exist(fd)) {
+    if(CTX->file_map()->exist(fd)) {
         errno = 0;
         return 0;
     }

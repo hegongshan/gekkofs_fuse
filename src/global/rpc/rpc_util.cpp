@@ -32,8 +32,10 @@ namespace rpc {
  * @param state
  * @return
  */
-hg_bool_t bool_to_merc_bool(const bool state) {
-    return state ? static_cast<hg_bool_t>(HG_TRUE) : static_cast<hg_bool_t>(HG_FALSE);
+hg_bool_t
+bool_to_merc_bool(const bool state) {
+    return state ? static_cast<hg_bool_t>(HG_TRUE)
+                 : static_cast<hg_bool_t>(HG_FALSE);
 }
 
 
@@ -41,16 +43,17 @@ hg_bool_t bool_to_merc_bool(const bool state) {
  * Returns the machine's hostname
  * @return
  */
-string get_my_hostname(bool short_hostname) {
+string
+get_my_hostname(bool short_hostname) {
     char hostname[1024];
     auto ret = gethostname(hostname, 1024);
-    if (ret == 0) {
+    if(ret == 0) {
         string hostname_s(hostname);
-        if (!short_hostname)
+        if(!short_hostname)
             return hostname_s;
         // get short hostname
         auto pos = hostname_s.find("."s);
-        if (pos != string::npos)
+        if(pos != string::npos)
             hostname_s = hostname_s.substr(0, pos);
         return hostname_s;
     } else
@@ -58,7 +61,8 @@ string get_my_hostname(bool short_hostname) {
 }
 
 
-string get_host_by_name(const string& hostname) {
+string
+get_host_by_name(const string& hostname) {
     int err = 0;
     struct addrinfo hints;
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -68,26 +72,18 @@ string get_host_by_name(const string& hostname) {
 
     struct addrinfo* addr = nullptr;
 
-    err = getaddrinfo(
-            hostname.c_str(),
-            nullptr,
-            &hints,
-            &addr
-    );
-    if (err) {
-        throw runtime_error("Error getting address info for '"
-                            + hostname + "': " + gai_strerror(err));
+    err = getaddrinfo(hostname.c_str(), nullptr, &hints, &addr);
+    if(err) {
+        throw runtime_error("Error getting address info for '" + hostname +
+                            "': " + gai_strerror(err));
     }
 
     char addr_str[INET6_ADDRSTRLEN];
 
-    err = getnameinfo(
-            addr->ai_addr, addr->ai_addrlen,
-            addr_str, INET6_ADDRSTRLEN,
-            nullptr, 0,
-            (NI_NUMERICHOST | NI_NOFQDN)
-    );
-    if (err) {
+    err = getnameinfo(addr->ai_addr, addr->ai_addrlen, addr_str,
+                      INET6_ADDRSTRLEN, nullptr, 0,
+                      (NI_NUMERICHOST | NI_NOFQDN));
+    if(err) {
         throw runtime_error("Error on getnameinfo(): "s + gai_strerror(err));
     }
     freeaddrinfo(addr);

@@ -43,31 +43,41 @@ struct MetadentryUpdateFlags {
 } // namespace gkfs
 
 // Hermes instance
-namespace hermes { class async_engine; }
+namespace hermes {
+class async_engine;
+}
 
 extern std::unique_ptr<hermes::async_engine> ld_network_service;
 
 // function definitions
 namespace gkfs {
 namespace util {
-template<typename E>
-constexpr typename std::underlying_type<E>::type to_underlying(E e) {
+template <typename E>
+constexpr typename std::underlying_type<E>::type
+to_underlying(E e) {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-std::shared_ptr<gkfs::metadata::Metadata> get_metadata(const std::string& path, bool follow_links = false);
+std::shared_ptr<gkfs::metadata::Metadata>
+get_metadata(const std::string& path, bool follow_links = false);
 
-int metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md, struct stat& attr);
+int
+metadata_to_stat(const std::string& path, const gkfs::metadata::Metadata& md,
+                 struct stat& attr);
 
-void load_hosts();
+void
+load_hosts();
 
-void load_forwarding_map();
+void
+load_forwarding_map();
 
-std::vector<std::pair<std::string, std::string>> read_hosts_file();
+std::vector<std::pair<std::string, std::string>>
+read_hosts_file();
 
-void connect_to_hosts(const std::vector<std::pair<std::string, std::string>>& hosts);
+void
+connect_to_hosts(const std::vector<std::pair<std::string, std::string>>& hosts);
 
 } // namespace util
 } // namespace gkfs
 
-#endif //GEKKOFS_PRELOAD_UTIL_HPP
+#endif // GEKKOFS_PRELOAD_UTIL_HPP

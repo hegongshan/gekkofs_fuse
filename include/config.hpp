@@ -39,8 +39,8 @@ constexpr auto client_log_path = "/tmp/gkfs_client.log";
 constexpr auto daemon_log_path = "/tmp/gkfs_daemon.log";
 
 constexpr auto client_log_level = "info,errors,critical,hermes";
-constexpr auto daemon_log_level = 4; //info
-} // namespace logging
+constexpr auto daemon_log_level = 4; // info
+} // namespace log
 
 namespace metadata {
 // which metadata should be considered apart from size and mode
@@ -53,11 +53,12 @@ constexpr auto use_blocks = false;
 
 namespace rpc {
 constexpr auto chunksize = 524288; // in bytes (e.g., 524288 == 512KB)
-//size of preallocated buffer to hold directory entries in rpc call
+// size of preallocated buffer to hold directory entries in rpc call
 constexpr auto dirents_buff_size = (8 * 1024 * 1024); // 8 mega
 /*
- * Indicates the number of concurrent progress to drive I/O operations of chunk files to and from local file systems
- * The value is directly mapped to created Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
+ * Indicates the number of concurrent progress to drive I/O operations of chunk
+ * files to and from local file systems The value is directly mapped to created
+ * Argobots xstreams, controlled in a single pool with ABT_snoozer scheduler
  */
 constexpr auto daemon_io_xstreams = 8;
 // Number of threads used for RPC handlers at the daemon
@@ -69,7 +70,7 @@ namespace rocksdb {
 constexpr auto use_write_ahead_log = false;
 } // namespace rocksdb
 
-} // namespace gkfs
 } // namespace config
+} // namespace gkfs
 
-#endif //GEKKOFS_CONFIG_HPP
+#endif // GEKKOFS_CONFIG_HPP

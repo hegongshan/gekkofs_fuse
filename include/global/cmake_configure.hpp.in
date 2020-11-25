@@ -10,11 +10,11 @@
 
   SPDX-License-Identifier: MIT
 */
-
+// clang-format off
 #ifndef GKFS_CMAKE_CONFIGURE_HPP
 #define GKFS_CMAKE_CONFIGURE_HPP
 
 #cmakedefine01 CREATE_CHECK_PARENTS
 #cmakedefine01 LOG_SYSCALLS
-
-#endif //FS_CMAKE_CONFIGURE_H
+#endif // FS_CMAKE_CONFIGURE_H
+// clang-format on

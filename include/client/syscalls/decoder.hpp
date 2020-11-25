@@ -25,8 +25,7 @@ namespace detail {
 
 /** a RAII saver/restorer of errno values */
 struct errno_saver {
-    errno_saver(int errnum) :
-        saved_errno_(errnum) { }
+    errno_saver(int errnum) : saved_errno_(errnum) {}
 
     ~errno_saver() {
         errno = saved_errno_;
@@ -39,8 +38,7 @@ struct errno_saver {
 
 template <typename FmtBuffer>
 inline void
-decode(FmtBuffer& buffer, 
-       const long syscall_number,
+decode(FmtBuffer& buffer, const long syscall_number,
        const long argv[MAX_ARGS]) {
 
     detail::errno_saver _(errno);
@@ -64,9 +62,7 @@ decode(FmtBuffer& buffer,
 
 template <typename FmtBuffer>
 inline void
-decode(FmtBuffer& buffer, 
-       const long syscall_number,
-       const long argv[MAX_ARGS],
+decode(FmtBuffer& buffer, const long syscall_number, const long argv[MAX_ARGS],
        const long result) {
 
     detail::errno_saver _(errno);
@@ -90,18 +86,15 @@ decode(FmtBuffer& buffer,
         return;
     }
 
-	if(error_code(result) != 0) {
-        fmt::format_to(buffer, ") = {} {} ({})", 
-                static_cast<int>(-1), 
-                errno_name(-result),
-                errno_message(-result));
+    if(error_code(result) != 0) {
+        fmt::format_to(buffer, ") = {} {} ({})", static_cast<int>(-1),
+                       errno_name(-result), errno_message(-result));
         return;
     }
 
     fmt::format_to(buffer, ") = ");
     const auto& ret = sc.return_type();
     ret.formatter<FmtBuffer>()(buffer, result);
-
 }
 
 } // namespace syscall

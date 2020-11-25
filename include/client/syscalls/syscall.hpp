@@ -11,6 +11,9 @@
   SPDX-License-Identifier: MIT
 */
 
+// This file uses special C formatting for a better overview
+// clang-format off
+
 #ifndef GKFS_SYSCALL_HPP
 #define GKFS_SYSCALL_HPP
 
@@ -68,8 +71,7 @@ lookup_by_number(const long syscall_number) {
 }
 
 static inline descriptor
-lookup_by_number(const long syscall_number,
-               const long argv[MAX_ARGS]) {
+lookup_by_number(const long syscall_number, const long argv[MAX_ARGS]) {
     const auto* info = ::get_syscall_info(syscall_number, argv);
     return *reinterpret_cast<const descriptor*>(info);
 }
@@ -125,38 +127,38 @@ enum class info : int {
 
 
 inline constexpr info
-operator&(info t1, info t2) { 
-    return info(static_cast<int>(t1) & static_cast<int>(t2)); 
+operator&(info t1, info t2) {
+    return info(static_cast<int>(t1) & static_cast<int>(t2));
 }
 
 inline constexpr info
-operator|(info t1, info t2) { 
-    return info(static_cast<int>(t1) | static_cast<int>(t2)); 
+operator|(info t1, info t2) {
+    return info(static_cast<int>(t1) | static_cast<int>(t2));
 }
 
 inline constexpr info
-operator^(info t1, info t2) { 
-    return info(static_cast<int>(t1) ^ static_cast<int>(t2)); 
+operator^(info t1, info t2) {
+    return info(static_cast<int>(t1) ^ static_cast<int>(t2));
 }
 
 inline constexpr info
-operator~(info t1) { 
-    return info(~static_cast<int>(t1)); 
+operator~(info t1) {
+    return info(~static_cast<int>(t1));
 }
 
 inline const info&
-operator|=(info& t1, info t2) { 
-    return t1 = t1 | t2; 
+operator|=(info& t1, info t2) {
+    return t1 = t1 | t2;
 }
 
 inline const info&
-operator&=(info& t1, info t2) { 
-    return t1 = t1 & t2; 
+operator&=(info& t1, info t2) {
+    return t1 = t1 & t2;
 }
 
 inline const info&
-operator^=(info& t1, info t2) { 
-    return t1 = t1 ^ t2; 
+operator^=(info& t1, info t2) {
+    return t1 = t1 ^ t2;
 }
 
 
@@ -188,7 +190,7 @@ target(syscall::info info) {
     return info & target_mask;
 }
 
-static constexpr bool 
+static constexpr bool
 is_handled_by_kernel(syscall::info info) {
     return (info & target_mask) == to_kernel;
 }
@@ -204,13 +206,15 @@ execution_is_pending(syscall::info info) {
  */
 static inline int
 error_code(long result) {
-	if (result < 0 && result >= -0x1000)
-		return (int)-result;
+    if(result < 0 && result >= -0x1000)
+        return (int) -result;
 
-	return 0;
+    return 0;
 }
 
 } // namespace syscall
 } // namespace gkfs
 
 #endif // GKFS_SYSCALL_HPP
+
+// clang-format on

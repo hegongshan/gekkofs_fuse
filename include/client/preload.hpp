@@ -21,13 +21,16 @@
 #define CTX gkfs::preload::PreloadContext::getInstance()
 namespace gkfs {
 namespace preload {
-void init_ld_env_if_needed();
+void
+init_ld_env_if_needed();
 } // namespace preload
 } // namespace gkfs
 
-void init_preload() __attribute__((constructor));
+void
+init_preload() __attribute__((constructor));
 
-void destroy_preload() __attribute__((destructor));
+void
+destroy_preload() __attribute__((destructor));
 
 
-#endif //IOINTERCEPT_PRELOAD_HPP
+#endif // IOINTERCEPT_PRELOAD_HPP

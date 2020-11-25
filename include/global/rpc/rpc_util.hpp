@@ -25,13 +25,16 @@ extern "C" {
 namespace gkfs {
 namespace rpc {
 
-hg_bool_t bool_to_merc_bool(bool state);
+hg_bool_t
+bool_to_merc_bool(bool state);
 
-std::string get_my_hostname(bool short_hostname = false);
+std::string
+get_my_hostname(bool short_hostname = false);
 
-std::string get_host_by_name(const std::string& hostname);
+std::string
+get_host_by_name(const std::string& hostname);
 
 } // namespace rpc
 } // namespace gkfs
 
-#endif //GEKKOFS_GLOBAL_RPC_UTILS_HPP
+#endif // GEKKOFS_GLOBAL_RPC_UTILS_HPP

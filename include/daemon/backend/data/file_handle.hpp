@@ -24,37 +24,38 @@ namespace gkfs {
 namespace data {
 
 /**
- * File handle to encapsulate a file descriptor, allowing RAII closing of the file descriptor
+ * File handle to encapsulate a file descriptor, allowing RAII closing of the
+ * file descriptor
  */
 class FileHandle {
 
 private:
-
     constexpr static const int init_value{-1};
 
     int fd_{init_value};
     std::string path_{};
 
 public:
-
     FileHandle() = default;
 
-    explicit FileHandle(int fd, std::string path) noexcept :
-            fd_(fd) {}
+    explicit FileHandle(int fd, std::string path) noexcept : fd_(fd) {}
 
     FileHandle(FileHandle&& rhs) = default;
 
     FileHandle(const FileHandle& other) = delete;
 
-    FileHandle& operator=(FileHandle&& rhs) = default;
+    FileHandle&
+    operator=(FileHandle&& rhs) = default;
 
-    FileHandle& operator=(const FileHandle& other) = delete;
+    FileHandle&
+    operator=(const FileHandle& other) = delete;
 
     explicit operator bool() const noexcept {
         return valid();
     }
 
-    bool operator!() const noexcept {
+    bool
+    operator!() const noexcept {
         return !valid();
     }
 
@@ -72,11 +73,13 @@ public:
      * Closes file descriptor and resets it to initial value
      * @return
      */
-    bool close() noexcept {
-        if (fd_ != init_value) {
-            if (::close(fd_) < 0) {
-                GKFS_DATA_MOD->log()->warn("{}() Failed to close file descriptor '{}' path '{}' errno '{}'", __func__,
-                                           fd_, path_, ::strerror(errno));
+    bool
+    close() noexcept {
+        if(fd_ != init_value) {
+            if(::close(fd_) < 0) {
+                GKFS_DATA_MOD->log()->warn(
+                        "{}() Failed to close file descriptor '{}' path '{}' errno '{}'",
+                        __func__, fd_, path_, ::strerror(errno));
                 return false;
             }
         }
@@ -85,15 +88,13 @@ public:
     }
 
     ~FileHandle() {
-        if (fd_ != init_value)
+        if(fd_ != init_value)
             close();
     }
-
-
 };
 
 } // namespace data
 } // namespace gkfs
 
 
-#endif //GEKKOFS_DAEMON_FILE_HANDLE_HPP
+#endif // GEKKOFS_DAEMON_FILE_HANDLE_HPP

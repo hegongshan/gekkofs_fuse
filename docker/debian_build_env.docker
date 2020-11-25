@@ -41,8 +41,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		python3-dev \
 		python3-venv \
 		expect \
+		# clang 10 deps
+		lsb-release \
+		wget \
+		software-properties-common \
+		gnupg2 \
+# add clang-10 repos
+&& wget https://apt.llvm.org/llvm.sh -P /tmp && chmod +x /tmp/llvm.sh && /tmp/llvm.sh 10 \
+# install clang-format
+&& apt-get update && apt-get install -y --no-install-recommends clang-format-10 \
 # Clean apt cache to reduce image layer size
-&& rm -rf /var/lib/apt/lists/*
+&& rm -rf /var/lib/apt/lists/* && rm /tmp/llvm.sh \
+# Clean apt caches of packages
+&& apt-get clean && apt-get autoclean
 
 ## COPY scripts/dl_dep.sh		$SCRIPTS_PATH/
 ## COPY scripts/compile_dep.sh $SCRIPTS_PATH/
