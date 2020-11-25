@@ -25,8 +25,7 @@ extern "C" {
 #include <margo.h>
 }
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 class ChunkOpException : public std::runtime_error {
 public:
@@ -221,7 +220,6 @@ public:
     wait_for_tasks_and_push_back(const bulk_args& args);
 };
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data
 
 #endif // GEKKOFS_DAEMON_DATA_HPP

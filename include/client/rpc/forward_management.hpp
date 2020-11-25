@@ -15,13 +15,11 @@
 #ifndef GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
 #define GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 bool
 forward_get_fs_config();
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_CLIENT_FORWARD_MNGMNT_HPP

@@ -20,8 +20,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace util {
+namespace gkfs::util {
 
 void
 populate_hosts_file() {
@@ -49,5 +48,4 @@ destroy_hosts_file() {
     std::remove(GKFS_DATA->hosts_file().c_str());
 }
 
-} // namespace util
-} // namespace gkfs
+} // namespace gkfs::util

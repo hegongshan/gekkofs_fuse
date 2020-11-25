@@ -14,8 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace gkfs {
-namespace path {
+namespace gkfs::path {
 
 unsigned int
 match_components(const std::string& path, unsigned int& path_components,
@@ -43,5 +42,4 @@ init_cwd();
 void
 set_cwd(const std::string& path, bool internal);
 
-} // namespace path
-} // namespace gkfs
+} // namespace gkfs::path

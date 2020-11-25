@@ -15,13 +15,18 @@
 #define GKFS_IO_SERIALIZE_HPP
 
 #include <nlohmann/json.hpp>
+#include <reflection.hpp>
+
+extern "C" {
+#include <sys/stat.h>
+}
 
 template <typename T>
-nlohmann::json 
+nlohmann::json
 serialize(const T& object) {
 
-    using json = nlohmann::json; 
-    
+    using json = nlohmann::json;
+
     json j;
 
     constexpr auto n = std::tuple_size<decltype(T::properties)>::value;

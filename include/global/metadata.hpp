@@ -21,22 +21,21 @@
 #include <sys/stat.h>
 #include <string>
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 constexpr mode_t LINK_MODE = ((S_IRWXU | S_IRWXG | S_IRWXO) | S_IFLNK);
 
 class Metadata {
 private:
-    time_t atime_; // access time. gets updated on file access unless mounted
-                   // with noatime
-    time_t mtime_; // modify time. gets updated when file content is modified.
-    time_t ctime_; // change time. gets updated when the file attributes are
-                   // changed AND when file content is modified.
-    mode_t mode_;
-    nlink_t link_count_; // number of names for this inode (hardlinks)
-    size_t size_;        // size_ in bytes, might be computed instead of stored
-    blkcnt_t blocks_;    // allocated file system blocks_
+    time_t atime_{}; // access time. gets updated on file access unless mounted
+                     // with noatime
+    time_t mtime_{}; // modify time. gets updated when file content is modified.
+    time_t ctime_{}; // change time. gets updated when the file attributes are
+                     // changed AND when file content is modified.
+    mode_t mode_{};
+    nlink_t link_count_{}; // number of names for this inode (hardlinks)
+    size_t size_{};     // size_ in bytes, might be computed instead of stored
+    blkcnt_t blocks_{}; // allocated file system blocks_
 #ifdef HAS_SYMLINKS
     std::string target_path_; // For links this is the path of the target file
 #endif
@@ -122,8 +121,7 @@ public:
 #endif
 };
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 
 #endif // FS_METADATA_H

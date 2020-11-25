@@ -16,18 +16,18 @@
 
 #include <nlohmann/json.hpp>
 #include <fmt/format.h>
-#include <dirent.h> // required by DIR*
-
 #include <boost/preprocessor.hpp>
 
+extern "C" {
+#include <dirent.h> // required by DIR*
+}
 
 namespace refl {
 namespace detail {
 
-template<typename Class, typename T>
+template <typename Class, typename T>
 struct property_impl {
-    constexpr property_impl(T Class::*aMember, 
-                            const char* aType, 
+    constexpr property_impl(T Class::*aMember, const char* aType,
                             const char* aName) : 
         member{aMember}, 
         type{aType}, 

@@ -48,7 +48,6 @@ set(DAEMON_LINK_LIBRARIES
     # others
     Boost::boost
     Boost::program_options
-    Boost::filesystem
     Threads::Threads
     )
 set(DAEMON_INCLUDE_DIRS

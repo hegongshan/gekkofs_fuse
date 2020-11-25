@@ -22,8 +22,7 @@ extern "C" {
 
 #include <string>
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 template <typename InputType, typename OutputType>
 inline hg_return_t
@@ -96,8 +95,7 @@ cleanup_respond(hg_handle_t* handle, OutputType* output) {
     return ret;
 }
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 
 #endif // GEKKOFS_DAEMON_RPC_UTIL_HPP

@@ -16,7 +16,7 @@
 #include <client/hooks.hpp>
 #include <client/logging.hpp>
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <fmt/format.h>
 
 #include <cerrno>
@@ -802,8 +802,7 @@ hook_clone_at_parent(unsigned long flags, void* child_stack, int* ptid,
 
 } // namespace
 
-namespace gkfs {
-namespace preload {
+namespace gkfs::preload {
 
 int
 internal_hook_guard_wrapper(long syscall_number, long arg0, long arg1,
@@ -911,5 +910,4 @@ stop_interception() {
     intercept_hook_point_clone_parent = nullptr;
 }
 
-} // namespace preload
-} // namespace gkfs
+} // namespace gkfs::preload

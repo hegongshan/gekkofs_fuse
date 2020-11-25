@@ -16,8 +16,6 @@
 #include <client/preload_util.hpp>
 #include <client/rpc/rpc_types.hpp>
 
-#include <boost/token_functions.hpp>
-
 namespace gkfs {
 namespace rpc {
 

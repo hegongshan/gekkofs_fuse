@@ -23,8 +23,7 @@
 #include <map>
 #include <type_traits>
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 struct MetadentryUpdateFlags {
     bool atime = false;
@@ -39,8 +38,7 @@ struct MetadentryUpdateFlags {
     bool path = false;
 };
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 // Hermes instance
 namespace hermes {
@@ -50,8 +48,7 @@ class async_engine;
 extern std::unique_ptr<hermes::async_engine> ld_network_service;
 
 // function definitions
-namespace gkfs {
-namespace util {
+namespace gkfs::util {
 template <typename E>
 constexpr typename std::underlying_type<E>::type
 to_underlying(E e) {
@@ -77,7 +74,6 @@ read_hosts_file();
 void
 connect_to_hosts(const std::vector<std::pair<std::string, std::string>>& hosts);
 
-} // namespace util
-} // namespace gkfs
+} // namespace gkfs::util
 
 #endif // GEKKOFS_PRELOAD_UTIL_HPP

@@ -22,8 +22,7 @@ extern "C" {
 
 #include <string>
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 hg_bool_t
 bool_to_merc_bool(bool state);
@@ -34,7 +33,6 @@ get_my_hostname(bool short_hostname = false);
 std::string
 get_host_by_name(const std::string& hostname);
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_GLOBAL_RPC_UTILS_HPP

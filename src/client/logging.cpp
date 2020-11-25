@@ -391,7 +391,7 @@ logger::~logger() {
 
 void
 logger::log_syscall(syscall::info info, const long syscall_number,
-                    const long args[6], boost::optional<long> result) {
+                    const long args[6], std::optional<long> result) {
 
 
     const bool log_syscall_entry = !!(log::syscall_at_entry & log_mask_);

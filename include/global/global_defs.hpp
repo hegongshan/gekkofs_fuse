@@ -14,11 +14,9 @@
 #ifndef GEKKOFS_GLOBAL_DEFS_HPP
 #define GEKKOFS_GLOBAL_DEFS_HPP
 
-namespace gkfs {
-
 // These constexpr set the RPC's identity and which handler the receiver end
 // should use
-namespace rpc {
+namespace gkfs::rpc {
 
 using chnk_id_t = unsigned long;
 
@@ -49,8 +47,6 @@ constexpr auto ofi_tcp = "ofi+tcp";
 constexpr auto ofi_verbs = "ofi+verbs";
 constexpr auto na_sm = "na+sm";
 } // namespace protocol
-} // namespace rpc
-
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_GLOBAL_DEFS_HPP

@@ -20,8 +20,7 @@
 
 namespace rdb = rocksdb;
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 class MetadataDB {
 private:
@@ -68,7 +67,6 @@ public:
     iterate_all();
 };
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 #endif // GEKKOFS_METADATA_DB_HPP

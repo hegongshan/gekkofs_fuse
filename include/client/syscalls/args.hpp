@@ -18,12 +18,14 @@
 #define GKFS_SYSCALLS_ARGS_HPP
 
 #include <fcntl.h>
-#include <signal.h>
+#include <csignal>
+#include <cassert>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <syscall.h>
 #include <unistd.h>
+#include <optional>
 
 #include <type_traits>
 #include <fmt/format.h>
@@ -78,7 +80,7 @@ static constexpr auto generic       = type::generic;
 struct printable_arg {
     const char* const name;
     const long value;
-    boost::optional<long> size;
+    std::optional<long> size;
 };
 
 

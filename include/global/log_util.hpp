@@ -16,8 +16,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace gkfs {
-namespace log {
+namespace gkfs::log {
 
 spdlog::level::level_enum
 get_level(std::string level_str);
@@ -28,7 +27,6 @@ get_level(unsigned long level);
 void
 setup(const std::vector<std::string>& loggers, spdlog::level::level_enum level,
       const std::string& path);
-} // namespace log
-} // namespace gkfs
+} // namespace gkfs::log
 
 #endif

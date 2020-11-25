@@ -221,16 +221,14 @@ log_prog_name() {
 
 } // namespace
 
-namespace gkfs {
-namespace preload {
+namespace gkfs::preload {
 
 void
 init_ld_env_if_needed() {
     pthread_once(&init_env_thread, init_ld_environment_);
 }
 
-} // namespace preload
-} // namespace gkfs
+} // namespace gkfs::preload
 
 /**
  * Called initially ONCE when preload library is used with the LD_PRELOAD

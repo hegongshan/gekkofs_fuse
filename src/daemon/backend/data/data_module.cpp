@@ -13,8 +13,7 @@
 
 #include <daemon/backend/data/data_module.hpp>
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 const std::shared_ptr<spdlog::logger>&
 DataModule::log() const {
@@ -26,5 +25,4 @@ DataModule::log(const std::shared_ptr<spdlog::logger>& log) {
     DataModule::log_ = log;
 }
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data

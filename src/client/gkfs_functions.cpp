@@ -94,8 +94,7 @@ check_parent_dir(const std::string& path) {
 }
 } // namespace
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 /**
  * gkfs wrapper for open() system calls
@@ -734,7 +733,7 @@ gkfs_pread(std::shared_ptr<gkfs::filemap::OpenFile> file, char* buf,
 
     // Zeroing buffer before read is only relevant for sparse files. Otherwise
     // sparse regions contain invalid data.
-    if(gkfs::config::io::zero_buffer_before_read) {
+    if constexpr(gkfs::config::io::zero_buffer_before_read) {
         memset(buf, 0, sizeof(char) * count);
     }
     auto ret = gkfs::rpc::forward_read(file->path(), buf, offset, count);
@@ -1146,5 +1145,4 @@ gkfs_readlink(const std::string& path, char* buf, int bufsize) {
 
 #endif
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall

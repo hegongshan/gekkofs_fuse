@@ -19,8 +19,7 @@
 #define ADD_PREFIX(str) CLIENT_ENV_PREFIX str
 
 /* Environment variables for the GekkoFS client */
-namespace gkfs {
-namespace env {
+namespace gkfs::env {
 
 static constexpr auto LOG = ADD_PREFIX("LOG");
 
@@ -37,8 +36,7 @@ static constexpr auto HOSTS_FILE = ADD_PREFIX("HOSTS_FILE");
 static constexpr auto FORWARDING_MAP_FILE = ADD_PREFIX("FORWARDING_MAP_FILE");
 #endif
 
-} // namespace env
-} // namespace gkfs
+} // namespace gkfs::env
 
 #undef ADD_PREFIX
 
