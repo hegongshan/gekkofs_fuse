@@ -4,6 +4,7 @@ PROJECT_SRC="$(pwd)/src"
 PROJECT_INCLUDE="$(pwd)/include"
 RUN_FORMAT=false
 CLANG_FORMAT_BIN=""
+VERBOSE=false
 
 usage_short() {
     echo "
@@ -30,6 +31,7 @@ optional arguments:
                         (default: looks for 'clang-format' or 'clang-format-10')
     -r, --run_format    run clang-formatter before formatting check
                         DISCLAIMER: FILES ARE MODIFIED IN PLACE!
+    -v, --verbose       shows the diff of all files
 "
 }
 
@@ -59,6 +61,10 @@ while [[ $# -gt 0 ]]; do
         ;;
     -r | --run_format)
         RUN_FORMAT=true
+        shift # past argument
+        ;;
+    -v | --verbose)
+        VERBOSE=true
         shift # past argument
         ;;
     -h | --help)
@@ -115,6 +121,11 @@ while IFS= read -r -d '' FILE; do
         else
             echo -n "$FILE "
             echo "$UNFORMATTED_LINES"
+            if [[ "$VERBOSE" == true ]]; then
+                diff -u <(cat "$FILE") <($CLANG_FORMAT_BIN -style=file "$FILE")
+                echo "_______________________________________________________"
+            fi
+            echo
             FAIL=true
         fi
     fi
