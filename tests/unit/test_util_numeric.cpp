@@ -70,3 +70,59 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
         }
     }
 }
+
+SCENARIO(" offsets can be right-aligned to block size boundaries ",
+         "[utils][numeric][chnk_ralign]") {
+
+    using namespace gkfs::util;
+
+    GIVEN(" a block size ") {
+
+        const std::size_t block_size = GENERATE(filter(
+                [](uint64_t bs) { return is_power_of_2(bs); }, range(0, 100000)));
+
+        WHEN(" offset is 0 ") {
+
+            const uint64_t offset = 0;
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the right-aligned offset is block_size ") {
+                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t expected_offset = block_size;
+                REQUIRE(aligned_offset == expected_offset);
+            }
+        }
+
+        WHEN(" offset is smaller than block_size ") {
+
+            const uint64_t offset = GENERATE_COPY(
+                    take(test_reps, random(std::size_t{0}, block_size - 1)));
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the right-aligned offset is 0 ") {
+                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t expected_offset = block_size;
+                REQUIRE(aligned_offset == expected_offset);
+            }
+        }
+
+        WHEN(" offset is larger than block_size ") {
+
+            const uint64_t offset = GENERATE_COPY(
+                    take(test_reps, random(block_size, block_size * 31)));
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the right-aligned offset is the right boundary of the "
+                 "containing block ") {
+                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t expected_offset =
+                        static_cast<uint64_t>(offset / block_size + 1) *
+                        block_size;
+                REQUIRE(aligned_offset == expected_offset);
+            }
+        }
+    }
+}
