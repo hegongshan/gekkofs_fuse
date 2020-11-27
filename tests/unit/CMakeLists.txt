@@ -34,6 +34,7 @@ target_link_libraries(catch2_main
 add_executable(tests
     test_example_00.cpp
     test_example_01.cpp
+    test_util_numeric.cpp
 )
 
 target_link_libraries(tests
