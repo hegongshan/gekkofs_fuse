@@ -15,12 +15,89 @@
 #include <global/chunk_calc_util.hpp>
 #include <fmt/format.h>
 
+using namespace gkfs::util;
 constexpr auto test_repetitions = 250u;
+
+namespace {
+
+/**
+ * Check if @n is a power of two by (rather inefficiently)
+ * performing successive divisions by 2 in an attempt to reach 1.
+ *
+ * @param n the number to check
+ * @returns true if @n is a power of 2, false otherwise
+ */
+bool
+check_power_of_2(uint64_t n) {
+    if(n == 0) {
+        return false;
+    }
+
+    while(n != 1) {
+        if(n % 2 != 0) {
+            return false;
+        }
+        n /= 2;
+    }
+
+    return true;
+}
+
+} // namespace
+
+
+SCENARIO(" powers of 2 can be correctly detected ",
+         "[utils][numeric][is_power_of_2]") {
+
+    GIVEN(" a positive number ") {
+
+        WHEN(" n is 0 ") {
+
+            const uint64_t n = 0;
+
+            THEN(" is_power_of_2(n) returns false ") {
+                REQUIRE(is_power_of_2(n) == false);
+            }
+        }
+
+        WHEN(" n is 1 ") {
+
+            const uint64_t n = 1;
+
+            THEN(" is_power_of_2(n) returns true ") {
+                REQUIRE(is_power_of_2(n) == true);
+            }
+        }
+
+        WHEN(" n is neither 0 nor 1 ") {
+
+            AND_WHEN(" n is a power of 2 ") {
+
+                const std::size_t n = GENERATE(
+                        filter([](uint64_t m) { return check_power_of_2(m); },
+                               range(0, 10000)));
+
+                THEN(" is_power_of_2(n) returns false ") {
+                    REQUIRE(is_power_of_2(n) == true);
+                }
+            }
+
+            AND_WHEN(" n is not a power of 2 ") {
+
+                const std::size_t n = GENERATE(
+                        filter([](uint64_t m) { return !check_power_of_2(m); },
+                               range(0, 10000)));
+
+                THEN(" is_power_of_2(n) returns false ") {
+                    REQUIRE(is_power_of_2(n) == false);
+                }
+            }
+        }
+    }
+}
 
 SCENARIO(" offsets can be left-aligned to block size boundaries ",
          "[utils][numeric][chnk_lalign]") {
-
-    using namespace gkfs::util;
 
     GIVEN(" a block size ") {
 
@@ -73,8 +150,6 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
 
 SCENARIO(" offsets can be right-aligned to block size boundaries ",
          "[utils][numeric][chnk_ralign]") {
-
-    using namespace gkfs::util;
 
     GIVEN(" a block size ") {
 
