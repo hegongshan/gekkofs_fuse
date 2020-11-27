@@ -14,112 +14,188 @@
 #ifndef GEKKOFS_CHNK_CALC_UTIL_HPP
 #define GEKKOFS_CHNK_CALC_UTIL_HPP
 
+#include <cstdint>
+#include <unistd.h>
 #include <cassert>
 
 namespace gkfs::util {
 
 /**
- * Compute the base2 logarithm for 64 bit integers
+ * Check whether integer `n` is a power of 2.
+ *
+ * @param [in] n the number to check.
+ * @returns `true` if `n` is a power of 2; `false` otherwise.
  */
-inline int
+constexpr bool
+is_power_of_2(uint64_t n) {
+    return n && (!(n & (n - 1u)));
+}
+
+/**
+ * Compute the base2 logarithm for 64 bit integers.
+ *
+ * @param [in] n the number from which to compute the log2.
+ * @returns the base 2 logarithm of `n`.
+ */
+constexpr std::size_t
 log2(uint64_t n) {
-
-    /* see
-     * http://stackoverflow.com/questions/11376288/fast-computing-of-log2-for-64-bit-integers
-     */
-    static const int table[64] = {
-            0,  58, 1,  59, 47, 53, 2,  60, 39, 48, 27, 54, 33, 42, 3,  61,
-            51, 37, 40, 49, 18, 28, 20, 55, 30, 34, 11, 43, 14, 22, 4,  62,
-            57, 46, 52, 38, 26, 32, 41, 50, 36, 17, 19, 29, 10, 13, 21, 56,
-            45, 25, 31, 35, 16, 9,  12, 44, 24, 15, 8,  23, 7,  6,  5,  63};
-
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n |= n >> 32;
-
-    return table[(n * 0x03f6eaf2cd271461) >> 58];
+    return 8u * sizeof(uint64_t) - __builtin_clzll(n) - 1;
 }
 
-
 /**
- * Align an @offset to the closest left side chunk boundary
- */
-inline off64_t
-chnk_lalign(const off64_t offset, const size_t chnk_size) {
-    return offset & ~(chnk_size - 1);
-}
-
-
-/**
- * Align an @offset to the closest right side chunk boundary
- */
-inline off64_t
-chnk_ralign(const off64_t offset, const size_t chnk_size) {
-    return chnk_lalign(offset + chnk_size, chnk_size);
-}
-
-
-/**
- * Return the padding (bytes) that separates the @offset from the closest
- * left side chunk boundary
+ * Check whether @n is divisible by @block_size.
  *
- * If @offset is a boundary the resulting padding will be 0
- */
-inline size_t
-chnk_lpad(const off64_t offset, const size_t chnk_size) {
-    return offset % chnk_size;
-}
-
-
-/**
- * Return the padding (bytes) that separates the @offset from the closest
- * right side chunk boundary
+ * @note This function assumes that block_size is a power of 2.
  *
- * If @offset is a boundary the resulting padding will be 0
+ * @param [in] n the number to check.
+ * @param [in] block_size
+ * @returns true if @n is divisible by @block_size; false otherwise.
  */
-inline size_t
-chnk_rpad(const off64_t offset, const size_t chnk_size) {
-    return (-offset) % chnk_size;
+constexpr bool
+is_divisible(const uint64_t n, const size_t block_size) {
+    using gkfs::util::log2;
+    assert(is_power_of_2(block_size));
+    return !(n & ((1u << log2(block_size)) - 1));
 }
 
-
 /**
- * Given an @offset calculates the chunk number to which the @offset belongs
+ * Given a file @offset and a @block_size, align the @offset to its
+ * closest left-side block boundary.
  *
- * chunk_id(8,4) = 2;
- * chunk_id(7,4) = 1;
- * chunk_id(2,4) = 0;
- * chunk_id(0,4) = 0;
+ * @note This function assumes that block_size is a power of 2.
+ *
+ * @param [in] offset the offset to align.
+ * @param [in] block_size the block size used to compute boundaries.
+ * @returns an offset aligned to the left-side block boundary.
  */
-inline uint64_t
-chnk_id_for_offset(const off64_t offset, const size_t chnk_size) {
-    /*
-     * This does not work for offsets that use the 64th bit, i.e.,
-     * 9223372036854775808. 9223372036854775808 - 1 uses 63 bits and still
-     * works. `offset / chnk_size` works with the 64th bit. With this number we
-     * can address more than 19,300,000 exabytes of data though. Hi future me?
-     */
-    return static_cast<uint64_t>(chnk_lalign(offset, chnk_size) >>
-                                 log2(chnk_size));
+constexpr uint64_t
+chnk_lalign(const uint64_t offset, const size_t block_size) {
+    // This check is automatically removed in release builds
+    assert(is_power_of_2(block_size));
+    return static_cast<uint64_t>(offset) & ~(block_size - 1u);
 }
 
 
 /**
- * Return the number of chunks involved in an operation that operates
- * from @offset for a certain amount of bytes (@count).
+ * Given a file @offset and a @block_size, align the @offset to its
+ * closest right-side block boundary.
+ *
+ * @note This function assumes that block_size is a power of 2.
+ *
+ * @param [in] offset the offset to align.
+ * @param [in] block_size the block size used to compute boundaries.
+ * @returns an offset aligned to the right-side block boundary.
  */
-inline uint64_t
-chnk_count_for_offset(const off64_t offset, const size_t count,
+constexpr uint64_t
+chnk_ralign(const uint64_t offset, const size_t block_size) {
+    // This check is automatically removed in release builds
+    assert(is_power_of_2(block_size));
+    return chnk_lalign(offset, block_size) + block_size;
+}
+
+
+/**
+ * Return the overrun bytes that separate @offset from the closest left side
+ * block boundary.
+ *
+ * @note This function assumes that block_size is a power of 2.
+ *
+ * @param [in] offset the offset for which the overrun distance should be
+ * computed.
+ * @param [in] block_size the block size used to compute boundaries.
+ * @returns the distance in bytes between the left-side boundary of @offset
+ */
+constexpr size_t
+chnk_lpad(const uint64_t offset, const size_t block_size) {
+    // This check is automatically removed in release builds
+    assert(is_power_of_2(block_size));
+    return static_cast<uint64_t>(offset) & (block_size - 1u);
+}
+
+
+/**
+ * Return the underrun bytes that separate @offset from the closest right side
+ * block boundary.
+ *
+ * @note This function assumes that block_size is a power of 2.
+ *
+ * @param [in] offset the offset for which the overrun distance should be
+ * computed.
+ * @param [in] block_size the block size used to compute boundaries.
+ * @returns the distance in bytes between the right-side boundary of @offset
+ */
+constexpr size_t
+chnk_rpad(const uint64_t offset, const size_t block_size) {
+    // This check is automatically removed in release builds
+    assert(is_power_of_2(block_size));
+    return chnk_ralign(offset, block_size) - offset;
+}
+
+
+/**
+ * Given an @offset and a @block_size, compute the block index to which @offset
+ * belongs.
+ *
+ * @note Block indexes are (conceptually) computed by dividing @offset
+ * by @block_size, with index 0 referring to block [0, block_size - 1],
+ * index 1 to block [block_size, 2 * block_size - 1], and so on up to
+ * a maximum index FILE_LENGTH / block_size.
+ *
+ * @note This function assumes that @block_size is a power of 2.
+ *
+ * @param [in] offset the offset for which the block index should be computed.
+ * @param [in] block_size the block_size that should be used to compute the
+ * index.
+ * @returns the index of the block containing @offset.
+ */
+constexpr uint64_t
+chnk_id_for_offset(const uint64_t offset, const size_t block_size) {
+
+    using gkfs::util::log2;
+
+    // This check is automatically removed in release builds
+    assert(is_power_of_2(block_size));
+    return static_cast<uint64_t>(chnk_lalign(offset, block_size) >>
+                                 log2(block_size));
+}
+
+
+/**
+ * Compute the number of blocks involved in an operation affecting the
+ * regions from [@offset, to @offset + @count).
+ *
+ * @note This function assumes that @block_size is a power of 2.
+ * @note This function assumes that @offset + @count does not
+ * overflow.
+ *
+ * @param [in] offset the operation's initial offset.
+ * @param [in] count the number of bytes affected by the operation.
+ * @param [in] chnk_size the block size that should be used to compute the
+ * number of blocks.
+ * @returns the number of blocks affected by the operation.
+ */
+constexpr std::size_t
+chnk_count_for_offset(const uint64_t offset, const size_t count,
                       const size_t chnk_size) {
 
-    off64_t chnk_start = chnk_lalign(offset, chnk_size);
-    off64_t chnk_end = chnk_lalign(offset + count - 1, chnk_size);
+    using gkfs::util::log2;
 
-    return static_cast<uint64_t>((chnk_end >> log2(chnk_size)) -
-                                 (chnk_start >> log2(chnk_size)) + 1);
+    // These checks are automatically removed in release builds
+    assert(is_power_of_2(chnk_size));
+
+#if defined(__GNUC__) && !defined(__clang__)
+    assert(!__builtin_add_overflow_p(offset, count, static_cast<uint64_t>(0)));
+#else
+    assert(offset + count > offset);
+#endif
+
+    const uint64_t chnk_start = chnk_lalign(offset, chnk_size);
+    const uint64_t chnk_end = chnk_lalign(offset + count, chnk_size);
+    const size_t mask = -!!count; // this is either 0 or ~0
+
+    return (((chnk_end >> log2(chnk_size)) - (chnk_start >> log2(chnk_size)) +
+             !is_divisible(offset + count, chnk_size))) &
+           mask;
 }
 
 } // namespace gkfs::util
