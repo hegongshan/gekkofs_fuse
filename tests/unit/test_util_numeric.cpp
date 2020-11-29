@@ -284,3 +284,87 @@ SCENARIO(" overrun distance can be computed correctly ",
         }
     }
 }
+
+SCENARIO(" underrun distance can be computed correctly ",
+         "[utils][numeric][chnk_rpad]") {
+
+    GIVEN(" a block size ") {
+
+        const std::size_t block_size = GENERATE(filter(
+                [](uint64_t bs) { return is_power_of_2(bs); }, range(0, 100000)));
+
+        WHEN(" offset is smaller than block_size ") {
+
+            AND_WHEN(" offset equals 0 ") {
+
+                const uint64_t offset = 0;
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed underrun distance equals block_size ") {
+                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t expected_underrun = block_size;
+                    REQUIRE(underrun == expected_underrun);
+                }
+            }
+
+            AND_WHEN(" 0 < offset < block_size ") {
+
+                const uint64_t offset = GENERATE_COPY(take(
+                        test_reps, random(std::size_t{0}, block_size - 1)));
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed underrun distance equals offset ") {
+                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t expected_underrun = block_size - offset;
+                    REQUIRE(underrun == expected_underrun);
+                }
+            }
+
+            AND_WHEN(" offset equals block_size - 1 ") {
+
+                const uint64_t offset = block_size - 1;
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed underrun distance equals block_size - 1 ") {
+                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t expected_underrun = block_size - offset;
+                    REQUIRE(underrun == expected_underrun);
+                }
+            }
+        }
+
+        WHEN(" offset equals block_size ") {
+
+            const uint64_t offset = block_size;
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the computed underrun distance equals block_size ") {
+                const uint64_t underrun = chnk_rpad(offset, block_size);
+                const uint64_t expected_underrun = block_size;
+                REQUIRE(underrun == expected_underrun);
+            }
+        }
+
+        WHEN(" offset is larger than block_size ") {
+
+            const uint64_t offset = GENERATE_COPY(
+                    take(test_reps, random(block_size, block_size * 31)));
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the computed underrun distance equals the difference between "
+                 "offset and its closest block's right boundary ") {
+                const uint64_t underrun = chnk_rpad(offset, block_size);
+                const uint64_t expected_underrun =
+                        static_cast<uint64_t>(offset / block_size + 1) *
+                                block_size -
+                        offset;
+                REQUIRE(underrun == expected_underrun);
+            }
+        }
+    }
+}
