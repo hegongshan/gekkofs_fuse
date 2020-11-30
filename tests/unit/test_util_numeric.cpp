@@ -368,3 +368,123 @@ SCENARIO(" underrun distance can be computed correctly ",
         }
     }
 }
+
+SCENARIO(" chunk IDs can be computed correctly ",
+         "[utils][numeric][chnk_id_for_offset]") {
+
+    GIVEN(" an offset and a block size ") {
+
+        const std::size_t block_size = GENERATE(filter(
+                [](uint64_t bs) { return is_power_of_2(bs); }, range(0, 100000)));
+
+        WHEN(" offset is smaller than block_size ") {
+
+            AND_WHEN(" offset equals 0 ") {
+
+                const uint64_t offset = 0;
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID equals 0 ") {
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = 0;
+                    REQUIRE(id == expected_id);
+                }
+            }
+
+            AND_WHEN(" 0 < offset < block_size ") {
+
+                const uint64_t offset = GENERATE_COPY(take(
+                        test_reps, random(std::size_t{0}, block_size - 1)));
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID equals 0 ") {
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = 0;
+                    REQUIRE(id == expected_id);
+                }
+            }
+
+            AND_WHEN(" offset equals block_size - 1 ") {
+
+                const uint64_t offset = block_size - 1;
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID equals 0 ") {
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = 0;
+                    REQUIRE(id == expected_id);
+                }
+            }
+        }
+
+        WHEN(" offset equals block_size ") {
+
+            const uint64_t offset = block_size;
+
+            CAPTURE(offset, block_size);
+
+            THEN(" the computed chunk ID equals 1 ") {
+                const uint64_t id = chnk_id_for_offset(offset, block_size);
+                const uint64_t expected_id = 1;
+                REQUIRE(id == expected_id);
+            }
+        }
+
+        WHEN(" offset is larger than block_size ") {
+
+            AND_WHEN(" block_size < offset < 2^63 - 1 ") {
+
+                const uint64_t offset = GENERATE_COPY(take(
+                        test_reps,
+                        random(block_size,
+                               std::numeric_limits<uint64_t>::max() / 2 - 1)));
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID is equal to dividing the offset by "
+                     "the block_size ") {
+
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = offset / block_size;
+                    REQUIRE(id == expected_id);
+                }
+            }
+
+            // The following test specifically exercises issue #137
+            AND_WHEN(" offset == 2^63 ") {
+
+                const uint64_t offset =
+                        std::numeric_limits<uint64_t>::max() / 2 + 1;
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID is equal to dividing the offset by "
+                     "the block_size ") {
+
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = offset / block_size;
+                    REQUIRE(id == expected_id);
+                }
+            }
+
+            // The following test specifically exercises issue #137
+            AND_WHEN(" offset == 2^64 - 1") {
+
+                const uint64_t offset = std::numeric_limits<uint64_t>::max();
+
+                CAPTURE(offset, block_size);
+
+                THEN(" the computed chunk ID is equal to dividing the offset by "
+                     "the block_size ") {
+
+                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t expected_id = offset / block_size;
+                    REQUIRE(id == expected_id);
+                }
+            }
+        }
+    }
+}
