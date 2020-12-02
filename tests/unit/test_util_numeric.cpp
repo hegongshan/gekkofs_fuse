@@ -16,7 +16,7 @@
 #include <fmt/format.h>
 
 using namespace gkfs::util;
-constexpr auto test_repetitions = 250u;
+constexpr auto test_reps = 200u;
 
 namespace {
 
