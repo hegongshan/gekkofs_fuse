@@ -96,6 +96,24 @@ SCENARIO(" powers of 2 can be correctly detected ",
     }
 }
 
+SCENARIO(" divisibility by powers of 2 can be correctly detected ",
+         "[utils][numeric][is_divisible]") {
+
+    GIVEN(" a number and a block_size ") {
+
+        const uint64_t n = GENERATE(range(0, 1000), range(20000, 23000),
+                                    std::numeric_limits<uint64_t>::max());
+        const std::size_t block_size =
+                GENERATE(filter([](uint64_t bs) { return is_power_of_2(bs); },
+                                range(0, 10000)));
+
+        CAPTURE(n, block_size);
+
+        bool expected = n % block_size == 0;
+        REQUIRE(is_divisible(n, block_size) == expected);
+    }
+}
+
 SCENARIO(" offsets can be left-aligned to block size boundaries ",
          "[utils][numeric][chnk_lalign]") {
 
