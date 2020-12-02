@@ -506,3 +506,459 @@ SCENARIO(" chunk IDs can be computed correctly ",
         }
     }
 }
+
+SCENARIO(" the number of chunks involved in an operation can be computed "
+         "correctly ",
+         "[utils][numeric][chnk_count_for_offset]") {
+
+    GIVEN(" an offset, an operation size, and a block size ") {
+
+        const std::size_t block_size = GENERATE(filter(
+                [](uint64_t bs) { return is_power_of_2(bs); }, range(0, 100000)));
+
+        WHEN(" offset < block_size ") {
+
+            AND_WHEN(" offset == 0 ") {
+
+                const uint64_t offset = 0;
+
+                AND_WHEN(" offset + size == 0 ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 0 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" 0 < offset + size < block_size ") {
+
+                    const size_t size = GENERATE_COPY(take(
+                            test_reps, random(std::size_t{1}, block_size)));
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 1;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == block_size ") {
+
+                    const size_t size = block_size;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 1;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size > block_size ") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(block_size + 1,
+                                        std::numeric_limits<uint64_t>::max())));
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+            }
+
+            AND_WHEN(" 0 < offset < block_size ") {
+
+                const uint64_t offset = GENERATE_COPY(take(
+                        test_reps, random(std::size_t{0}, block_size - 1)));
+
+                AND_WHEN(" offset + size == offset ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" 0 < offset + size < block_size ") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(std::size_t{1}, block_size - offset)));
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count equals 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 1;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == block_size ") {
+
+                    const size_t size = block_size - offset;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 1;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size > block_size ") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(block_size + 1,
+                                        std::numeric_limits<uint64_t>::max())));
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+            }
+
+            AND_WHEN(" offset == block_size - 1 ") {
+
+                const size_t offset = block_size - 1;
+
+                AND_WHEN(" offset + size == offset ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 0 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == block_size ") {
+
+                    const size_t size = 1;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 1;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size > block_size ") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(block_size + 1,
+                                        std::numeric_limits<uint64_t>::max())));
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+            }
+        }
+
+        WHEN(" offset == block_size ") {
+
+            const uint64_t offset = block_size;
+
+            AND_WHEN(" offset + size == block_size ") {
+
+                const size_t size = 0;
+
+                CAPTURE(offset, size, block_size);
+
+                THEN(" the computed block count == 1 ") {
+                    const std::size_t n =
+                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t expected_n = 0;
+                    REQUIRE(n == expected_n);
+                }
+            }
+
+            AND_WHEN(" offset + size == M * block_size ") {
+                const size_t m = GENERATE(range(0u, test_reps));
+                const size_t size = m * block_size;
+
+                CAPTURE(offset, size, block_size);
+
+                THEN(" the computed block count == M ") {
+                    const std::size_t n =
+                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t expected_n = m;
+                    REQUIRE(n == expected_n);
+                }
+            }
+
+            AND_WHEN(" offset + size < 2^64 - 1") {
+
+                const size_t size = GENERATE_COPY(take(
+                        test_reps,
+                        random(std::size_t{1},
+                               std::numeric_limits<uint64_t>::max() - offset)));
+
+                THEN(" the computed block count corresponds to the number "
+                     "of blocks involved in the operation ") {
+                    const std::size_t n =
+                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t expected_n =
+                            (offset + size) / block_size - offset / block_size +
+                            ((offset + size) % block_size ? 1u : 0);
+
+                    REQUIRE(n == expected_n);
+                }
+            }
+
+            AND_WHEN(" offset + size == 2^64 - 1") {
+
+                const size_t size =
+                        std::numeric_limits<uint64_t>::max() - offset;
+
+                THEN(" the computed block count corresponds to the number "
+                     "of blocks involved in the operation ") {
+                    const std::size_t n =
+                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t expected_n =
+                            (offset + size) / block_size - offset / block_size +
+                            ((offset + size) % block_size ? 1u : 0);
+
+                    REQUIRE(n == expected_n);
+                }
+            }
+        }
+
+        WHEN(" offset > block_size ") {
+
+            AND_WHEN(" block_size < offset < 2^63 - 1 ") {
+
+                const uint64_t offset = GENERATE_COPY(take(
+                        test_reps,
+                        random(block_size,
+                               std::numeric_limits<uint64_t>::max() / 2 - 1)));
+
+                AND_WHEN(" offset + size == block_size ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == M * block_size ") {
+                    const size_t m = GENERATE_COPY(range(2u, test_reps));
+                    const size_t size = m * block_size - (offset % block_size);
+
+                    CAPTURE(offset, size, block_size, m);
+
+                    THEN(" the computed block count == M ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = m;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size < 2^64 - 1") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(std::size_t{1},
+                                        std::numeric_limits<uint64_t>::max() -
+                                                offset)));
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == 2^64 - 1") {
+
+                    const size_t size =
+                            std::numeric_limits<uint64_t>::max() - offset;
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+            }
+
+            AND_WHEN(" offset == 2^63 ") {
+
+                const uint64_t offset =
+                        std::numeric_limits<uint64_t>::max() / 2 + 1;
+
+                AND_WHEN(" offset + size == block_size ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == M * block_size ") {
+                    const size_t m = GENERATE(range(0u, test_reps));
+                    const size_t size = m * block_size;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == M ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = m;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size < 2^64 - 1") {
+
+                    const size_t size = GENERATE_COPY(
+                            take(test_reps,
+                                 random(std::size_t{1},
+                                        std::numeric_limits<uint64_t>::max() -
+                                                offset)));
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == 2^64 - 1") {
+
+                    const size_t size =
+                            std::numeric_limits<uint64_t>::max() - offset;
+
+                    THEN(" the computed block count corresponds to the number "
+                         "of blocks involved in the operation ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n =
+                                (offset + size) / block_size -
+                                offset / block_size +
+                                ((offset + size) % block_size ? 1u : 0);
+
+                        REQUIRE(n == expected_n);
+                    }
+                }
+            }
+
+            AND_WHEN(" offset == 2^64 - 1 ") {
+
+                const uint64_t offset = std::numeric_limits<uint64_t>::max();
+
+                AND_WHEN(" offset + size == offset ") {
+
+                    const size_t size = 0;
+
+                    CAPTURE(offset, size, block_size);
+
+                    THEN(" the computed block count == 1 ") {
+                        const std::size_t n =
+                                chnk_count_for_offset(offset, size, block_size);
+                        const std::size_t expected_n = 0;
+                        REQUIRE(n == expected_n);
+                    }
+                }
+
+                AND_WHEN(" offset + size == 2^64 ") {
+                    // TODO: here we should check that we actually hit an
+                    // assert(), but Catch2 does not have facilities to
+                    // support this yet
+                }
+            }
+        }
+    }
+}
