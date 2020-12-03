@@ -163,7 +163,7 @@ load_hostfile(const std::string& path) {
 
 } // namespace
 
-namespace gkfs::util {
+namespace gkfs::utils {
 
 /**
  * Retrieve metadata from daemon
@@ -398,4 +398,4 @@ connect_to_hosts(const vector<pair<string, string>>& hosts) {
     CTX->hosts(addrs);
 }
 
-} // namespace gkfs::util
+} // namespace gkfs::utils

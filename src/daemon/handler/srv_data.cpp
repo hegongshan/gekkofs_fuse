@@ -460,7 +460,7 @@ rpc_srv_read(hg_handle_t handle) {
             origin_offsets[chnk_id_curr] = 0;
             bulk_buf_ptrs[chnk_id_curr] = chnk_ptr;
             chnk_sizes[chnk_id_curr] = offset_transfer_size;
-            // util variables
+            // utils variables
             chnk_ptr += offset_transfer_size;
             chnk_size_left_host -= offset_transfer_size;
         } else {
@@ -481,7 +481,7 @@ rpc_srv_read(hg_handle_t handle) {
                 transfer_size = chnk_size_left_host;
             bulk_buf_ptrs[chnk_id_curr] = chnk_ptr;
             chnk_sizes[chnk_id_curr] = transfer_size;
-            // util variables
+            // utils variables
             chnk_ptr += transfer_size;
             chnk_size_left_host -= transfer_size;
         }

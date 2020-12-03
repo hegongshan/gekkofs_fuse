@@ -55,9 +55,9 @@ forward_write(const string& path, const void* buf, const bool append_flag,
     off64_t offset =
             append_flag ? in_offset : (updated_metadentry_size - write_size);
 
-    auto chnk_start = gkfs::util::chnk_id_for_offset(
+    auto chnk_start = gkfs::utils::chnk_id_for_offset(
             offset, gkfs::config::rpc::chunksize);
-    auto chnk_end = gkfs::util::chnk_id_for_offset(
+    auto chnk_end = gkfs::utils::chnk_id_for_offset(
             (offset + write_size) - 1, gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
@@ -126,12 +126,12 @@ forward_write(const string& path, const void* buf, const bool append_flag,
         // receiver of first chunk must subtract the offset from first chunk
         if(target == chnk_start_target) {
             total_chunk_size -=
-                    gkfs::util::chnk_lpad(offset, gkfs::config::rpc::chunksize);
+                    gkfs::utils::chnk_lpad(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target) {
-            total_chunk_size -= gkfs::util::chnk_rpad(
+            total_chunk_size -= gkfs::utils::chnk_rpad(
                     offset + write_size, gkfs::config::rpc::chunksize);
         }
 
@@ -145,7 +145,7 @@ forward_write(const string& path, const void* buf, const bool append_flag,
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    gkfs::util::chnk_lpad(offset, gkfs::config::rpc::chunksize),
+                    gkfs::utils::chnk_lpad(offset, gkfs::config::rpc::chunksize),
                     target, CTX->hosts().size(),
                     // number of chunks handled by that destination
                     target_chnks[target].size(),
@@ -230,9 +230,9 @@ forward_read(const string& path, void* buf, const off64_t offset,
 
     // Calculate chunkid boundaries and numbers so that daemons know in which
     // interval to look for chunks
-    auto chnk_start = gkfs::util::chnk_id_for_offset(
+    auto chnk_start = gkfs::utils::chnk_id_for_offset(
             offset, gkfs::config::rpc::chunksize);
-    auto chnk_end = gkfs::util::chnk_id_for_offset(
+    auto chnk_end = gkfs::utils::chnk_id_for_offset(
             (offset + read_size - 1), gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
@@ -301,12 +301,12 @@ forward_read(const string& path, void* buf, const off64_t offset,
         // receiver of first chunk must subtract the offset from first chunk
         if(target == chnk_start_target) {
             total_chunk_size -=
-                    gkfs::util::chnk_lpad(offset, gkfs::config::rpc::chunksize);
+                    gkfs::utils::chnk_lpad(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target) {
-            total_chunk_size -= gkfs::util::chnk_rpad(
+            total_chunk_size -= gkfs::utils::chnk_rpad(
                     offset + read_size, gkfs::config::rpc::chunksize);
         }
 
@@ -320,7 +320,7 @@ forward_read(const string& path, void* buf, const off64_t offset,
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    gkfs::util::chnk_lpad(offset, gkfs::config::rpc::chunksize),
+                    gkfs::utils::chnk_lpad(offset, gkfs::config::rpc::chunksize),
                     target, CTX->hosts().size(),
                     // number of chunks handled by that destination
                     target_chnks[target].size(),
@@ -404,9 +404,9 @@ forward_truncate(const std::string& path, size_t current_size,
 
     // Find out which data servers need to delete data chunks in order to
     // contact only them
-    const unsigned int chunk_start = gkfs::util::chnk_id_for_offset(
+    const unsigned int chunk_start = gkfs::utils::chnk_id_for_offset(
             new_size, gkfs::config::rpc::chunksize);
-    const unsigned int chunk_end = gkfs::util::chnk_id_for_offset(
+    const unsigned int chunk_end = gkfs::utils::chnk_id_for_offset(
             current_size - new_size - 1, gkfs::config::rpc::chunksize);
 
     std::unordered_set<unsigned int> hosts;

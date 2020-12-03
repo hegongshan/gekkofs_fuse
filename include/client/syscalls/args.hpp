@@ -291,7 +291,7 @@ format_whence_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for lseek() whence arg */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(SEEK_SET),
             FLAG_ENTRY(SEEK_CUR),
             FLAG_ENTRY(SEEK_END)
@@ -314,7 +314,7 @@ format_mmap_prot_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for mmap() prot arg */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(PROT_NONE),
             FLAG_ENTRY(PROT_READ),
             FLAG_ENTRY(PROT_WRITE),
@@ -339,7 +339,7 @@ format_mmap_flags_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for mmap() flags arg */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(MAP_SHARED),
             FLAG_ENTRY(MAP_PRIVATE),
 #ifdef MAP_SHARED_VALIDATE
@@ -379,7 +379,7 @@ format_clone_flags_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for clone() flags arg */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(CLONE_VM),
             FLAG_ENTRY(CLONE_FS),
             FLAG_ENTRY(CLONE_FILES),
@@ -431,7 +431,7 @@ format_signum_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for signum args */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(SIGHUP),
             FLAG_ENTRY(SIGINT),
             FLAG_ENTRY(SIGQUIT),
@@ -485,7 +485,7 @@ format_sigproc_how_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 
     /* Names for sigproc how args */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(SIG_BLOCK),
             FLAG_ENTRY(SIG_UNBLOCK),
             FLAG_ENTRY(SIG_SETMASK));
@@ -572,13 +572,13 @@ format_open_flags_to(FmtBuffer& buffer,
 
     /* Names for O_ACCMODE args */
     const auto flag_names =
-            util::make_array(
+            utils::make_array(
             FLAG_ENTRY(O_RDONLY),
             FLAG_ENTRY(O_WRONLY),
             FLAG_ENTRY(O_RDWR));
 
     const auto extra_flag_names =
-            util::make_array(
+            utils::make_array(
 #ifdef O_EXEC
             FLAG_ENTRY(O_EXEC),
 #endif

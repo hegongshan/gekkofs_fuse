@@ -15,7 +15,7 @@
 #include <global/chunk_calc_util.hpp>
 #include <fmt/format.h>
 
-using namespace gkfs::util;
+using namespace gkfs::utils;
 constexpr auto test_reps = 200u;
 
 namespace {

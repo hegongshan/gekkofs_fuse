@@ -49,11 +49,11 @@ ChunkTruncateOperation::truncate_abt(void* _arg) {
     int err_response = 0;
     try {
         // get chunk from where to cut off
-        auto chunk_id_start = gkfs::util::chnk_id_for_offset(
+        auto chunk_id_start = gkfs::utils::chnk_id_for_offset(
                 size, gkfs::config::rpc::chunksize);
         // do not last delete chunk if it is in the middle of a chunk
         auto left_pad =
-                gkfs::util::chnk_lpad(size, gkfs::config::rpc::chunksize);
+                gkfs::utils::chnk_lpad(size, gkfs::config::rpc::chunksize);
         if(left_pad != 0) {
             GKFS_DATA->storage()->truncate_chunk_file(path, chunk_id_start,
                                                       left_pad);

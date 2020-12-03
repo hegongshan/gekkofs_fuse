@@ -97,7 +97,7 @@ init_ld_environment_() {
     vector<pair<string, string>> hosts{};
     try {
         LOG(INFO, "Loading peer addresses...");
-        hosts = gkfs::util::read_hosts_file();
+        hosts = gkfs::utils::read_hosts_file();
     } catch(const std::exception& e) {
         exit_error_msg(EXIT_FAILURE,
                        "Failed to load hosts addresses: "s + e.what());
@@ -111,7 +111,7 @@ init_ld_environment_() {
     }
 
     try {
-        gkfs::util::connect_to_hosts(hosts);
+        gkfs::utils::connect_to_hosts(hosts);
     } catch(const std::exception& e) {
         exit_error_msg(EXIT_FAILURE,
                        "Failed to connect to hosts: "s + e.what());
@@ -120,7 +120,7 @@ init_ld_environment_() {
     /* Setup distributor */
 #ifdef GKFS_ENABLE_FORWARDING
     try {
-        gkfs::util::load_forwarding_map();
+        gkfs::utils::load_forwarding_map();
 
         LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());
     } catch(std::exception& e) {
@@ -160,7 +160,7 @@ forwarding_mapper(void* p) {
 
     while(forwarding_running) {
         try {
-            gkfs::util::load_forwarding_map();
+            gkfs::utils::load_forwarding_map();
 
             if(previous != CTX->fwd_host_id()) {
                 LOG(INFO, "{}() Forward to {}", __func__, CTX->fwd_host_id());

@@ -16,7 +16,7 @@
 
 #include <array>
 
-namespace gkfs::util {
+namespace gkfs::utils {
 
 template <typename... T>
 constexpr auto
@@ -28,6 +28,6 @@ make_array(T&&... values) -> std::array<
             sizeof...(T)>{std::forward<T>(values)...};
 }
 
-} // namespace gkfs::util
+} // namespace gkfs::utils
 
 #endif // LIBGKFS_UTILS_MAKE_ARRAY_HPP
