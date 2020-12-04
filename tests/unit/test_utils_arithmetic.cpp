@@ -115,7 +115,7 @@ SCENARIO(" divisibility by powers of 2 can be correctly detected ",
 }
 
 SCENARIO(" offsets can be left-aligned to block size boundaries ",
-         "[utils][numeric][chnk_lalign]") {
+         "[utils][numeric][align_left]") {
 
     GIVEN(" a block size ") {
 
@@ -130,7 +130,7 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
             CAPTURE(offset, block_size);
 
             THEN(" the left-aligned offset is 0 ") {
-                const uint64_t aligned_offset = chnk_lalign(offset, block_size);
+                const uint64_t aligned_offset = align_left(offset, block_size);
                 REQUIRE(aligned_offset == 0);
             }
         }
@@ -143,7 +143,7 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
             CAPTURE(offset, block_size);
 
             THEN(" the left-aligned offset is 0 ") {
-                const uint64_t aligned_offset = chnk_lalign(offset, block_size);
+                const uint64_t aligned_offset = align_left(offset, block_size);
                 REQUIRE(aligned_offset == 0);
             }
         }
@@ -157,7 +157,7 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
 
             THEN(" the left-aligned offset is the left boundary of the "
                  "containing block ") {
-                const uint64_t aligned_offset = chnk_lalign(offset, block_size);
+                const uint64_t aligned_offset = align_left(offset, block_size);
                 const uint64_t exp_offset =
                         static_cast<uint64_t>(offset / block_size) * block_size;
                 REQUIRE(aligned_offset == exp_offset);

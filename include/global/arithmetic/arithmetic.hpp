@@ -69,7 +69,7 @@ is_divisible(const uint64_t n, const size_t block_size) {
  * @returns an offset aligned to the left-side block boundary.
  */
 constexpr uint64_t
-chnk_lalign(const uint64_t offset, const size_t block_size) {
+align_left(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
     return static_cast<uint64_t>(offset) & ~(block_size - 1u);
@@ -90,7 +90,7 @@ constexpr uint64_t
 chnk_ralign(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return chnk_lalign(offset, block_size) + block_size;
+    return align_left(offset, block_size) + block_size;
 }
 
 
@@ -155,7 +155,7 @@ chnk_id_for_offset(const uint64_t offset, const size_t block_size) {
 
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return static_cast<uint64_t>(chnk_lalign(offset, block_size) >>
+    return static_cast<uint64_t>(align_left(offset, block_size) >>
                                  log2(block_size));
 }
 
@@ -189,8 +189,8 @@ chnk_count_for_offset(const uint64_t offset, const size_t count,
     assert(offset + count > offset);
 #endif
 
-    const uint64_t chnk_start = chnk_lalign(offset, chnk_size);
-    const uint64_t chnk_end = chnk_lalign(offset + count, chnk_size);
+    const uint64_t chnk_start = align_left(offset, chnk_size);
+    const uint64_t chnk_end = align_left(offset + count, chnk_size);
     const size_t mask = -!!count; // this is either 0 or ~0
 
     return (((chnk_end >> log2(chnk_size)) - (chnk_start >> log2(chnk_size)) +
