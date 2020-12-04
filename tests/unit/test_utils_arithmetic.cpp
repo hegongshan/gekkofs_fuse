@@ -12,8 +12,8 @@
 */
 
 #include <catch2/catch.hpp>
-#include <global/arithmetic/chunk_calc_util.hpp>
 #include <fmt/format.h>
+#include <arithmetic.hpp>
 
 using namespace gkfs::utils::arithmetic;
 constexpr auto test_reps = 200u;

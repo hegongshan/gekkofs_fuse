@@ -11,8 +11,8 @@
   SPDX-License-Identifier: MIT
 */
 
-#ifndef GEKKOFS_CHNK_CALC_UTIL_HPP
-#define GEKKOFS_CHNK_CALC_UTIL_HPP
+#ifndef GKFS_GLOBAL_ARITHMETIC_HPP
+#define GKFS_GLOBAL_ARITHMETIC_HPP
 
 #include <cstdint>
 #include <unistd.h>
@@ -200,4 +200,4 @@ chnk_count_for_offset(const uint64_t offset, const size_t count,
 
 } // namespace gkfs::utils::arithmetic
 
-#endif
+#endif // GKFS_GLOBAL_ARITHMETIC_HPP

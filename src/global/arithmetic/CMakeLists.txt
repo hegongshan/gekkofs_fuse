@@ -14,7 +14,7 @@
 add_library(arithmetic INTERFACE)
 target_sources(arithmetic
   INTERFACE
-    ${INCLUDE_DIR}/global/arithmetic/chunk_calc_util.hpp
+    ${INCLUDE_DIR}/global/arithmetic/arithmetic.hpp
   )
 
 target_include_directories(arithmetic

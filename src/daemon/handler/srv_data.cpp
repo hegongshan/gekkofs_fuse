@@ -20,7 +20,7 @@
 
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/distributor.hpp>
-#include <global/arithmetic/chunk_calc_util.hpp>
+#include <global/arithmetic/arithmetic.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
