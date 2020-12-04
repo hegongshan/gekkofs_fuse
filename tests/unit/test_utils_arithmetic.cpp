@@ -167,7 +167,7 @@ SCENARIO(" offsets can be left-aligned to block size boundaries ",
 }
 
 SCENARIO(" offsets can be right-aligned to block size boundaries ",
-         "[utils][numeric][chnk_ralign]") {
+         "[utils][numeric][align_right]") {
 
     GIVEN(" a block size ") {
 
@@ -181,7 +181,7 @@ SCENARIO(" offsets can be right-aligned to block size boundaries ",
             CAPTURE(offset, block_size);
 
             THEN(" the right-aligned offset is block_size ") {
-                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t aligned_offset = align_right(offset, block_size);
                 const uint64_t expected_offset = block_size;
                 REQUIRE(aligned_offset == expected_offset);
             }
@@ -195,7 +195,7 @@ SCENARIO(" offsets can be right-aligned to block size boundaries ",
             CAPTURE(offset, block_size);
 
             THEN(" the right-aligned offset is 0 ") {
-                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t aligned_offset = align_right(offset, block_size);
                 const uint64_t expected_offset = block_size;
                 REQUIRE(aligned_offset == expected_offset);
             }
@@ -210,7 +210,7 @@ SCENARIO(" offsets can be right-aligned to block size boundaries ",
 
             THEN(" the right-aligned offset is the right boundary of the "
                  "containing block ") {
-                const uint64_t aligned_offset = chnk_ralign(offset, block_size);
+                const uint64_t aligned_offset = align_right(offset, block_size);
                 const uint64_t expected_offset =
                         static_cast<uint64_t>(offset / block_size + 1) *
                         block_size;

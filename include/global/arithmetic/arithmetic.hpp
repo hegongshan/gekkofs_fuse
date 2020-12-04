@@ -87,7 +87,7 @@ align_left(const uint64_t offset, const size_t block_size) {
  * @returns an offset aligned to the right-side block boundary.
  */
 constexpr uint64_t
-chnk_ralign(const uint64_t offset, const size_t block_size) {
+align_right(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
     return align_left(offset, block_size) + block_size;
@@ -128,7 +128,7 @@ constexpr size_t
 chnk_rpad(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return chnk_ralign(offset, block_size) - offset;
+    return align_right(offset, block_size) - offset;
 }
 
 
