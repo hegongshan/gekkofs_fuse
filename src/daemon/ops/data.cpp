@@ -13,7 +13,7 @@
 
 #include <daemon/ops/data.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
-#include <global/chunk_calc_util.hpp>
+#include <global/arithmetic/chunk_calc_util.hpp>
 #include <utility>
 
 extern "C" {

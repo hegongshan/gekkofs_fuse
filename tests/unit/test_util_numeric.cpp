@@ -12,7 +12,7 @@
 */
 
 #include <catch2/catch.hpp>
-#include <global/chunk_calc_util.hpp>
+#include <global/arithmetic/chunk_calc_util.hpp>
 #include <fmt/format.h>
 
 using namespace gkfs::utils::arithmetic;

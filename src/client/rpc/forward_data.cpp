@@ -17,7 +17,7 @@
 #include <client/logging.hpp>
 
 #include <global/rpc/distributor.hpp>
-#include <global/chunk_calc_util.hpp>
+#include <global/arithmetic/chunk_calc_util.hpp>
 
 #include <unordered_set>
 
