@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <cassert>
 
-namespace gkfs::utils {
+namespace gkfs::utils::arithmetic {
 
 /**
  * Check whether integer `n` is a power of 2.
@@ -53,7 +53,7 @@ log2(uint64_t n) {
  */
 constexpr bool
 is_divisible(const uint64_t n, const size_t block_size) {
-    using gkfs::utils::log2;
+    using gkfs::utils::arithmetic::log2;
     assert(is_power_of_2(block_size));
     return !(n & ((1u << log2(block_size)) - 1));
 }
@@ -151,7 +151,7 @@ chnk_rpad(const uint64_t offset, const size_t block_size) {
 constexpr uint64_t
 chnk_id_for_offset(const uint64_t offset, const size_t block_size) {
 
-    using gkfs::utils::log2;
+    using gkfs::utils::arithmetic::log2;
 
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
@@ -178,7 +178,7 @@ constexpr std::size_t
 chnk_count_for_offset(const uint64_t offset, const size_t count,
                       const size_t chnk_size) {
 
-    using gkfs::utils::log2;
+    using gkfs::utils::arithmetic::log2;
 
     // These checks are automatically removed in release builds
     assert(is_power_of_2(chnk_size));
@@ -198,6 +198,6 @@ chnk_count_for_offset(const uint64_t offset, const size_t count,
            mask;
 }
 
-} // namespace gkfs::utils
+} // namespace gkfs::utils::arithmetic
 
 #endif

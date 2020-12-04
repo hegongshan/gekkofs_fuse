@@ -41,6 +41,10 @@ namespace data {
  */
 void
 ChunkTruncateOperation::truncate_abt(void* _arg) {
+
+    // import pow2-optimized arithmetic functions
+    using namespace gkfs::utils::arithmetic;
+
     assert(_arg);
     // Unpack args
     auto* arg = static_cast<struct chunk_truncate_args*>(_arg);
@@ -49,11 +53,10 @@ ChunkTruncateOperation::truncate_abt(void* _arg) {
     int err_response = 0;
     try {
         // get chunk from where to cut off
-        auto chunk_id_start = gkfs::utils::chnk_id_for_offset(
-                size, gkfs::config::rpc::chunksize);
+        auto chunk_id_start =
+                chnk_id_for_offset(size, gkfs::config::rpc::chunksize);
         // do not last delete chunk if it is in the middle of a chunk
-        auto left_pad =
-                gkfs::utils::chnk_lpad(size, gkfs::config::rpc::chunksize);
+        auto left_pad = chnk_lpad(size, gkfs::config::rpc::chunksize);
         if(left_pad != 0) {
             GKFS_DATA->storage()->truncate_chunk_file(path, chunk_id_start,
                                                       left_pad);
