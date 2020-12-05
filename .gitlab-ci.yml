@@ -95,6 +95,15 @@ integration tests:
     paths:
       - "${INTEGRATION_TESTS_RUN_PATH}"
 
+unit:
+  stage: test
+  script:
+    - ctest -j $(nproc) -L unit::all
+  artifacts:
+    when: on_failure
+    paths:
+      - Testing
+
 test wr:
   stage: test
   script:

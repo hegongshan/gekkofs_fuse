@@ -47,7 +47,9 @@ target_link_libraries(tests
 # to auto-discover Catch tests and register them in CTest
 set(CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/contrib" ${CMAKE_MODULE_PATH})
 include(Catch)
-catch_discover_tests(tests)
+catch_discover_tests(tests
+  PROPERTIES LABELS "unit::all"
+  )
 
 if(GKFS_INSTALL_TESTS)
     install(TARGETS tests
