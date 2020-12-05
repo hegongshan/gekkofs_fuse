@@ -512,7 +512,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
 
 SCENARIO(" the number of chunks involved in an operation can be computed "
          "correctly ",
-         "[utils][numeric][chnk_count_for_offset]") {
+         "[utils][numeric][block_count]") {
 
     GIVEN(" an offset, an operation size, and a block size ") {
 
@@ -533,7 +533,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 0 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }
@@ -548,7 +548,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 1;
                         REQUIRE(n == expected_n);
                     }
@@ -562,7 +562,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 1;
                         REQUIRE(n == expected_n);
                     }
@@ -580,7 +580,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -604,7 +604,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }
@@ -620,7 +620,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count equals 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 1;
                         REQUIRE(n == expected_n);
                     }
@@ -634,7 +634,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 1;
                         REQUIRE(n == expected_n);
                     }
@@ -652,7 +652,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -675,7 +675,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 0 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }
@@ -689,7 +689,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 1;
                         REQUIRE(n == expected_n);
                     }
@@ -707,7 +707,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -730,8 +730,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                 CAPTURE(offset, size, block_size);
 
                 THEN(" the computed block count == 1 ") {
-                    const std::size_t n =
-                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t n = block_count(offset, size, block_size);
                     const std::size_t expected_n = 0;
                     REQUIRE(n == expected_n);
                 }
@@ -744,8 +743,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                 CAPTURE(offset, size, block_size);
 
                 THEN(" the computed block count == M ") {
-                    const std::size_t n =
-                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t n = block_count(offset, size, block_size);
                     const std::size_t expected_n = m;
                     REQUIRE(n == expected_n);
                 }
@@ -760,8 +758,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                 THEN(" the computed block count corresponds to the number "
                      "of blocks involved in the operation ") {
-                    const std::size_t n =
-                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t n = block_count(offset, size, block_size);
                     const std::size_t expected_n =
                             (offset + size) / block_size - offset / block_size +
                             ((offset + size) % block_size ? 1u : 0);
@@ -777,8 +774,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                 THEN(" the computed block count corresponds to the number "
                      "of blocks involved in the operation ") {
-                    const std::size_t n =
-                            chnk_count_for_offset(offset, size, block_size);
+                    const std::size_t n = block_count(offset, size, block_size);
                     const std::size_t expected_n =
                             (offset + size) / block_size - offset / block_size +
                             ((offset + size) % block_size ? 1u : 0);
@@ -805,7 +801,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }
@@ -819,7 +815,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == M ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = m;
                         REQUIRE(n == expected_n);
                     }
@@ -836,7 +832,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -854,7 +850,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -878,7 +874,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }
@@ -892,7 +888,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == M ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = m;
                         REQUIRE(n == expected_n);
                     }
@@ -909,7 +905,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -927,7 +923,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
                     THEN(" the computed block count corresponds to the number "
                          "of blocks involved in the operation ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n =
                                 (offset + size) / block_size -
                                 offset / block_size +
@@ -950,7 +946,7 @@ SCENARIO(" the number of chunks involved in an operation can be computed "
 
                     THEN(" the computed block count == 1 ") {
                         const std::size_t n =
-                                chnk_count_for_offset(offset, size, block_size);
+                                block_count(offset, size, block_size);
                         const std::size_t expected_n = 0;
                         REQUIRE(n == expected_n);
                     }

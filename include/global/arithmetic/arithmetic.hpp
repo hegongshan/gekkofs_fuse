@@ -169,32 +169,32 @@ block_index(const uint64_t offset, const size_t block_size) {
  * overflow.
  *
  * @param [in] offset the operation's initial offset.
- * @param [in] count the number of bytes affected by the operation.
- * @param [in] chnk_size the block size that should be used to compute the
+ * @param [in] size the number of bytes affected by the operation.
+ * @param [in] block_size the block size that should be used to compute the
  * number of blocks.
  * @returns the number of blocks affected by the operation.
  */
 constexpr std::size_t
-chnk_count_for_offset(const uint64_t offset, const size_t count,
-                      const size_t chnk_size) {
+block_count(const uint64_t offset, const size_t size, const size_t block_size) {
 
     using gkfs::utils::arithmetic::log2;
 
     // These checks are automatically removed in release builds
-    assert(is_power_of_2(chnk_size));
+    assert(is_power_of_2(block_size));
 
 #if defined(__GNUC__) && !defined(__clang__)
-    assert(!__builtin_add_overflow_p(offset, count, static_cast<uint64_t>(0)));
+    assert(!__builtin_add_overflow_p(offset, size, static_cast<uint64_t>(0)));
 #else
-    assert(offset + count > offset);
+    assert(offset + size > offset);
 #endif
 
-    const uint64_t chnk_start = align_left(offset, chnk_size);
-    const uint64_t chnk_end = align_left(offset + count, chnk_size);
-    const size_t mask = -!!count; // this is either 0 or ~0
+    const uint64_t first_block = align_left(offset, block_size);
+    const uint64_t final_block = align_left(offset + size, block_size);
+    const size_t mask = -!!size; // this is either 0 or ~0
 
-    return (((chnk_end >> log2(chnk_size)) - (chnk_start >> log2(chnk_size)) +
-             !is_divisible(offset + count, chnk_size))) &
+    return (((final_block >> log2(block_size)) -
+             (first_block >> log2(block_size)) +
+             !is_divisible(offset + size, block_size))) &
            mask;
 }
 
