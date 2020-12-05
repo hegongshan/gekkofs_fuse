@@ -133,8 +133,8 @@ forward_write(const string& path, const void* buf, const bool append_flag,
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target) {
-            total_chunk_size -= chnk_rpad(offset + write_size,
-                                          gkfs::config::rpc::chunksize);
+            total_chunk_size -= block_underrun(offset + write_size,
+                                               gkfs::config::rpc::chunksize);
         }
 
         auto endp = CTX->hosts().at(target);
@@ -310,8 +310,8 @@ forward_read(const string& path, void* buf, const off64_t offset,
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target) {
-            total_chunk_size -=
-                    chnk_rpad(offset + read_size, gkfs::config::rpc::chunksize);
+            total_chunk_size -= block_underrun(offset + read_size,
+                                               gkfs::config::rpc::chunksize);
         }
 
         auto endp = CTX->hosts().at(target);

@@ -125,7 +125,7 @@ block_overrun(const uint64_t offset, const size_t block_size) {
  * @returns the distance in bytes between the right-side boundary of @offset
  */
 constexpr size_t
-chnk_rpad(const uint64_t offset, const size_t block_size) {
+block_underrun(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
     return align_right(offset, block_size) - offset;

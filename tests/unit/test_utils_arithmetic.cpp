@@ -304,7 +304,7 @@ SCENARIO(" overrun distance can be computed correctly ",
 }
 
 SCENARIO(" underrun distance can be computed correctly ",
-         "[utils][numeric][chnk_rpad]") {
+         "[utils][numeric][block_underrun]") {
 
     GIVEN(" a block size ") {
 
@@ -320,7 +320,8 @@ SCENARIO(" underrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed underrun distance equals block_size ") {
-                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t underrun =
+                            block_underrun(offset, block_size);
                     const uint64_t expected_underrun = block_size;
                     REQUIRE(underrun == expected_underrun);
                 }
@@ -334,7 +335,8 @@ SCENARIO(" underrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed underrun distance equals offset ") {
-                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t underrun =
+                            block_underrun(offset, block_size);
                     const uint64_t expected_underrun = block_size - offset;
                     REQUIRE(underrun == expected_underrun);
                 }
@@ -347,7 +349,8 @@ SCENARIO(" underrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed underrun distance equals block_size - 1 ") {
-                    const uint64_t underrun = chnk_rpad(offset, block_size);
+                    const uint64_t underrun =
+                            block_underrun(offset, block_size);
                     const uint64_t expected_underrun = block_size - offset;
                     REQUIRE(underrun == expected_underrun);
                 }
@@ -361,7 +364,7 @@ SCENARIO(" underrun distance can be computed correctly ",
             CAPTURE(offset, block_size);
 
             THEN(" the computed underrun distance equals block_size ") {
-                const uint64_t underrun = chnk_rpad(offset, block_size);
+                const uint64_t underrun = block_underrun(offset, block_size);
                 const uint64_t expected_underrun = block_size;
                 REQUIRE(underrun == expected_underrun);
             }
@@ -376,7 +379,7 @@ SCENARIO(" underrun distance can be computed correctly ",
 
             THEN(" the computed underrun distance equals the difference between "
                  "offset and its closest block's right boundary ") {
-                const uint64_t underrun = chnk_rpad(offset, block_size);
+                const uint64_t underrun = block_underrun(offset, block_size);
                 const uint64_t expected_underrun =
                         static_cast<uint64_t>(offset / block_size + 1) *
                                 block_size -
