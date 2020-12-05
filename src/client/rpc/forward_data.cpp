@@ -58,9 +58,9 @@ forward_write(const string& path, const void* buf, const bool append_flag,
     off64_t offset =
             append_flag ? in_offset : (updated_metadentry_size - write_size);
 
-    auto chnk_start = chnk_id_for_offset(offset, gkfs::config::rpc::chunksize);
-    auto chnk_end = chnk_id_for_offset((offset + write_size) - 1,
-                                       gkfs::config::rpc::chunksize);
+    auto chnk_start = block_index(offset, gkfs::config::rpc::chunksize);
+    auto chnk_end = block_index((offset + write_size) - 1,
+                                gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
     // that those are send in one rpc bulk transfer
@@ -235,9 +235,9 @@ forward_read(const string& path, void* buf, const off64_t offset,
 
     // Calculate chunkid boundaries and numbers so that daemons know in which
     // interval to look for chunks
-    auto chnk_start = chnk_id_for_offset(offset, gkfs::config::rpc::chunksize);
-    auto chnk_end = chnk_id_for_offset((offset + read_size - 1),
-                                       gkfs::config::rpc::chunksize);
+    auto chnk_start = block_index(offset, gkfs::config::rpc::chunksize);
+    auto chnk_end =
+            block_index((offset + read_size - 1), gkfs::config::rpc::chunksize);
 
     // Collect all chunk ids within count that have the same destination so
     // that those are send in one rpc bulk transfer
@@ -412,9 +412,9 @@ forward_truncate(const std::string& path, size_t current_size,
     // Find out which data servers need to delete data chunks in order to
     // contact only them
     const unsigned int chunk_start =
-            chnk_id_for_offset(new_size, gkfs::config::rpc::chunksize);
-    const unsigned int chunk_end = chnk_id_for_offset(
-            current_size - new_size - 1, gkfs::config::rpc::chunksize);
+            block_index(new_size, gkfs::config::rpc::chunksize);
+    const unsigned int chunk_end = block_index(current_size - new_size - 1,
+                                               gkfs::config::rpc::chunksize);
 
     std::unordered_set<unsigned int> hosts;
     for(unsigned int chunk_id = chunk_start; chunk_id <= chunk_end;

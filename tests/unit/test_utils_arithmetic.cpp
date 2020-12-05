@@ -391,7 +391,7 @@ SCENARIO(" underrun distance can be computed correctly ",
 }
 
 SCENARIO(" chunk IDs can be computed correctly ",
-         "[utils][numeric][chnk_id_for_offset]") {
+         "[utils][numeric][block_index]") {
 
     GIVEN(" an offset and a block size ") {
 
@@ -407,7 +407,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed chunk ID equals 0 ") {
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = 0;
                     REQUIRE(id == expected_id);
                 }
@@ -421,7 +421,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed chunk ID equals 0 ") {
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = 0;
                     REQUIRE(id == expected_id);
                 }
@@ -434,7 +434,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed chunk ID equals 0 ") {
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = 0;
                     REQUIRE(id == expected_id);
                 }
@@ -448,7 +448,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
             CAPTURE(offset, block_size);
 
             THEN(" the computed chunk ID equals 1 ") {
-                const uint64_t id = chnk_id_for_offset(offset, block_size);
+                const uint64_t id = block_index(offset, block_size);
                 const uint64_t expected_id = 1;
                 REQUIRE(id == expected_id);
             }
@@ -468,7 +468,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 THEN(" the computed chunk ID is equal to dividing the offset by "
                      "the block_size ") {
 
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = offset / block_size;
                     REQUIRE(id == expected_id);
                 }
@@ -485,7 +485,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 THEN(" the computed chunk ID is equal to dividing the offset by "
                      "the block_size ") {
 
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = offset / block_size;
                     REQUIRE(id == expected_id);
                 }
@@ -501,7 +501,7 @@ SCENARIO(" chunk IDs can be computed correctly ",
                 THEN(" the computed chunk ID is equal to dividing the offset by "
                      "the block_size ") {
 
-                    const uint64_t id = chnk_id_for_offset(offset, block_size);
+                    const uint64_t id = block_index(offset, block_size);
                     const uint64_t expected_id = offset / block_size;
                     REQUIRE(id == expected_id);
                 }

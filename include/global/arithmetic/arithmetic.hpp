@@ -149,7 +149,7 @@ block_underrun(const uint64_t offset, const size_t block_size) {
  * @returns the index of the block containing @offset.
  */
 constexpr uint64_t
-chnk_id_for_offset(const uint64_t offset, const size_t block_size) {
+block_index(const uint64_t offset, const size_t block_size) {
 
     using gkfs::utils::arithmetic::log2;
 

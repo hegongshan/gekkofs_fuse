@@ -53,8 +53,7 @@ ChunkTruncateOperation::truncate_abt(void* _arg) {
     int err_response = 0;
     try {
         // get chunk from where to cut off
-        auto chunk_id_start =
-                chnk_id_for_offset(size, gkfs::config::rpc::chunksize);
+        auto chunk_id_start = block_index(size, gkfs::config::rpc::chunksize);
         // do not last delete chunk if it is in the middle of a chunk
         auto left_pad = block_overrun(size, gkfs::config::rpc::chunksize);
         if(left_pad != 0) {
