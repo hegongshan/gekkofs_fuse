@@ -56,7 +56,7 @@ ChunkTruncateOperation::truncate_abt(void* _arg) {
         auto chunk_id_start =
                 chnk_id_for_offset(size, gkfs::config::rpc::chunksize);
         // do not last delete chunk if it is in the middle of a chunk
-        auto left_pad = chnk_lpad(size, gkfs::config::rpc::chunksize);
+        auto left_pad = block_overrun(size, gkfs::config::rpc::chunksize);
         if(left_pad != 0) {
             GKFS_DATA->storage()->truncate_chunk_file(path, chunk_id_start,
                                                       left_pad);

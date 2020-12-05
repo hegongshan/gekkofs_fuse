@@ -106,7 +106,7 @@ align_right(const uint64_t offset, const size_t block_size) {
  * @returns the distance in bytes between the left-side boundary of @offset
  */
 constexpr size_t
-chnk_lpad(const uint64_t offset, const size_t block_size) {
+block_overrun(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
     return static_cast<uint64_t>(offset) & (block_size - 1u);

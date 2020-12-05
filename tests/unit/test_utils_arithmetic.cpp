@@ -221,7 +221,7 @@ SCENARIO(" offsets can be right-aligned to block size boundaries ",
 }
 
 SCENARIO(" overrun distance can be computed correctly ",
-         "[utils][numeric][chnk_lpad]") {
+         "[utils][numeric][block_overrun]") {
 
     GIVEN(" a block size ") {
 
@@ -237,7 +237,7 @@ SCENARIO(" overrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed overrun distance equals 0 ") {
-                    const uint64_t overrun = chnk_lpad(offset, block_size);
+                    const uint64_t overrun = block_overrun(offset, block_size);
                     const uint64_t expected_overrun = 0;
                     REQUIRE(overrun == expected_overrun);
                 }
@@ -251,7 +251,7 @@ SCENARIO(" overrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed overrun distance equals offset ") {
-                    const uint64_t overrun = chnk_lpad(offset, block_size);
+                    const uint64_t overrun = block_overrun(offset, block_size);
                     const uint64_t expected_overrun = offset;
                     REQUIRE(overrun == expected_overrun);
                 }
@@ -264,7 +264,7 @@ SCENARIO(" overrun distance can be computed correctly ",
                 CAPTURE(offset, block_size);
 
                 THEN(" the computed overrun distance equals block_size - 1 ") {
-                    const uint64_t overrun = chnk_lpad(offset, block_size);
+                    const uint64_t overrun = block_overrun(offset, block_size);
                     const uint64_t expected_overrun = block_size - 1;
                     REQUIRE(overrun == expected_overrun);
                 }
@@ -278,7 +278,7 @@ SCENARIO(" overrun distance can be computed correctly ",
             CAPTURE(offset, block_size);
 
             THEN(" the computed overrun distance equals 0 ") {
-                const uint64_t overrun = chnk_lpad(offset, block_size);
+                const uint64_t overrun = block_overrun(offset, block_size);
                 const uint64_t expected_overrun = 0;
                 REQUIRE(overrun == expected_overrun);
             }
@@ -293,7 +293,7 @@ SCENARIO(" overrun distance can be computed correctly ",
 
             THEN(" the computed overrun distance equals the difference between "
                  "offset and its closest block's left boundary ") {
-                const uint64_t overrun = chnk_lpad(offset, block_size);
+                const uint64_t overrun = block_overrun(offset, block_size);
                 const uint64_t expected_overrun =
                         offset -
                         static_cast<uint64_t>(offset / block_size) * block_size;

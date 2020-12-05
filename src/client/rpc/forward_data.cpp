@@ -127,7 +127,8 @@ forward_write(const string& path, const void* buf, const bool append_flag,
 
         // receiver of first chunk must subtract the offset from first chunk
         if(target == chnk_start_target) {
-            total_chunk_size -= chnk_lpad(offset, gkfs::config::rpc::chunksize);
+            total_chunk_size -=
+                    block_overrun(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
@@ -146,7 +147,7 @@ forward_write(const string& path, const void* buf, const bool append_flag,
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    chnk_lpad(offset, gkfs::config::rpc::chunksize), target,
+                    block_overrun(offset, gkfs::config::rpc::chunksize), target,
                     CTX->hosts().size(),
                     // number of chunks handled by that destination
                     target_chnks[target].size(),
@@ -303,7 +304,8 @@ forward_read(const string& path, void* buf, const off64_t offset,
 
         // receiver of first chunk must subtract the offset from first chunk
         if(target == chnk_start_target) {
-            total_chunk_size -= chnk_lpad(offset, gkfs::config::rpc::chunksize);
+            total_chunk_size -=
+                    block_overrun(offset, gkfs::config::rpc::chunksize);
         }
 
         // receiver of last chunk must subtract
@@ -322,7 +324,7 @@ forward_read(const string& path, void* buf, const off64_t offset,
                     path,
                     // first offset in targets is the chunk with
                     // a potential offset
-                    chnk_lpad(offset, gkfs::config::rpc::chunksize), target,
+                    block_overrun(offset, gkfs::config::rpc::chunksize), target,
                     CTX->hosts().size(),
                     // number of chunks handled by that destination
                     target_chnks[target].size(),
