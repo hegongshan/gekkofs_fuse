@@ -18,8 +18,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 /**
  * Returns the metadata of an object at a specific path. The metadata can be of
@@ -63,6 +62,17 @@ std::vector<std::pair<std::string, bool>>
 get_dirents(const std::string& dir) {
     return GKFS_DATA->mdb()->get_dirents(dir);
 }
+
+/**
+ * Returns a vector of directory entries for given directory (extended version)
+ * @param dir
+ * @return
+ */
+std::vector<std::tuple<std::string, bool, size_t, time_t>>
+get_dirents_extended(const std::string& dir) {
+    return GKFS_DATA->mdb()->get_dirents_extended(dir);
+}
+
 
 /**
  * Creates metadata (if required) and dentry at the same time
@@ -131,5 +141,4 @@ remove(const string& path) {
             path); // destroys all chunks for the path on this node
 }
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata

@@ -37,4 +37,5 @@ hermes::detail::register_user_request_types() {
     (void) registered_requests().add<gkfs::rpc::trunc_data>();
     (void) registered_requests().add<gkfs::rpc::get_dirents>();
     (void) registered_requests().add<gkfs::rpc::chunk_stat>();
+    (void) registered_requests().add<gkfs::rpc::get_dirents_extended>();
 }

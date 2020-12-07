@@ -33,6 +33,9 @@ get_size(const std::string& path);
 std::vector<std::pair<std::string, bool>>
 get_dirents(const std::string& dir);
 
+std::vector<std::tuple<std::string, bool, size_t, time_t>>
+get_dirents_extended(const std::string& dir);
+
 void
 create(const std::string& path, Metadata& md);
 

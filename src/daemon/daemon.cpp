@@ -106,6 +106,9 @@ register_server_rpcs(margo_instance_id mid) {
                    rpc_srv_update_metadentry_size);
     MARGO_REGISTER(mid, gkfs::rpc::tag::get_dirents, rpc_get_dirents_in_t,
                    rpc_get_dirents_out_t, rpc_srv_get_dirents);
+    MARGO_REGISTER(mid, gkfs::rpc::tag::get_dirents_extended,
+                   rpc_get_dirents_in_t, rpc_get_dirents_out_t,
+                   rpc_srv_get_dirents_extended);
 #ifdef HAS_SYMLINKS
     MARGO_REGISTER(mid, gkfs::rpc::tag::mk_symlink, rpc_mk_symlink_in_t,
                    rpc_err_out_t, rpc_srv_mk_symlink);

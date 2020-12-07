@@ -17,7 +17,7 @@
 
 #include <string>
 #include <memory>
-
+#include <vector>
 /* Forward declaration */
 namespace gkfs {
 namespace filemap {
@@ -61,6 +61,9 @@ forward_get_metadentry_size(const std::string& path);
 
 std::pair<int, std::shared_ptr<gkfs::filemap::OpenDir>>
 forward_get_dirents(const std::string& path);
+
+std::pair<int, std::vector<std::tuple<const std::string, bool, size_t, time_t>>>
+forward_get_dirents_single(const std::string& path, int server);
 
 #ifdef HAS_SYMLINKS
 

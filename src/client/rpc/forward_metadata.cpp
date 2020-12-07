@@ -527,6 +527,136 @@ forward_get_dirents(const string& path) {
     return make_pair(err, open_dir);
 }
 
+/**
+ * Send an RPC request to receive all entries of a directory in a server.
+ * @param path
+ * @param server
+ * @return error code
+ * Returns a tuple with path-isdir-size and ctime
+ * We still use dirents_buff_size, but we need to match in the client side, as
+ * the buffer is provided by the "gfind" applications However, as we only ask
+ * for a server the size should be enought for most of the scenarios. We are
+ * reusing the forward_get_dirents code. As we only need a server, we could
+ * simplify the code removing the asynchronous part.
+ */
+pair<int, vector<tuple<const std::string, bool, size_t, time_t>>>
+forward_get_dirents_single(const string& path, int server) {
+
+    LOG(DEBUG, "{}() enter for path '{}'", __func__, path)
+
+    auto const targets = CTX->distributor()->locate_directory_metadata(path);
+
+    /* preallocate receiving buffer. The actual size is not known yet.
+     *
+     * On C++14 make_unique function also zeroes the newly allocated buffer.
+     * It turns out that this operation is increadibly slow for such a big
+     * buffer. Moreover we don't need a zeroed buffer here.
+     */
+    auto large_buffer = std::unique_ptr<char[]>(
+            new char[gkfs::config::rpc::dirents_buff_size]);
+
+    // We use the full size per server...
+    const std::size_t per_host_buff_size = gkfs::config::rpc::dirents_buff_size;
+    vector<tuple<const std::string, bool, size_t, time_t>> output;
+
+    // expose local buffers for RMA from servers
+    std::vector<hermes::exposed_memory> exposed_buffers;
+    exposed_buffers.reserve(1);
+    std::size_t i = server;
+    try {
+        exposed_buffers.emplace_back(ld_network_service->expose(
+                std::vector<hermes::mutable_buffer>{hermes::mutable_buffer{
+                        large_buffer.get(), per_host_buff_size}},
+                hermes::access_mode::write_only));
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "{}() Failed to expose buffers for RMA. err '{}'", __func__,
+            ex.what());
+        return make_pair(EBUSY, output);
+    }
+
+    auto err = 0;
+    // send RPCs
+    std::vector<hermes::rpc_handle<gkfs::rpc::get_dirents_extended>> handles;
+
+    auto endp = CTX->hosts().at(targets[i]);
+
+    gkfs::rpc::get_dirents_extended::input in(path, exposed_buffers[0]);
+
+    try {
+        LOG(DEBUG, "{}() Sending RPC to host: '{}'", __func__, targets[i]);
+        handles.emplace_back(
+                ld_network_service->post<gkfs::rpc::get_dirents_extended>(endp,
+                                                                          in));
+    } catch(const std::exception& ex) {
+        LOG(ERROR,
+            "{}() Unable to send non-blocking get_dirents() on {} [peer: {}] err '{}'",
+            __func__, path, targets[i], ex.what());
+        err = EBUSY;
+    }
+
+    LOG(DEBUG,
+        "{}() path '{}' send rpc_srv_get_dirents() rpc to '{}' targets. per_host_buff_size '{}' Waiting on reply next and deserialize",
+        __func__, path, targets.size(), per_host_buff_size);
+
+    // wait for RPC responses
+
+    gkfs::rpc::get_dirents_extended::output out;
+
+    try {
+        // XXX We might need a timeout here to not wait forever for an
+        // output that never comes?
+        out = handles[0].get().at(0);
+        // skip processing dirent data if there was an error during send
+        // In this case all responses are gathered but their contents skipped
+
+        if(out.err() != 0) {
+            LOG(ERROR,
+                "{}() Failed to retrieve dir entries from host '{}'. Error '{}', path '{}'",
+                __func__, targets[0], strerror(out.err()), path);
+            err = out.err();
+            // We need to gather all responses before exiting
+        }
+    } catch(const std::exception& ex) {
+        LOG(ERROR,
+            "{}() Failed to get rpc output.. [path: {}, target host: {}] err '{}'",
+            __func__, path, targets[0], ex.what());
+        err = EBUSY;
+        // We need to gather all responses before exiting
+    }
+
+    // The parenthesis is extremely important if not the cast will add as a
+    // size_t or a time_t and not as a char
+    auto out_buff_ptr = static_cast<char*>(exposed_buffers[0].begin()->data());
+    auto bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
+    auto size_ptr = reinterpret_cast<size_t*>(
+            (out_buff_ptr) + (out.dirents_size() * sizeof(bool)));
+    auto ctime_ptr = reinterpret_cast<time_t*>(
+            (out_buff_ptr) +
+            (out.dirents_size() * (sizeof(bool) + sizeof(size_t))));
+    auto names_ptr =
+            out_buff_ptr + (out.dirents_size() *
+                            (sizeof(bool) + sizeof(size_t) + sizeof(time_t)));
+
+    for(std::size_t j = 0; j < out.dirents_size(); j++) {
+
+        bool ftype = (*bool_ptr);
+        bool_ptr++;
+
+        size_t size = *size_ptr;
+        size_ptr++;
+
+        time_t ctime = *ctime_ptr;
+        ctime_ptr++;
+
+        auto name = std::string(names_ptr);
+        // number of characters in entry + \0 terminator
+        names_ptr += name.size() + 1;
+        output.emplace_back(std::forward_as_tuple(name, ftype, size, ctime));
+    }
+    return make_pair(err, output);
+}
+
+
 #ifdef HAS_SYMLINKS
 
 /**

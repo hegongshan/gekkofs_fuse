@@ -243,6 +243,11 @@ can be provided to set the path to the log file, and the log module can be
 selected with the `GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace}`
 environment variable.
 
+### External functions
+
+GekkoFS allows to use external functions on your client code, via LD_PRELOAD. 
+Source code needs to be compiled with -fPIC. We include a pfind io500 substitution,
+ `examples/gfind/gfind.cpp` and a non-mpi version `examples/gfind/sfind.cpp`
 
 ### Acknowledgment
 

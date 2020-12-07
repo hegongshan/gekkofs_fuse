@@ -62,6 +62,16 @@ struct linux_dirent64 {
                     // forbids zero-size array 'd_name'
 };
 
+struct dirent_extended {
+    size_t size;
+    time_t ctime;
+    unsigned short d_reclen;
+    unsigned char d_type;
+    char d_name[1]; // originally `char d_name[0]` in kernel, but ISO C++
+                    // forbids zero-size array 'd_name'
+};
+
+
 namespace {
 
 /**
@@ -1146,3 +1156,58 @@ gkfs_readlink(const std::string& path, char* buf, int bufsize) {
 #endif
 
 } // namespace gkfs::syscall
+
+
+/* This function defines an extension of the dirents prepared to do a find-like
+ * function The function only sends the request to the specified server
+ */
+extern "C" int
+gkfs_getsingleserverdir(const char* path, struct dirent_extended* dirp,
+                        unsigned int count, int server) {
+
+    auto ret = gkfs::rpc::forward_get_dirents_single(path, server);
+    auto err = ret.first;
+    if(err) {
+        errno = err;
+        return -1;
+    }
+
+    auto open_dir = ret.second;
+    unsigned int pos = 0;
+    unsigned int written = 0;
+    struct dirent_extended* current_dirp = nullptr;
+    while(pos < open_dir.size()) {
+        auto de = open_dir[pos];
+        /*
+         * Calculate the total dentry size within the 'dirent_extended`
+         * depending on the file name size. The size is then aligned to the size
+         * of `long` boundary.
+         */
+        auto total_size = ALIGN(offsetof(struct dirent_extended, d_name) +
+                                        (get<0>(de)).size() + 1,
+                                sizeof(uint64_t));
+        if(total_size > (count - written)) {
+            // no enough space left on user buffer to insert next dirent
+            break;
+        }
+        current_dirp = reinterpret_cast<struct dirent_extended*>(
+                reinterpret_cast<char*>(dirp) + written);
+
+        current_dirp->d_reclen = total_size;
+        current_dirp->d_type = get<1>(de);
+        current_dirp->size = get<2>(de);
+        current_dirp->ctime = get<3>(de);
+
+        LOG(DEBUG, "name {}: {} {} {} {} / size {}", pos, get<0>(de),
+            get<1>(de), get<2>(de), get<3>(de), total_size);
+        std::strcpy(&(current_dirp->d_name[0]), (get<0>(de)).c_str());
+        ++pos;
+        written += total_size;
+    }
+
+    if(written == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    return written;
+}

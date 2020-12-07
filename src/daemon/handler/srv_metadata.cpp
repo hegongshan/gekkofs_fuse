@@ -466,6 +466,156 @@ rpc_srv_get_dirents(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
+/* Sends the name-size-ctime of a specific directory
+ * Used to accelerate find
+ * It mimics get_dirents, but uses a tuple
+ */
+hg_return_t
+rpc_srv_get_dirents_extended(hg_handle_t handle) {
+    rpc_get_dirents_in_t in{};
+    rpc_get_dirents_out_t out{};
+    out.err = EIO;
+    out.dirents_size = 0;
+    hg_bulk_t bulk_handle = nullptr;
+
+    // Get input parmeters
+    auto ret = margo_get_input(handle, &in);
+    if(ret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error(
+                "{}() Could not get RPC input data with err '{}'", __func__,
+                ret);
+        out.err = EBUSY;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
+
+    // Retrieve size of source buffer
+    auto hgi = margo_get_info(handle);
+    auto mid = margo_hg_info_get_instance(hgi);
+    auto bulk_size = margo_bulk_get_size(in.bulk_handle);
+    GKFS_DATA->spdlogger()->debug("{}() Got RPC: path '{}' bulk_size '{}' ",
+                                  __func__, in.path, bulk_size);
+
+    // Get directory entries from local DB
+    vector<tuple<string, bool, size_t, time_t>> entries{};
+    try {
+        entries = gkfs::metadata::get_dirents_extended(in.path);
+    } catch(const ::exception& e) {
+        GKFS_DATA->spdlogger()->error("{}() Error during get_dirents(): '{}'",
+                                      __func__, e.what());
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
+
+    GKFS_DATA->spdlogger()->trace(
+            "{}() path '{}' Read database with '{}' entries", __func__, in.path,
+            entries.size());
+
+    if(entries.empty()) {
+        out.err = 0;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
+
+    // Calculate total output size
+    // TODO OPTIMIZATION: this can be calculated inside db_get_dirents
+    size_t tot_names_size = 0;
+    for(auto const& e : entries) {
+        tot_names_size += (get<0>(e)).size();
+    }
+
+    // tot_names_size (# characters in entry) + # entries * (bool size + char
+    // size for \0 character)
+    size_t out_size =
+            tot_names_size + entries.size() * (sizeof(bool) + sizeof(char) +
+                                               sizeof(size_t) + sizeof(time_t));
+    if(bulk_size < out_size) {
+        // Source buffer is smaller than total output size
+        GKFS_DATA->spdlogger()->error(
+                "{}() Entries do not fit source buffer. bulk_size '{}' < out_size '{}' must be satisfied!",
+                __func__, bulk_size, out_size);
+        out.err = ENOBUFS;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out);
+    }
+
+    void* bulk_buf; // buffer for bulk transfer
+    // create bulk handle and allocated memory for buffer with out_size
+    // information
+    ret = margo_bulk_create(mid, 1, nullptr, &out_size, HG_BULK_READ_ONLY,
+                            &bulk_handle);
+    if(ret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error("{}() Failed to create bulk handle",
+                                      __func__);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+    // access the internally allocated memory buffer and put it into bulk_buf
+    uint32_t actual_count; // number of segments. we use one here because we
+                           // push the whole buffer at once
+    ret = margo_bulk_access(bulk_handle, 0, out_size, HG_BULK_READ_ONLY, 1,
+                            &bulk_buf, &out_size, &actual_count);
+    if(ret != HG_SUCCESS || actual_count != 1) {
+        GKFS_DATA->spdlogger()->error(
+                "{}() Failed to access allocated buffer from bulk handle",
+                __func__);
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    GKFS_DATA->spdlogger()->trace(
+            "{}() path '{}' entries '{}' out_size '{}'. Set up local read only bulk handle and allocated buffer with size '{}'",
+            __func__, in.path, entries.size(), out_size, out_size);
+
+    // Serialize output data on local buffer
+    // The parenthesis are extremely important, if not the + will be size_t or
+    // time_t size and not char
+    auto out_buff_ptr = static_cast<char*>(bulk_buf);
+    auto bool_ptr = reinterpret_cast<bool*>(out_buff_ptr);
+    auto size_ptr = reinterpret_cast<size_t*>((out_buff_ptr) +
+                                              (entries.size() * sizeof(bool)));
+    auto ctime_ptr = reinterpret_cast<time_t*>(
+            (out_buff_ptr) +
+            (entries.size() * (sizeof(bool) + sizeof(size_t))));
+    auto names_ptr =
+            out_buff_ptr +
+            (entries.size() * (sizeof(bool) + sizeof(size_t) + sizeof(time_t)));
+
+    for(auto const& e : entries) {
+        if((get<0>(e)).empty()) {
+            GKFS_DATA->spdlogger()->warn(
+                    "{}() Entry in readdir() empty. If this shows up, something else is very wrong.",
+                    __func__);
+        }
+        *bool_ptr = (get<1>(e));
+        bool_ptr++;
+
+        *size_ptr = (get<2>(e));
+        size_ptr++;
+
+        *ctime_ptr = (get<3>(e));
+        ctime_ptr++;
+
+        const auto name = (get<0>(e)).c_str();
+        ::strcpy(names_ptr, name);
+        // number of characters + \0 terminator
+        names_ptr += ((get<0>(e)).size() + 1);
+    }
+
+    GKFS_DATA->spdlogger()->trace(
+            "{}() path '{}' entries '{}' out_size '{}'. Copied data to bulk_buffer. NEXT bulk_transfer",
+            __func__, in.path, entries.size(), out_size);
+    ret = margo_bulk_transfer(mid, HG_BULK_PUSH, hgi->addr, in.bulk_handle, 0,
+                              bulk_handle, 0, out_size);
+    if(ret != HG_SUCCESS) {
+        GKFS_DATA->spdlogger()->error(
+                "{}() Failed to push '{}' dirents on path '{}' to client with bulk size '{}' and out_size '{}'",
+                __func__, entries.size(), in.path, bulk_size, out_size);
+        out.err = EBUSY;
+        return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    }
+
+    out.dirents_size = entries.size();
+    out.err = 0;
+    GKFS_DATA->spdlogger()->debug(
+            "{}() Sending output response err '{}' dirents_size '{}'. DONE",
+            __func__, out.err, out.dirents_size);
+    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+}
 
 #ifdef HAS_SYMLINKS
 
@@ -526,6 +676,7 @@ DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_metadentry_size)
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents)
 
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_get_dirents_extended)
 #ifdef HAS_SYMLINKS
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_mk_symlink)
