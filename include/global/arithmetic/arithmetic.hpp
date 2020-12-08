@@ -73,7 +73,7 @@ constexpr uint64_t
 align_left(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return static_cast<uint64_t>(offset) & ~(block_size - 1u);
+    return offset & ~(block_size - 1u);
 }
 
 
@@ -110,7 +110,7 @@ constexpr size_t
 block_overrun(const uint64_t offset, const size_t block_size) {
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return static_cast<uint64_t>(offset) & (block_size - 1u);
+    return offset & (block_size - 1u);
 }
 
 
@@ -156,8 +156,7 @@ block_index(const uint64_t offset, const size_t block_size) {
 
     // This check is automatically removed in release builds
     assert(is_power_of_2(block_size));
-    return static_cast<uint64_t>(align_left(offset, block_size) >>
-                                 log2(block_size));
+    return align_left(offset, block_size) >> log2(block_size);
 }
 
 
@@ -184,7 +183,7 @@ block_count(const uint64_t offset, const size_t size, const size_t block_size) {
     assert(is_power_of_2(block_size));
 
 #if defined(__GNUC__) && !defined(__clang__)
-    assert(!__builtin_add_overflow_p(offset, size, static_cast<uint64_t>(0)));
+    assert(!__builtin_add_overflow_p(offset, size, uint64_t{0}));
 #else
     assert(offset + size > offset);
 #endif
