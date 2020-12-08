@@ -133,7 +133,7 @@ forward_write(const string& path, const void* buf, const bool append_flag,
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target &&
-           !is_divisible(offset + write_size, gkfs::config::rpc::chunksize)) {
+           !is_aligned(offset + write_size, gkfs::config::rpc::chunksize)) {
             total_chunk_size -= block_underrun(offset + write_size,
                                                gkfs::config::rpc::chunksize);
         }
@@ -311,7 +311,7 @@ forward_read(const string& path, void* buf, const off64_t offset,
 
         // receiver of last chunk must subtract
         if(target == chnk_end_target &&
-           !is_divisible(offset + read_size, gkfs::config::rpc::chunksize)) {
+           !is_aligned(offset + read_size, gkfs::config::rpc::chunksize)) {
             total_chunk_size -= block_underrun(offset + read_size,
                                                gkfs::config::rpc::chunksize);
         }

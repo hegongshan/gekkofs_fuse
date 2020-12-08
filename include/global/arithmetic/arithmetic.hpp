@@ -43,7 +43,8 @@ log2(uint64_t n) {
 }
 
 /**
- * Check whether @n is divisible by @block_size.
+ * Check whether @n is aligned to a block boundary, i.e. if it is divisible by
+ * @block_size.
  *
  * @note This function assumes that block_size is a power of 2.
  *
@@ -52,7 +53,7 @@ log2(uint64_t n) {
  * @returns true if @n is divisible by @block_size; false otherwise.
  */
 constexpr bool
-is_divisible(const uint64_t n, const size_t block_size) {
+is_aligned(const uint64_t n, const size_t block_size) {
     using gkfs::utils::arithmetic::log2;
     assert(is_power_of_2(block_size));
     return !(n & ((1u << log2(block_size)) - 1));
@@ -194,7 +195,7 @@ block_count(const uint64_t offset, const size_t size, const size_t block_size) {
 
     return (((final_block >> log2(block_size)) -
              (first_block >> log2(block_size)) +
-             !is_divisible(offset + size, block_size))) &
+             !is_aligned(offset + size, block_size))) &
            mask;
 }
 

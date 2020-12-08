@@ -97,7 +97,7 @@ SCENARIO(" powers of 2 can be correctly detected ",
 }
 
 SCENARIO(" divisibility by powers of 2 can be correctly detected ",
-         "[utils][numeric][is_divisible]") {
+         "[utils][numeric][is_aligned]") {
 
     GIVEN(" a number and a block_size ") {
 
@@ -110,7 +110,7 @@ SCENARIO(" divisibility by powers of 2 can be correctly detected ",
         CAPTURE(n, block_size);
 
         bool expected = n % block_size == 0;
-        REQUIRE(is_divisible(n, block_size) == expected);
+        REQUIRE(is_aligned(n, block_size) == expected);
     }
 }
 
