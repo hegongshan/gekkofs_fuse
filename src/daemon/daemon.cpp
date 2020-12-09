@@ -258,7 +258,7 @@ init_environment() {
     }
     // setup hostfile to let clients know that a daemon is running on this host
     if(!GKFS_DATA->hosts_file().empty()) {
-        gkfs::util::populate_hosts_file();
+        gkfs::utils::populate_hosts_file();
     }
     GKFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
 }
@@ -301,7 +301,7 @@ destroy_enviroment() {
     if(!GKFS_DATA->hosts_file().empty()) {
         GKFS_DATA->spdlogger()->debug("{}() Removing hosts file", __func__);
         try {
-            gkfs::util::destroy_hosts_file();
+            gkfs::utils::destroy_hosts_file();
         } catch(const fs::filesystem_error& e) {
             GKFS_DATA->spdlogger()->debug("{}() hosts file not found",
                                           __func__);

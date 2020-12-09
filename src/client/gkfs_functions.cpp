@@ -84,7 +84,7 @@ int
 check_parent_dir(const std::string& path) {
 #if CREATE_CHECK_PARENTS
     auto p_comp = gkfs::path::dirname(path);
-    auto md = gkfs::util::get_metadata(p_comp);
+    auto md = gkfs::utils::get_metadata(p_comp);
     if(!md) {
         if(errno == ENOENT) {
             LOG(DEBUG, "Parent component does not exist: '{}'", p_comp);
@@ -130,7 +130,7 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
     }
 
     bool exists = true;
-    auto md = gkfs::util::get_metadata(path);
+    auto md = gkfs::utils::get_metadata(path);
     if(!md) {
         if(errno == ENOENT) {
             exists = false;
@@ -253,7 +253,7 @@ gkfs_create(const std::string& path, mode_t mode) {
  */
 int
 gkfs_remove(const std::string& path) {
-    auto md = gkfs::util::get_metadata(path);
+    auto md = gkfs::utils::get_metadata(path);
     if(!md) {
         return -1;
     }
@@ -276,7 +276,7 @@ gkfs_remove(const std::string& path) {
  */
 int
 gkfs_access(const std::string& path, const int mask, bool follow_links) {
-    auto md = gkfs::util::get_metadata(path, follow_links);
+    auto md = gkfs::utils::get_metadata(path, follow_links);
     if(!md) {
         errno = ENOENT;
         return -1;
@@ -294,11 +294,11 @@ gkfs_access(const std::string& path, const int mask, bool follow_links) {
  */
 int
 gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
-    auto md = gkfs::util::get_metadata(path, follow_links);
+    auto md = gkfs::utils::get_metadata(path, follow_links);
     if(!md) {
         return -1;
     }
-    gkfs::util::metadata_to_stat(path, *md, *buf);
+    gkfs::utils::metadata_to_stat(path, *md, *buf);
     return 0;
 }
 
@@ -318,14 +318,14 @@ gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
 int
 gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
            struct statx* buf, bool follow_links) {
-    auto md = gkfs::util::get_metadata(path, follow_links);
+    auto md = gkfs::utils::get_metadata(path, follow_links);
     if(!md) {
         return -1;
     }
 
     struct stat tmp {};
 
-    gkfs::util::metadata_to_stat(path, *md, tmp);
+    gkfs::utils::metadata_to_stat(path, *md, tmp);
 
     buf->stx_mask = 0;
     buf->stx_blksize = tmp.st_blksize;
@@ -545,7 +545,7 @@ gkfs_truncate(const std::string& path, off_t length) {
         return -1;
     }
 
-    auto md = gkfs::util::get_metadata(path, true);
+    auto md = gkfs::utils::get_metadata(path, true);
     if(!md) {
         return -1;
     }
@@ -863,7 +863,7 @@ gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 int
 gkfs_opendir(const std::string& path) {
 
-    auto md = gkfs::util::get_metadata(path);
+    auto md = gkfs::utils::get_metadata(path);
     if(!md) {
         return -1;
     }
@@ -891,7 +891,7 @@ gkfs_opendir(const std::string& path) {
  */
 int
 gkfs_rmdir(const std::string& path) {
-    auto md = gkfs::util::get_metadata(path);
+    auto md = gkfs::utils::get_metadata(path);
     if(!md) {
         LOG(DEBUG, "Path '{}' does not exist: ", path);
         errno = ENOENT;
@@ -1088,7 +1088,7 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
      *  Here if the target is a directory we raise a NOTSUP error.
      *  So that application know we don't support link to directory.
      */
-    auto target_md = gkfs::util::get_metadata(target_path, false);
+    auto target_md = gkfs::utils::get_metadata(target_path, false);
     if(target_md != nullptr) {
         auto trg_mode = target_md->mode();
         if(!(S_ISREG(trg_mode) || S_ISLNK(trg_mode))) {
@@ -1103,7 +1103,7 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
         return -1;
     }
 
-    auto link_md = gkfs::util::get_metadata(path, false);
+    auto link_md = gkfs::utils::get_metadata(path, false);
     if(link_md != nullptr) {
         LOG(DEBUG, "Link exists: '{}'", path);
         errno = EEXIST;
@@ -1130,7 +1130,7 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
  */
 int
 gkfs_readlink(const std::string& path, char* buf, int bufsize) {
-    auto md = gkfs::util::get_metadata(path, false);
+    auto md = gkfs::utils::get_metadata(path, false);
     if(md == nullptr) {
         LOG(DEBUG, "Named link doesn't exist");
         return -1;

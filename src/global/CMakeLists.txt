@@ -1,3 +1,5 @@
+add_subdirectory(arithmetic)
+
 add_library(distributor STATIC)
 set_property(TARGET distributor PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(distributor

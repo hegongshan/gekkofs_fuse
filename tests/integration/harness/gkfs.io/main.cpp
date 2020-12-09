@@ -41,7 +41,7 @@ init_commands(CLI::App& app) {
     write_validate_init(app);
     write_random_init(app);
     truncate_init(app);
-    // util
+    // utils
     file_compare_init(app);
 }
 

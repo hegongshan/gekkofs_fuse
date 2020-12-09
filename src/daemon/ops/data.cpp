@@ -13,7 +13,7 @@
 
 #include <daemon/ops/data.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
-#include <global/chunk_calc_util.hpp>
+#include <global/arithmetic/arithmetic.hpp>
 #include <utility>
 
 extern "C" {
@@ -41,6 +41,10 @@ namespace data {
  */
 void
 ChunkTruncateOperation::truncate_abt(void* _arg) {
+
+    // import pow2-optimized arithmetic functions
+    using namespace gkfs::utils::arithmetic;
+
     assert(_arg);
     // Unpack args
     auto* arg = static_cast<struct chunk_truncate_args*>(_arg);
@@ -49,11 +53,9 @@ ChunkTruncateOperation::truncate_abt(void* _arg) {
     int err_response = 0;
     try {
         // get chunk from where to cut off
-        auto chunk_id_start = gkfs::util::chnk_id_for_offset(
-                size, gkfs::config::rpc::chunksize);
+        auto chunk_id_start = block_index(size, gkfs::config::rpc::chunksize);
         // do not last delete chunk if it is in the middle of a chunk
-        auto left_pad =
-                gkfs::util::chnk_lpad(size, gkfs::config::rpc::chunksize);
+        auto left_pad = block_overrun(size, gkfs::config::rpc::chunksize);
         if(left_pad != 0) {
             GKFS_DATA->storage()->truncate_chunk_file(path, chunk_id_start,
                                                       left_pad);

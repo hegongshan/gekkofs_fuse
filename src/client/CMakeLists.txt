@@ -42,7 +42,6 @@ set(PRELOAD_HEADERS
     ../../include/client/syscalls/syscall.hpp
     ../../include/client/syscalls/detail/syscall_info.h
     ../../include/global/cmake_configure.hpp
-    ../../include/global/chunk_calc_util.hpp
     ../../include/global/global_defs.hpp
     ../../include/global/path_util.hpp
     ../../include/global/rpc/rpc_types.hpp
@@ -70,7 +69,9 @@ set(PRELOAD_INCLUDE_DIRS
 
 add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
-target_link_libraries(gkfs_intercept ${PRELOAD_LINK_LIBRARIES})
+target_link_libraries(gkfs_intercept
+    arithmetic
+    ${PRELOAD_LINK_LIBRARIES})
 
 target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
 

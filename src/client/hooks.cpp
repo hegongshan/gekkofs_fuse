@@ -614,7 +614,7 @@ hook_chdir(const char* path) {
     bool internal = CTX->relativize_path(path, rel_path);
     if(internal) {
         // path falls in our namespace
-        auto md = gkfs::util::get_metadata(rel_path);
+        auto md = gkfs::utils::get_metadata(rel_path);
         if(md == nullptr) {
             LOG(ERROR, "{}() path does not exists", __func__);
             return -ENOENT;

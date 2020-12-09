@@ -34,18 +34,22 @@ target_link_libraries(catch2_main
 add_executable(tests
     test_example_00.cpp
     test_example_01.cpp
+  test_utils_arithmetic.cpp
 )
 
 target_link_libraries(tests
     catch2_main
     fmt::fmt
+  arithmetic
 )
 
 # Catch2's contrib folder includes some helper functions
 # to auto-discover Catch tests and register them in CTest
 set(CMAKE_MODULE_PATH "${catch2_SOURCE_DIR}/contrib" ${CMAKE_MODULE_PATH})
 include(Catch)
-catch_discover_tests(tests)
+catch_discover_tests(tests
+  PROPERTIES LABELS "unit::all"
+  )
 
 if(GKFS_INSTALL_TESTS)
     install(TARGETS tests
