@@ -84,10 +84,40 @@ function(gkfs_enable_python_testing)
         install(
             CODE "message(\"Install pytest virtual environment...\")"
             CODE "message(\"-- Create virtual environment: ${PYTEST_VIRTUALENV}\")"
-            CODE "execute_process(COMMAND ${Python3_EXECUTABLE} -m venv ${PYTEST_VIRTUALENV})"
+            CODE "execute_process(
+                    COMMAND ${Python3_EXECUTABLE} -m venv ${PYTEST_VIRTUALENV}
+                    RESULT_VARIABLE STATUS
+                    OUTPUT_VARIABLE CMD_OUT
+                    ERROR_VARIABLE CMD_ERR
+                    OUTPUT_FILE install_stdout.log
+                    ERROR_FILE install_stderr.log)"
+            CODE "if(STATUS AND NOT STATUS EQUAL 0)
+                    message(FATAL_ERROR \"Creation of pytest virtual environment failed. Check 'cmake_install_stdout.log' and 'cmake_install_stderr.log' for details\")
+                  endif()"
+        )
+
+        install(
             CODE "message(\"-- Installing packages...\")"
-            CODE "execute_process(COMMAND ${PYTEST_VIRTUALENV}/bin/pip install --upgrade pip -v)"
-            CODE "execute_process(COMMAND ${PYTEST_VIRTUALENV}/bin/pip install -r ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --upgrade -v)"
+            CODE "execute_process(
+                    COMMAND ${PYTEST_VIRTUALENV}/bin/pip install --upgrade pip -v
+                    RESULT_VARIABLE STATUS
+                    OUTPUT_VARIABLE CMD_OUT
+                    ERROR_VARIABLE CMD_ERR
+                    OUTPUT_FILE install_stdout.log
+                    ERROR_FILE install_stderr.log)"
+            CODE "if(STATUS AND NOT STATUS EQUAL 0)
+                    message(FATAL_ERROR \"Installation of pytest dependencies failed. Check 'cmake_install_stdout.log' and 'cmake_install_stderr.log' for details\")
+                  endif()"
+            CODE "execute_process(
+                    COMMAND ${PYTEST_VIRTUALENV}/bin/pip install -r ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt --upgrade -v
+                    RESULT_VARIABLE STATUS
+                    OUTPUT_VARIABLE CMD_OUT
+                    ERROR_VARIABLE CMD_ERR
+                    OUTPUT_FILE install_stdout.log
+                    ERROR_FILE install_stderr.log)"
+            CODE "if(STATUS AND NOT STATUS EQUAL 0)
+                    message(FATAL_ERROR \"Installation of pytest dependencies failed. Check 'cmake_install_stdout.log' and 'cmake_install_stderr.log' for details\")
+                  endif()"
         )
     endif()
 
