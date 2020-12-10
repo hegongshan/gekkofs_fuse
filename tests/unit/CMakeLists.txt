@@ -53,6 +53,6 @@ catch_discover_tests(tests
 
 if(GKFS_INSTALL_TESTS)
     install(TARGETS tests
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/unit
     )
 endif()

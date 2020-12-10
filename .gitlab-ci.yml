@@ -68,9 +68,13 @@ compile GekkoFS:
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
+    # the following commands are intended to reduce artifact size
+    - rm -rf ${BUILD_PATH}/_deps
+    - find ${BUILD_PATH} -name "*.o" -delete
   artifacts:
     paths:
-     - ${INSTALL_PATH}
+      - ${BUILD_PATH}
+      - ${INSTALL_PATH}
 
 compile tests:
   stage: build
@@ -98,6 +102,7 @@ integration tests:
 unit:
   stage: test
   script:
+    - cd ${BUILD_PATH}
     - ctest -j $(nproc) -L unit::all
   artifacts:
     when: on_failure
