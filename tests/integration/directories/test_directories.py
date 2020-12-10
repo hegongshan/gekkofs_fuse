@@ -220,11 +220,16 @@ def test_extended(gkfs_daemon, gkfs_shell, gkfs_client):
     ret = gkfs_client.write(file_a, buf, 1)
 
     assert ret.retval == 1
-    preload = 'LIBGKFS_HOSTS_FILE='+str(gkfs_client._patched_env['LIBGKFS_HOSTS_FILE'])+' LD_PRELOAD='+str(gkfs_client._preload_library)
-    stream = os.popen(preload+' '+str(gkfs_daemon._workspace.bindirs[1])+'/sfind '+str(topdir)+' -M '+str(gkfs_daemon.mountdir)+' -S 1 -name "*_k*"');
-    output = stream.read()
-    assert output == "MATCHED 0/4\n"
-    
+
+    cmd = gkfs_shell.sfind(
+            topdir,
+            f'-M {gkfs_daemon.mountdir}',
+            '-S 1',
+            '-name "*_k*"'
+            )
+
+    assert cmd.exit_code == 0
+    assert cmd.stdout.decode() == "MATCHED 0/4\n"
 
 @pytest.mark.skip(reason="invalid errno returned on success")
 @pytest.mark.parametrize("directory_path",
