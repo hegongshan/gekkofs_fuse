@@ -466,7 +466,6 @@ class ShellClient:
     def __init__(self, workspace):
         self._workspace = workspace
         self._search_paths = _find_search_paths(self._workspace.bindirs)
-        self._cmd = sh.Command("bash")
         self._env = os.environ.copy()
 
         libdirs = ':'.join(
@@ -579,6 +578,8 @@ class ShellClient:
         if intercept_shell:
             logger.debug(f"patched env: {self._patched_env}")
 
+        self._cmd = sh.Command("bash")
+
         # 'sh' raises an exception if the return code is not zero;
         # since we'd rather check for return codes explictly, we
         # whitelist all exit codes from 1 to 255 as 'ok' using the
@@ -635,22 +636,27 @@ class ShellClient:
         extra properties to it.
         """
 
-        cmd = sh.which(cmd, self._search_paths)
+        found_cmd = sh.which(cmd, self._search_paths)
 
-        bash_c_args = f"{cmd} {' '.join(str(a) for a in args)}"
-        logger.debug(f"running bash")
-        logger.debug(f"cmd: bash -c '{bash_c_args}'")
+        if not found_cmd:
+            raise sh.CommandNotFound(cmd)
+
+        self._cmd = sh.Command(found_cmd)
+
+        logger.debug(f"running program")
+        logger.debug(f"cmd: {cmd} {' '.join(str(a) for a in args)}")
         logger.debug(f"search_paths: {':'.join(str(p) for p in self._search_paths)}")
         logger.debug(f"timeout: {timeout} seconds")
         logger.debug(f"timeout_signal: {signal.Signals(timeout_signal).name}")
         logger.debug(f"patched env:\n{pformat(self._patched_env)}")
 
+
         # 'sh' raises an exception if the return code is not zero;
         # since we'd rather check for return codes explictly, we
         # whitelist all exit codes from 1 to 255 as 'ok' using the
         # _ok_code argument
-        proc = self._cmd('-c',
-            bash_c_args,
+        proc = self._cmd(
+            args,
             _env = self._env,
     #        _out=sys.stdout,
     #        _err=sys.stderr,
@@ -658,6 +664,9 @@ class ShellClient:
             _timeout_signal=timeout_signal,
     #        _ok_code=list(range(0, 256))
             )
+
+        logger.debug(f"program stdout: {proc.stdout}")
+        logger.debug(f"program stderr: {proc.stderr}")
 
         return ShellCommand(cmd, proc)
 

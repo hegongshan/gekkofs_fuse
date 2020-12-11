@@ -223,9 +223,12 @@ def test_extended(gkfs_daemon, gkfs_shell, gkfs_client):
 
     cmd = gkfs_shell.sfind(
             topdir,
-            f'-M {gkfs_daemon.mountdir}',
-            '-S 1',
-            '-name "*_k*"'
+            '-M',
+            gkfs_daemon.mountdir,
+            '-S',
+            1,
+            '-name',
+            '*_k*'
             )
 
     assert cmd.exit_code == 0
