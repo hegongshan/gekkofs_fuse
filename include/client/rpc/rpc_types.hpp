@@ -49,8 +49,7 @@
 #include <common/common_defs.hpp>
 #include <common/rpc/rpc_types.hpp>
 
-namespace hermes {
-namespace detail {
+namespace hermes::detail {
 
 struct hg_void_t {};
 
@@ -62,11 +61,9 @@ hg_proc_void_t(hg_proc_t proc, void* data) {
     return HG_SUCCESS;
 }
 
-} // namespace detail
-} // namespace hermes
+} // namespace hermes::detail
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 //==============================================================================
 // definitions for fs_config
@@ -2283,8 +2280,7 @@ struct chunk_stat {
     };
 };
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 
 #endif // GKFS_RPCS_TYPES_HPP

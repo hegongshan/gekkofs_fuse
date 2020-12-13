@@ -86,7 +86,6 @@ forward_mk_symlink(const std::string& path, const std::string& target_path);
 
 #endif
 
-
 } // namespace rpc
 } // namespace gkfs
 

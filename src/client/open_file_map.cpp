@@ -39,8 +39,7 @@ extern "C" {
 
 using namespace std;
 
-namespace gkfs {
-namespace filemap {
+namespace gkfs::filemap {
 
 OpenFile::OpenFile(const string& path, const int flags, FileType type)
     : type_(type), path_(path) {
@@ -240,5 +239,4 @@ OpenFileMap::get_fd_idx() {
     return fd_idx;
 }
 
-} // namespace filemap
-} // namespace gkfs
+} // namespace gkfs::filemap

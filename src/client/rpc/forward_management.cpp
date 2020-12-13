@@ -32,8 +32,7 @@
 #include <client/preload_util.hpp>
 #include <client/rpc/rpc_types.hpp>
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 /**
  * Gets fs configuration information from the running daemon and transfers it to
@@ -76,5 +75,4 @@ forward_get_fs_config() {
     return true;
 }
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc

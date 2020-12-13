@@ -40,8 +40,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace rpc {
+namespace gkfs::rpc {
 
 /*
  * This file includes all metadata RPC calls.
@@ -723,5 +722,4 @@ forward_mk_symlink(const std::string& path, const std::string& target_path) {
 
 #endif
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc

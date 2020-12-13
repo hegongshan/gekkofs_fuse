@@ -31,8 +31,7 @@
 
 using namespace std;
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 string
 MergeOperand::serialize_id() const {
@@ -207,5 +206,4 @@ MetadataMergeOperator::AllowSingleOperand() const {
     return true;
 }
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata

@@ -34,13 +34,11 @@
 #define ADD_PREFIX(str) DAEMON_ENV_PREFIX str
 
 /* Environment variables for the GekkoFS daemon */
-namespace gkfs {
-namespace env {
+namespace gkfs::env {
 
 static constexpr auto HOSTS_FILE = ADD_PREFIX("HOSTS_FILE");
 
-} // namespace env
-} // namespace gkfs
+} // namespace gkfs::env
 
 #undef ADD_PREFIX
 
