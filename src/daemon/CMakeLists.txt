@@ -56,9 +56,13 @@ set(DAEMON_INCLUDE_DIRS
     )
 
 add_executable(gkfs_daemon ${DAEMON_SRC} ${DAEMON_HEADERS})
-target_link_libraries(gkfs_daemon ${DAEMON_LINK_LIBRARIES})
+target_link_libraries(gkfs_daemon PRIVATE ${DAEMON_LINK_LIBRARIES})
 
 target_include_directories(gkfs_daemon PRIVATE ${DAEMON_INCLUDE_DIRS})
+
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(gkfs_daemon AUTO)
+endif()
 
 install(TARGETS gkfs_daemon
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -92,6 +96,7 @@ if (GKFS_ENABLE_FORWARDING)
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
     target_link_libraries(gkfwd_daemon
+      PRIVATE
         ${DAEMON_LINK_LIBRARIES}
         ${AGIOS_LIBRARIES}
         )
@@ -101,6 +106,10 @@ if (GKFS_ENABLE_FORWARDING)
         ${DAEMON_INCLUDE_DIRS}
         ${AGIOS_INCLUDE_DIRS}
         )
+
+    if(GKFS_ENABLE_CODE_COVERAGE)
+      target_code_coverage(gkfwd_daemon AUTO)
+    endif()
 
     install(TARGETS gkfwd_daemon
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

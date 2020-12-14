@@ -70,10 +70,16 @@ set(PRELOAD_INCLUDE_DIRS
 add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
 target_link_libraries(gkfs_intercept
+  PRIVATE
     arithmetic
     ${PRELOAD_LINK_LIBRARIES})
 
 target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
+
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(gkfs_intercept AUTO)
+endif()
+
 
 install(TARGETS gkfs_intercept
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -107,9 +113,13 @@ if (GKFS_ENABLE_FORWARDING)
     message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
-    target_link_libraries(gkfwd_intercept ${PRELOAD_LINK_LIBRARIES})
+    target_link_libraries(gkfwd_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
 
     target_include_directories(gkfwd_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
+
+    if(GKFS_ENABLE_CODE_COVERAGE)
+      target_code_coverage(gkfwd_intercept AUTO)
+    endif()
 
     install(TARGETS gkfwd_intercept
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

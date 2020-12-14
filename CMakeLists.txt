@@ -74,6 +74,16 @@ configure_file(include/version.hpp.in include/version.hpp)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
+
+################################################################################
+## Coverage generation support:
+## ============================
+## 
+## The `gkfs-code-coverage' module enables the GKFS_ENABLE_CODE_COVERAGE option
+## as well as the target_code_coverage() function.
+################################################################################
+include(gkfs-code-coverage)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
 # Rocksdb dependencies

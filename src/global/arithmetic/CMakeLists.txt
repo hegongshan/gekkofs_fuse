@@ -21,3 +21,5 @@ target_include_directories(arithmetic
   INTERFACE
     ${INCLUDE_DIR}/global/arithmetic/
   )
+
+target_code_coverage(arithmetic INTERFACE)
