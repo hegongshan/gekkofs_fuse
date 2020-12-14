@@ -5,6 +5,7 @@ gkfs_enable_python_testing(
     BINARY_DIRECTORIES ${CMAKE_BINARY_DIR}/src/daemon/
                        ${CMAKE_BINARY_DIR}/src/client/
                        ${CMAKE_BINARY_DIR}/tests/integration/harness/
+                       ${CMAKE_BINARY_DIR}/examples/gfind/
     LIBRARY_PREFIX_DIRECTORIES ${CMAKE_PREFIX_PATH}
 )
 
