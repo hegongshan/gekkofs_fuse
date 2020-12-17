@@ -128,8 +128,8 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         errno = ENOTSUP;
         return -1;
     }
-    // metadata pointer assigned during create or stat
-    std::shared_ptr<gkfs::metadata::Metadata> md = nullptr;
+    // metadata object filled during create or stat
+    gkfs::metadata::Metadata md{};
     if(flags & O_CREAT) {
         if(flags & O_DIRECTORY) {
             LOG(ERROR, "O_DIRECTORY use with O_CREAT. NOT SUPPORTED");
@@ -138,18 +138,24 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
         // no access check required here. If one is using our FS they have the
         // permissions.
-        int err = gkfs_create(path, mode | S_IFREG);
+        auto err = gkfs_create(path, mode | S_IFREG);
         if(err) {
             if(errno == EEXIST) {
                 // file exists, O_CREAT was set
                 if(flags & O_EXCL) {
                     // File exists and O_EXCL & O_CREAT was set
-                    errno = EEXIST;
                     return -1;
                 }
                 // file exists, O_CREAT was set O_EXCL wasnt, so function does
                 // not fail this case is actually undefined as per `man 2 open`
-                md = gkfs::util::get_metadata(path);
+                auto md_ = gkfs::utils::get_metadata(path);
+                if(!md_) {
+                    LOG(ERROR,
+                        "Could not get metadata after creating file '{}': '{}'",
+                        path, strerror(errno));
+                    return -1;
+                }
+                md = *md_;
             } else {
                 LOG(ERROR, "Error creating file: '{}'", strerror(errno));
                 return -1;
@@ -160,40 +166,38 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
                     std::make_shared<gkfs::filemap::OpenFile>(path, flags));
         }
     } else {
-        md = gkfs::util::get_metadata(path);
-        if(!md) {
-            if(errno == ENOENT) {
-                // file doesn't exists and O_CREAT was not set
-                return -1;
-            } else {
-                LOG(ERROR, "Error stating existing file");
-                return -1;
+        auto md_ = gkfs::utils::get_metadata(path);
+        if(!md_) {
+            if(errno != ENOENT) {
+                LOG(ERROR, "Error stating existing file '{}'", path);
             }
+            // file doesn't exists and O_CREAT was not set
+            return -1;
         }
+        md = *md_;
     }
-    assert(md);
 
 #ifdef HAS_SYMLINKS
-    if(md->is_link()) {
+    if(md.is_link()) {
         if(flags & O_NOFOLLOW) {
             LOG(WARNING, "Symlink found and O_NOFOLLOW flag was specified");
             errno = ELOOP;
             return -1;
         }
-        return gkfs_open(md->target_path(), mode, flags);
+        return gkfs_open(md.target_path(), mode, flags);
     }
 #endif
 
-    if(S_ISDIR(md->mode())) {
+    if(S_ISDIR(md.mode())) {
         return gkfs_opendir(path);
     }
 
 
     /*** Regular file exists ***/
-    assert(S_ISREG(md->mode()));
+    assert(S_ISREG(md.mode()));
 
     if((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
-        if(gkfs_truncate(path, md->size(), 0)) {
+        if(gkfs_truncate(path, md.size(), 0)) {
             LOG(ERROR, "Error truncating file");
             return -1;
         }
@@ -257,8 +261,10 @@ gkfs_remove(const std::string& path) {
     if(!md) {
         return -1;
     }
-    bool has_data = S_ISREG(md->mode()) && (md->size() != 0);
-    auto err = gkfs::rpc::forward_remove(path, !has_data, md->size());
+    gkfs::metadata::Metadata md{attr.value()};
+
+    bool has_data = S_ISREG(md.mode()) && (md.size() != 0);
+    auto err = gkfs::rpc::forward_remove(path, !has_data, md.size());
     if(err) {
         errno = err;
         return -1;
@@ -278,7 +284,6 @@ int
 gkfs_access(const std::string& path, const int mask, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
     if(!md) {
-        errno = ENOENT;
         return -1;
     }
     return 0;
@@ -549,6 +554,7 @@ gkfs_truncate(const std::string& path, off_t length) {
     if(!md) {
         return -1;
     }
+
     auto size = md->size();
     if(static_cast<unsigned long>(length) > size) {
         LOG(DEBUG, "Length is greater then file size: {} > {}", length, size);
@@ -862,11 +868,11 @@ gkfs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
  */
 int
 gkfs_opendir(const std::string& path) {
-
     auto md = gkfs::utils::get_metadata(path);
     if(!md) {
         return -1;
     }
+
     if(!S_ISDIR(md->mode())) {
         LOG(DEBUG, "Path is not a directory");
         errno = ENOTDIR;
@@ -893,8 +899,7 @@ int
 gkfs_rmdir(const std::string& path) {
     auto md = gkfs::utils::get_metadata(path);
     if(!md) {
-        LOG(DEBUG, "Path '{}' does not exist: ", path);
-        errno = ENOENT;
+        LOG(DEBUG, "Error: Path '{}' err code '{}' ", path, strerror(errno));
         return -1;
     }
     if(!S_ISDIR(md->mode())) {
@@ -1089,7 +1094,7 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
      *  So that application know we don't support link to directory.
      */
     auto target_md = gkfs::utils::get_metadata(target_path, false);
-    if(target_md != nullptr) {
+    if(target_md) {
         auto trg_mode = target_md->mode();
         if(!(S_ISREG(trg_mode) || S_ISLNK(trg_mode))) {
             assert(S_ISDIR(trg_mode));
@@ -1104,11 +1109,12 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
     }
 
     auto link_md = gkfs::utils::get_metadata(path, false);
-    if(link_md != nullptr) {
+    if(link_md) {
         LOG(DEBUG, "Link exists: '{}'", path);
         errno = EEXIST;
         return -1;
     }
+
     auto err = gkfs::rpc::forward_mk_symlink(path, target_path);
     if(err) {
         errno = err;
@@ -1131,7 +1137,7 @@ gkfs_mk_symlink(const std::string& path, const std::string& target_path) {
 int
 gkfs_readlink(const std::string& path, char* buf, int bufsize) {
     auto md = gkfs::utils::get_metadata(path, false);
-    if(md == nullptr) {
+    if(!md) {
         LOG(DEBUG, "Named link doesn't exist");
         return -1;
     }

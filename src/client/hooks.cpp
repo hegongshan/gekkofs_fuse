@@ -615,10 +615,11 @@ hook_chdir(const char* path) {
     if(internal) {
         // path falls in our namespace
         auto md = gkfs::utils::get_metadata(rel_path);
-        if(md == nullptr) {
-            LOG(ERROR, "{}() path does not exists", __func__);
-            return -ENOENT;
+        if(!md) {
+            LOG(ERROR, "{}() path {} errno {}", __func__, path, errno);
+            return -errno;
         }
+
         if(!S_ISDIR(md->mode())) {
             LOG(ERROR, "{}() path is not a directory", __func__);
             return -ENOTDIR;
