@@ -27,41 +27,37 @@
 using json = nlohmann::json;
 
 struct mkdir_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     ::mode_t mode;
 
-    REFL_DECL_STRUCT(mkdir_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(::mode_t, mode)
-    );
+    REFL_DECL_STRUCT(mkdir_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(::mode_t, mode));
 };
 
 struct mkdir_output {
     int retval;
     int errnum;
 
-    REFL_DECL_STRUCT(mkdir_output,
-        REFL_DECL_MEMBER(int, retval),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(mkdir_output, REFL_DECL_MEMBER(int, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const mkdir_output& out) {
+to_json(json& record, const mkdir_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 mkdir_exec(const mkdir_options& opts) {
 
-    int rv = ::mkdir(opts.pathname.c_str(), opts.mode);
+    auto rv = ::mkdir(opts.pathname.c_str(), opts.mode);
 
     if(opts.verbose) {
-        fmt::print("mkdir(pathname=\"{}\", mode={:#04o}) = {}, errno: {} [{}]\n", 
-                   opts.pathname, opts.mode, rv, errno, ::strerror(errno));
+        fmt::print(
+                "mkdir(pathname=\"{}\", mode={:#04o}) = {}, errno: {} [{}]\n",
+                opts.pathname, opts.mode, rv, errno, ::strerror(errno));
         return;
     }
 
@@ -74,34 +70,20 @@ mkdir_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<mkdir_options>();
-    auto* cmd = app.add_subcommand(
-            "mkdir", 
-            "Execute the mkdir() system call");
+    auto* cmd = app.add_subcommand("mkdir", "Execute the mkdir() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human readable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human readable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "mode", 
-            opts->mode,
-            "Octal mode specified for the new directory (e.g. 0664)"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("mode", opts->mode,
+                    "Octal mode specified for the new directory (e.g. 0664)")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        mkdir_exec(*opts); 
-    });
+    cmd->callback([opts]() { mkdir_exec(*opts); });
 }

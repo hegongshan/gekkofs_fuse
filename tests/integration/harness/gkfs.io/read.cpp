@@ -30,15 +30,13 @@
 using json = nlohmann::json;
 
 struct read_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     ::size_t count;
 
-    REFL_DECL_STRUCT(read_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(::size_t, count)
-    );
+    REFL_DECL_STRUCT(read_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(::size_t, count));
 };
 
 struct read_output {
@@ -46,28 +44,25 @@ struct read_output {
     io::buffer buf;
     int errnum;
 
-    REFL_DECL_STRUCT(read_output,
-        REFL_DECL_MEMBER(::size_t, retval),
-        REFL_DECL_MEMBER(void*, buf),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(read_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(void*, buf),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const read_output& out) {
+to_json(json& record, const read_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 read_exec(const read_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_RDONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_RDONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("read(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n", 
-                    opts.pathname, opts.count, fd, errno, ::strerror(errno));
+            fmt::print("read(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
+                       opts.pathname, opts.count, fd, errno, ::strerror(errno));
             return;
         }
 
@@ -79,10 +74,10 @@ read_exec(const read_options& opts) {
 
     io::buffer buf(opts.count);
 
-    int rv = ::read(fd, buf.data(), opts.count);
+    auto rv = ::read(fd, buf.data(), opts.count);
 
     if(opts.verbose) {
-        fmt::print("read(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n", 
+        fmt::print("read(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
                    opts.pathname, opts.count, rv, errno, ::strerror(errno));
         return;
     }
@@ -96,35 +91,19 @@ read_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<read_options>();
-    auto* cmd = app.add_subcommand(
-            "read", 
-            "Execute the read() system call");
+    auto* cmd = app.add_subcommand("read", "Execute the read() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human readable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human readable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "count", 
-            opts->count,
-            "Number of bytes to read"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("count", opts->count, "Number of bytes to read")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        read_exec(*opts); 
-    });
+    cmd->callback([opts]() { read_exec(*opts); });
 }
-

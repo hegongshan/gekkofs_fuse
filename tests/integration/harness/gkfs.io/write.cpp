@@ -30,44 +30,41 @@
 using json = nlohmann::json;
 
 struct write_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     std::string data;
     ::size_t count;
 
-    REFL_DECL_STRUCT(write_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(std::string, data),
-        REFL_DECL_MEMBER(::size_t, count)
-    );
+    REFL_DECL_STRUCT(write_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(std::string, data),
+                     REFL_DECL_MEMBER(::size_t, count));
 };
 
 struct write_output {
     ::ssize_t retval;
     int errnum;
 
-    REFL_DECL_STRUCT(write_output,
-        REFL_DECL_MEMBER(::size_t, retval),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(write_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const write_output& out) {
+to_json(json& record, const write_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 write_exec(const write_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_WRONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_WRONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("open(pathname=\"{}\", buf=\"{}\" count={}) = {}, errno: {} [{}]\n",
-                    opts.pathname, opts.data, opts.count, fd, errno, ::strerror(errno));
+            fmt::print(
+                    "open(pathname=\"{}\", buf=\"{}\" count={}) = {}, errno: {} [{}]\n",
+                    opts.pathname, opts.data, opts.count, fd, errno,
+                    ::strerror(errno));
             return;
         }
 
@@ -78,10 +75,10 @@ write_exec(const write_options& opts) {
     }
 
     io::buffer buf(opts.data);
-    int rv = ::write(fd, buf.data(), opts.count);
+    auto rv = ::write(fd, buf.data(), opts.count);
 
     if(opts.verbose) {
-        fmt::print("write(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n", 
+        fmt::print("write(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
                    opts.pathname, opts.count, rv, errno, ::strerror(errno));
         return;
     }
@@ -95,44 +92,23 @@ write_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<write_options>();
-    auto* cmd = app.add_subcommand(
-            "write", 
-            "Execute the write() system call");
+    auto* cmd = app.add_subcommand("write", "Execute the write() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human writeable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human writeable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "data", 
-            opts->data,
-            "Data to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("data", opts->data, "Data to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "count", 
-            opts->count,
-            "Number of bytes to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("count", opts->count, "Number of bytes to write")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        write_exec(*opts); 
-    });
+    cmd->callback([opts]() { write_exec(*opts); });
 }
-
-

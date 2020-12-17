@@ -30,55 +30,54 @@
 using json = nlohmann::json;
 
 struct lseek_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     ::off_t offset;
     int whence;
 
-    REFL_DECL_STRUCT(lseek_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(::off_t, offset),
-        REFL_DECL_MEMBER(int, whence)
-    );
+    REFL_DECL_STRUCT(lseek_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(::off_t, offset),
+                     REFL_DECL_MEMBER(int, whence));
 };
 
 struct lseek_output {
     ::off_t retval;
     int errnum;
 
-    REFL_DECL_STRUCT(lseek_output,
-        REFL_DECL_MEMBER(::off_t, retval),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(lseek_output, REFL_DECL_MEMBER(::off_t, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const lseek_output& out) {
+to_json(json& record, const lseek_output& out) {
     record = serialize(out);
 }
 
-std::string 
+std::string
 whence2str(int whence) {
-    switch (whence) {
-       case SEEK_SET : return "SEEK_SET";
-       case SEEK_CUR : return "SEEK_CUR";
-       case SEEK_END : return "SEEK_END";
-       default : return "UNKNOWN";
-   }
+    switch(whence) {
+        case SEEK_SET:
+            return "SEEK_SET";
+        case SEEK_CUR:
+            return "SEEK_CUR";
+        case SEEK_END:
+            return "SEEK_END";
+        default:
+            return "UNKNOWN";
+    }
     return "UNKNOWN";
 }
 
-void 
+void
 lseek_exec(const lseek_options& opts) {
 
     int fd = ::open(opts.pathname.c_str(), O_RDONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("open(pathname=\"{}\") = {}, errno: {} [{}]\n", 
-                    opts.pathname, fd, errno, ::strerror(errno));
+            fmt::print("open(pathname=\"{}\") = {}, errno: {} [{}]\n",
+                       opts.pathname, fd, errno, ::strerror(errno));
             return;
         }
 
@@ -91,8 +90,10 @@ lseek_exec(const lseek_options& opts) {
     int rv = ::lseek(fd, opts.offset, opts.whence);
 
     if(opts.verbose) {
-        fmt::print("lseek(pathname=\"{}\", offset='{}', whence='{}') = {}, errno: {} [{}]\n", 
-                   opts.pathname, opts.offset, whence2str(opts.whence), rv, errno, ::strerror(errno));
+        fmt::print(
+                "lseek(pathname=\"{}\", offset='{}', whence='{}') = {}, errno: {} [{}]\n",
+                opts.pathname, opts.offset, whence2str(opts.whence), rv, errno,
+                ::strerror(errno));
         return;
     }
 
@@ -105,44 +106,23 @@ lseek_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<lseek_options>();
-    auto* cmd = app.add_subcommand(
-            "lseek", 
-            "Execute the lseek() system call");
+    auto* cmd = app.add_subcommand("lseek", "Execute the lseek() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human writeable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human writeable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "offset", 
-            opts->offset,
-            "offset used"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("offset", opts->offset, "offset used")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "whence", 
-            opts->whence,
-            "Whence the action is done"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("whence", opts->whence, "Whence the action is done")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        lseek_exec(*opts); 
-    });
+    cmd->callback([opts]() { lseek_exec(*opts); });
 }
-
-

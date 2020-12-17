@@ -31,47 +31,44 @@
 using json = nlohmann::json;
 
 struct pwritev_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     std::string data_0, data_1;
     ::size_t count;
     ::size_t offset;
 
-    REFL_DECL_STRUCT(pwritev_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(std::string, data_0),
-        REFL_DECL_MEMBER(std::string, data_1),
-        REFL_DECL_MEMBER(::size_t, count),
-        REFL_DECL_MEMBER(::size_t, offset)
-    );
+    REFL_DECL_STRUCT(pwritev_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(std::string, data_0),
+                     REFL_DECL_MEMBER(std::string, data_1),
+                     REFL_DECL_MEMBER(::size_t, count),
+                     REFL_DECL_MEMBER(::size_t, offset));
 };
 
 struct pwritev_output {
     ::ssize_t retval;
     int errnum;
 
-    REFL_DECL_STRUCT(pwritev_output,
-        REFL_DECL_MEMBER(::size_t, retval),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(pwritev_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const pwritev_output& out) {
+to_json(json& record, const pwritev_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 pwritev_exec(const pwritev_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_WRONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_WRONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("pwritev(pathname=\"{}\", buf_0=\"{}\" buf_1=\"{}\" count={}, offset={}) = {}, errno: {} [{}]\n", 
-                    opts.pathname, opts.data_0, opts.data_1, opts.count, opts.offset, fd, errno, ::strerror(errno));
+            fmt::print(
+                    "pwritev(pathname=\"{}\", buf_0=\"{}\" buf_1=\"{}\" count={}, offset={}) = {}, errno: {} [{}]\n",
+                    opts.pathname, opts.data_0, opts.data_1, opts.count,
+                    opts.offset, fd, errno, ::strerror(errno));
             return;
         }
 
@@ -83,7 +80,7 @@ pwritev_exec(const pwritev_options& opts) {
 
     io::buffer buf_0(opts.data_0);
     io::buffer buf_1(opts.data_1);
-    
+
     struct iovec iov[2];
 
     iov[0].iov_base = buf_0.data();
@@ -95,8 +92,10 @@ pwritev_exec(const pwritev_options& opts) {
     int rv = ::pwritev(fd, iov, opts.count, opts.offset);
 
     if(opts.verbose) {
-        fmt::print("pwritev(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n", 
-                   opts.pathname, opts.count, opts.offset, rv, errno, ::strerror(errno));
+        fmt::print(
+                "pwritev(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n",
+                opts.pathname, opts.count, opts.offset, rv, errno,
+                ::strerror(errno));
         return;
     }
 
@@ -109,60 +108,32 @@ pwritev_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<pwritev_options>();
-    auto* cmd = app.add_subcommand(
-            "pwritev", 
-            "Execute the pwritev() system call");
+    auto* cmd =
+            app.add_subcommand("pwritev", "Execute the pwritev() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human writeable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human writeable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "data_0", 
-            opts->data_0,
-            "Data 0 to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("data_0", opts->data_0, "Data 0 to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "data_1", 
-            opts->data_1,
-            "Data 1 to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("data_1", opts->data_1, "Data 1 to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "count", 
-            opts->count,
-            "Number of bytes to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("count", opts->count, "Number of bytes to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "offset", 
-            opts->offset,
-            "Offset to read"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("offset", opts->offset, "Offset to read")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        pwritev_exec(*opts); 
-    });
+    cmd->callback([opts]() { pwritev_exec(*opts); });
 }
-
-

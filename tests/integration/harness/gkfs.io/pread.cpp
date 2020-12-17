@@ -30,17 +30,15 @@
 using json = nlohmann::json;
 
 struct pread_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     ::size_t count;
     ::size_t offset;
 
-    REFL_DECL_STRUCT(pread_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(::size_t, count),
-        REFL_DECL_MEMBER(::size_t, offset)
-    );
+    REFL_DECL_STRUCT(pread_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(::size_t, count),
+                     REFL_DECL_MEMBER(::size_t, offset));
 };
 
 struct pread_output {
@@ -48,28 +46,27 @@ struct pread_output {
     io::buffer buf;
     int errnum;
 
-    REFL_DECL_STRUCT(pread_output,
-        REFL_DECL_MEMBER(::size_t, retval),
-        REFL_DECL_MEMBER(void*, buf),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(pread_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(void*, buf),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const pread_output& out) {
+to_json(json& record, const pread_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 pread_exec(const pread_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_RDONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_RDONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("pread(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n", 
-                    opts.pathname, opts.count, opts.offset, fd, errno, ::strerror(errno));
+            fmt::print(
+                    "pread(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n",
+                    opts.pathname, opts.count, opts.offset, fd, errno,
+                    ::strerror(errno));
             return;
         }
 
@@ -84,8 +81,10 @@ pread_exec(const pread_options& opts) {
     int rv = ::pread(fd, buf.data(), opts.count, opts.offset);
 
     if(opts.verbose) {
-        fmt::print("pread(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n", 
-                   opts.pathname, opts.count, opts.offset, rv, errno, ::strerror(errno));
+        fmt::print(
+                "pread(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n",
+                opts.pathname, opts.count, opts.offset, rv, errno,
+                ::strerror(errno));
         return;
     }
 
@@ -98,43 +97,23 @@ pread_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<pread_options>();
-    auto* cmd = app.add_subcommand(
-            "pread", 
-            "Execute the pread() system call");
+    auto* cmd = app.add_subcommand("pread", "Execute the pread() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human readable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human readable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "count", 
-            opts->count,
-            "Number of bytes to read"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("count", opts->count, "Number of bytes to read")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "offset", 
-            opts->offset,
-            "Offset to read"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("offset", opts->offset, "Offset to read")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        pread_exec(*opts); 
-    });
+    cmd->callback([opts]() { pread_exec(*opts); });
 }
-

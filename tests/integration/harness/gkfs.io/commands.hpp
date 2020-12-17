@@ -15,7 +15,9 @@
 #define IO_COMMANDS_HPP
 
 // forward declare CLI::App
-namespace CLI { struct App; }
+namespace CLI {
+struct App;
+}
 
 void
 mkdir_init(CLI::App& app);

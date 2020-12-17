@@ -28,13 +28,11 @@
 using json = nlohmann::json;
 
 struct stat_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
 
-    REFL_DECL_STRUCT(stat_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname)
-    );
+    REFL_DECL_STRUCT(stat_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname));
 };
 
 struct stat_output {
@@ -42,28 +40,25 @@ struct stat_output {
     int errnum;
     struct ::stat statbuf;
 
-    REFL_DECL_STRUCT(stat_output,
-        REFL_DECL_MEMBER(int, retval),
-        REFL_DECL_MEMBER(int, errnum),
-        REFL_DECL_MEMBER(struct ::stat, statbuf)
-    );
+    REFL_DECL_STRUCT(stat_output, REFL_DECL_MEMBER(int, retval),
+                     REFL_DECL_MEMBER(int, errnum),
+                     REFL_DECL_MEMBER(struct ::stat, statbuf));
 };
 
 void
-to_json(json& record, 
-        const stat_output& out) {
+to_json(json& record, const stat_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 stat_exec(const stat_options& opts) {
 
     struct ::stat statbuf;
 
-    int rv = ::stat(opts.pathname.c_str(), &statbuf);
+    auto rv = ::stat(opts.pathname.c_str(), &statbuf);
 
     if(opts.verbose) {
-        fmt::print("stat(pathname=\"{}\") = {}, errno: {} [{}]\n", 
+        fmt::print("stat(pathname=\"{}\") = {}, errno: {} [{}]\n",
                    opts.pathname, rv, errno, ::strerror(errno));
         return;
     }
@@ -77,27 +72,15 @@ stat_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<stat_options>();
-    auto* cmd = app.add_subcommand(
-            "stat", 
-            "Execute the stat() system call");
+    auto* cmd = app.add_subcommand("stat", "Execute the stat() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human readable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human readable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        stat_exec(*opts); 
-    });
+    cmd->callback([opts]() { stat_exec(*opts); });
 }
-

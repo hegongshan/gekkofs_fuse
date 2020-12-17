@@ -30,46 +30,43 @@
 using json = nlohmann::json;
 
 struct pwrite_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     std::string data;
     ::size_t count;
     ::size_t offset;
 
-    REFL_DECL_STRUCT(pwrite_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(std::string, data),
-        REFL_DECL_MEMBER(::size_t, count),
-        REFL_DECL_MEMBER(::size_t, offset)
-    );
+    REFL_DECL_STRUCT(pwrite_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(std::string, data),
+                     REFL_DECL_MEMBER(::size_t, count),
+                     REFL_DECL_MEMBER(::size_t, offset));
 };
 
 struct pwrite_output {
     ::ssize_t retval;
     int errnum;
 
-    REFL_DECL_STRUCT(pwrite_output,
-        REFL_DECL_MEMBER(::size_t, retval),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(pwrite_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const pwrite_output& out) {
+to_json(json& record, const pwrite_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 pwrite_exec(const pwrite_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_WRONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_WRONLY);
 
     if(fd == -1) {
         if(opts.verbose) {
-            fmt::print("pwrite(pathname=\"{}\", buf=\"{}\" count={}, offset={}) = {}, errno: {} [{}]\n", 
-                    opts.pathname, opts.data, opts.count, opts.offset, fd, errno, ::strerror(errno));
+            fmt::print(
+                    "pwrite(pathname=\"{}\", buf=\"{}\" count={}, offset={}) = {}, errno: {} [{}]\n",
+                    opts.pathname, opts.data, opts.count, opts.offset, fd,
+                    errno, ::strerror(errno));
             return;
         }
 
@@ -83,8 +80,10 @@ pwrite_exec(const pwrite_options& opts) {
     int rv = ::pwrite(fd, buf.data(), opts.count, opts.offset);
 
     if(opts.verbose) {
-        fmt::print("pwrite(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n", 
-                   opts.pathname, opts.count, opts.offset, rv, errno, ::strerror(errno));
+        fmt::print(
+                "pwrite(pathname=\"{}\", count={}, offset={}) = {}, errno: {} [{}]\n",
+                opts.pathname, opts.count, opts.offset, rv, errno,
+                ::strerror(errno));
         return;
     }
 
@@ -97,52 +96,28 @@ pwrite_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<pwrite_options>();
-    auto* cmd = app.add_subcommand(
-            "pwrite", 
-            "Execute the pwrite() system call");
+    auto* cmd =
+            app.add_subcommand("pwrite", "Execute the pwrite() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human writeable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human writeable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "data", 
-            opts->data,
-            "Data to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("data", opts->data, "Data to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "count", 
-            opts->count,
-            "Number of bytes to write"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("count", opts->count, "Number of bytes to write")
+            ->required()
+            ->type_name("");
 
-    cmd->add_option(
-            "offset", 
-            opts->offset,
-            "Offset to read"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("offset", opts->offset, "Offset to read")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        pwrite_exec(*opts); 
-    });
+    cmd->callback([opts]() { pwrite_exec(*opts); });
 }
-
-

@@ -28,15 +28,13 @@
 using json = nlohmann::json;
 
 struct readdir_options {
-    bool verbose;
+    bool verbose{};
     std::string pathname;
     ::size_t count;
 
-    REFL_DECL_STRUCT(readdir_options,
-        REFL_DECL_MEMBER(bool, verbose),
-        REFL_DECL_MEMBER(std::string, pathname),
-        REFL_DECL_MEMBER(::size_t, count)
-    );
+    REFL_DECL_STRUCT(readdir_options, REFL_DECL_MEMBER(bool, verbose),
+                     REFL_DECL_MEMBER(std::string, pathname),
+                     REFL_DECL_MEMBER(::size_t, count));
 };
 
 struct readdir_output {
@@ -44,26 +42,24 @@ struct readdir_output {
     int errnum;
 
     REFL_DECL_STRUCT(readdir_output,
-        REFL_DECL_MEMBER(std::vector<struct ::dirent>, dirents),
-        REFL_DECL_MEMBER(int, errnum)
-    );
+                     REFL_DECL_MEMBER(std::vector<struct ::dirent>, dirents),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, 
-        const readdir_output& out) {
+to_json(json& record, const readdir_output& out) {
     record = serialize(out);
 }
 
-void 
+void
 readdir_exec(const readdir_options& opts) {
 
     ::DIR* dirp = ::opendir(opts.pathname.c_str());
 
     if(dirp == NULL) {
         if(opts.verbose) {
-            fmt::print("readdir(pathname=\"{}\") = {}, errno: {} [{}]\n", 
-                    opts.pathname, "NULL", errno, ::strerror(errno));
+            fmt::print("readdir(pathname=\"{}\") = {}, errno: {} [{}]\n",
+                       opts.pathname, "NULL", errno, ::strerror(errno));
             return;
         }
 
@@ -83,8 +79,9 @@ readdir_exec(const readdir_options& opts) {
     }
 
     if(opts.verbose) {
-        fmt::print("readdir(pathname=\"{}\") = [\n{}],\nerrno: {} [{}]\n", 
-                   opts.pathname, fmt::join(entries, ",\n"), errno, ::strerror(errno));
+        fmt::print("readdir(pathname=\"{}\") = [\n{}],\nerrno: {} [{}]\n",
+                   opts.pathname, fmt::join(entries, ",\n"), errno,
+                   ::strerror(errno));
         return;
     }
 
@@ -97,28 +94,16 @@ readdir_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<readdir_options>();
-    auto* cmd = app.add_subcommand(
-            "readdir", 
-            "Execute the readdir() system call");
+    auto* cmd =
+            app.add_subcommand("readdir", "Execute the readdir() system call");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human readable output"
-        );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human readable output");
 
-    cmd->add_option(
-            "pathname", 
-            opts->pathname,
-            "Directory name"
-        )
-        ->required()
-        ->type_name("");
+    cmd->add_option("pathname", opts->pathname, "Directory name")
+            ->required()
+            ->type_name("");
 
-    cmd->callback([opts]() { 
-        readdir_exec(*opts); 
-    });
+    cmd->callback([opts]() { readdir_exec(*opts); });
 }
-
-
