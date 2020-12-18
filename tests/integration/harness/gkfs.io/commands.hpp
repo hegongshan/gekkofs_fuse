@@ -15,7 +15,9 @@
 #define IO_COMMANDS_HPP
 
 // forward declare CLI::App
-namespace CLI { struct App; }
+namespace CLI {
+struct App;
+}
 
 void
 mkdir_init(CLI::App& app);
@@ -79,5 +81,13 @@ truncate_init(CLI::App& app);
 // UTIL
 void
 file_compare_init(CLI::App& app);
+void
+chdir_init(CLI::App& app);
+
+void
+getcwd_validate_init(CLI::App& app);
+
+void
+symlink_init(CLI::App& app);
 
 #endif // IO_COMMANDS_HPP

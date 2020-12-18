@@ -40,25 +40,21 @@ struct write_random_options {
     std::string pathname{};
     ::size_t count{};
 
-    REFL_DECL_STRUCT(write_random_options,
-                     REFL_DECL_MEMBER(bool, verbose),
+    REFL_DECL_STRUCT(write_random_options, REFL_DECL_MEMBER(bool, verbose),
                      REFL_DECL_MEMBER(std::string, pathname),
-                     REFL_DECL_MEMBER(::size_t, count)
-    );
+                     REFL_DECL_MEMBER(::size_t, count));
 };
 
 struct write_random_output {
     ::ssize_t retval;
     int errnum;
 
-    REFL_DECL_STRUCT(write_random_output,
-                     REFL_DECL_MEMBER(::size_t, retval),
-                     REFL_DECL_MEMBER(int, errnum)
-    );
+    REFL_DECL_STRUCT(write_random_output, REFL_DECL_MEMBER(::size_t, retval),
+                     REFL_DECL_MEMBER(int, errnum));
 };
 
-void to_json(json& record,
-             const write_random_output& out) {
+void
+to_json(json& record, const write_random_output& out) {
     record = serialize(out);
 }
 
@@ -66,12 +62,13 @@ void to_json(json& record,
  * Writes `count` random bytes to file
  * @param opts
  */
-void write_random_exec(const write_random_options& opts) {
+void
+write_random_exec(const write_random_options& opts) {
 
-    int fd = ::open(opts.pathname.c_str(), O_WRONLY);
+    auto fd = ::open(opts.pathname.c_str(), O_WRONLY);
 
-    if (fd == -1) {
-        if (opts.verbose) {
+    if(fd == -1) {
+        if(opts.verbose) {
             fmt::print("open(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
                        opts.pathname, opts.count, fd, errno, ::strerror(errno));
             return;
@@ -82,7 +79,9 @@ void write_random_exec(const write_random_options& opts) {
         return;
     }
     // random number generator with seed
-    std::independent_bits_engine<std::default_random_engine, CHAR_BIT, unsigned char> engine{seed};
+    std::independent_bits_engine<std::default_random_engine, CHAR_BIT,
+                                 unsigned char>
+            engine{seed};
     // create buffer for opts.count
     std::vector<uint8_t> data(opts.count);
     std::generate(begin(data), end(data), std::ref(engine));
@@ -91,7 +90,7 @@ void write_random_exec(const write_random_options& opts) {
 
     int rv = ::write(fd, buf.data(), opts.count);
 
-    if (opts.verbose) {
+    if(opts.verbose) {
         fmt::print("write(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
                    opts.pathname, opts.count, rv, errno, ::strerror(errno));
         return;
@@ -101,38 +100,25 @@ void write_random_exec(const write_random_options& opts) {
     fmt::print("{}\n", out.dump(2));
 }
 
-void write_random_init(CLI::App& app) {
+void
+write_random_init(CLI::App& app) {
 
     // Create the option and subcommand objects
     auto opts = std::make_shared<write_random_options>();
-    auto* cmd = app.add_subcommand(
-            "write_random",
-            "Execute the write() system call ");
+    auto* cmd = app.add_subcommand("write_random",
+                                   "Execute the write() system call ");
 
     // Add options to cmd, binding them to opts
-    cmd->add_flag(
-            "-v,--verbose",
-            opts->verbose,
-            "Produce human writeable output"
-    );
+    cmd->add_flag("-v,--verbose", opts->verbose,
+                  "Produce human writeable output");
 
-    cmd->add_option(
-                    "pathname",
-                    opts->pathname,
-                    "File name"
-            )
+    cmd->add_option("pathname", opts->pathname, "File name")
             ->required()
             ->type_name("");
 
-    cmd->add_option(
-                    "count",
-                    opts->count,
-                    "Number of random bytes to write"
-            )
+    cmd->add_option("count", opts->count, "Number of random bytes to write")
             ->required()
             ->type_name("");
 
-    cmd->callback([opts]() {
-        write_random_exec(*opts);
-    });
+    cmd->callback([opts]() { write_random_exec(*opts); });
 }

@@ -34,17 +34,19 @@ init_commands(CLI::App& app) {
     pwrite_init(app);
     writev_init(app);
     pwritev_init(app);
-    #ifdef STATX_TYPE
+#ifdef STATX_TYPE
     statx_init(app);
-    #endif
+#endif
     lseek_init(app);
     write_validate_init(app);
     write_random_init(app);
     truncate_init(app);
     // utils
     file_compare_init(app);
+    chdir_init(app);
+    getcwd_validate_init(app);
+    symlink_init(app);
 }
-
 
 
 int

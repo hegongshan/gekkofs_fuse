@@ -19,57 +19,54 @@
 #include <commands.hpp>
 #include <reflection.hpp>
 #include <serialize.hpp>
-#include <binary_buffer.hpp>
 
 /* C includes */
 #include <unistd.h>
 
 using json = nlohmann::json;
 
-struct rmdir_options {
+struct chdir_options {
     bool verbose{};
     std::string pathname;
 
-    REFL_DECL_STRUCT(rmdir_options, REFL_DECL_MEMBER(bool, verbose),
+    REFL_DECL_STRUCT(chdir_options, REFL_DECL_MEMBER(bool, verbose),
                      REFL_DECL_MEMBER(std::string, pathname));
 };
 
-struct rmdir_output {
+struct chdir_output {
     int retval;
     int errnum;
 
-    REFL_DECL_STRUCT(rmdir_output, REFL_DECL_MEMBER(int, retval),
+    REFL_DECL_STRUCT(chdir_output, REFL_DECL_MEMBER(int, retval),
                      REFL_DECL_MEMBER(int, errnum));
 };
 
 void
-to_json(json& record, const rmdir_output& out) {
+to_json(json& record, const chdir_output& out) {
     record = serialize(out);
 }
 
 void
-rmdir_exec(const rmdir_options& opts) {
+chdir_exec(const chdir_options& opts) {
 
-    auto fd = ::rmdir(opts.pathname.c_str());
+    auto rv = ::chdir(opts.pathname.c_str());
 
     if(opts.verbose) {
-        fmt::print("rmdir(pathname=\"{}\") = {}, errno: {} [{}]\n",
-                   opts.pathname, errno, ::strerror(errno));
+        fmt::print("chdir(pathname=\"{}\") = {}, errno: {} [{}]\n",
+                   opts.pathname, rv, errno, ::strerror(errno));
         return;
     }
 
-    json out = rmdir_output{fd, errno};
+    json out = chdir_output{rv, errno};
     fmt::print("{}\n", out.dump(2));
-
-    return;
 }
 
 void
-rmdir_init(CLI::App& app) {
+chdir_init(CLI::App& app) {
 
     // Create the option and subcommand objects
-    auto opts = std::make_shared<rmdir_options>();
-    auto* cmd = app.add_subcommand("rmdir", "Execute the rmdir() system call");
+    auto opts = std::make_shared<chdir_options>();
+    auto* cmd = app.add_subcommand("chdir", "Execute the chdir() system call");
 
     // Add options to cmd, binding them to opts
     cmd->add_flag("-v,--verbose", opts->verbose,
@@ -79,5 +76,5 @@ rmdir_init(CLI::App& app) {
             ->required()
             ->type_name("");
 
-    cmd->callback([opts]() { rmdir_exec(*opts); });
+    cmd->callback([opts]() { chdir_exec(*opts); });
 }

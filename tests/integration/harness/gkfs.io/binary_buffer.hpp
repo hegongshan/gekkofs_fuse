@@ -22,10 +22,9 @@
 namespace io {
 
 struct buffer {
-    buffer(::size_t size = 0) :
-        m_data(size) { }
+    buffer(::size_t size = 0) : m_data(size) {}
 
-    buffer(nullptr_t p) { }
+    buffer(nullptr_t p) {}
 
     buffer(const std::string& s) {
         m_data.clear();
@@ -63,15 +62,13 @@ struct buffer {
 };
 
 inline void
-to_json(nlohmann::json& record, 
-        const buffer& out) {
+to_json(nlohmann::json& record, const buffer& out) {
 
     if(out == nullptr) {
         record = nullptr;
-    }
-    else {
+    } else {
 
-//    record = fmt::format("x{:2x}", fmt::join(out, "x"));
+        //    record = fmt::format("x{:2x}", fmt::join(out, "x"));
         record = out.storage();
     }
 }

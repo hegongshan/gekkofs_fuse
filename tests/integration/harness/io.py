@@ -109,7 +109,7 @@ class StructStatxSchema(Schema):
         return namedtuple('StructStatx',
                 ['stx_mask', 'stx_blksize', 'stx_attributes', 'stx_nlink', 'stx_uid',
                  'stx_gid', 'stx_mode', 'stx_ino', 'stx_size', 'stx_blocks', 'stx_attributes_mask',
-                 'stx_atime', 'stx_btime', 'stx_ctime', 'stx_mtime', 'stx_rdev_major', 
+                 'stx_atime', 'stx_btime', 'stx_ctime', 'stx_mtime', 'stx_rdev_major',
                  'stx_rdev_minor', 'stx_dev_major', 'stx_dev_minor'])(**data)
 
 class DirentStruct(Schema):
@@ -211,7 +211,7 @@ class ReaddirOutputSchema(Schema):
         return namedtuple('ReaddirReturn', ['dirents', 'errno'])(**data)
 
 class RmdirOutputSchema(Schema):
-    """Schema to deserialize the results of an opendir() execution"""
+    """Schema to deserialize the results of an rmdir() execution"""
 
     retval = fields.Integer(required=True)
     errno = Errno(data_key='errnum', required=True)
@@ -325,6 +325,40 @@ class TruncateOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('TruncateReturn', ['retval', 'errno'])(**data)
 
+class ChdirOutputSchema(Schema):
+    """Schema to deserialize the results of an chdir() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('ChdirReturn', ['retval', 'errno'])(**data)
+
+
+class GetcwdvalidateOutputSchema(Schema):
+    """Schema to deserialize the results of an GetCwd execution"""
+
+    retval = fields.Integer(required=True)
+    path = fields.String(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('GetcwdvalidateReturn', ['retval', 'path', 'errno'])(**data)
+
+
+
+class SymlinkOutputSchema(Schema):
+    """Schema to deserialize the results of an symlink execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('SymlinkReturn', ['retval', 'errno'])(**data)
+
 
 # UTIL
 class FileCompareOutputSchema(Schema):
@@ -335,6 +369,8 @@ class FileCompareOutputSchema(Schema):
     @post_load
     def make_object(self, data, **kwargs):
         return namedtuple('FileCompareReturn', ['retval', 'errno'])(**data)
+
+
 
 class IOParser:
 
@@ -360,6 +396,9 @@ class IOParser:
         'truncate': TruncateOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
+        'chdir'   : ChdirOutputSchema(),
+        'getcwd_validate'  : GetcwdvalidateOutputSchema(),
+        'symlink' : SymlinkOutputSchema(),
     }
 
     def parse(self, command, output):
