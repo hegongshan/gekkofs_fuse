@@ -78,6 +78,7 @@ get_dirents_extended(const std::string& dir) {
  * Creates metadata (if required) and dentry at the same time
  * @param path
  * @param mode
+ * @throws DBException
  */
 void
 create(const std::string& path, Metadata& md) {
@@ -95,7 +96,11 @@ create(const std::string& path, Metadata& md) {
         if(GKFS_DATA->ctime_state())
             md.ctime(time);
     }
-    GKFS_DATA->mdb()->put(path, md.serialize());
+    if(gkfs::config::metadata::create_exist_check) {
+        GKFS_DATA->mdb()->put_no_exist(path, md.serialize());
+    } else {
+        GKFS_DATA->mdb()->put(path, md.serialize());
+    }
 }
 
 /**
@@ -121,10 +126,10 @@ update_size(const string& path, size_t io_size, off64_t offset, bool append) {
 }
 
 /**
- * Remove metadentry if exists and try to remove all chunks for path
+ * Remove metadentry if exists
  * @param path
  * @return
- * @throws gkfs::metadata::DBException, gkfs::data::ChunkStorageException
+ * @throws gkfs::metadata::DBException
  */
 void
 remove(const string& path) {
@@ -137,8 +142,6 @@ remove(const string& path) {
         GKFS_DATA->mdb()->remove(path); // remove metadata from KV store
     } catch(const NotFoundException& e) {
     }
-    GKFS_DATA->storage()->destroy_chunk_space(
-            path); // destroys all chunks for the path on this node
 }
 
 } // namespace gkfs::metadata

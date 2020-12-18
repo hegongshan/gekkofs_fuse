@@ -102,44 +102,52 @@ forward_stat(const std::string& path, string& attr) {
  * small files (file_size / chunk_size) < number_of_daemons where no broadcast
  * to all daemons is used to remove all chunks. Otherwise, a broadcast to all
  * daemons is used.
+ *
+ * This function only attempts data removal if data exists (determined when
+ * metadata is removed)
  * @param path
- * @param remove_metadentry_only
- * @param size
  * @return error code
  */
 int
-forward_remove(const std::string& path, const bool remove_metadentry_only,
-               const ssize_t size) {
+forward_remove(const std::string& path) {
 
-    // if only the metadentry should be removed, send one rpc to the
-    // metadentry's responsible node to remove the metadata
-    // else, send an rpc to all hosts and thus broadcast chunk_removal.
-    if(remove_metadentry_only) {
-        auto endp =
-                CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
+    auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
+    int64_t size = 0;
+    uint32_t mode = 0;
 
-        try {
+    /*
+     * Send one RPC to metadata destination and remove metadata while retrieving
+     * size and mode to determine if data needs to removed too
+     */
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out =
+                ld_network_service->post<gkfs::rpc::remove_metadata>(endp, path)
+                        .get()
+                        .at(0);
 
-            LOG(DEBUG, "Sending RPC ...");
-            // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that
-            // we can retry for RPC_TRIES (see old commits with margo)
-            // TODO(amiranda): hermes will eventually provide a post(endpoint)
-            // returning one result and a broadcast(endpoint_set) returning a
-            // result_set. When that happens we can remove the .at(0) :/
-            auto out = ld_network_service->post<gkfs::rpc::remove>(endp, path)
-                               .get()
-                               .at(0);
+        LOG(DEBUG, "Got response success: {}", out.err());
 
-            LOG(DEBUG, "Got response success: {}", out.err());
-
-            return out.err() ? out.err() : 0;
-        } catch(const std::exception& ex) {
-            LOG(ERROR, "while getting rpc output");
-            return EBUSY;
-        }
+        if(out.err())
+            return out.err();
+        size = out.size();
+        mode = out.mode();
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
     }
+    // if file is not a regular file and it's size is 0, data does not need to
+    // be removed, thus, we exit
+    if(!(S_ISREG(mode) && (size != 0)))
+        return 0;
 
-    std::vector<hermes::rpc_handle<gkfs::rpc::remove>> handles;
+
+    std::vector<hermes::rpc_handle<gkfs::rpc::remove_data>> handles;
 
     // Small files
     if(static_cast<std::size_t>(size / gkfs::config::rpc::chunksize) <
@@ -150,9 +158,10 @@ forward_remove(const std::string& path, const bool remove_metadentry_only,
 
         try {
             LOG(DEBUG, "Sending RPC to host: {}", endp_metadata.to_string());
-            gkfs::rpc::remove::input in(path);
-            handles.emplace_back(ld_network_service->post<gkfs::rpc::remove>(
-                    endp_metadata, in));
+            gkfs::rpc::remove_data::input in(path);
+            handles.emplace_back(
+                    ld_network_service->post<gkfs::rpc::remove_data>(
+                            endp_metadata, in));
 
             uint64_t chnk_start = 0;
             uint64_t chnk_end = size / gkfs::config::rpc::chunksize;
@@ -160,19 +169,22 @@ forward_remove(const std::string& path, const bool remove_metadentry_only,
             for(uint64_t chnk_id = chnk_start; chnk_id <= chnk_end; chnk_id++) {
                 const auto chnk_host_id =
                         CTX->distributor()->locate_data(path, chnk_id);
-                /*
-                 * If the chnk host matches the metadata host the remove request
-                 * as already been sent as part of the metadata remove request.
-                 */
-                if(chnk_host_id == metadata_host_id)
-                    continue;
+                if constexpr(gkfs::config::metadata::implicit_data_removal) {
+                    /*
+                     * If the chnk host matches the metadata host the remove
+                     * request as already been sent as part of the metadata
+                     * remove request.
+                     */
+                    if(chnk_host_id == metadata_host_id)
+                        continue;
+                }
                 const auto endp_chnk = CTX->hosts().at(chnk_host_id);
 
                 LOG(DEBUG, "Sending RPC to host: {}", endp_chnk.to_string());
 
                 handles.emplace_back(
-                        ld_network_service->post<gkfs::rpc::remove>(endp_chnk,
-                                                                    in));
+                        ld_network_service->post<gkfs::rpc::remove_data>(
+                                endp_chnk, in));
             }
         } catch(const std::exception& ex) {
             LOG(ERROR,
@@ -184,7 +196,7 @@ forward_remove(const std::string& path, const bool remove_metadentry_only,
             try {
                 LOG(DEBUG, "Sending RPC to host: {}", endp.to_string());
 
-                gkfs::rpc::remove::input in(path);
+                gkfs::rpc::remove_data::input in(path);
 
                 // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so
                 // that we can retry for RPC_TRIES (see old commits with margo)
@@ -194,7 +206,8 @@ forward_remove(const std::string& path, const bool remove_metadentry_only,
                 // happens we can remove the .at(0) :/
 
                 handles.emplace_back(
-                        ld_network_service->post<gkfs::rpc::remove>(endp, in));
+                        ld_network_service->post<gkfs::rpc::remove_data>(endp,
+                                                                         in));
 
             } catch(const std::exception& ex) {
                 // TODO(amiranda): we should cancel all previously posted

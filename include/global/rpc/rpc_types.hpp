@@ -36,6 +36,9 @@ MERCURY_GEN_PROC(rpc_stat_out_t,
 
 MERCURY_GEN_PROC(rpc_rm_node_in_t, ((hg_const_string_t)(path)))
 
+MERCURY_GEN_PROC(rpc_rm_metadata_out_t,
+                 ((hg_int32_t)(err))((hg_int64_t)(size))((hg_uint32_t)(mode)))
+
 MERCURY_GEN_PROC(rpc_trunc_in_t,
                  ((hg_const_string_t)(path))((hg_uint64_t)(length)))
 

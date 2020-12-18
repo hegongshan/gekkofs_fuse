@@ -30,6 +30,11 @@ public:
     explicit NotFoundException(const std::string& s) : DBException(s){};
 };
 
+class ExistsException : public DBException {
+public:
+    explicit ExistsException(const std::string& s) : DBException(s){};
+};
+
 } // namespace metadata
 } // namespace gkfs
 

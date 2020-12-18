@@ -55,7 +55,7 @@ to_underlying(E e) {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-std::shared_ptr<gkfs::metadata::Metadata>
+std::optional<gkfs::metadata::Metadata>
 get_metadata(const std::string& path, bool follow_links = false);
 
 int

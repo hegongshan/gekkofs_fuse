@@ -25,7 +25,8 @@ namespace tag {
 constexpr auto fs_config = "rpc_srv_fs_config";
 constexpr auto create = "rpc_srv_mk_node";
 constexpr auto stat = "rpc_srv_stat";
-constexpr auto remove = "rpc_srv_rm_node";
+constexpr auto remove_metadata = "rpc_srv_rm_metadata";
+constexpr auto remove_data = "rpc_srv_rm_data";
 constexpr auto decr_size = "rpc_srv_decr_size";
 constexpr auto update_metadentry = "rpc_srv_update_metadentry";
 constexpr auto get_metadentry_size = "rpc_srv_get_metadentry_size";

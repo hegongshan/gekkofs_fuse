@@ -108,8 +108,8 @@ ChunkStorage::destroy_chunk_space(const string& file_path) const {
     try {
         // Note: remove_all does not throw an error when path doesn't exist.
         auto n = fs::remove_all(chunk_dir);
-        log_->debug("{}() Removed '{}' files from '{}'", __func__, n,
-                    chunk_dir);
+        log_->debug("{}() Removed '{}' files and directories from '{}'",
+                    __func__, n, chunk_dir);
     } catch(const fs::filesystem_error& e) {
         auto err_str = fmt::format(
                 "{}() Failed to remove chunk directory. Path: '{}', Error: '{}'",

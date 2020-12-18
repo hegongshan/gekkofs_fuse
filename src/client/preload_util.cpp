@@ -165,20 +165,21 @@ load_hostfile(const std::string& path) {
 
 namespace gkfs::utils {
 
+
 /**
- * Retrieve metadata from daemon
+ * Retrieve metadata from daemon and return Metadata object
  * errno may be set
  * @param path
  * @param follow_links
- * @return shared_ptr for metadata, nullptr else
+ * @return Metadata
  */
-std::shared_ptr<gkfs::metadata::Metadata>
+optional<gkfs::metadata::Metadata>
 get_metadata(const string& path, bool follow_links) {
     std::string attr;
     auto err = gkfs::rpc::forward_stat(path, attr);
     if(err) {
         errno = err;
-        return nullptr;
+        return {};
     }
 #ifdef HAS_SYMLINKS
     if(follow_links) {
@@ -187,14 +188,15 @@ get_metadata(const string& path, bool follow_links) {
             err = gkfs::rpc::forward_stat(md.target_path(), attr);
             if(err) {
                 errno = err;
-                return nullptr;
+                return {};
             }
             md = gkfs::metadata::Metadata{attr};
         }
     }
 #endif
-    return make_shared<gkfs::metadata::Metadata>(attr);
+    return gkfs::metadata::Metadata{attr};
 }
+
 
 /**
  * Converts the Metadata object into a stat struct, which is needed by Linux
