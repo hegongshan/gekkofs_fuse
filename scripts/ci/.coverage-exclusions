@@ -1,0 +1,4 @@
+/usr/include/*
+[[ROOT_DIR]]/external/*
+[[ROOT_DIR]]/tests/*
+[[BUILD_DIR]]/*
