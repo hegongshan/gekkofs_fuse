@@ -4,6 +4,7 @@ stages:
   - build deps
   - build
   - test
+  - report
 
 variables:
   DEPS_SRC_PATH:                "${CI_PROJECT_DIR}/deps/src"
@@ -60,6 +61,7 @@ compile GekkoFS:
       -Wdev
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
+      -DGKFS_ENABLE_CODE_COVERAGE:BOOL=ON
       -DGKFS_BUILD_TESTS:BOOL=ON
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DGKFS_ENABLE_FORWARDING:BOOL=ON
@@ -68,13 +70,18 @@ compile GekkoFS:
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
-    # the following commands are intended to reduce artifact size
-    - rm -rf ${BUILD_PATH}/_deps
     - find ${BUILD_PATH} -name "*.o" -delete
+    # cleanup nlohmann_json: it includes around 500MiB of test data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/test/data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/benchmarks/data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/.git
   artifacts:
     paths:
       - ${BUILD_PATH}
       - ${INSTALL_PATH}
+    exclude:
+      # remove object files
+      - ${BUILD_PATH}/**/*.o
 
 compile tests:
   stage: build
@@ -91,23 +98,39 @@ compile tests:
 integration tests:
   stage: test
   script:
-    - mkdir -p ${INTEGRATION_TESTS_RUN_PATH}
-    - cd ${INTEGRATION_TESTS_BIN_PATH} 
-    - TMPDIR=${INTEGRATION_TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${INTEGRATION_TESTS_RUN_PATH}/session.log
+    ## run tests
+    - cd ${BUILD_PATH}/tests/integration
+    - unbuffer ${PYTEST} -v | tee session.log
+    ## capture coverage information
+    - cd ${BUILD_PATH}
+    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --capture integration
+          --root-dir ${CI_PROJECT_DIR}
+          --build-dir ${BUILD_PATH}
+          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
   artifacts:
-    when: on_failure
+    #    when: on_failure
     paths:
-      - "${INTEGRATION_TESTS_RUN_PATH}"
+      #      - "${INTEGRATION_TESTS_RUN_PATH}"
+      - ${BUILD_PATH}
 
 unit:
   stage: test
   script:
+    ## run actual tests
     - cd ${BUILD_PATH}
     - ctest -j $(nproc) -L unit::all
+    ## capture coverage information
+    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --capture unit
+          --root-dir ${CI_PROJECT_DIR}
+          --build-dir ${BUILD_PATH}
+          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
   artifacts:
-    when: on_failure
+    #    when: on_failure
     paths:
-      - Testing
+      - ${BUILD_PATH}
+        #      - Testing
 
 test wr:
   stage: test
@@ -156,3 +179,25 @@ test lseek:
     when: on_failure
     paths:
      - "${LOG_PATH}"
+
+
+################################################################################
+## Generation of code coverage reports
+################################################################################
+
+coverage:
+  stage: report
+  image: gekkofs/coverage
+  script:
+    - cd ${BUILD_PATH}
+    ## merge the partial coverage files from each test in the pipeline
+    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --merge
+          --root-dir ${CI_PROJECT_DIR}
+          --build-dir ${BUILD_PATH}
+  artifacts:
+    reports:
+      cobertura: ${BUILD_PATH}/.coverage/coverage-cobertura.xml
+    paths:
+      - ${BUILD_PATH}/.coverage
+    expire_in: 2 weeks

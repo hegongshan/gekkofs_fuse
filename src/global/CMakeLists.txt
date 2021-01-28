@@ -9,6 +9,10 @@ target_sources(distributor
     ${CMAKE_CURRENT_LIST_DIR}/rpc/distributor.cpp
     )
 
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(distributor AUTO)
+endif()
+
 add_library(log_util STATIC)
 set_property(TARGET log_util PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(log_util
@@ -18,8 +22,13 @@ target_sources(log_util
     ${CMAKE_CURRENT_LIST_DIR}/log_util.cpp
     )
 target_link_libraries(log_util
+  PRIVATE
     spdlog
     )
+
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(log_util AUTO)
+endif()
 
 add_library(env_util STATIC)
 set_property(TARGET env_util PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -31,6 +40,10 @@ target_sources(env_util
     ${CMAKE_CURRENT_LIST_DIR}/env_util.cpp
     )
 
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(env_util AUTO)
+endif()
+
 add_library(metadata STATIC)
 set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(metadata
@@ -40,5 +53,10 @@ target_sources(metadata
     ${CMAKE_CURRENT_LIST_DIR}/metadata.cpp
     )
 target_link_libraries(metadata
+  PRIVATE
     fmt::fmt
     )
+
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(metadata AUTO)
+endif()
