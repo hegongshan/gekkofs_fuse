@@ -1,0 +1,296 @@
+ruby:
+  ext: ['.rb', '.rake']
+  after: ['^#!', '^#.*encoding:', '^#.*frozen_string_literal:']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: ''
+
+perl:
+  ext: ['.pl']
+  after: ['^#!', '^#.*encoding:']
+  comment:
+    open:   '#\n'
+    close:  '#\n'
+    prefix: '# '
+    suffix: ''
+
+# Support PEP 0263 comments:
+# coding=<encoding name>
+# -*- coding: <encoding name> -*-
+# vim: set fileencoding=<encoding name> :
+python:
+  ext: ['.py']
+  after: ['^#!', '^#.*coding:', '^#.*coding=', '^#.*fileencoding=']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
+
+html:
+  ext: ['.html', '.htm', '.xhtml']
+  comment:
+    open:   '<!--\n'
+    close:  '-->\n'
+    prefix: '    '
+    suffix: ''
+
+php:
+  ext: ['.php']
+  after: [ '^#!' ]
+  comment:
+    open:   '<?php \n/*\n'
+    close:  ' */ ?>\n'
+    prefix: ' * '
+    suffix: ''
+
+javacript:
+  ext: ['.js', '.jsx']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+qml:
+  ext: ['.qml']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+qmake_project:
+  ext: ['.pro']
+  comment:
+    open:   '#\n'
+    close:  '#\n'
+    prefix: '# '
+    suffix: ''
+
+css:
+  ext: ['.css']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+c:
+  ext: ['.c', '.h']
+  comment:
+    open:   '/*\n'
+    close:  '*/\n\n'
+    prefix: '  '
+    suffix: '\n'
+
+cpp:
+  ext: ['.cpp', '.hpp', '.cc', '.hh']
+  comment:
+    open:   '/*\n'
+    close:  '*/\n\n'
+    prefix: '  '
+    suffix: '\n'
+
+java:
+  ext: ['.java']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+    
+kotlin:
+  ext: ['.kt']
+  comment:
+    open:   '/*\n'
+    clone:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+golang:
+  ext: ['.go']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+groovy:
+  ext: ['.groovy']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+haml:
+  ext: ['.haml', '.hamlc']
+  comment:
+    open:   '-#\n'
+    close:  '-#\n'
+    prefix: '-# '
+    suffix: ''
+
+coffee:
+  ext: ['.coffee']
+  comment:
+    open:   '###\n'
+    close:  '###\n'
+    prefix: ''
+    suffix: ''
+
+# M4 macro language, use #, not dnl
+m4:
+  ext:  ['.m4']
+  comment:
+    open:   '#\n'
+    close:  '#\n'
+    prefix: '# '
+    suffix: ''
+
+am:
+  ext:  ['.am']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
+
+ac:
+  ext:  ['.ac']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
+
+mk:
+  ext:  ['.mk']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
+
+# Most shells, really
+shell:
+  ext:  ['.sh']
+  after: ['^#!']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
+
+# Use "-- " to make sure e.g. MySQL understands it
+sql:
+  ext:  ['.sql']
+  comment:
+    open:   '-- \n'
+    close:  '-- \n'
+    prefix: '-- '
+    suffix: ''
+
+# XML is *not* the same as HTML, and the comments need to go after a
+# preprocessing directive, if present.
+# FIXME: only supports single line directives
+xml:
+  ext: ['.xml', '.xsd', '.mxml']
+  after: ['^<\?']
+  comment:
+    open:   '<!--\n'
+    close:  '-->\n'
+    prefix: '    '
+    suffix: ''
+
+yaml:
+  ext:  ['.yml', '.yaml']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
+
+action_script:
+  ext: ['.as']
+  comment:
+    open:   '//\n'
+    close:  '//\n\n'
+    prefix: '// '
+    suffix: ''
+
+sass:
+  ext: ['.sass', '.scss']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+verilog:
+  ext: ['.v', '.sv']
+  comment:
+    open:   '//\n'
+    close:  '//\n\n'
+    prefix: '// '
+    suffix: ''
+
+vhdl:
+  ext: ['.vhd']
+  comment:
+    open:   '--\n'
+    close:  '--\n\n'
+    prefix: '-- '
+    suffix: ''
+
+elm:
+  ext: ['.elm']
+  comment:
+    open: '{-\n'
+    close: '-}\n\n'
+    prefix: '  '
+    suffix: ''
+
+swift:
+  ext: ['.swift']
+  comment:
+    open:   '/*\n'
+    close:  ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+rust:
+  ext: ['.rs']
+  comment:
+    open: '/*\n'
+    close: ' */\n\n'
+    prefix: ' * '
+    suffix: ''
+
+# Conf files i.e. apache config, splunk.conf files
+conf:
+  ext:  ['.conf']
+  comment:
+    open:   '#\n'
+    close:  '#\n'
+    prefix: '# '
+    suffix: ''
+
+cmake:
+  ext: ['CMakeLists.txt', '.cmake']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
+
+dockerfile:
+  ext: ['Dockerfile']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
