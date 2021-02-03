@@ -1,0 +1,159 @@
+diff --git a/lib/copyright_header/parser.rb b/lib/copyright_header/parser.rb
+index 5b7b4d0..46a906a 100644
+--- a/lib/copyright_header/parser.rb
++++ b/lib/copyright_header/parser.rb
+@@ -50,11 +50,36 @@ module CopyrightHeader
+       end
+     end
+ 
+-    def format(comment_open = nil, comment_close = nil, comment_prefix = nil)
++    def format(comment_open = nil, comment_close = nil, comment_prefix = nil, comment_suffix = nil)
+       comment_open ||= ''
+       comment_close ||= ''
+       comment_prefix ||= ''
+-      license = comment_open + @lines.map { |line| (comment_prefix + line).gsub(/\s+\n$/, "\n") }.join() + comment_close
++      comment_suffix = "\n" if comment_suffix.nil? || comment_suffix.empty?
++
++      comment_suffix.gsub!(/\\n/, "\n")
++
++      expander = lambda do |str|
++        regex = %r{(?<prefix>.*?)%repeat\{["']?(?<char>.)["']?,\s*(?<reps>\d+|:word_wrap:)\}%(?<suffix>.*)}
++
++        if matches = str.match(regex)
++          if matches[:reps] == ':word_wrap:'
++            n = @options[:word_wrap]
++          else
++            n = matches[:reps].to_i
++          end
++          str = matches[:prefix] + matches[:char] * n + matches[:suffix]
++        end
++
++        return str
++      end
++
++      comment_open = expander.(comment_open)
++      comment_close = expander.(comment_close)
++      comment_length = @options[:word_wrap] - comment_prefix.chomp().length - comment_suffix.chomp().length
++
++      license = comment_open + @lines.map {
++        |line| (comment_prefix + line.chomp().ljust(comment_length, ' ') + comment_suffix).gsub(/\s+\n$/, "\n")
++      }.join() + comment_close
+       license.gsub!(/\\n/, "\n")
+       license
+     end
+@@ -72,7 +97,7 @@ module CopyrightHeader
+     end
+ 
+     def format(license)
+-      license.format(@config[:comment]['open'], @config[:comment]['close'], @config[:comment]['prefix'])
++      license.format(@config[:comment]['open'], @config[:comment]['close'], @config[:comment]['prefix'], @config[:comment]['suffix'])
+     end
+ 
+     def add(license)
+@@ -121,7 +146,10 @@ module CopyrightHeader
+         # Due to editors messing with whitespace, we'll make this more of a fuzzy match and use \s to match whitespace
+         pattern = Regexp.escape(text).gsub(/\\[ n]/, '\s*').gsub(/\\s*$/, '\s')
+         exp = Regexp.new(pattern)
+-        @contents.gsub!(exp, '')
++        if @contents.gsub!(exp, '').nil?
++          STDERR.puts "SKIP #{@file}; detected copyright does not match template"
++          return nil
++        end
+         @contents
+       else
+         STDERR.puts "SKIP #{@file}; copyright not detected"
+@@ -160,28 +188,36 @@ module CopyrightHeader
+       return extension
+     end
+ 
++    def fullname(file)
++      return File.basename(file)
++    end
++
++    def file_type(file)
++      key = fullname(file)
++      if @config.has_key? key
++        return key
++      end
++      return ext(file)
++    end
++
+     def supported?(file)
+-      @config.has_key? ext(file)
++      @config.has_key? ext(file) or @config.has_key? fullname(file)
+     end
+ 
+     def header(file)
+-      Header.new(file, @config[ext(file)])
++      Header.new(file, @config[file_type(file)])
+     end
++
+   end
+ 
+   class Parser
+     attr_accessor :options
+     @syntax = nil
+-    @license = nil
++    @licenses = nil
+     def initialize(options = {})
+       @options = options
+       @exclude = [ /^LICENSE(|\.txt)$/i, /^holders(|\.txt)$/i, /^README/, /^\./]
+-      @license = License.new(:license_file => @options[:license_file],
+-                             :copyright_software => @options[:copyright_software],
+-                             :copyright_software_description => @options[:copyright_software_description],
+-                             :copyright_years => @options[:copyright_years],
+-                             :copyright_holders => @options[:copyright_holders],
+-                             :word_wrap => @options[:word_wrap])
++      @licenses = {}
+       @syntax = Syntax.new(@options[:syntax], @options[:guess_extension])
+     end
+ 
+@@ -221,14 +257,27 @@ module CopyrightHeader
+ 
+           if @syntax.supported?(path)
+             header = @syntax.header(path)
+-            contents = header.send(method, @license)
++            file_type = @syntax.file_type(path)
++
++            if not @licenses.key?(file_type)
++              @licenses[file_type] = License.new(:license_file => @options[:license_file],
++                                                 :copyright_software => @options[:copyright_software],
++                                                 :copyright_software_description => @options[:copyright_software_description],
++                                                 :copyright_years => @options[:copyright_years],
++                                                 :copyright_holders => @options[:copyright_holders],
++                                                 :word_wrap => @options[:word_wrap])
++            end
++
++            license = @licenses[file_type]
++
++            contents = header.send(method, license)
+             if contents.nil?
+               STDERR.puts "SKIP #{path}; failed to generate license"
+             else
+               write(path, contents)
+             end
+           else
+-            STDERR.puts "SKIP #{path}; unsupported #{@syntax.ext(path)}"
++            STDERR.puts "SKIP #{path}; unsupported #{@syntax.file_type(path)}"
+           end
+         rescue Exception => e
+           STDERR.puts "SKIP #{path}; exception=#{e.message}"
+@@ -249,7 +298,6 @@ module CopyrightHeader
+     def write(file, contents)
+       if @options[:dry_run]
+         STDERR.puts "UPDATE #{file} [dry-run]"
+-        STDERR.puts contents
+       elsif @options[:output_dir].nil?
+         STDERR.puts "UPDATE #{file} [no output-dir]"
+         STDERR.puts contents
+diff --git a/lib/copyright_header/version.rb b/lib/copyright_header/version.rb
+index 881e44c..6ae4e1c 100644
+--- a/lib/copyright_header/version.rb
++++ b/lib/copyright_header/version.rb
+@@ -18,5 +18,5 @@
+ # along with Copyright Header.  If not, see <http://www.gnu.org/licenses/>.
+ #
+ module CopyrightHeader
+-  VERSION = "1.0.22"
++  VERSION = "1.0.27.pre"
+ end
