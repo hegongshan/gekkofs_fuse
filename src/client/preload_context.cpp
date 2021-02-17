@@ -1,6 +1,6 @@
 /*
-  Copyright 2018-2020, Barcelona Supercomputing Center (BSC), Spain
-  Copyright 2015-2020, Johannes Gutenberg Universitaet Mainz, Germany
+  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
+  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
 
   This software was partially supported by the
   EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
@@ -10,6 +10,7 @@
 
   SPDX-License-Identifier: MIT
 */
+
 #include <client/preload_context.hpp>
 #include <client/env.hpp>
 #include <client/logging.hpp>

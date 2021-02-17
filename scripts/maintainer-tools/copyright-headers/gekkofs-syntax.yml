@@ -1,10 +1,24 @@
+################################################################################
+# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+#                                                                              #
+# This software was partially supported by the                                 #
+# EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
+#                                                                              #
+# This software was partially supported by the                                 #
+# ADA-FS project under the SPPEXA project funded by the DFG.                   #
+#                                                                              #
+# SPDX-License-Identifier: MIT                                                 #
+################################################################################
+
 ruby:
   ext: ['.rb', '.rake']
   after: ['^#!', '^#.*encoding:', '^#.*frozen_string_literal:']
   comment:
-    open:   '\n#\n'
-    close:  '#\n'
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
     prefix: '# '
+    suffix: ''
 
 perl:
   ext: ['.pl']
@@ -13,6 +27,7 @@ perl:
     open:   '#\n'
     close:  '#\n'
     prefix: '# '
+    suffix: ''
 
 # Support PEP 0263 comments:
 # coding=<encoding name>
@@ -22,9 +37,10 @@ python:
   ext: ['.py']
   after: ['^#!', '^#.*coding:', '^#.*coding=', '^#.*fileencoding=']
   comment:
-    open:   '\n'
-    close:  '\n'
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
     prefix: '# '
+    suffix: '#\n'
 
 html:
   ext: ['.html', '.htm', '.xhtml']
@@ -32,6 +48,7 @@ html:
     open:   '<!--\n'
     close:  '-->\n'
     prefix: '    '
+    suffix: ''
 
 php:
   ext: ['.php']
@@ -40,6 +57,7 @@ php:
     open:   '<?php \n/*\n'
     close:  ' */ ?>\n'
     prefix: ' * '
+    suffix: ''
 
 javacript:
   ext: ['.js', '.jsx']
@@ -47,6 +65,7 @@ javacript:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 qml:
   ext: ['.qml']
@@ -54,6 +73,7 @@ qml:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 qmake_project:
   ext: ['.pro']
@@ -61,6 +81,7 @@ qmake_project:
     open:   '#\n'
     close:  '#\n'
     prefix: '# '
+    suffix: ''
 
 css:
   ext: ['.css']
@@ -68,13 +89,15 @@ css:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 c:
   ext: ['.c', '.h']
   comment:
-    open:   '/*'
-    close:  ' */\n\n'
-    prefix: ' * '
+    open:   '/*\n'
+    close:  '*/\n\n'
+    prefix: '  '
+    suffix: '\n'
 
 cpp:
   ext: ['.cpp', '.hpp', '.cc', '.hh']
@@ -82,6 +105,7 @@ cpp:
     open:   '/*\n'
     close:  '*/\n\n'
     prefix: '  '
+    suffix: '\n'
 
 java:
   ext: ['.java']
@@ -89,6 +113,7 @@ java:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
     
 kotlin:
   ext: ['.kt']
@@ -96,6 +121,7 @@ kotlin:
     open:   '/*\n'
     clone:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 golang:
   ext: ['.go']
@@ -103,6 +129,7 @@ golang:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 groovy:
   ext: ['.groovy']
@@ -110,6 +137,7 @@ groovy:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 haml:
   ext: ['.haml', '.hamlc']
@@ -117,6 +145,7 @@ haml:
     open:   '-#\n'
     close:  '-#\n'
     prefix: '-# '
+    suffix: ''
 
 coffee:
   ext: ['.coffee']
@@ -124,6 +153,7 @@ coffee:
     open:   '###\n'
     close:  '###\n'
     prefix: ''
+    suffix: ''
 
 # M4 macro language, use #, not dnl
 m4:
@@ -132,15 +162,41 @@ m4:
     open:   '#\n'
     close:  '#\n'
     prefix: '# '
+    suffix: ''
+
+am:
+  ext:  ['.am']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
+
+ac:
+  ext:  ['.ac']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
+
+mk:
+  ext:  ['.mk']
+  comment:
+    open:   '##########################################################################\n'
+    close:  '##########################################################################\n\n'
+    prefix: '#  '
+    suffix: '#\n'
 
 # Most shells, really
 shell:
   ext:  ['.sh']
   after: ['^#!']
   comment:
-    open:   '#\n'
-    close:  '#\n'
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
     prefix: '# '
+    suffix: '#\n'
 
 # Use "-- " to make sure e.g. MySQL understands it
 sql:
@@ -149,6 +205,7 @@ sql:
     open:   '-- \n'
     close:  '-- \n'
     prefix: '-- '
+    suffix: ''
 
 # XML is *not* the same as HTML, and the comments need to go after a
 # preprocessing directive, if present.
@@ -160,13 +217,15 @@ xml:
     open:   '<!--\n'
     close:  '-->\n'
     prefix: '    '
+    suffix: ''
 
 yaml:
   ext:  ['.yml', '.yaml']
   comment:
-    open:   '#\n'
-    close:  '#\n'
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
     prefix: '# '
+    suffix: '#\n'
 
 action_script:
   ext: ['.as']
@@ -174,6 +233,7 @@ action_script:
     open:   '//\n'
     close:  '//\n\n'
     prefix: '// '
+    suffix: ''
 
 sass:
   ext: ['.sass', '.scss']
@@ -181,6 +241,7 @@ sass:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 verilog:
   ext: ['.v', '.sv']
@@ -188,6 +249,7 @@ verilog:
     open:   '//\n'
     close:  '//\n\n'
     prefix: '// '
+    suffix: ''
 
 vhdl:
   ext: ['.vhd']
@@ -195,6 +257,7 @@ vhdl:
     open:   '--\n'
     close:  '--\n\n'
     prefix: '-- '
+    suffix: ''
 
 elm:
   ext: ['.elm']
@@ -202,6 +265,7 @@ elm:
     open: '{-\n'
     close: '-}\n\n'
     prefix: '  '
+    suffix: ''
 
 swift:
   ext: ['.swift']
@@ -209,6 +273,7 @@ swift:
     open:   '/*\n'
     close:  ' */\n\n'
     prefix: ' * '
+    suffix: ''
 
 rust:
   ext: ['.rs']
@@ -216,6 +281,8 @@ rust:
     open: '/*\n'
     close: ' */\n\n'
     prefix: ' * '
+    suffix: ''
+
 # Conf files i.e. apache config, splunk.conf files
 conf:
   ext:  ['.conf']
@@ -223,3 +290,20 @@ conf:
     open:   '#\n'
     close:  '#\n'
     prefix: '# '
+    suffix: ''
+
+cmake:
+  ext: ['CMakeLists.txt', '.cmake']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
+
+dockerfile:
+  ext: ['Dockerfile']
+  comment:
+    open:   '%repeat{#, :word_wrap:}%\n'
+    close:   '%repeat{#, :word_wrap:}%\n\n'
+    prefix: '# '
+    suffix: '#\n'
