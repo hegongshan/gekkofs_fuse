@@ -9,9 +9,23 @@
 # This software was partially supported by the                                 #
 # ADA-FS project under the SPPEXA project funded by the DFG.                   #
 #                                                                              #
-# SPDX-License-Identifier: MIT                                                 #
+# This file is part of GekkoFS.                                                #
+#                                                                              #
+# GekkoFS is free software: you can redistribute it and/or modify              #
+# it under the terms of the GNU General Public License as published by         #
+# the Free Software Foundation, either version 3 of the License, or            #
+# (at your option) any later version.                                          #
+#                                                                              #
+# GekkoFS is distributed in the hope that it will be useful,                   #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
+# GNU General Public License for more details.                                 #
+#                                                                              #
+# You should have received a copy of the GNU General Public License            #
+# along with GekkoFS.  If not, see <https://www.gnu.org/licenses/>.            #
+#                                                                              #
+# SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
-
 
 usage_short() {
 	echo "

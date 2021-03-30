@@ -9,9 +9,23 @@
 # This software was partially supported by the                                 #
 # ADA-FS project under the SPPEXA project funded by the DFG.                   #
 #                                                                              #
-# SPDX-License-Identifier: MIT                                                 #
+# This file is part of GekkoFS.                                                #
+#                                                                              #
+# GekkoFS is free software: you can redistribute it and/or modify              #
+# it under the terms of the GNU General Public License as published by         #
+# the Free Software Foundation, either version 3 of the License, or            #
+# (at your option) any later version.                                          #
+#                                                                              #
+# GekkoFS is distributed in the hope that it will be useful,                   #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
+# GNU General Public License for more details.                                 #
+#                                                                              #
+# You should have received a copy of the GNU General Public License            #
+# along with GekkoFS.  If not, see <https://www.gnu.org/licenses/>.            #
+#                                                                              #
+# SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
-
 
 PROJECT_DIR=$(readlink -f .)
 PROJECT_CONFIG_FILE="project.config"
@@ -42,6 +56,8 @@ The following commands can be used:
 Additionally, the following options are supported:
   -p, --project-dir DIR   The root directory of the project's target files.
                           Defaults to '\$PWD', the current directory.
+  -c, --config-file FILE  The configuration file used for this project.
+                          Defaults to '\$PWD/project.config'.
   -s, --show-targets      Don't actually execute, just show which targets would
                           be considered.
   -n, --dry-run           Don't actually execute, just show what would happen.
@@ -58,8 +74,8 @@ function parse_args() {
     # -l is for long options with double dash like --version
     # the comma separates different long options
     options=$(getopt -l \
-                "add,remove,help,project-dir:,dry-run,show-targets" \
-                -o "arhp:ns" -- "$@")
+                "add,remove,help,project-dir:,config-file:,dry-run,show-targets" \
+                -o "arhp:c:ns" -- "$@")
 
     # set --:
     # If no arguments follow this option, then the positional parameters are
@@ -93,6 +109,21 @@ function parse_args() {
                 fi
 
                 PROJECT_DIR=$(readlink -f "$1")
+                ;;
+
+            -c | --config-file)
+                shift
+                if [[ -z "$1" ]]; then
+                    echo "option '${OPT}' requires an argument"
+                    exit 1
+                fi
+
+                if ! [[ -f $1 ]]; then
+                    echo "file '${1}' does not exist."
+                    exit 1
+                fi
+
+                PROJECT_CONFIG_FILE=$(readlink -f "$1")
                 ;;
 
             -n | --dry-run)
