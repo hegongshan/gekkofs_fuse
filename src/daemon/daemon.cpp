@@ -28,10 +28,10 @@
 
 #include <daemon/daemon.hpp>
 #include <version.hpp>
-#include <global/log_util.hpp>
-#include <global/env_util.hpp>
-#include <global/rpc/rpc_types.hpp>
-#include <global/rpc/rpc_util.hpp>
+#include <common/log_util.hpp>
+#include <common/env_util.hpp>
+#include <common/rpc/rpc_types.hpp>
+#include <common/rpc/rpc_util.hpp>
 #include <daemon/env.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/ops/metadentry.hpp>

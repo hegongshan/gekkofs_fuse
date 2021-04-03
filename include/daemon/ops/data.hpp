@@ -30,7 +30,7 @@
 #define GEKKOFS_DAEMON_DATA_HPP
 
 #include <daemon/daemon.hpp>
-#include <global/global_defs.hpp>
+#include <common/global_defs.hpp>
 
 #include <string>
 #include <vector>

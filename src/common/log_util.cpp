@@ -26,7 +26,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#include <global/log_util.hpp>
+#include <common/log_util.hpp>
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <vector>

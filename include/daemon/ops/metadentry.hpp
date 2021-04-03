@@ -30,7 +30,7 @@
 #define GEKKOFS_METADENTRY_HPP
 
 #include <daemon/daemon.hpp>
-#include <global/metadata.hpp>
+#include <common/metadata.hpp>
 
 namespace gkfs {
 namespace metadata {

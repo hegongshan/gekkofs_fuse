@@ -32,9 +32,9 @@
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/ops/data.hpp>
 
-#include <global/rpc/rpc_types.hpp>
-#include <global/rpc/distributor.hpp>
-#include <global/arithmetic/arithmetic.hpp>
+#include <common/rpc/rpc_types.hpp>
+#include <common/rpc/distributor.hpp>
+#include <common/arithmetic/arithmetic.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>

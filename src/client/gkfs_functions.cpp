@@ -36,7 +36,7 @@
 #include <client/rpc/forward_data.hpp>
 #include <client/open_dir.hpp>
 
-#include <global/path_util.hpp>
+#include <common/path_util.hpp>
 
 extern "C" {
 #include <dirent.h> // used for file types in the getdents{,64}() functions

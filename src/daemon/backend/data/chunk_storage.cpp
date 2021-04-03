@@ -29,7 +29,7 @@
 #include <daemon/backend/data/data_module.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/backend/data/file_handle.hpp>
-#include <global/path_util.hpp>
+#include <common/path_util.hpp>
 
 #include <cerrno>
 

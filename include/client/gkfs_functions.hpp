@@ -31,7 +31,7 @@
 #define GEKKOFS_GKFS_FUNCTIONS_HPP
 
 #include <client/open_file_map.hpp>
-#include <global/metadata.hpp>
+#include <common/metadata.hpp>
 
 struct statfs;
 struct statvfs;

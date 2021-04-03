@@ -25,8 +25,7 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
-#include <global/env_util.hpp>
+#include <common/env_util.hpp>
 
 #include <string>
 #include <cstdlib>

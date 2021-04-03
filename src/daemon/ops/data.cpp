@@ -28,7 +28,7 @@
 
 #include <daemon/ops/data.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
-#include <global/arithmetic/arithmetic.hpp>
+#include <common/arithmetic/arithmetic.hpp>
 #include <utility>
 
 extern "C" {

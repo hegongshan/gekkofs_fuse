@@ -38,8 +38,8 @@ set(PRELOAD_SRC
     preload.cpp
     preload_context.cpp
     preload_util.cpp
-    ../global/path_util.cpp
-    ../global/rpc/rpc_util.cpp
+    ../common/path_util.cpp
+    ../common/rpc/rpc_util.cpp
     rpc/rpc_types.cpp
     rpc/forward_data.cpp
     rpc/forward_management.cpp
@@ -70,11 +70,11 @@ set(PRELOAD_HEADERS
     ../../include/client/syscalls/rets.hpp
     ../../include/client/syscalls/syscall.hpp
     ../../include/client/syscalls/detail/syscall_info.h
-    ../../include/global/cmake_configure.hpp
-    ../../include/global/global_defs.hpp
-    ../../include/global/path_util.hpp
-    ../../include/global/rpc/rpc_types.hpp
-    ../../include/global/rpc/rpc_util.hpp
+    ../../include/common/cmake_configure.hpp
+    ../../include/common/global_defs.hpp
+    ../../include/common/path_util.hpp
+    ../../include/common/rpc/rpc_types.hpp
+    ../../include/common/rpc/rpc_util.hpp
     )
 set(PRELOAD_LINK_LIBRARIES
     # internal

@@ -29,7 +29,7 @@
 #ifndef GEKKOFS_CHUNK_STORAGE_HPP
 #define GEKKOFS_CHUNK_STORAGE_HPP
 
-#include <global/global_defs.hpp>
+#include <common/global_defs.hpp>
 
 #include <limits>
 #include <string>

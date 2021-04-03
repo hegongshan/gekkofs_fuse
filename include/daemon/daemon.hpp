@@ -34,7 +34,7 @@
 #include <spdlog/spdlog.h>
 
 #include <config.hpp>
-#include <global/global_defs.hpp>
+#include <common/global_defs.hpp>
 // margo
 extern "C" {
 #include <abt.h>

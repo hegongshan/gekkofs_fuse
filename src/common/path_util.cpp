@@ -26,7 +26,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#include <global/path_util.hpp>
+#include <common/path_util.hpp>
 
 #include <system_error>
 #include <cstring>
