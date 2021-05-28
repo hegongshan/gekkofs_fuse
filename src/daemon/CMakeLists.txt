@@ -46,8 +46,8 @@ set(DAEMON_HEADERS
     ../../include/config.hpp
     ../../include/version.hpp
     ../../include/common/cmake_configure.hpp
-    ../../include/common/global_defs.hpp
-        ../../include/common/rpc/rpc_types.hpp
+    ../../include/common/common_defs.hpp
+    ../../include/common/rpc/rpc_types.hpp
     ../../include/common/rpc/rpc_util.hpp
     ../../include/common/path_util.hpp
     ../../include/daemon/daemon.hpp

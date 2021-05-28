@@ -46,7 +46,7 @@
 #endif
 
 
-#include <common/global_defs.hpp>
+#include <common/common_defs.hpp>
 #include <common/rpc/rpc_types.hpp>
 
 namespace hermes {

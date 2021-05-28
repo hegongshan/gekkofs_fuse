@@ -26,8 +26,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#ifndef GKFS_GLOBAL_ARITHMETIC_HPP
-#define GKFS_GLOBAL_ARITHMETIC_HPP
+#ifndef GKFS_COMMON_ARITHMETIC_HPP
+#define GKFS_COMMON_ARITHMETIC_HPP
 
 #include <cstdint>
 #include <unistd.h>
@@ -215,4 +215,4 @@ block_count(const uint64_t offset, const size_t size, const size_t block_size) {
 
 } // namespace gkfs::utils::arithmetic
 
-#endif // GKFS_GLOBAL_ARITHMETIC_HPP
+#endif // GKFS_COMMON_ARITHMETIC_HPP

@@ -33,7 +33,7 @@ target_sources(storage
     ${INCLUDE_DIR}/daemon/backend/data/chunk_storage.hpp
     PRIVATE
     ${INCLUDE_DIR}/common/path_util.hpp
-    ${INCLUDE_DIR}/common/global_defs.hpp
+    ${INCLUDE_DIR}/common/common_defs.hpp
     ${INCLUDE_DIR}/daemon/backend/data/data_module.hpp
     ${INCLUDE_DIR}/daemon/backend/data/file_handle.hpp
     ${CMAKE_CURRENT_LIST_DIR}/chunk_storage.cpp

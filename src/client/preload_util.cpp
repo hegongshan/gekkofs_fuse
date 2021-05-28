@@ -35,7 +35,7 @@
 #include <common/rpc/distributor.hpp>
 #include <common/rpc/rpc_util.hpp>
 #include <common/env_util.hpp>
-#include <common/global_defs.hpp>
+#include <common/common_defs.hpp>
 
 #include <hermes.hpp>
 

@@ -26,8 +26,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#ifndef GEKKOFS_GLOBAL_DEFS_HPP
-#define GEKKOFS_GLOBAL_DEFS_HPP
+#ifndef GEKKOFS_COMMON_DEFS_HPP
+#define GEKKOFS_COMMON_DEFS_HPP
 
 // These constexpr set the RPC's identity and which handler the receiver end
 // should use
@@ -66,4 +66,4 @@ constexpr auto na_sm = "na+sm";
 } // namespace protocol
 } // namespace gkfs::rpc
 
-#endif // GEKKOFS_GLOBAL_DEFS_HPP
+#endif // GEKKOFS_COMMON_DEFS_HPP

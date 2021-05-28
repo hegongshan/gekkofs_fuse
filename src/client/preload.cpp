@@ -35,7 +35,7 @@
 #include <client/intercept.hpp>
 
 #include <common/rpc/distributor.hpp>
-#include <common/global_defs.hpp>
+#include <common/common_defs.hpp>
 
 #include <fstream>
 
