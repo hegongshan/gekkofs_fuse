@@ -26,7 +26,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#include <global/metadata.hpp>
+#include <common/metadata.hpp>
 #include <config.hpp>
 
 #include <fmt/format.h>

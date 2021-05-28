@@ -26,7 +26,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#include <global/rpc/distributor.hpp>
+#include <common/rpc/distributor.hpp>
 
 using namespace std;
 

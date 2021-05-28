@@ -26,8 +26,8 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#ifndef GEKKOFS_GLOBAL_RPC_UTILS_HPP
-#define GEKKOFS_GLOBAL_RPC_UTILS_HPP
+#ifndef GEKKOFS_COMMON_RPC_UTILS_HPP
+#define GEKKOFS_COMMON_RPC_UTILS_HPP
 
 extern "C" {
 #include <mercury_types.h>
@@ -49,4 +49,4 @@ get_host_by_name(const std::string& hostname);
 
 } // namespace gkfs::rpc
 
-#endif // GEKKOFS_GLOBAL_RPC_UTILS_HPP
+#endif // GEKKOFS_COMMON_RPC_UTILS_HPP

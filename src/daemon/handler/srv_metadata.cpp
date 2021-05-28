@@ -32,7 +32,7 @@
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/ops/metadentry.hpp>
 
-#include <global/rpc/rpc_types.hpp>
+#include <common/rpc/rpc_types.hpp>
 
 using namespace std;
 

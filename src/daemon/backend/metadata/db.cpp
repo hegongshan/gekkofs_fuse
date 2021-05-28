@@ -30,8 +30,8 @@
 #include <daemon/backend/metadata/merge.hpp>
 #include <daemon/backend/exceptions.hpp>
 
-#include <global/metadata.hpp>
-#include <global/path_util.hpp>
+#include <common/metadata.hpp>
+#include <common/path_util.hpp>
 
 extern "C" {
 #include <sys/stat.h>

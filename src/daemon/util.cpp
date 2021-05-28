@@ -29,7 +29,7 @@
 #include <daemon/util.hpp>
 #include <daemon/daemon.hpp>
 
-#include <global/rpc/rpc_util.hpp>
+#include <common/rpc/rpc_util.hpp>
 
 #include <fstream>
 #include <iostream>

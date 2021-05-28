@@ -29,7 +29,7 @@
 #include <daemon/daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 
-#include <global/rpc/rpc_types.hpp>
+#include <common/rpc/rpc_types.hpp>
 
 using namespace std;
 

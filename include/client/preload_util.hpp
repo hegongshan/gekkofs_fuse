@@ -31,7 +31,7 @@
 #define GEKKOFS_PRELOAD_UTIL_HPP
 
 #include <client/preload.hpp>
-#include <global/metadata.hpp>
+#include <common/metadata.hpp>
 
 #include <string>
 #include <iostream>

@@ -31,7 +31,7 @@
 
 
 #include <rocksdb/merge_operator.h>
-#include <global/metadata.hpp>
+#include <common/metadata.hpp>
 
 namespace rdb = rocksdb;
 

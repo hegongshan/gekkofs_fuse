@@ -32,8 +32,8 @@
 #include <client/rpc/rpc_types.hpp>
 #include <client/logging.hpp>
 
-#include <global/rpc/distributor.hpp>
-#include <global/arithmetic/arithmetic.hpp>
+#include <common/rpc/distributor.hpp>
+#include <common/arithmetic/arithmetic.hpp>
 
 #include <unordered_set>
 

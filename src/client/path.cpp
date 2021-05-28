@@ -32,7 +32,7 @@
 #include <client/logging.hpp>
 #include <client/env.hpp>
 
-#include <global/path_util.hpp>
+#include <common/path_util.hpp>
 
 #include <vector>
 #include <string>

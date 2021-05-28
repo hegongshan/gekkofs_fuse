@@ -178,7 +178,7 @@ add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
 message(STATUS "[gekkofs] Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
 mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 
-configure_file(include/global/cmake_configure.hpp.in include/global/cmake_configure.hpp)
+configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
 # Imported target
 add_library(RocksDB INTERFACE IMPORTED GLOBAL)
@@ -235,8 +235,8 @@ include_directories(
 
 include(GNUInstallDirs)
 
-# Global components
-add_subdirectory(src/global)
+# Common components
+add_subdirectory(src/common)
 # Daemon
 add_subdirectory(src/daemon)
 # Client library

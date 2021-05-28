@@ -29,7 +29,7 @@
 #ifndef GEKKOFS_CONFIG_HPP
 #define GEKKOFS_CONFIG_HPP
 
-#include <global/cmake_configure.hpp>
+#include <common/cmake_configure.hpp>
 
 // environment prefixes (are concatenated in env module at compile time)
 #define CLIENT_ENV_PREFIX "LIBGKFS_"

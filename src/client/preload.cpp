@@ -34,8 +34,8 @@
 #include <client/preload_util.hpp>
 #include <client/intercept.hpp>
 
-#include <global/rpc/distributor.hpp>
-#include <global/global_defs.hpp>
+#include <common/rpc/distributor.hpp>
+#include <common/common_defs.hpp>
 
 #include <fstream>
 

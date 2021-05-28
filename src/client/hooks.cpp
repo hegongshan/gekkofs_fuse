@@ -35,7 +35,7 @@
 #include <client/path.hpp>
 #include <client/open_dir.hpp>
 
-#include <global/path_util.hpp>
+#include <common/path_util.hpp>
 
 #include <memory>
 

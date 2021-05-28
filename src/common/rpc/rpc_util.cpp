@@ -26,7 +26,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#include <global/rpc/rpc_util.hpp>
+#include <common/rpc/rpc_util.hpp>
 
 extern "C" {
 #include <unistd.h>

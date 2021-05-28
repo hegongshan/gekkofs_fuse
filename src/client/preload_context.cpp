@@ -34,8 +34,8 @@
 #include <client/open_dir.hpp>
 #include <client/path.hpp>
 
-#include <global/env_util.hpp>
-#include <global/path_util.hpp>
+#include <common/env_util.hpp>
+#include <common/path_util.hpp>
 #include <config.hpp>
 
 #include <hermes.hpp>

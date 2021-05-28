@@ -32,10 +32,10 @@
 #include <client/logging.hpp>
 #include <client/rpc/forward_metadata.hpp>
 
-#include <global/rpc/distributor.hpp>
-#include <global/rpc/rpc_util.hpp>
-#include <global/env_util.hpp>
-#include <global/global_defs.hpp>
+#include <common/rpc/distributor.hpp>
+#include <common/rpc/rpc_util.hpp>
+#include <common/env_util.hpp>
+#include <common/common_defs.hpp>
 
 #include <hermes.hpp>
 
