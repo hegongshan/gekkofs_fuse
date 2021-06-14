@@ -13,7 +13,7 @@
 
 #include <catch2/catch.hpp>
 #include <fmt/format.h>
-#include <global/rpc/distributor.hpp>
+#include <common/rpc/distributor.hpp>
 #include <fstream>
 
 TEST_CASE( "Guided distributor Testing", "[Distributor]" ) {

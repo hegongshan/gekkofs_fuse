@@ -283,7 +283,6 @@ Then, use the `examples/distributors/guided/generate.py` to create the output fi
 
 This should work if the nodes are sorted in alphabetical order, which is the usual scenario. Users should take care of multi-server configurations.
 
-```
 Finally, enable the distributor using the next compilation flags:
 * `GKFS_USE_GUIDED_DISTRIBUTION` ON
 * `GKFS_USE_GUIDED_DISTRIBUTION_PATH` `<full path to guided.txt>`
