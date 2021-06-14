@@ -759,6 +759,59 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
     return gkfs::syscall::hooked;
 }
 
+#ifdef SYS_socketcall
+/* Wraps socketcall in powerpc9, we only change syscalls that need special
+ * treatment */
+long
+socketcall_wrapper(long syscall_number, long& arg0, long& arg1, long& arg2,
+                   long& arg3, long& arg4, long& arg5) {
+
+    if(syscall_number == SYS_socketcall) {
+        switch(static_cast<int>(arg0)) {
+            case 1:
+                syscall_number = SYS_socket;
+                break;
+            case 4:
+                syscall_number = SYS_listen;
+                break;
+            case 5:
+                syscall_number = SYS_accept;
+                break;
+            case 8:
+                syscall_number = SYS_socketpair;
+                break;
+            case 13:
+                syscall_number = SYS_shutdown;
+                break;
+            case 17:
+                syscall_number = SYS_recvmsg;
+                break;
+            case 18:
+                syscall_number = SYS_accept4;
+                break;
+            case 19:
+                syscall_number = SYS_recvmmsg;
+                break;
+            default:
+                break;
+        }
+
+        long int* parameters = (long int*) arg1;
+        arg0 = static_cast<long>(*parameters);
+        parameters++;
+        arg1 = static_cast<long>(*parameters);
+        parameters++;
+        arg2 = static_cast<long>(*parameters);
+        parameters++;
+        arg3 = static_cast<long>(*parameters);
+        parameters++;
+        arg4 = static_cast<long>(*parameters);
+    }
+    return syscall_number;
+}
+#endif
+
+
 void
 hook_forwarded_syscall(long syscall_number, long arg0, long arg1, long arg2,
                        long arg3, long arg4, long arg5, long result) {
@@ -826,6 +879,11 @@ internal_hook_guard_wrapper(long syscall_number, long arg0, long arg1,
                             long* syscall_return_value) {
     assert(CTX->interception_enabled());
 
+#ifdef SYS_socketcall
+    if(syscall_number == SYS_socketcall)
+        syscall_number = socketcall_wrapper(syscall_number, arg0, arg1, arg2,
+                                            arg3, arg4, arg5);
+#endif
 
     if(reentrance_guard_flag) {
         ::save_current_syscall_info(gkfs::syscall::from_internal_code |
@@ -867,6 +925,12 @@ hook_guard_wrapper(long syscall_number, long arg0, long arg1, long arg2,
                    long* syscall_return_value) {
 
     assert(CTX->interception_enabled());
+
+#ifdef SYS_socketcall
+    if(syscall_number == SYS_socketcall)
+        syscall_number = socketcall_wrapper(syscall_number, arg0, arg1, arg2,
+                                            arg3, arg4, arg5);
+#endif
 
     int was_hooked = 0;
 

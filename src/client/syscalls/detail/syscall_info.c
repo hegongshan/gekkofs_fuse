@@ -74,7 +74,7 @@
 
 /* Linux syscalls on x86_64 */
 const struct syscall_info syscall_table[] = {
-    SYSCALL(read,                    3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "buf"),              S_NARG(arg, "count")),          
+    SYSCALL(read,                    3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "buf"),              S_NARG(arg, "count")),
     SYSCALL(write,                   3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "buf"),              S_NARG(arg, "count")),
     SYSCALL(open,                    2,  S_RET(rdec),    S_NARG(cstr, "pathname"),      S_NARG(open_flags, "flags")),
     SYSCALL(close,                   1,  S_RET(rdec),    S_UARG(fd)),
@@ -103,9 +103,15 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(msync,                   3,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(arg, "flags")),
     SYSCALL(mincore,                 3,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(ptr, "vec")),
     SYSCALL(madvise,                 3,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(arg, "behavior")),
+#ifdef SYS_semget
     SYSCALL(shmget,                  3,  S_RET(rdec),    S_NARG(arg, "key"),            S_NARG(dec, "size"),             S_NARG(arg, "flag")),
+#endif // SYS_semget
+#ifdef SYS_shmat
     SYSCALL(shmat,                   3,  S_RET(rdec),    S_NARG(arg, "shmid"),          S_NARG(ptr, "shmaddr"),          S_NARG(arg, "shmflg")),
+#endif // SYS_shmat
+#ifdef SYS_shmctl
     SYSCALL(shmctl,                  3,  S_RET(rdec),    S_NARG(arg, "shmid"),          S_NARG(arg, "cmd"),              S_NARG(ptr, "buf")),
+#endif // SYS_shmctl
     SYSCALL(dup,                     1,  S_RET(rdec),    S_NARG(fd, "oldfd")),
     SYSCALL(dup2,                    2,  S_RET(rdec),    S_NARG(fd, "oldfd"),           S_NARG(fd, "newfd")),
     SYSCALL(pause,                   0,  S_RET(rdec),    S_NOARGS()),
@@ -138,14 +144,30 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(wait4,                   4,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(ptr, "stat_addr"),        S_NARG(arg, "options"),           S_NARG(ptr, "rusage")),
     SYSCALL(kill,                    2,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(signum, "sig")),
     SYSCALL(uname,                   1,  S_RET(rdec),    S_NARG(ptr, "buf")),
+#ifdef SYS_semget
     SYSCALL(semget,                  3,  S_RET(rdec),    S_NARG(arg, "key"),            S_NARG(dec, "nsems"),            S_NARG(arg, "semflg")),
+#endif // SYS_semop
+#ifdef SYS_semop
     SYSCALL(semop,                   3,  S_RET(rdec),    S_NARG(dec, "semid"),          S_NARG(ptr, "sops"),             S_NARG(arg, "nsops")),
+#endif // SYS_semop
+#ifdef SYS_semctl
     SYSCALL(semctl,                  4,  S_RET(rdec),    S_NARG(dec, "semid"),          S_NARG(dec, "semnum"),           S_NARG(arg, "cmd"),               S_NARG(arg, "arg")),
+#endif // SYS_semctl
+#ifdef SYS_shmdt
     SYSCALL(shmdt,                   1,  S_RET(rdec),    S_NARG(ptr, "shmaddr")),
+#endif // SYS_shmdt
+#ifdef SYS_msgget
     SYSCALL(msgget,                  2,  S_RET(rdec),    S_NARG(arg, "key"),            S_NARG(arg, "msflg")),
+#endif // SYS_msgget
+#ifdef SYS_msgsnd
     SYSCALL(msgsnd,                  4,  S_RET(rdec),    S_NARG(arg, "msqid"),          S_NARG(ptr, "msgp"),             S_NARG(dec, "msgsz"),             S_NARG(arg, "msflg")),
+#endif // SYS_msgsnd
+#ifdef SYS_msgrcv
     SYSCALL(msgrcv,                  5,  S_RET(rdec),    S_NARG(arg, "msqid"),          S_NARG(ptr, "msgp"),             S_NARG(dec, "msgsz"),             S_NARG(arg, "msgtyp"),       S_NARG(arg, "msflg")),
+#endif // SYS_msgrcv
+#ifdef SYS_msgctl
     SYSCALL(msgctl,                  3,  S_RET(rdec),    S_NARG(arg, "msqid"),          S_NARG(arg, "cmd"),              S_NARG(ptr, "buf")),
+#endif // SYS_msgctl
     SYSCALL(fcntl,                   3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(arg, "cmd"),              S_NARG(arg, "arg")),
     SYSCALL(flock,                   2,  S_RET(rdec),    S_UARG(fd),                    S_NARG(arg, "cmd")),
     SYSCALL(fsync,                   1,  S_RET(rdec),    S_UARG(fd)),
@@ -232,7 +254,9 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(pivot_root,              2,  S_RET(rdec),    S_NARG(cstr, "new_root"),      S_NARG(cstr, "put_old")),
     SYSCALL(_sysctl,                 1,  S_RET(rdec),    S_NARG(ptr, "args")),
     SYSCALL(prctl,                   5,  S_RET(rdec),    S_NARG(arg, "option"),         S_NARG(arg, "arg2"),             S_NARG(arg, "arg3"),              S_NARG(arg, "arg4"),         S_NARG(arg, "arg5")),
+#ifdef SYS_arch_prctl
     SYSCALL(arch_prctl,              2,  S_RET(rdec),    S_NARG(arg, "code"),           S_NARG(arg, "addr")),
+#endif // SYS_arch_prctl
     SYSCALL(adjtimex,                1,  S_RET(rdec),    S_NARG(ptr, "txc_p")),
     SYSCALL(setrlimit,               2,  S_RET(rdec),    S_NARG(arg, "resource"),       S_NARG(ptr, "rlim")),
     SYSCALL(chroot,                  1,  S_RET(rdec),    S_NARG(cstr, "pathname")),
@@ -259,7 +283,9 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(putpmsg,                 5,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2"),              S_NARG(arg, "arg3"),         S_NARG(arg, "arg4")),
     SYSCALL(afs_syscall,             5,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2"),              S_NARG(arg, "arg3"),         S_NARG(arg, "arg4")),
     SYSCALL(tuxcall,                 3,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2")),
+#ifdef SYS_security
     SYSCALL(security,                3,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2")),
+#endif // SYS_security
     SYSCALL(gettid,                  0,  S_RET(rdec),    S_NOARGS()),
     SYSCALL(readahead,               3,  S_RET(rdec),    S_UARG(fd),                    S_UARG(offset),                  S_NARG(arg, "count")),
     SYSCALL(setxattr,                5,  S_RET(rdec),    S_NARG(cstr, "pathname"),      S_NARG(cstr, "pathname"),        S_NARG(ptr, "value"),             S_NARG(dec, "size"),         S_NARG(arg, "flags")),
@@ -279,22 +305,32 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(futex,                   6,  S_RET(rdec),    S_NARG(ptr, "uaddr"),          S_NARG(arg, "op"),               S_NARG(arg, "val"),               S_NARG(ptr, "utime"),        S_NARG(ptr, "uaddr2"),       S_NARG(arg, "val3")),
     SYSCALL(sched_setaffinity,       3,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(arg, "length"),           S_NARG(ptr, "mask")),
     SYSCALL(sched_getaffinity,       3,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(arg, "length"),           S_NARG(ptr, "mask")),
+#ifdef SYS_set_thread_area
     SYSCALL(set_thread_area,         1,  S_RET(rdec),    S_NARG(ptr, "u_info")),
+#endif // SYS_set_thread_area
     SYSCALL(io_setup,                2,  S_RET(rdec),    S_NARG(dec, "nr_reqs"),        S_NARG(ptr, "ctx")),
     SYSCALL(io_destroy,              1,  S_RET(rdec),    S_NARG(ptr, "ctx")),
     SYSCALL(io_getevents,            5,  S_RET(rdec),    S_NARG(ptr, "ctx_id"),         S_NARG(dec, "min_nr"),           S_NARG(dec, "nr"),                S_NARG(ptr, "events"),       S_NARG(ptr, "timeout")),
     SYSCALL(io_submit,               3,  S_RET(rdec),    S_NARG(ptr, "ctx_id"),         S_NARG(dec, "nr"),               S_NARG(ptr, "iocbpp")),
     SYSCALL(io_cancel,               3,  S_RET(rdec),    S_NARG(ptr, "ctx_id"),         S_NARG(ptr, "iocb"),             S_NARG(ptr, "result")),
+#ifdef SYS_get_thread_area
     SYSCALL(get_thread_area,         1,  S_RET(rdec),    S_NARG(ptr, "u_info")),
+#endif // SYS_get_thread_area
     SYSCALL(lookup_dcookie,          3,  S_RET(rdec),    S_NARG(arg, "cookie64"),       S_NARG(ptr, "buf"),              S_NARG(dec, "length")),
     SYSCALL(epoll_create,            3,  S_RET(rdec),    S_NARG(arg, "size")),
+#ifdef SYS_epoll_ctl_old
     SYSCALL(epoll_ctl_old,           4,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2"),              S_NARG(arg, "arg3")),
+#endif // SYS_epoll_ctl_old
+#ifdef SYS_epoll_wait_old
     SYSCALL(epoll_wait_old,          4,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2"),              S_NARG(arg, "arg3")),
+#endif // SYS_epoll_wait_old
     SYSCALL(remap_file_pages,        5,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "size"),             S_NARG(mmap_prot, "prot"),        S_NARG(dec, "pgoff"),        S_NARG(arg, "flags")),
     SYSCALL(getdents64,              3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "dirent"),           S_NARG(arg, "count")),
     SYSCALL(set_tid_address,         1,  S_RET(rdec),    S_NARG(ptr, "tidptr")),
     SYSCALL(restart_syscall,         0,  S_RET(rdec),    S_NOARGS()),
+#ifdef SYS_semtimedop
     SYSCALL(semtimedop,              4,  S_RET(rdec),    S_NARG(dec, "semid"),          S_NARG(ptr, "sops"),             S_NARG(arg, "nsops"),             S_NARG(ptr, "timeout")),
+#endif // SYS_semtimedop
     SYSCALL(fadvise64,               4,  S_RET(rdec),    S_UARG(fd),                    S_UARG(offset),                  S_NARG(dec, "length"),            S_NARG(arg, "advice")),
     SYSCALL(timer_create,            3,  S_RET(rdec),    S_NARG(arg, "which_clock"),    S_NARG(ptr, "timer_event_spec"), S_NARG(ptr, "created_timer_id")),
     SYSCALL(timer_settime,           4,  S_RET(rdec),    S_NARG(arg, "timer_id"),       S_NARG(arg, "flags"),            S_NARG(ptr, "new_setting"),       S_NARG(ptr, "old_setting")),
@@ -310,7 +346,9 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(epoll_ctl,               4,  S_RET(rdec),    S_NARG(dec, "epfd"),           S_NARG(arg, "op"),               S_UARG(fd),                       S_NARG(ptr, "event")),
     SYSCALL(tgkill,                  3,  S_RET(rdec),    S_NARG(arg, "tgid"),           S_NARG(dec, "pid"),              S_NARG(signum, "sig")),
     SYSCALL(utimes,                  2,  S_RET(rdec),    S_NARG(cstr, "filename"),      S_NARG(ptr, "utimes")),
+#ifdef SYS_vserver
     SYSCALL(vserver,                 5,  S_RET(rdec),    S_NARG(arg, "arg0"),           S_NARG(arg, "arg1"),             S_NARG(arg, "arg2"),              S_NARG(arg, "arg3"),         S_NARG(arg, "arg4")),
+#endif // SYS_vserver
     SYSCALL(mbind,                   6,  S_RET(rdec),    S_NARG(ptr, "addr"),           S_NARG(dec, "length"),           S_NARG(octal_mode, "mode"),       S_NARG(ptr, "nmask"),        S_NARG(arg, "maxnode"),      S_NARG(arg, "flags")),
     SYSCALL(set_mempolicy,           3,  S_RET(rdec),    S_NARG(octal_mode, "mode"),    S_NARG(ptr, "nmask"),            S_NARG(arg, "maxnode")),
     SYSCALL(get_mempolicy,           5,  S_RET(rdec),    S_NARG(ptr, "policy"),         S_NARG(ptr, "nmask"),            S_NARG(arg, "maxnode"),           S_NARG(ptr, "addr"),         S_NARG(arg, "flags")),
@@ -351,7 +389,9 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(get_robust_list,         3,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(ptr, "head_ptr"),         S_NARG(ptr, "len_ptr")),
     SYSCALL(splice,                  6,  S_RET(rdec),    S_NARG(dec, "fd_in"),          S_NARG(ptr, "off_in"),           S_NARG(dec, "fd_out"),            S_NARG(ptr, "off_out"),      S_NARG(dec, "length"),       S_NARG(arg, "flags")),
     SYSCALL(tee,                     4,  S_RET(rdec),    S_NARG(dec, "fd_in"),          S_NARG(dec, "fd_out"),           S_NARG(dec, "length"),            S_NARG(arg, "flags")),
+#ifdef SYS_sync_file_range
     SYSCALL(sync_file_range,         4,  S_RET(rdec),    S_UARG(fd),                    S_UARG(offset),                  S_NARG(offset, "nbytes"),          S_NARG(arg, "flags")),
+#endif // SYS_sync_file_range
     SYSCALL(vmsplice,                4,  S_RET(rdec),    S_UARG(fd),                    S_NARG(ptr, "iov"),              S_NARG(arg, "nr_segs"),           S_NARG(arg, "flags")),
     SYSCALL(move_pages,              6,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(arg, "nr_pages"),         S_NARG(ptr, "pages"),             S_NARG(ptr, "nodes"),        S_NARG(ptr, "status"),       S_NARG(arg, "flags")),
     SYSCALL(utimensat,               4,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(ptr, "utimes"),            S_NARG(arg, "flags")),
@@ -388,23 +428,39 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(process_vm_writev,       6,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(ptr, "local_iov"),        S_NARG(dec, "liovcnt"),           S_NARG(ptr, "remote_iov"),   S_NARG(dec, "riovcnt"),      S_NARG(arg, "flags")),
     SYSCALL(kcmp,                    5,  S_RET(rdec),    S_NARG(arg, "pid1"),           S_NARG(arg, "pid2"),             S_NARG(arg, "type"),              S_NARG(arg, "idx1"),         S_NARG(arg, "idx2")),
     SYSCALL(finit_module,            3,  S_RET(rdec),    S_UARG(fd),                    S_NARG(cstr, "param_values"),    S_NARG(arg, "flags")),
+#ifdef SYS_sched_setattr
     SYSCALL(sched_setattr,           3,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(ptr, "attr"),             S_NARG(arg, "flags")),
+#endif // SYS_sched_setattr
+#ifdef SYS_sched_getattr
     SYSCALL(sched_getattr,           4,  S_RET(rdec),    S_NARG(dec, "pid"),            S_NARG(ptr, "attr"),             S_NARG(dec, "size"),              S_NARG(arg, "flags")),
+#endif // SYS_sched_getattr
+#ifdef SYS_renameat2
     SYSCALL(renameat2,               5,  S_RET(rdec),    S_NARG(atfd, "olddfd"),        S_NARG(cstr, "oldpath"),         S_NARG(atfd, "newdfd"),           S_NARG(cstr, "newpath"),     S_NARG(arg, "flags")),
+#endif // SYS_renameat2
+#ifdef SYS_seccomp
     SYSCALL(seccomp,                 3,  S_RET(rdec),    S_NARG(arg, "op"),             S_NARG(arg, "flags"),            S_NARG(ptr, "uargs")),
+#endif // SYS_seccomp
+#ifdef SYS_getrandom
     SYSCALL(getrandom,               3,  S_RET(rdec),    S_NARG(ptr, "buf"),            S_NARG(arg, "count"),            S_NARG(arg, "flags")),
+#endif // SYS_getrandom
+#ifdef SYS_memfd_create
     SYSCALL(memfd_create,            2,  S_RET(rdec),    S_NARG(cstr, "pathname"),      S_NARG(arg, "flags")),
+#endif // SYS_memfd_create
+#ifdef SYS_kexec_file_load
     SYSCALL(kexec_file_load,         5,  S_RET(rdec),    S_NARG(fd, "kernel_fd"),       S_NARG(fd, "initrd_fd"),         S_NARG(arg, "cmdline_len"),       S_NARG(cstr, "cmdline"),     S_NARG(arg, "flags")),
+#endif // SYS_kexec_file_load
 
 #ifdef SYS_bpf
     SYSCALL(bpf,                     2,  S_RET(rdec),    S_NARG(arg, "cmd"),            S_NARG(ptr, "attr"),             S_NARG(arg, "size")),
 #endif // SYS_bpf
 
-#ifdef SYS_execveat 
+#ifdef SYS_execveat
     SYSCALL(execveat,                5,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(ptr, "argv"),              S_NARG(ptr, "envp"),         S_NARG(arg, "flags")),
 #endif // SYS_execveat
 
+#ifdef SYS_userfaultfd
     SYSCALL(userfaultfd,             2,  S_RET(rdec),    S_NARG(arg, "flags")),
+#endif // SYS_userfaultfd
 
 #ifdef SYS_membarrier
     SYSCALL(membarrier,              2,  S_RET(rdec),    S_NARG(arg, "cmd"),            S_NARG(arg, "flags")),
@@ -467,11 +523,11 @@ static const struct syscall_info open_with_o_creat = {
 };
 
 static const struct syscall_info openat_with_o_creat = {
-    .s_name = "openat", 
+    .s_name = "openat",
     .s_nargs = 4,
     .s_return_type = S_RET(rdec),
 	.s_args = {
-	    S_NARG(atfd, "dfd"), 
+	    S_NARG(atfd, "dfd"),
 	    S_NARG(cstr, "pathname"),
 	    S_NARG(open_flags, "flags"),
 	    S_NARG(octal_mode, "mode")
@@ -551,7 +607,9 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(adjtimex),
     SYSCALL_BY_NAME(afs_syscall),
     SYSCALL_BY_NAME(alarm),
+#ifdef SYS_arch_prctl
     SYSCALL_BY_NAME(arch_prctl),
+#endif // SYS_arch_prctl
     SYSCALL_BY_NAME(bind),
 #ifdef SYS_bpf
     SYSCALL_BY_NAME(bpf),
@@ -583,14 +641,18 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(epoll_create),
     SYSCALL_BY_NAME(epoll_create1),
     SYSCALL_BY_NAME(epoll_ctl),
+#ifdef SYS_epoll_ctl_old
     SYSCALL_BY_NAME(epoll_ctl_old),
+#endif // SYS_epoll_ctl_old
     SYSCALL_BY_NAME(epoll_pwait),
     SYSCALL_BY_NAME(epoll_wait),
+#ifdef SYS_epoll_wait_old
     SYSCALL_BY_NAME(epoll_wait_old),
+#endif // SYS_epoll_wait_old
     SYSCALL_BY_NAME(eventfd),
     SYSCALL_BY_NAME(eventfd2),
     SYSCALL_BY_NAME(execve),
-#ifdef SYS_execveat 
+#ifdef SYS_execveat
     SYSCALL_BY_NAME(execveat),
 #endif // SYS_execveat
     SYSCALL_BY_NAME(exit),
@@ -623,7 +685,9 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(get_kernel_syms),
     SYSCALL_BY_NAME(get_mempolicy),
     SYSCALL_BY_NAME(get_robust_list),
+#ifdef SYS_get_thread_area
     SYSCALL_BY_NAME(get_thread_area),
+#endif // SYS_get_thread_area
     SYSCALL_BY_NAME(getcpu),
     SYSCALL_BY_NAME(getcwd),
     SYSCALL_BY_NAME(getdents),
@@ -716,10 +780,18 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(mq_timedsend),
     SYSCALL_BY_NAME(mq_unlink),
     SYSCALL_BY_NAME(mremap),
+#ifdef SYS_msgctl
     SYSCALL_BY_NAME(msgctl),
+#endif // SYS_msgctl
+#ifdef SYS_msgget
     SYSCALL_BY_NAME(msgget),
+#endif // SYS_msgget
+#ifdef SYS_msgrcv
     SYSCALL_BY_NAME(msgrcv),
+#endif // SYS_msgrcv
+#ifdef SYS_msgsnd
     SYSCALL_BY_NAME(msgsnd),
+#endif // SYS_msgsnd
     SYSCALL_BY_NAME(msync),
     SYSCALL_BY_NAME(munlock),
     SYSCALL_BY_NAME(munlockall),
@@ -808,19 +880,31 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(sched_setscheduler),
     SYSCALL_BY_NAME(sched_yield),
     SYSCALL_BY_NAME(seccomp),
+#ifdef SYS_security
     SYSCALL_BY_NAME(security),
+#endif // SYS_security
     SYSCALL_BY_NAME(select),
+#ifdef SYS_semctl
     SYSCALL_BY_NAME(semctl),
+#endif // SYS_semctl
+#ifdef SYS_semget
     SYSCALL_BY_NAME(semget),
+#endif // SYS_semget
+#ifdef SYS_semop
     SYSCALL_BY_NAME(semop),
+#endif // SYS_semop
+#ifdef SYS_semtimedop
     SYSCALL_BY_NAME(semtimedop),
+#endif // SYS_semtimedop
     SYSCALL_BY_NAME(sendfile),
     SYSCALL_BY_NAME(sendmmsg),
     SYSCALL_BY_NAME(sendmsg),
     SYSCALL_BY_NAME(sendto),
     SYSCALL_BY_NAME(set_mempolicy),
     SYSCALL_BY_NAME(set_robust_list),
+#ifdef SYS_set_thread_area
     SYSCALL_BY_NAME(set_thread_area),
+#endif // SYS_set_thread_area
     SYSCALL_BY_NAME(set_tid_address),
     SYSCALL_BY_NAME(setdomainname),
     SYSCALL_BY_NAME(setfsgid),
@@ -842,10 +926,18 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(settimeofday),
     SYSCALL_BY_NAME(setuid),
     SYSCALL_BY_NAME(setxattr),
+#ifdef SYS_shmat
     SYSCALL_BY_NAME(shmat),
+#endif // SYS_shmat
+#ifdef SYS_shmctl
     SYSCALL_BY_NAME(shmctl),
+#endif // SYS_shmctl
+#ifdef SYS_shmdt
     SYSCALL_BY_NAME(shmdt),
+#endif // SYS_shmdt
+#ifdef SYS_shmget
     SYSCALL_BY_NAME(shmget),
+#endif // SYS_shmget
     SYSCALL_BY_NAME(shutdown),
     SYSCALL_BY_NAME(sigaltstack),
     SYSCALL_BY_NAME(signalfd),
@@ -863,7 +955,9 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(symlink),
     SYSCALL_BY_NAME(symlinkat),
     SYSCALL_BY_NAME(sync),
+#ifdef SYS_sync_file_range
     SYSCALL_BY_NAME(sync_file_range),
+#endif // SYS_sync_file_range
     SYSCALL_BY_NAME(syncfs),
     SYSCALL_BY_NAME(sysfs),
     SYSCALL_BY_NAME(sysinfo),
@@ -898,7 +992,9 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(vfork),
     SYSCALL_BY_NAME(vhangup),
     SYSCALL_BY_NAME(vmsplice),
+#ifdef SYS_vserver
     SYSCALL_BY_NAME(vserver),
+#endif // SYS_vserver
     SYSCALL_BY_NAME(wait4),
     SYSCALL_BY_NAME(waitid),
     SYSCALL_BY_NAME(write),
