@@ -29,6 +29,7 @@
 add_subdirectory(arithmetic)
 
 add_library(distributor STATIC)
+include_directories(${Boost_INCLUDE_DIRS})
 set_property(TARGET distributor PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(distributor
     PUBLIC

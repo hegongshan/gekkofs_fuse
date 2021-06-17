@@ -47,7 +47,9 @@ extern "C" {
 #include <syscall.h>
 }
 
-namespace gkfs::preload {
+namespace gkfs {
+
+namespace preload {
 
 decltype(PreloadContext::MIN_INTERNAL_FD) constexpr PreloadContext::
         MIN_INTERNAL_FD;
@@ -59,6 +61,10 @@ PreloadContext::PreloadContext()
 
     internal_fds_.set();
     internal_fds_must_relocate_ = true;
+
+    char host[255];
+    gethostname(host, 255);
+    hostname = host;
 }
 
 void
@@ -426,4 +432,11 @@ PreloadContext::unprotect_user_fds() {
     internal_fds_must_relocate_ = true;
 }
 
-} // namespace gkfs::preload
+
+std::string
+PreloadContext::get_hostname() {
+    return hostname;
+}
+
+} // namespace preload
+} // namespace gkfs

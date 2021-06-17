@@ -29,11 +29,17 @@
 #ifndef GEKKOFS_RPC_DISTRIBUTOR_HPP
 #define GEKKOFS_RPC_DISTRIBUTOR_HPP
 
+#include "../include/config.hpp"
 #include <vector>
 #include <string>
 #include <numeric>
+#include <unordered_map>
+#include <fstream>
+#include <boost/icl/interval_map.hpp>
 
-namespace gkfs::rpc {
+namespace gkfs {
+
+namespace rpc {
 
 using chunkid_t = unsigned int;
 using host_t = unsigned int;
@@ -45,6 +51,11 @@ public:
 
     virtual host_t
     locate_data(const std::string& path, const chunkid_t& chnk_id) const = 0;
+    // TODO: We need to pass hosts_size in the server side, because the number
+    // of servers are not defined (in startup)
+    virtual host_t
+    locate_data(const std::string& path, const chunkid_t& chnk_id,
+                unsigned int hosts_size) = 0;
 
     virtual host_t
     locate_file_metadata(const std::string& path) const = 0;
@@ -57,11 +68,13 @@ public:
 class SimpleHashDistributor : public Distributor {
 private:
     host_t localhost_;
-    unsigned int hosts_size_;
+    unsigned int hosts_size_{0};
     std::vector<host_t> all_hosts_;
     std::hash<std::string> str_hash;
 
 public:
+    SimpleHashDistributor();
+
     SimpleHashDistributor(host_t localhost, unsigned int hosts_size);
 
     host_t
@@ -70,6 +83,10 @@ public:
     host_t
     locate_data(const std::string& path,
                 const chunkid_t& chnk_id) const override;
+
+    host_t
+    locate_data(const std::string& path, const chunkid_t& chnk_id,
+                unsigned int host_size);
 
     host_t
     locate_file_metadata(const std::string& path) const override;
@@ -123,6 +140,43 @@ public:
     locate_directory_metadata(const std::string& path) const override;
 };
 
-} // namespace gkfs::rpc
+class GuidedDistributor : public Distributor {
+private:
+    host_t localhost_;
+    unsigned int hosts_size_{0};
+    std::vector<host_t> all_hosts_;
+    std::hash<std::string> str_hash;
+    std::unordered_map<std::string,
+                       boost::icl::interval_map<chunkid_t, unsigned int>>
+            map_interval;
+    std::vector<std::string> prefix_list; // Should not be very long
+    bool
+    init_guided();
+
+public:
+    GuidedDistributor();
+
+    GuidedDistributor(host_t localhost, unsigned int hosts_size);
+
+    host_t
+    localhost() const override;
+
+    host_t
+    locate_data(const std::string& path,
+                const chunkid_t& chnk_id) const override;
+
+    host_t
+    locate_data(const std::string& path, const chunkid_t& chnk_id,
+                unsigned int host_size);
+
+    host_t
+    locate_file_metadata(const std::string& path) const override;
+
+    std::vector<host_t>
+    locate_directory_metadata(const std::string& path) const override;
+};
+
+} // namespace rpc
+} // namespace gkfs
 
 #endif // GEKKOFS_RPC_LOCATOR_HPP

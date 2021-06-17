@@ -262,7 +262,6 @@ forward_read(const string& path, void* buf, const off64_t offset,
     // contains the recipient ids, used to access the target_chnks map.
     // First idx is chunk with potential offset
     std::vector<uint64_t> targets{};
-
     // targets for the first and last chunk as they need special treatment
     uint64_t chnk_start_target = 0;
     uint64_t chnk_end_target = 0;
@@ -361,8 +360,15 @@ forward_read(const string& path, void* buf, const off64_t offset,
             handles.emplace_back(
                     ld_network_service->post<gkfs::rpc::read_data>(endp, in));
 
-            LOG(DEBUG, "host: {}, path: {}, chunks: {}, size: {}, offset: {}",
-                target, path, in.chunk_n(), total_chunk_size, in.offset());
+            LOG(DEBUG,
+                "host: {}, path: {}, chunk_start: {}, chunk_end: {}, chunks: {}, size: {}, offset: {}",
+                target, path, chnk_start, chnk_end, in.chunk_n(),
+                total_chunk_size, in.offset());
+
+            LOG(TRACE_READS,
+                "read {} host: {}, path: {}, chunk_start: {}, chunk_end: {}",
+                CTX->get_hostname(), target, path, chnk_start, chnk_end);
+
 
         } catch(const std::exception& ex) {
             LOG(ERROR,

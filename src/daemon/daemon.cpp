@@ -32,6 +32,7 @@
 #include <common/env_util.hpp>
 #include <common/rpc/rpc_types.hpp>
 #include <common/rpc/rpc_util.hpp>
+
 #include <daemon/env.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/ops/metadentry.hpp>
@@ -57,6 +58,7 @@ extern "C" {
 }
 
 using namespace std;
+
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
 
@@ -203,6 +205,21 @@ init_environment() {
         throw;
     }
 
+    GKFS_DATA->spdlogger()->debug("{}() Initializing Distributor ", __func__);
+    try {
+#ifdef GKFS_USE_GUIDED_DISTRIBUTION
+        auto distributor = std::make_shared<gkfs::rpc::GuidedDistributor>();
+#else
+        auto distributor = std::make_shared<gkfs::rpc::SimpleHashDistributor>();
+#endif
+        RPC_DATA->distributor(distributor);
+    } catch(const std::exception& e) {
+        GKFS_DATA->spdlogger()->error(
+                "{}() Failed to initialize Distributor: {}", __func__,
+                e.what());
+        throw;
+    }
+
 #ifdef GKFS_ENABLE_FORWARDING
     GKFS_DATA->spdlogger()->debug("{}() Enable I/O forwarding mode", __func__);
 #endif
@@ -220,6 +237,7 @@ init_environment() {
         throw;
     }
 #endif
+
     // Initialize data backend
     std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'",

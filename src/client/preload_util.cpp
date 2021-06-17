@@ -362,7 +362,7 @@ read_hosts_file() {
     }
 
     LOG(INFO, "Hosts pool size: {}", hosts.size());
-
+    sort(hosts.begin(), hosts.end()); // Sort hosts by alphanumerical value.
     return hosts;
 }
 

@@ -149,10 +149,16 @@ init_ld_environment_() {
             CTX->fwd_host_id(), CTX->hosts().size());
     CTX->distributor(forwarder_dist);
 #else
-    auto simple_hash_dist = std::make_shared<gkfs::rpc::SimpleHashDistributor>(
+#ifdef GKFS_USE_GUIDED_DISTRIBUTION
+    auto distributor = std::make_shared<gkfs::rpc::GuidedDistributor>(
             CTX->local_host_id(), CTX->hosts().size());
-    CTX->distributor(simple_hash_dist);
+#else
+    auto distributor = std::make_shared<gkfs::rpc::SimpleHashDistributor>(
+            CTX->local_host_id(), CTX->hosts().size());
 #endif
+    CTX->distributor(distributor);
+#endif
+
 
     LOG(INFO, "Retrieving file system configuration...");
 

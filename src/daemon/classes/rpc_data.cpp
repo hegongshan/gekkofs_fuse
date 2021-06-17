@@ -30,7 +30,9 @@
 
 using namespace std;
 
-namespace gkfs::daemon {
+namespace gkfs {
+
+namespace daemon {
 
 // Getter/Setter
 
@@ -74,4 +76,17 @@ RPCData::self_addr_str(const std::string& addr_str) {
     self_addr_str_ = addr_str;
 }
 
-} // namespace gkfs::daemon
+const std::shared_ptr<gkfs::rpc::Distributor>&
+RPCData::distributor() const {
+    return distributor_;
+}
+
+void
+RPCData::distributor(
+        const std::shared_ptr<gkfs::rpc::Distributor>& distributor) {
+    distributor_ = distributor;
+}
+
+
+} // namespace daemon
+} // namespace gkfs

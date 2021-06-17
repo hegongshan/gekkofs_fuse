@@ -32,6 +32,13 @@
 #include <daemon/daemon.hpp>
 
 namespace gkfs {
+
+/* Forward declarations */
+namespace rpc {
+class Distributor;
+}
+
+
 namespace daemon {
 
 class RPCData {
@@ -47,6 +54,8 @@ private:
     ABT_pool io_pool_;
     std::vector<ABT_xstream> io_streams_;
     std::string self_addr_str_;
+    // Distributor
+    std::shared_ptr<gkfs::rpc::Distributor> distributor_;
 
 public:
     static RPCData*
@@ -84,7 +93,13 @@ public:
     self_addr_str() const;
 
     void
-    self_addr_str(const std::string& addr_str);
+    self_addr_str(const std::string& addr_stra);
+
+    const std::shared_ptr<gkfs::rpc::Distributor>&
+    distributor() const;
+
+    void
+    distributor(const std::shared_ptr<gkfs::rpc::Distributor>& distributor);
 };
 
 } // namespace daemon

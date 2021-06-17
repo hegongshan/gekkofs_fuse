@@ -105,6 +105,10 @@ static const auto constexpr debug_opts = utils::make_array(
                   "[ default: on ]"},
                  log::mercury},
 
+        opt_info{STR_AND_LEN("trace_reads"),
+                 {"Print extended read information", "[ default: off  ]"},
+                 log::trace_reads},
+
 #ifdef GKFS_DEBUG_BUILD
 
         opt_info{STR_AND_LEN("debug"),

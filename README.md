@@ -6,7 +6,7 @@
 
 GekkoFS is a file system capable of aggregating the local I/O capacity and performance of each compute node
 in a HPC cluster to produce a high-performance storage space that can be accessed in a distributed manner.
-This storage space allows HPC applications and simulations to run in isolation from each other with regards 
+This storage space allows HPC applications and simulations to run in isolation from each other with regards
 to I/O, which reduces interferences and improves performance.
 
 # Dependencies
@@ -30,7 +30,7 @@ to I/O, which reduces interferences and improves performance.
 - snappy: `sudo yum install snappy snappy-devel`
 - zlib: `sudo yum install zlib zlib-devel`
 - bzip2: `sudo yum install bzip2 bzip2-devel`
-- zstandard: 
+- zstandard:
 ```bash
    wget https://github.com/facebook/zstd/archive/v1.1.3.tar.gz
    mv v1.1.3.tar.gz zstd-1.1.3.tar.gz
@@ -162,28 +162,28 @@ Further options:
 ```bash
 Allowed options:
   -h [ --help ]             Help message
-  -m [ --mountdir ] arg     Virtual mounting directory where GekkoFS is 
+  -m [ --mountdir ] arg     Virtual mounting directory where GekkoFS is
                             available.
-  -r [ --rootdir ] arg      Local data directory where GekkoFS data for this 
+  -r [ --rootdir ] arg      Local data directory where GekkoFS data for this
                             daemon is stored.
   -i [ --metadir ] arg      Metadata directory where GekkoFS RocksDB data
                             directory is located. If not set, rootdir is used.
-  -l [ --listen ] arg       Address or interface to bind the daemon to. 
+  -l [ --listen ] arg       Address or interface to bind the daemon to.
                             Default: local hostname.
-                            When used with ofi+verbs the FI_VERBS_IFACE 
-                            environment variable is set accordingly which 
-                            associates the verbs device with the network 
-                            interface. In case FI_VERBS_IFACE is already 
+                            When used with ofi+verbs the FI_VERBS_IFACE
+                            environment variable is set accordingly which
+                            associates the verbs device with the network
+                            interface. In case FI_VERBS_IFACE is already
                             defined, the argument is ignored. Default 'ib'.
-  -H [ --hosts-file ] arg   Shared file used by deamons to register their 
+  -H [ --hosts-file ] arg   Shared file used by deamons to register their
                             endpoints. (default './gkfs_hosts.txt')
   -P [ --rpc-protocol ] arg Used RPC protocol for inter-node communication.
-                            Available: {ofi+sockets, ofi+verbs, ofi+psm2} for 
-                            TCP, Infiniband, and Omni-Path, respectively. 
+                            Available: {ofi+sockets, ofi+verbs, ofi+psm2} for
+                            TCP, Infiniband, and Omni-Path, respectively.
                             (Default ofi+sockets)
                             Libfabric must have enabled support verbs or psm2.
-  --auto-sm                 Enables intra-node communication (IPCs) via the 
-                            `na+sm` (shared memory) protocol, instead of using 
+  --auto-sm                 Enables intra-node communication (IPCs) via the
+                            `na+sm` (shared memory) protocol, instead of using
                             the RPC protocol. (Default off)
   --version                 Print version and exit.
 ```
@@ -194,15 +194,15 @@ Shut it down by gracefully killing the process (SIGTERM).
 
 Metadata and actual data will be stored at the `<fs_data_path>`. The path where the application works on is set with
 `<pseudo_mount_dir_path>`.
- 
+
 Run the application with the preload library: `LD_PRELOAD=<path>/build/lib/libgkfs_intercept.so ./application`. In the case of
 an MPI application use the `{mpirun, mpiexec} -x` argument.
- 
+
 ### Logging
 The following environment variables can be used to enable logging in the client
 library: `LIBGKFS_LOG=<module>` and `LIBGKFS_LOG_OUTPUT=<path/to/file>` to
 configure the output module and set the path to the log file of the client
-library. If not path is specified in `LIBGKFS_LOG_OUTPUT`, the client library 
+library. If not path is specified in `LIBGKFS_LOG_OUTPUT`, the client library
 will send log messages to `/tmp/gkfs_client.log`.
 
 The following modules are available:
@@ -228,6 +228,7 @@ The following modules are available:
    module will only be available if the client library is built in `Debug`
    mode.
  - `all`: All previous options combined.
+ - `trace_reads`: Generate log line with extra information in read operations for guided distributor
  - `help`: Print a help message and exit.
 
 When tracing sytem calls, specific syscalls can be removed from log messages by
@@ -236,19 +237,55 @@ setting it to `LIBGKFS_LOG_SYSCALL_FILTER=epoll_wait,epoll_create` will filter
 out any log entries from the `epoll_wait()` and `epoll_create()` system calls.
 
 Additionally, setting the `LIBGKFS_LOG_OUTPUT_TRUNC` environment variable with
-a value different from `0` will instruct the logging subsystem to truncate 
+a value different from `0` will instruct the logging subsystem to truncate
 the file used for logging, rather than append to it.
 
-For the daemon, the `GKFS_DAEMON_LOG_PATH=<path/to/file>` environment variable 
-can be provided to set the path to the log file, and the log module can be 
+For the daemon, the `GKFS_DAEMON_LOG_PATH=<path/to/file>` environment variable
+can be provided to set the path to the log file, and the log module can be
 selected with the `GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace}`
 environment variable.
+
 
 ### External functions
 
 GekkoFS allows to use external functions on your client code, via LD_PRELOAD. 
 Source code needs to be compiled with -fPIC. We include a pfind io500 substitution,
  `examples/gfind/gfind.cpp` and a non-mpi version `examples/gfind/sfind.cpp`
+
+### Data distributors
+The data distribution can be selected at compilation time, we have 2 distributors available:
+
+## Simple Hash (Default)
+Chunks are distributed randomly to the different GekkoFS servers.
+
+## Guided Distributor
+Guided distributor distributes chunks using a shared file with the next format:
+`<path> <chunk_number> <host>`
+
+Moreover if you prepend a path with #, all the data from that path will go to the same place as the metadata. 
+Specifically defined paths (without#) will be prioritary.
+
+i.e.,
+#/mdt-hard 0 0 
+
+GekkoFS will store data and metadata to the same server. The server will still be random (0 0 has no meaning, yet).
+ 
+Chunks not specified, are distributed using the Simple Hash distributor.
+
+To generate such file we need to follow a first execution, using the trace_reads log option
+
+This will enable a `TRACE_READS` level log at the clients offering several lines that can be used to generate the input file.
+In this stage, each node should generate a separated file this can be done in SLURM using the next line :
+`srun -N 10 -n 320 --export="ALL" /bin/bash -c "export LIBGKFS_LOG_OUTPUT=${HOME}/test/GLOBAL.txt;LD_PRELOAD=${GKFS_PRLD} <app>"`
+
+Then, use the `examples/distributors/guided/generate.py` to create the output file.
+* `python examples/distributors/guided/generate.py ~/test/GLOBAL.txt >> guided.txt`
+
+This should work if the nodes are sorted in alphabetical order, which is the usual scenario. Users should take care of multi-server configurations.
+
+Finally, enable the distributor using the next compilation flags:
+* `GKFS_USE_GUIDED_DISTRIBUTION` ON
+* `GKFS_USE_GUIDED_DISTRIBUTION_PATH` `<full path to guided.txt>`
 
 ### Acknowledgment
 

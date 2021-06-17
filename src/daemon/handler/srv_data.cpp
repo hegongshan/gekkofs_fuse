@@ -45,7 +45,6 @@
 #endif
 
 using namespace std;
-
 /*
  * This file contains all Margo RPC handlers that are concerning management
  * operations
@@ -152,8 +151,8 @@ rpc_srv_write(hg_handle_t handle) {
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
 
+    auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
     vector<uint64_t> chnk_ids_host(in.chunk_n);
     // counter to track how many chunks have been assigned
@@ -196,7 +195,8 @@ rpc_srv_write(hg_handle_t handle) {
         chnk_id_file++) {
         // Continue if chunk does not hash to this host
 #ifndef GKFS_ENABLE_FORWARDING
-        if(distributor.locate_data(in.path, chnk_id_file) != host_id) {
+        if(RPC_DATA->distributor()->locate_data(in.path, chnk_id_file,
+                                                host_size) != host_id) {
             GKFS_DATA->spdlogger()->trace(
                     "{}() chunkid '{}' ignored as it does not match to this host with id '{}'. chnk_id_curr '{}'",
                     __func__, chnk_id_file, host_id, chnk_id_curr);
@@ -415,9 +415,8 @@ rpc_srv_read(hg_handle_t handle) {
 #ifndef GKFS_ENABLE_FORWARDING
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    gkfs::rpc::SimpleHashDistributor distributor(host_id, host_size);
 #endif
-
+    auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
     vector<uint64_t> chnk_ids_host(in.chunk_n);
     // counter to track how many chunks have been assigned
@@ -448,7 +447,8 @@ rpc_srv_read(hg_handle_t handle) {
         chnk_id_file++) {
         // Continue if chunk does not hash to this host
 #ifndef GKFS_ENABLE_FORWARDING
-        if(distributor.locate_data(in.path, chnk_id_file) != host_id) {
+        if(RPC_DATA->distributor()->locate_data(in.path, chnk_id_file,
+                                                host_size) != host_id) {
             GKFS_DATA->spdlogger()->trace(
                     "{}() chunkid '{}' ignored as it does not match to this host with id '{}'. chnk_id_curr '{}'",
                     __func__, chnk_id_file, host_id, chnk_id_curr);
