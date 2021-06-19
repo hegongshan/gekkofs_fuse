@@ -136,6 +136,11 @@ find_package(Boost 1.53 REQUIRED
 
 find_package(Threads REQUIRED)
 
+# some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
+# produces a std::filesystem imported target that takes care of all these
+# details transparently
+find_package(Filesystem REQUIRED)
+
 find_package(Date REQUIRED)
 
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
