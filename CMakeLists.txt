@@ -140,6 +140,14 @@ find_package(Date REQUIRED)
 # Import some convenience functions
 include(gkfs-utils)
 
+################################################################################
+## Build GekkoFS documentation
+################################################################################
+option(GKFS_BUILD_DOCUMENTATION "Build documentation" OFF)
+if(GKFS_BUILD_DOCUMENTATION)
+  add_subdirectory(docs)
+endif()
+
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
 message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
 
