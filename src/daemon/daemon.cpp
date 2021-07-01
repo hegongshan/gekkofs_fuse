@@ -382,7 +382,7 @@ initialize_loggers() {
 
     auto logger_names = std::vector<std::string>{
             "main",
-            "MetadataDB",
+            "MetadataModule",
             "DataModule",
     };
 

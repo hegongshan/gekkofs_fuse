@@ -39,8 +39,25 @@ target_sources(metadata_db
     ${CMAKE_CURRENT_LIST_DIR}/db.cpp
     )
 
+add_library(metadata_module
+  STATIC
+)
+
+target_sources(metadata_module
+  PUBLIC
+    ${INCLUDE_DIR}/daemon/backend/metadata/metadata_module.hpp
+  PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/metadata_module.cpp
+)
+
+target_link_libraries(metadata_module
+  PUBLIC
+    spdlog
+)
+
 target_link_libraries(metadata_db
     # Required by RocksDB
+    metadata_module
     -ldl
     metadata
     RocksDB

@@ -29,6 +29,7 @@
 #include <daemon/ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
+#include <daemon/backend/metadata/metadata_module.hpp>
 
 using namespace std;
 

@@ -26,45 +26,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-add_library(data_module
-  STATIC
-)
-
-target_sources(data_module
-  PUBLIC
-    ${INCLUDE_DIR}/daemon/backend/data/data_module.hpp
-  PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/data_module.cpp
-)
-
-target_link_libraries(data_module
-  PUBLIC
-    spdlog
-)
-
-add_library(storage STATIC)
-
-target_sources(storage
-    PUBLIC
-    ${INCLUDE_DIR}/daemon/backend/data/chunk_storage.hpp
-    PRIVATE
-    ${INCLUDE_DIR}/common/path_util.hpp
-    ${INCLUDE_DIR}/common/common_defs.hpp
-    ${INCLUDE_DIR}/daemon/backend/data/data_module.hpp
-    ${INCLUDE_DIR}/daemon/backend/data/file_handle.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/chunk_storage.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/data_module.cpp
-    )
-
-target_link_libraries(storage
-    PRIVATE
-    spdlog
-    data_module
-    # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
-    stdc++fs
-    -ldl
-    )
-
-#target_include_directories(storage
-#    PRIVATE
-#    )
+add_subdirectory(metadata)
+add_subdirectory(data)
