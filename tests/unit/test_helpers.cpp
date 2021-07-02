@@ -45,10 +45,11 @@ SCENARIO("random strings can be generated", "[test_helpers][random_string]") {
 
         WHEN("Length is a positive integer") {
 
-            const auto s = helpers::random_string(6);
+            const std::size_t n = GENERATE(range(1, 5432));
+            const auto s = helpers::random_string(n);
 
             THEN(" The generated string is empty ") {
-                REQUIRE(s.length() == 6);
+                REQUIRE(s.length() == n);
             }
         }
     }
