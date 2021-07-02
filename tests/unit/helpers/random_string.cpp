@@ -41,7 +41,7 @@ random_string(std::size_t length) {
 
     thread_local static std::mt19937 rng{std::random_device{}()};
     thread_local static std::uniform_int_distribution<std::string::size_type>
-            pick(0, std::size(charset) - 1);
+            pick(0, std::size(charset) - 2);
 
     std::string s(length, '\0');
 
