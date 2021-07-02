@@ -30,6 +30,7 @@
 #define GEKKOFS_METADATA_DB_HPP
 
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <rocksdb/db.h>
 #include <daemon/backend/exceptions.hpp>
 #include <tuple>
@@ -44,6 +45,7 @@ private:
     rdb::Options options;
     rdb::WriteOptions write_opts;
     std::string path;
+    std::shared_ptr<spdlog::logger> log_;
 
     static void
     optimize_rocksdb_options(rdb::Options& options);

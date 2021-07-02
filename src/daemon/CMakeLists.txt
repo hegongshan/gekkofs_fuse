@@ -26,8 +26,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-add_subdirectory(backend/metadata)
-add_subdirectory(backend/data)
+add_subdirectory(backend)
 
 set(DAEMON_SRC
     ../common/rpc/rpc_util.cpp

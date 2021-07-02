@@ -29,6 +29,7 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/metadata/merge.hpp>
 #include <daemon/backend/exceptions.hpp>
+#include <daemon/backend/metadata/metadata_module.hpp>
 
 #include <common/metadata.hpp>
 #include <common/path_util.hpp>
@@ -45,6 +46,13 @@ namespace gkfs::metadata {
  * @param path where KV store data is stored
  */
 MetadataDB::MetadataDB(const std::string& path) : path(path) {
+
+    /* Get logger instance and set it for data module and chunk storage */
+    GKFS_METADATA_MOD->log(spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME));
+    assert(GKFS_METADATA_MOD->log());
+    log_ = spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME);
+    assert(log_);
+
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
     options.IncreaseParallelism();
     options.OptimizeLevelStyleCompaction();
