@@ -89,3 +89,15 @@ target_link_libraries(metadata
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(metadata AUTO)
 endif()
+
+add_library(path_util
+  STATIC
+  )
+set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+target_sources(path_util
+  PRIVATE
+    path_util.cpp
+  PUBLIC
+    ${INCLUDE_DIR}/common/path_util.hpp
+  )

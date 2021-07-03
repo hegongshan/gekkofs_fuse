@@ -38,7 +38,6 @@ set(PRELOAD_SRC
     preload.cpp
     preload_context.cpp
     preload_util.cpp
-    ../common/path_util.cpp
     ../common/rpc/rpc_util.cpp
     rpc/rpc_types.cpp
     rpc/forward_data.cpp
@@ -72,7 +71,6 @@ set(PRELOAD_HEADERS
     ../../include/client/syscalls/detail/syscall_info.h
     ../../include/common/cmake_configure.hpp
     ../../include/common/common_defs.hpp
-    ../../include/common/path_util.hpp
     ../../include/common/rpc/rpc_types.hpp
     ../../include/common/rpc/rpc_util.hpp
     )
@@ -81,6 +79,8 @@ set(PRELOAD_LINK_LIBRARIES
     metadata
     distributor
     env_util
+    arithmetic
+    path_util
     # external
     Syscall_intercept::Syscall_intercept
     dl
@@ -100,7 +100,6 @@ add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
 
 target_link_libraries(gkfs_intercept
   PRIVATE
-    arithmetic
     ${PRELOAD_LINK_LIBRARIES})
 
 target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})

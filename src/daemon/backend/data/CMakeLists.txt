@@ -48,7 +48,6 @@ target_sources(storage
     PUBLIC
     ${INCLUDE_DIR}/daemon/backend/data/chunk_storage.hpp
     PRIVATE
-    ${INCLUDE_DIR}/common/path_util.hpp
     ${INCLUDE_DIR}/common/common_defs.hpp
     ${INCLUDE_DIR}/daemon/backend/data/file_handle.hpp
     ${CMAKE_CURRENT_LIST_DIR}/chunk_storage.cpp
@@ -58,6 +57,7 @@ target_link_libraries(storage
     PRIVATE
     spdlog
     data_module
+    path_util
     # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
     stdc++fs
     -ldl

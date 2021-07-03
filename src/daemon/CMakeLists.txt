@@ -30,7 +30,6 @@ add_subdirectory(backend)
 
 set(DAEMON_SRC
     ../common/rpc/rpc_util.cpp
-    ../common/path_util.cpp
     daemon.cpp
     util.cpp
     ops/metadentry.cpp
@@ -48,7 +47,6 @@ set(DAEMON_HEADERS
     ../../include/common/common_defs.hpp
     ../../include/common/rpc/rpc_types.hpp
     ../../include/common/rpc/rpc_util.hpp
-    ../../include/common/path_util.hpp
     ../../include/daemon/daemon.hpp
     ../../include/daemon/util.hpp
     ../../include/daemon/ops/data.hpp
@@ -68,6 +66,7 @@ set(DAEMON_LINK_LIBRARIES
     env_util
     spdlog
     fmt::fmt
+    path_util
     # margo libs
     ${ABT_LIBRARIES}
     mercury
