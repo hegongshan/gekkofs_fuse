@@ -100,7 +100,8 @@ integration tests:
   script:
     ## run tests
     - cd ${BUILD_PATH}/tests/integration
-    - unbuffer ${PYTEST} -v | tee session.log
+    - TMPDIR=${INTEGRATION_TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${INTEGRATION_TESTS_RUN_PATH} session.log
+
     ## capture coverage information
     - cd ${BUILD_PATH}
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
@@ -111,7 +112,7 @@ integration tests:
   artifacts:
     #    when: on_failure
     paths:
-      #      - "${INTEGRATION_TESTS_RUN_PATH}"
+      - ${INTEGRATION_TESTS_RUN_PATH}
       - ${BUILD_PATH}
 
 unit:
