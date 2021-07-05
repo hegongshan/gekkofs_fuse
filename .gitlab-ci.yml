@@ -29,11 +29,13 @@ image: gekkofs/gekkofs:build_env-0.8.0
 
 check format:
   stage: check format
+  needs: []
   script:
     - ${CI_PROJECT_DIR}/scripts/check_format.sh -s "${CI_PROJECT_DIR}/src" -i "${CI_PROJECT_DIR}/include" -v
 
 compile dependencies:
   stage: build deps
+  needs: []
   cache:
     key: deps-cache
     paths:
