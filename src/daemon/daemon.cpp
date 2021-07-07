@@ -390,7 +390,7 @@ initialize_loggers() {
 }
 
 /**
- *
+ * Parses input of user
  * @param vm
  * @throws runtime_error
  */
@@ -462,6 +462,10 @@ parse_input(const po::variables_map& vm) {
     auto rootdir_path = fs::path(rootdir) / fmt::format_int(getpid()).str();
 #endif
 
+    if(vm.count("cleanrd")) {
+        // may throw exception (caught in main)
+        fs::remove_all(rootdir_path.native());
+    }
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
                                   rootdir_path.native());
     fs::create_directories(rootdir_path);
@@ -529,6 +533,8 @@ main(int argc, const char* argv[]) {
             "auto-sm",
             "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
             "instead of using the RPC protocol. (Default off)");
+    desc.add_options()("clean-rootdir",
+                       "Cleans Rootdir >before< launching the deamon");
     desc.add_options()("version", "Print version and exit.");
     po::variables_map vm{};
     po::store(po::parse_command_line(argc, argv, desc), vm);
