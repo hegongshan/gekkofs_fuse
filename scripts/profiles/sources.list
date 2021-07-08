@@ -1,0 +1,73 @@
+################################################################################
+# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+#                                                                              #
+# This software was partially supported by the                                 #
+# EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
+#                                                                              #
+# This software was partially supported by the                                 #
+# ADA-FS project under the SPPEXA project funded by the DFG.                   #
+#                                                                              #
+# This file is part of GekkoFS.                                                #
+#                                                                              #
+# GekkoFS is free software: you can redistribute it and/or modify              #
+# it under the terms of the GNU General Public License as published by         #
+# the Free Software Foundation, either version 3 of the License, or            #
+# (at your option) any later version.                                          #
+#                                                                              #
+# GekkoFS is distributed in the hope that it will be useful,                   #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
+# GNU General Public License for more details.                                 #
+#                                                                              #
+# You should have received a copy of the GNU General Public License            #
+# along with GekkoFS.  If not, see <https://www.gnu.org/licenses/>.            #
+#                                                                              #
+# SPDX-License-Identifier: GPL-3.0-or-later                                    #
+################################################################################
+
+# vi: ft=bash
+
+declare -A sources
+
+sources=(
+    ["bzip2"]="https://sourceforge.net/projects/bzip2/files/bzip2-{{VERSION}}.tar.gz"
+    ["zstd"]="https://github.com/facebook/zstd/archive/v{{VERSION}}.tar.gz"
+    ["lz4"]="https://github.com/lz4/lz4/archive/v{{VERSION}}.tar.gz"
+    ["snappy"]="https://github.com/google/snappy/archive/{{VERSION}}.tar.gz"
+    ["capstone"]="https://github.com/aquynh/capstone/archive/{{VERSION}}.tar.gz"
+    ["argobots"]="https://github.com/pmodels/argobots/archive/v{{VERSION}}.tar.gz"
+    ["rocksdb"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
+    ["psm2"]="https://github.com/intel/opa-psm2/archive/PSM2_{{VERSION}}.tar.gz"
+    ["bmi"]="https://xgitlab.cels.anl.gov/sds/bmi.git"
+    ["libfabric"]="https://github.com/ofiwg/libfabric.git"
+    ["libfabric:experimental"]="https://github.com/ofiwg/libfabric.git"
+    ["libfabric:verbs"]="https://github.com/ofiwg/libfabric.git"
+    ["mercury"]="https://github.com/mercury-hpc/mercury"
+    ["margo"]="https://xgitlab.cels.anl.gov/sds/margo.git"
+    ["syscall_intercept"]="https://github.com/pmem/syscall_intercept.git"
+    ["date"]="https://github.com/HowardHinnant/date.git"
+    ["agios"]="https://github.com/francielizanon/agios.git"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
