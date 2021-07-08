@@ -37,8 +37,7 @@ struct statfs;
 struct linux_dirent;
 struct linux_dirent64;
 
-namespace gkfs {
-namespace hook {
+namespace gkfs::hook {
 
 int
 hook_openat(int dirfd, const char* cpath, int flags, mode_t mode);
@@ -164,7 +163,6 @@ hook_fstatfs(unsigned int fd, struct statfs* buf);
 int
 hook_fsync(unsigned int fd);
 
-} // namespace hook
-} // namespace gkfs
+} // namespace gkfs::hook
 
 #endif

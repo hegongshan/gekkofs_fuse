@@ -38,8 +38,7 @@
 #include <client/syscalls/errno.hpp>
 #include <client/syscalls/detail/syscall_info.h>
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 static const auto constexpr MAX_ARGS = 6u;
 using arg_list = std::array<arg::desc, MAX_ARGS>;
@@ -228,8 +227,7 @@ error_code(long result) {
     return 0;
 }
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall
 
 #endif // GKFS_SYSCALL_HPP
 

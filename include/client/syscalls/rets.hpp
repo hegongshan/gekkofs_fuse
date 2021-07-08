@@ -37,9 +37,7 @@
 #include <type_traits>
 #include <client/syscalls/detail/syscall_info.h>
 
-namespace gkfs {
-namespace syscall {
-namespace ret {
+namespace gkfs::syscall::ret {
 
 /** Allowed ret types (based on the values of the corresponding C enum) */
 enum class type {
@@ -148,9 +146,7 @@ format_dec_ret_to(FmtBuffer& buffer,
 #undef LIKELY
 #undef UNLIKELY
 
-} // namespace ret
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall::ret
 
 #endif // GKFS_SYSCALLS_RETS_HPP
 

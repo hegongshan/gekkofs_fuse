@@ -35,8 +35,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 /**
  * File handle to encapsulate a file descriptor, allowing RAII closing of the
@@ -108,8 +107,7 @@ public:
     }
 };
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data
 
 
 #endif // GEKKOFS_DAEMON_FILE_HANDLE_HPP

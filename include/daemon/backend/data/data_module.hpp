@@ -31,8 +31,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 class DataModule {
 
@@ -66,7 +65,6 @@ public:
     (static_cast<gkfs::data::DataModule*>(                                     \
             gkfs::data::DataModule::getInstance()))
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data
 
 #endif // GEKKOFS_DAEMON_DATA_LOGGING_HPP

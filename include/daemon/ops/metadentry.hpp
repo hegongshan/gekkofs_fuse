@@ -32,8 +32,7 @@
 #include <daemon/daemon.hpp>
 #include <common/metadata.hpp>
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 Metadata
 get(const std::string& path);
@@ -62,7 +61,6 @@ update_size(const std::string& path, size_t io_size, off_t offset, bool append);
 void
 remove(const std::string& path);
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 #endif // GEKKOFS_METADENTRY_HPP

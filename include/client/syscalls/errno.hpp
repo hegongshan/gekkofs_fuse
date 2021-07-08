@@ -33,8 +33,7 @@
 #include <array>
 #include <string>
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 static const std::array<const char* const, 531> errno_names = {
         /* [  0] = */ NULL,
@@ -591,7 +590,6 @@ errno_message(int errno_value) {
     return std::string{msg};
 }
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall
 
 #endif // GKFS_SYSCALLS_ERRNO_HPP

@@ -34,8 +34,7 @@
 #include <client/syscalls/args.hpp>
 #include <client/syscalls/rets.hpp>
 
-namespace gkfs {
-namespace syscall {
+namespace gkfs::syscall {
 
 namespace detail {
 
@@ -113,7 +112,6 @@ decode(FmtBuffer& buffer, const long syscall_number, const long argv[MAX_ARGS],
     ret.formatter<FmtBuffer>()(buffer, result);
 }
 
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall
 
 #endif // GKFS_SYSCALLS_DECODER_HPP

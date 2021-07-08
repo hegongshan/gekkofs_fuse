@@ -35,8 +35,7 @@
 
 namespace rdb = rocksdb;
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 enum class OperandID : char {
     increase_size = 'i',
@@ -137,7 +136,6 @@ public:
     AllowSingleOperand() const override;
 };
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 #endif // DB_MERGE_HPP

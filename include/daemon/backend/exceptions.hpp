@@ -32,8 +32,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace gkfs {
-namespace metadata {
+namespace gkfs::metadata {
 
 class DBException : public std::runtime_error {
 public:
@@ -50,7 +49,6 @@ public:
     explicit ExistsException(const std::string& s) : DBException(s){};
 };
 
-} // namespace metadata
-} // namespace gkfs
+} // namespace gkfs::metadata
 
 #endif // GEKKOFS_DB_EXCEPTIONS_HPP

@@ -37,8 +37,7 @@ extern "C" {
 
 using namespace std;
 
-namespace gkfs {
-namespace data {
+namespace gkfs::data {
 
 /* ------------------------------------------------------------------------
  * -------------------------- TRUNCATE ------------------------------------
@@ -469,5 +468,4 @@ ChunkReadOperation::wait_for_tasks_and_push_back(const bulk_args& args) {
     return make_pair(io_err, total_read);
 }
 
-} // namespace data
-} // namespace gkfs
+} // namespace gkfs::data

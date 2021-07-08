@@ -46,8 +46,7 @@ extern "C" {
 
 using namespace std;
 
-namespace gkfs {
-namespace path {
+namespace gkfs::path {
 
 static const string excluded_paths[2] = {"sys/", "proc/"};
 
@@ -325,5 +324,4 @@ set_cwd(const string& path, bool internal) {
     CTX->cwd(path);
 }
 
-} // namespace path
-} // namespace gkfs
+} // namespace gkfs::path

@@ -47,9 +47,7 @@
 #include <fmt/format.h>
 #include <client/syscalls/detail/syscall_info.h>
 
-namespace gkfs {
-namespace syscall {
-namespace arg {
+namespace gkfs::syscall::arg {
 
 /** Allowed arg types (based on the values of the corresponding C enum) */
 enum class type {
@@ -717,9 +715,7 @@ format_arg_to(FmtBuffer& buffer, const printable_arg& parg) {
 #undef LIKELY
 #undef UNLIKELY
 
-} // namespace arg
-} // namespace syscall
-} // namespace gkfs
+} // namespace gkfs::syscall::arg
 
 #endif // GKFS_SYSCALLS_ARGS_HPP
 

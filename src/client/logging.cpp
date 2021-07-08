@@ -44,8 +44,7 @@ extern "C" {
 
 #endif
 
-namespace gkfs {
-namespace log {
+namespace gkfs::log {
 
 struct opt_info {
     const char name_[32];
@@ -471,5 +470,4 @@ print_syscall:
     ::syscall_no_intercept(SYS_write, log_fd_, buffer.data(), buffer.size());
 }
 
-} // namespace log
-} // namespace gkfs
+} // namespace gkfs::log
