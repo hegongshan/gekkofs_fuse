@@ -129,7 +129,7 @@ if (GKFS_ENABLE_FORWARDING)
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
-            DGKFS_ENABLE_AGIOS
+            GKFS_ENABLE_AGIOS
             )
     else ()
         target_compile_definitions(gkfwd_daemon

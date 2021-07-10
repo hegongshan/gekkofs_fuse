@@ -95,23 +95,31 @@ install(TARGETS gkfs_daemon
     )
 ################### Forwarding daemon ###################
 if (GKFS_ENABLE_FORWARDING)
-    set(FWD_DAEMON_SRC
-        ${DAEMON_SRC}
-        scheduler/agios.cpp
-        )
-    set(FWD_DAEMON_HEADERS
-        ${DAEMON_HEADERS}
-        ../../include/daemon/scheduler/agios.hpp
-        )
-    add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
-
     if (GKFS_ENABLE_AGIOS)
+        set(FWD_DAEMON_SRC
+            ${DAEMON_SRC}
+            scheduler/agios.cpp
+            )
+        set(FWD_DAEMON_HEADERS
+            ${DAEMON_HEADERS}
+            ../../include/daemon/scheduler/agios.hpp
+            )
+        add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
+
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
-            DGKFS_ENABLE_AGIOS
+            GKFS_ENABLE_AGIOS
             )
     else ()
+        set(FWD_DAEMON_SRC
+            ${DAEMON_SRC}
+            )
+        set(FWD_DAEMON_HEADERS
+            ${DAEMON_HEADERS}
+            )
+        add_executable(gkfwd_daemon ${FWD_DAEMON_SRC} ${FWD_DAEMON_HEADERS})
+
         target_compile_definitions(gkfwd_daemon
             PUBLIC
             GKFS_ENABLE_FORWARDING
