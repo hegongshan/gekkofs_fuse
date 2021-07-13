@@ -29,7 +29,7 @@
 # vi: ft=bash
 
 # Variables to be imported into the scripts
-declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches
+declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_args
 declare -a order
 
 # Comment that should be displayed when printing the profile
@@ -48,7 +48,7 @@ wgetdeps=(
 
 # Dependencies that must be cloned
 clonedeps=(
-    ["bmi"]="81ad0575fc57a69269a16208417cbcbefa51f9ea"
+    ["bmi"]="6ea0b78fce1b964e45102828cdd05df7040a94c8"
     ["libfabric"]="HEAD@v1.8.1"
     ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
     ["margo"]="v0.6.3"
@@ -71,4 +71,15 @@ clonedeps_patches=(
 order=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "libfabric" "mercury" "argobots"
     "margo" "rocksdb" "syscall_intercept" "date" "agios"
+)
+
+# Extra arguments passed to the installation script. As such, they can
+# reference the following variables:
+#  - CMAKE: a variable that expands to the cmake binary
+#  - SOURCE_DIR: the directory where the sources for the package were
+#               downloaded
+#  - INSTALL_DIR: the directory where the package should be installed
+#  - CORES: the number of cores to use when building
+#  - PERFORM_TEST: whether tests for the package should be executed
+extra_install_args=(
 )

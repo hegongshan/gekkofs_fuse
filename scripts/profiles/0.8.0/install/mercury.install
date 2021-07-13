@@ -25,62 +25,58 @@
 #                                                                              #
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
-
 # vi: ft=bash
 
-# Variables to be imported into the scripts
-declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_args
-declare -a order
+################################################################################
+## The installation script must define both a pkg_install function and
+## pkg_check function that, as their name implies, must specify how
+## a dependency package should be installed and tested.  ## ## The following
+## variables can be used in the installation script:
+## - CMAKE: a variable that expands to the cmake binary
+## - SOURCE_DIR: the directory where the sources for the package were
+##               downloaded
+## - INSTALL_DIR: the directory where the package should be installed
+## - CORES: the number of cores to use when building
+## - PERFORM_TEST: whether tests for the package should be executed
+################################################################################
 
-# Comment that should be displayed when printing the profile
-comment="Dependencies for Mogon 2 supercomputer"
+pkg_install() {
 
-# Dependencies that must be downloaded directly
-wgetdeps=(
-    ["bzip2"]="1.0.6"
-    ["zstd"]="1.3.2"
-    ["lz4"]="1.8.0"
-    ["snappy"]="1.1.7"
-    ["capstone"]="4.0.1"
-    ["argobots"]="1.0rc1"
-    ["rocksdb:experimental"]="6.11.4"
-    ["psm2"]="11.2.86"
-)
+    set -x
 
-# Dependencies that must be cloned
-clonedeps=(
-    ["libfabric:experimental"]="HEAD@v1.9.1"
-    ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
-    ["margo"]="v0.6.3"
-    ["syscall_intercept"]="f7cebb7b7e7512a19b78a31ce236ad6ca22636dd"
-    ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
-)
+    # if the profile compiles bmi, enable it
+    if [[ -n "${PROFILE_DEP_NAMES['bmi']}" ]]; then
+        USE_BMI="-DNA_USE_BMI:BOOL=ON"
+    else
+        USE_BMI="-DNA_USE_BMI:BOOL=OFF"
+    fi
 
-# Extra arguments for git clone
-clonedeps_args=(
-    ["mercury"]="--recurse-submodules"
-)
+    # if the profile compiles libfabric, enable it
+    if [[ -n "${PROFILE_DEP_NAMES['libfabric']}" ]]; then
+        USE_OFI="-DNA_USE_OFI:BOOL=ON"
+    else
+        USE_OFI="-DNA_USE_OFI:BOOL=OFF"
+    fi
 
-# Patches that should be applied post-clone
-clonedeps_patches=(
-    ["syscall_intercept"]="syscall_intercept.patch"
-)
+    CURR="${SOURCE_DIR}/mercury"
+    prepare_build_dir "${CURR}"
+    cd "${CURR}/build"
+    PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig" $CMAKE \
+        -DCMAKE_BUILD_TYPE:STRING=Release \
+        -DBUILD_TESTING:BOOL=ON \
+        -DMERCURY_USE_SM_ROUTING:BOOL=ON \
+        -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
+        -DMERCURY_USE_CHECKSUMS:BOOL=OFF \
+        -DMERCURY_USE_BOOST_PP:BOOL=ON \
+        -DMERCURY_USE_EAGER_BULK:BOOL=ON \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+        ${USE_BMI} ${USE_OFI} \
+        ..
+    make -j"${CORES}"
+    make install
+}
 
-# Ordering that MUST be followed when downloading
-order=(
-    "bzip2" "zstd" "lz4" "snappy" "capstone" "libfabric:experimental"
-    "mercury" "argobots" "margo" "rocksdb:experimental" "syscall_intercept"
-    "date" "psm2"
-)
-
-# Extra arguments passed to the installation script. As such, they can
-# reference the following variables:
-#  - CMAKE: a variable that expands to the cmake binary
-#  - SOURCE_DIR: the directory where the sources for the package were
-#               downloaded
-#  - INSTALL_DIR: the directory where the package should be installed
-#  - CORES: the number of cores to use when building
-#  - PERFORM_TEST: whether tests for the package should be executed
-extra_install_args=(
-    ["libfabric:experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
-)
+pkg_check() {
+    :
+}

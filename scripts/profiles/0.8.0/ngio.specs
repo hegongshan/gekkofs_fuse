@@ -29,7 +29,7 @@
 # vi: ft=bash
 
 # Variables to be imported into the scripts
-declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches
+declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_args
 declare -a order
 
 # Comment that should be displayed when printing the profile
@@ -70,4 +70,16 @@ clonedeps_patches=(
 order=(
     "zstd" "lz4" "snappy" "capstone" "libfabric:experimental" "mercury"
     "argobots" "margo" "rocksdb" "syscall_intercept" "date" "psm2" "agios"
+)
+
+# Extra arguments passed to the installation script. As such, they can
+# reference the following variables:
+#  - CMAKE: a variable that expands to the cmake binary
+#  - SOURCE_DIR: the directory where the sources for the package were
+#               downloaded
+#  - INSTALL_DIR: the directory where the package should be installed
+#  - CORES: the number of cores to use when building
+#  - PERFORM_TEST: whether tests for the package should be executed
+extra_install_args=(
+    ["libfabric:experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
 )
