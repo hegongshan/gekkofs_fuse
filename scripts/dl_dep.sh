@@ -244,15 +244,15 @@ clonedeps() {
 
     local ACTION
 
-    if [[ -d "${SOURCE}/${FOLDER}/.git" ]]; then
-        cd "${SOURCE}/${FOLDER}" && git fetch -q
+    if [[ -d "${SOURCE_DIR}/${FOLDER}/.git" ]]; then
+        cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q
         ACTION="Pulled"
     else
-        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE}/${FOLDER}"
+        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE_DIR}/${FOLDER}"
         ACTION="Cloned"
     fi
     # fix the version
-    cd "${SOURCE}/${FOLDER}" && git checkout -qf "${COMMIT}"
+    cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}"
     echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS}'"
 
     # apply patch if provided
@@ -271,18 +271,18 @@ wgetdeps() {
 
     FOLDER=$1
     URL=$2
-    if [[ -d "${SOURCE}/${FOLDER}" ]]; then
+    if [[ -d "${SOURCE_DIR}/${FOLDER}" ]]; then
         # SC2115 Use "${var:?}" to ensure this never expands to /* .
-        rm -rf "${SOURCE:?}/${FOLDER:?}"
+        rm -rf "${SOURCE_DIR:?}/${FOLDER:?}"
     fi
-    mkdir -p "${SOURCE}/${FOLDER}"
-    cd "${SOURCE}"
+    mkdir -p "${SOURCE_DIR}/${FOLDER}"
+    cd "${SOURCE_DIR}"
     FILENAME="$(basename $URL)"
-    if [[ -f "${SOURCE}/$FILENAME" ]]; then
-        rm -f "${SOURCE}/$FILENAME"
+    if [[ -f "${SOURCE_DIR}/$FILENAME" ]]; then
+        rm -f "${SOURCE_DIR}/$FILENAME"
     fi
     curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
-    tar -xf "$FILENAME" --directory "${SOURCE}/${FOLDER}" --strip-components=1
+    tar -xf "$FILENAME" --directory "${SOURCE_DIR}/${FOLDER}" --strip-components=1
     rm -f "$FILENAME"
     echo "Downloaded '${URL}' to '${FOLDER}'"
 }
@@ -400,12 +400,12 @@ if [[ -z ${1+x} ]]; then
     usage_short
     exit 1
 fi
-SOURCE="$(readlink -mn "${1}")"
+SOURCE_DIR="$(readlink -mn "${1}")"
 
-echo "Source path is set to  \"${SOURCE}\""
+echo "Destination path is set to  \"${SOURCE_DIR}\""
 echo "------------------------------------"
 
-mkdir -p "${SOURCE}"
+mkdir -p "${SOURCE_DIR}"
 
 ## download dependencies
 for dep in "${PROFILE_DEP_NAMES[@]}"; do
