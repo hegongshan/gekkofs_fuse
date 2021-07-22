@@ -1,7 +1,5 @@
 stages:
-  - check format
-  - download deps
-  - build deps
+  - lint
   - build
   - test
   - report
@@ -25,38 +23,59 @@ variables:
   LIBGKFS_LOG_OUTPUT:           "${CI_PROJECT_DIR}/logs/gkfs_client.log"
   GIT_SUBMODULE_STRATEGY:       recursive
 
-image: gekkofs/gekkofs:build_env-0.8.0
+# base image
+image: gekkofs/core:0.8.0
 
+################################################################################
+## Validating
+################################################################################
 check format:
-  stage: check format
+  stage: lint
+  image: gekkofs/linter:0.8.0
   needs: []
   script:
     - ${CI_PROJECT_DIR}/scripts/check_format.sh -s "${CI_PROJECT_DIR}/src" -i "${CI_PROJECT_DIR}/include" -v
 
-compile dependencies:
-  stage: build deps
+
+################################################################################
+## Building
+################################################################################
+gkfs:
+  stage: build
+  image: gekkofs/deps:0.8.0
+  interruptible: true
   needs: []
-  cache:
-    key: deps-cache
-    paths:
-     - ${DEPS_INSTALL_PATH}/
   script:
-   # Folder of built dependencies is cached and marked with the ID of the commit from which have been built.
-   # If the download and compile script have been modified the cache gets invalidated and dependencies will be built again.
-   - ( [ -f "${DEPS_COMMIT}" ] && git diff --quiet "`cat ${DEPS_COMMIT}`" -- scripts/dl_dep.sh scripts/compile_dep.sh ) || (
-           rm -f ${DEPS_COMMIT} &&
-           scripts/dl_dep.sh ${DEPS_SRC_PATH} -n ofi -c ci &&
-           scripts/compile_dep.sh -n ofi -c ci ${DEPS_SRC_PATH} ${DEPS_INSTALL_PATH} &&
-           echo "${CI_COMMIT_SHA}" > "${DEPS_COMMIT}"
-     )
+    - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
+    - cmake
+      -Wdev
+      -Wdeprecate
+      -DCMAKE_BUILD_TYPE=Debug
+      -DGKFS_ENABLE_CODE_COVERAGE:BOOL=ON
+      -DGKFS_BUILD_TESTS:BOOL=ON
+      -DGKFS_INSTALL_TESTS:BOOL=ON
+      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
+      ${CI_PROJECT_DIR}
+    - make -j$(nproc) install
+    - find ${BUILD_PATH} -name "*.o" -delete
+    # cleanup nlohmann_json: it includes around 500MiB of test data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/test/data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/benchmarks/data
+    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/.git
   artifacts:
     paths:
-     - ${DEPS_INSTALL_PATH}
+      - ${BUILD_PATH}
+      - ${INSTALL_PATH}
+    exclude:
+      # remove object files
+      - ${BUILD_PATH}/**/*.o
 
-compile GekkoFS:
+gkfwd:
   stage: build
-  dependencies:
-    - "compile dependencies"
+  image: gekkofs/deps:0.8.0
+  interruptible: true
+  needs: []
   script:
     - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
     - cmake
@@ -85,44 +104,105 @@ compile GekkoFS:
       # remove object files
       - ${BUILD_PATH}/**/*.o
 
-compile tests:
-  stage: build
-  dependencies:
-    - "compile dependencies"
-  script:
-    - mkdir -p ${TESTS_BUILD_PATH} && cd ${TESTS_BUILD_PATH}
-    - cmake -DCMAKE_BUILD_TYPE=Debug ..
-    - make -j$(nproc)
-  artifacts:
-    paths:
-     - ${TESTS_BUILD_PATH}
 
-integration tests:
+################################################################################
+## Testing
+################################################################################
+
+## == integration tests for gkfs ===========
+gkfs:integration:
   stage: test
+  image: gekkofs/testing:0.8.0
+  interruptible: true
+  needs: ['gkfs']
+  parallel:
+    matrix:
+      - SUBTEST: [ data, directories, operations, position, shell, status ]
+
   script:
     ## run tests
     - cd ${BUILD_PATH}/tests/integration
-    - TMPDIR=${INTEGRATION_TESTS_RUN_PATH} unbuffer ${PYTEST} -v | tee ${INTEGRATION_TESTS_RUN_PATH} session.log
+    - ${PYTEST} -v -n $(nproc)
+          ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
+          --junit-xml=report.xml
 
     ## capture coverage information
     - cd ${BUILD_PATH}
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
-          --capture integration
+          --capture integration_${SUBTEST}
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
           --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
-  artifacts:
-    #    when: on_failure
-    paths:
-      - ${INTEGRATION_TESTS_RUN_PATH}
-      - ${BUILD_PATH}
 
-unit:
+  # fix relative paths so that GitLab can find the correct files
+  after_script:
+    - perl -i.orig
+          -pe 's%file="(.*?)"%file="tests/integration/$1"%;'
+          -pe 's%(../)+install/share/gkfs/%%g;'
+          ${BUILD_PATH}/tests/integration/report.xml
+
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - /tmp/
+      - ${BUILD_PATH}
+    reports:
+      junit: ${BUILD_PATH}/tests/integration/report.xml
+
+
+## == integration tests for gkfwd ==========
+gkfwd:integration:
   stage: test
+  image: gekkofs/testing:0.8.0
+  interruptible: true
+  needs: ['gkfwd']
+  parallel:
+    matrix:
+      - SUBTEST: [ forwarding ]
+
+  script:
+    ## run tests
+    - cd ${BUILD_PATH}/tests/integration
+    - ${PYTEST} -v -n $(nproc)
+          ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
+          --junit-xml=report.xml
+
+    ## capture coverage information
+    - cd ${BUILD_PATH}
+    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --capture integration_${SUBTEST}
+          --root-dir ${CI_PROJECT_DIR}
+          --build-dir ${BUILD_PATH}
+          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
+
+  # fix relative paths so that GitLab can find the correct files
+  after_script:
+    - perl -i.orig
+          -pe 's%file="(.*?)"%file="tests/integration/$1"%;'
+          -pe 's%(../)+install/share/gkfs/%%g;'
+          ${BUILD_PATH}/tests/integration/report.xml
+
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - /tmp/
+      - ${BUILD_PATH}
+    reports:
+      junit: ${BUILD_PATH}/tests/integration/report.xml
+
+
+## == unit tests for gkfs ==================
+gkfs:unit:
+  stage: test
+  image: gekkofs/testing:0.8.0
+  needs: ['gkfs']
   script:
     ## run actual tests
-    - cd ${BUILD_PATH}
-    - ctest -j $(nproc) -L unit::all
+    - cd ${BUILD_PATH}/tests/unit
+    - ctest -j $(nproc) -L unit::all --output-junit report.xml
+
     ## capture coverage information
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
           --capture unit
@@ -130,67 +210,20 @@ unit:
           --build-dir ${BUILD_PATH}
           --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
   artifacts:
-    #    when: on_failure
+    expire_in: 1 week
     paths:
       - ${BUILD_PATH}
-        #      - Testing
-
-test wr:
-  stage: test
-  script:
-    - mkdir -p "${LOG_PATH}"
-    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
-    - sleep 4
-    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_wr
-  artifacts:
-    when: on_failure
-    paths:
-     - "${LOG_PATH}"
-
-test directories:
-  stage: test
-  script:
-    - mkdir -p "${LOG_PATH}"
-    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
-    - sleep 4
-    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_dir
-  artifacts:
-    when: on_failure
-    paths:
-     - "${LOG_PATH}"
-
-test truncate:
-  stage: test
-  script:
-    - mkdir -p "${LOG_PATH}"
-    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
-    - sleep 4
-    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_truncate
-  artifacts:
-    when: on_failure
-    paths:
-     - "${LOG_PATH}"
-
-test lseek:
-  stage: test
-  script:
-    - mkdir -p "${LOG_PATH}"
-    - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
-    - sleep 4
-    - LD_PRELOAD=${INSTALL_PATH}/lib/libgkfs_intercept.so ${TESTS_BUILD_PATH}/gkfs_test_lseek
-  artifacts:
-    when: on_failure
-    paths:
-     - "${LOG_PATH}"
+    reports:
+      junit: ${BUILD_PATH}/tests/unit/report.xml
 
 
 ################################################################################
 ## Generation of code coverage reports
 ################################################################################
-
 coverage:
   stage: report
-  image: gekkofs/coverage
+  image: gekkofs/coverage:0.8.0
+  needs: [ 'gkfs:integration', 'gkfwd:integration', 'gkfs:unit' ]
   script:
     - cd ${BUILD_PATH}
     ## merge the partial coverage files from each test in the pipeline

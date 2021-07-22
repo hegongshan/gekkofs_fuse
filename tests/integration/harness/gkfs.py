@@ -267,7 +267,7 @@ class Daemon:
         logger.debug("waiting for daemon to be ready")
 
         try:
-            self.wait_until_active(self._proc.pid, 10.0)
+            self.wait_until_active(self._proc.pid, 60.0)
         except Exception as ex:
             logger.error(f"daemon initialization failed: {ex}")
 
