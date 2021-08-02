@@ -56,6 +56,19 @@ with_errno(int ret) {
 
 } // namespace
 
+template <class... Args>
+inline long
+syscall_no_intercept_wrapper(long syscall_number, Args... args) {
+    long result;
+    int error;
+    result = syscall_no_intercept(syscall_number, args...);
+    error = syscall_error_code(result);
+    if(error != 0) {
+        return -error;
+    }
+    return result;
+}
+
 namespace gkfs::hook {
 
 int
@@ -103,7 +116,7 @@ hook_close(int fd) {
         return 0;
     }
 
-    return syscall_no_intercept(SYS_close, fd);
+    return syscall_no_intercept_wrapper(SYS_close, fd);
 }
 
 int
@@ -116,7 +129,8 @@ hook_stat(const char* path, struct stat* buf) {
     if(CTX->relativize_path(path, rel_path, false)) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
-    return syscall_no_intercept(SYS_stat, rel_path.c_str(), buf);
+
+    return syscall_no_intercept_wrapper(SYS_stat, rel_path.c_str(), buf);
 }
 
 #ifdef STATX_TYPE
@@ -167,7 +181,8 @@ hook_lstat(const char* path, struct stat* buf) {
     if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
-    return syscall_no_intercept(SYS_lstat, rel_path.c_str(), buf);
+    return syscall_no_intercept_wrapper(SYS_lstat, rel_path.c_str(), buf);
+    ;
 }
 
 int
@@ -179,7 +194,7 @@ hook_fstat(unsigned int fd, struct stat* buf) {
         auto path = CTX->file_map()->get(fd)->path();
         return with_errno(gkfs::syscall::gkfs_stat(path, buf));
     }
-    return syscall_no_intercept(SYS_fstat, fd, buf);
+    return syscall_no_intercept_wrapper(SYS_fstat, fd, buf);
 }
 
 int
@@ -197,12 +212,12 @@ hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_newfstatat, dirfd, cpath, buf,
-                                        flags);
+            return syscall_no_intercept_wrapper(SYS_newfstatat, dirfd, cpath,
+                                                buf, flags);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_newfstatat, dirfd, resolved.c_str(),
-                                        buf, flags);
+            return syscall_no_intercept_wrapper(SYS_newfstatat, dirfd,
+                                                resolved.c_str(), buf, flags);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -225,7 +240,7 @@ hook_read(unsigned int fd, void* buf, size_t count) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_read(fd, buf, count));
     }
-    return syscall_no_intercept(SYS_read, fd, buf, count);
+    return syscall_no_intercept_wrapper(SYS_read, fd, buf, count);
 }
 
 int
@@ -239,7 +254,7 @@ hook_pread(unsigned int fd, char* buf, size_t count, loff_t pos) {
     }
     /* Since kernel 2.6: pread() became pread64(), and pwrite() became
      * pwrite64(). */
-    return syscall_no_intercept(SYS_pread64, fd, buf, count, pos);
+    return syscall_no_intercept_wrapper(SYS_pread64, fd, buf, count, pos);
 }
 
 int
@@ -251,7 +266,7 @@ hook_readv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_readv(fd, iov, iovcnt));
     }
-    return syscall_no_intercept(SYS_readv, fd, iov, iovcnt);
+    return syscall_no_intercept_wrapper(SYS_readv, fd, iov, iovcnt);
 }
 
 int
@@ -267,7 +282,7 @@ hook_preadv(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_preadv(fd, iov, iovcnt, pos_l));
     }
-    return syscall_no_intercept(SYS_preadv, fd, iov, iovcnt, pos_l);
+    return syscall_no_intercept_wrapper(SYS_preadv, fd, iov, iovcnt, pos_l);
 }
 
 int
@@ -279,7 +294,7 @@ hook_write(unsigned int fd, const char* buf, size_t count) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_write(fd, buf, count));
     }
-    return syscall_no_intercept(SYS_write, fd, buf, count);
+    return syscall_no_intercept_wrapper(SYS_write, fd, buf, count);
 }
 
 int
@@ -293,7 +308,7 @@ hook_pwrite(unsigned int fd, const char* buf, size_t count, loff_t pos) {
     }
     /* Since kernel 2.6: pread() became pread64(), and pwrite() became
      * pwrite64(). */
-    return syscall_no_intercept(SYS_pwrite64, fd, buf, count, pos);
+    return syscall_no_intercept_wrapper(SYS_pwrite64, fd, buf, count, pos);
 }
 
 int
@@ -305,7 +320,7 @@ hook_writev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_writev(fd, iov, iovcnt));
     }
-    return syscall_no_intercept(SYS_writev, fd, iov, iovcnt);
+    return syscall_no_intercept_wrapper(SYS_writev, fd, iov, iovcnt);
 }
 
 int
@@ -321,7 +336,7 @@ hook_pwritev(unsigned long fd, const struct iovec* iov, unsigned long iovcnt,
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_pwritev(fd, iov, iovcnt, pos_l));
     }
-    return syscall_no_intercept(SYS_pwritev, fd, iov, iovcnt, pos_l);
+    return syscall_no_intercept_wrapper(SYS_pwritev, fd, iov, iovcnt, pos_l);
 }
 
 int
@@ -339,11 +354,12 @@ hook_unlinkat(int dirfd, const char* cpath, int flags) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_unlinkat, dirfd, cpath, flags);
+            return syscall_no_intercept_wrapper(SYS_unlinkat, dirfd, cpath,
+                                                flags);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_unlinkat, dirfd, resolved.c_str(),
-                                        flags);
+            return syscall_no_intercept_wrapper(SYS_unlinkat, dirfd,
+                                                resolved.c_str(), flags);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -378,12 +394,12 @@ hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
             CTX->relativize_fd_path(newdfd, newname, newname_resolved, false);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd,
-                                        newname);
+            return syscall_no_intercept_wrapper(SYS_symlinkat, oldname, newdfd,
+                                                newname);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_symlinkat, oldname, newdfd,
-                                        newname_resolved.c_str());
+            return syscall_no_intercept_wrapper(SYS_symlinkat, oldname, newdfd,
+                                                newname_resolved.c_str());
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -412,7 +428,7 @@ hook_access(const char* path, int mask) {
         }
         return ret;
     }
-    return syscall_no_intercept(SYS_access, rel_path.c_str(), mask);
+    return syscall_no_intercept_wrapper(SYS_access, rel_path.c_str(), mask);
 }
 
 int
@@ -425,11 +441,12 @@ hook_faccessat(int dirfd, const char* cpath, int mode) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_faccessat, dirfd, cpath, mode);
+            return syscall_no_intercept_wrapper(SYS_faccessat, dirfd, cpath,
+                                                mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_faccessat, dirfd, resolved.c_str(),
-                                        mode);
+            return syscall_no_intercept_wrapper(SYS_faccessat, dirfd,
+                                                resolved.c_str(), mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -460,7 +477,7 @@ hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
         LOG(DEBUG, "{}() returning {}", __func__, off_ret);
         return off_ret;
     }
-    return syscall_no_intercept(SYS_lseek, fd, offset, whence);
+    return syscall_no_intercept_wrapper(SYS_lseek, fd, offset, whence);
 }
 
 int
@@ -472,7 +489,7 @@ hook_truncate(const char* path, long length) {
     if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_truncate(rel_path, length));
     }
-    return syscall_no_intercept(SYS_truncate, rel_path.c_str(), length);
+    return syscall_no_intercept_wrapper(SYS_truncate, rel_path.c_str(), length);
 }
 
 int
@@ -484,7 +501,7 @@ hook_ftruncate(unsigned int fd, unsigned long length) {
         auto path = CTX->file_map()->get(fd)->path();
         return with_errno(gkfs::syscall::gkfs_truncate(path, length));
     }
-    return syscall_no_intercept(SYS_ftruncate, fd, length);
+    return syscall_no_intercept_wrapper(SYS_ftruncate, fd, length);
 }
 
 int
@@ -495,7 +512,7 @@ hook_dup(unsigned int fd) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_dup(fd));
     }
-    return syscall_no_intercept(SYS_dup, fd);
+    return syscall_no_intercept_wrapper(SYS_dup, fd);
 }
 
 int
@@ -506,7 +523,7 @@ hook_dup2(unsigned int oldfd, unsigned int newfd) {
     if(CTX->file_map()->exist(oldfd)) {
         return with_errno(gkfs::syscall::gkfs_dup2(oldfd, newfd));
     }
-    return syscall_no_intercept(SYS_dup2, oldfd, newfd);
+    return syscall_no_intercept_wrapper(SYS_dup2, oldfd, newfd);
 }
 
 int
@@ -521,7 +538,7 @@ hook_dup3(unsigned int oldfd, unsigned int newfd, int flags) {
         LOG(WARNING, "{}() Not supported", __func__);
         return -ENOTSUP;
     }
-    return syscall_no_intercept(SYS_dup3, oldfd, newfd, flags);
+    return syscall_no_intercept_wrapper(SYS_dup3, oldfd, newfd, flags);
 }
 
 int
@@ -533,7 +550,7 @@ hook_getdents(unsigned int fd, struct linux_dirent* dirp, unsigned int count) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_getdents(fd, dirp, count));
     }
-    return syscall_no_intercept(SYS_getdents, fd, dirp, count);
+    return syscall_no_intercept_wrapper(SYS_getdents, fd, dirp, count);
 }
 
 
@@ -547,7 +564,7 @@ hook_getdents64(unsigned int fd, struct linux_dirent64* dirp,
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_getdents64(fd, dirp, count));
     }
-    return syscall_no_intercept(SYS_getdents64, fd, dirp, count);
+    return syscall_no_intercept_wrapper(SYS_getdents64, fd, dirp, count);
 }
 
 
@@ -561,11 +578,12 @@ hook_mkdirat(int dirfd, const char* cpath, mode_t mode) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_mkdirat, dirfd, resolved.c_str(),
-                                        mode);
+            return syscall_no_intercept_wrapper(SYS_mkdirat, dirfd,
+                                                resolved.c_str(), mode);
 
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_mkdirat, dirfd, cpath, mode);
+            return syscall_no_intercept_wrapper(SYS_mkdirat, dirfd, cpath,
+                                                mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -590,11 +608,12 @@ hook_fchmodat(int dirfd, const char* cpath, mode_t mode) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_fchmodat, dirfd, cpath, mode);
+            return syscall_no_intercept_wrapper(SYS_fchmodat, dirfd, cpath,
+                                                mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_fchmodat, dirfd, resolved.c_str(),
-                                        mode);
+            return syscall_no_intercept_wrapper(SYS_fchmodat, dirfd,
+                                                resolved.c_str(), mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -618,7 +637,7 @@ hook_fchmod(unsigned int fd, mode_t mode) {
         LOG(WARNING, "{}() operation not supported", __func__);
         return -ENOTSUP;
     }
-    return syscall_no_intercept(SYS_fchmod, fd, mode);
+    return syscall_no_intercept_wrapper(SYS_fchmod, fd, mode);
 }
 
 int
@@ -681,7 +700,7 @@ hook_fchdir(unsigned int fd) {
             return -(se.code().value());
         }
     } else {
-        long ret = syscall_no_intercept(SYS_fchdir, fd);
+        long ret = syscall_no_intercept_wrapper(SYS_fchdir, fd);
         if(ret < 0) {
             throw std::system_error(
                     syscall_error_code(ret), std::system_category(),
@@ -719,12 +738,12 @@ hook_readlinkat(int dirfd, const char* cpath, char* buf, int bufsiz) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, false);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_readlinkat, dirfd, cpath, buf,
-                                        bufsiz);
+            return syscall_no_intercept_wrapper(SYS_readlinkat, dirfd, cpath,
+                                                buf, bufsiz);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_readlinkat, dirfd, resolved.c_str(),
-                                        buf, bufsiz);
+            return syscall_no_intercept_wrapper(SYS_readlinkat, dirfd,
+                                                resolved.c_str(), buf, bufsiz);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -746,7 +765,7 @@ hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
         arg);
 
     if(!CTX->file_map()->exist(fd)) {
-        return syscall_no_intercept(SYS_fcntl, fd, cmd, arg);
+        return syscall_no_intercept_wrapper(SYS_fcntl, fd, cmd, arg);
     }
     int ret;
     switch(cmd) {
@@ -864,8 +883,8 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -EINVAL;
     }
 
-    return syscall_no_intercept(SYS_renameat2, olddfd, oldpath_pass, newdfd,
-                                newpath_pass, flags);
+    return syscall_no_intercept_wrapper(SYS_renameat2, olddfd, oldpath_pass,
+                                        newdfd, newpath_pass, flags);
 }
 
 int
@@ -878,7 +897,7 @@ hook_statfs(const char* path, struct statfs* buf) {
     if(CTX->relativize_path(path, rel_path)) {
         return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
-    return syscall_no_intercept(SYS_statfs, rel_path.c_str(), buf);
+    return syscall_no_intercept_wrapper(SYS_statfs, rel_path.c_str(), buf);
 }
 
 int
@@ -889,7 +908,7 @@ hook_fstatfs(unsigned int fd, struct statfs* buf) {
     if(CTX->file_map()->exist(fd)) {
         return with_errno(gkfs::syscall::gkfs_statfs(buf));
     }
-    return syscall_no_intercept(SYS_fstatfs, fd, buf);
+    return syscall_no_intercept_wrapper(SYS_fstatfs, fd, buf);
 }
 
 /* The function should broadcast a flush message (pmem_persist i.e.) if the
@@ -904,7 +923,7 @@ hook_fsync(unsigned int fd) {
         return 0;
     }
 
-    return syscall_no_intercept(SYS_fsync, fd);
+    return syscall_no_intercept_wrapper(SYS_fsync, fd);
 }
 
 } // namespace gkfs::hook

@@ -84,6 +84,7 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
     const long args[gkfs::syscall::MAX_ARGS] = {arg0, arg1, arg2,
                                                 arg3, arg4, arg5};
 #endif
+    int syserror = 0;
 
     LOG(SYSCALL,
         gkfs::syscall::from_internal_code | gkfs::syscall::to_hook |
@@ -96,9 +97,12 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
             *result = syscall_no_intercept(
                     syscall_number, reinterpret_cast<char*>(arg0),
                     static_cast<int>(arg1), static_cast<mode_t>(arg2));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
+            } else {
+                *result = -syserror;
             }
 
             break;
@@ -107,9 +111,12 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
             *result = syscall_no_intercept(
                     syscall_number, reinterpret_cast<const char*>(arg0),
                     O_WRONLY | O_CREAT | O_TRUNC, static_cast<mode_t>(arg1));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
+            } else {
+                *result = -syserror;
             }
 
             break;
@@ -119,19 +126,24 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
                     syscall_number, static_cast<int>(arg0),
                     reinterpret_cast<const char*>(arg1), static_cast<int>(arg2),
                     static_cast<mode_t>(arg3));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
+            } else {
+                *result = -syserror;
             }
-
             break;
 
         case SYS_epoll_create:
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<int>(arg0));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
+            } else {
+                *result = -syserror;
             }
 
             break;
@@ -139,9 +151,12 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
         case SYS_epoll_create1:
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<int>(arg0));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
+            } else {
+                *result = -syserror;
             }
 
             break;
@@ -149,8 +164,9 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
         case SYS_dup:
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<unsigned int>(arg0));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
             }
 
@@ -160,8 +176,9 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<unsigned int>(arg0),
                                            static_cast<unsigned int>(arg1));
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0) {
+            if(syserror == 0) {
                 *result = CTX->register_internal_fd(*result);
             }
 
@@ -172,7 +189,11 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
                     syscall_number, static_cast<unsigned int>(arg0),
                     static_cast<unsigned int>(arg1), static_cast<int>(arg2));
 
-            if(*result >= 0) {
+            syserror = syscall_error_code(*result);
+
+            if(syserror == 0) {
+
+
                 *result = CTX->register_internal_fd(*result);
             }
 
@@ -370,18 +391,24 @@ hook_internal(long syscall_number, long arg0, long arg1, long arg2, long arg3,
             *result =
                     syscall_no_intercept(syscall_number, static_cast<int>(arg0),
                                          static_cast<int>(arg1), arg2);
+            syserror = syscall_error_code(*result);
 
-            if(*result >= 0 && (static_cast<int>(arg1) == F_DUPFD ||
-                                static_cast<int>(arg1) == F_DUPFD_CLOEXEC)) {
-                *result = CTX->register_internal_fd(*result);
+            if(syserror == 0) {
+
+
+                if((static_cast<int>(arg1) == F_DUPFD ||
+                    static_cast<int>(arg1) == F_DUPFD_CLOEXEC)) {
+                    *result = CTX->register_internal_fd(*result);
+                }
             }
             break;
 
         case SYS_close:
             *result = syscall_no_intercept(syscall_number,
                                            static_cast<int>(arg0));
+            syserror = syscall_error_code(*result);
 
-            if(*result == 0) {
+            if(syserror == 0) {
                 CTX->unregister_internal_fd(arg0);
             }
             break;
