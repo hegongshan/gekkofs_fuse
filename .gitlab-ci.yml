@@ -129,6 +129,7 @@ gkfs:integration:
     ## capture coverage information
     - cd ${BUILD_PATH}
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --verbose
           --capture integration_${SUBTEST}
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
@@ -171,6 +172,7 @@ gkfwd:integration:
     ## capture coverage information
     - cd ${BUILD_PATH}
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --verbose
           --capture integration_${SUBTEST}
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
@@ -205,6 +207,7 @@ gkfs:unit:
 
     ## capture coverage information
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --verbose
           --capture unit
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
@@ -228,6 +231,7 @@ coverage:
     - cd ${BUILD_PATH}
     ## merge the partial coverage files from each test in the pipeline
     - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+          --verbose
           --merge
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
