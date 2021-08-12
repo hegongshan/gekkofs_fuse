@@ -5,16 +5,13 @@ stages:
   - report
 
 variables:
-  DEPS_SRC_PATH:                "${CI_PROJECT_DIR}/deps/src"
-  DEPS_INSTALL_PATH:            "${CI_PROJECT_DIR}/deps/install"
-  DEPS_COMMIT:                  "${CI_PROJECT_DIR}/deps/install/gkfs_deps_commit"
+  SCRIPTS_DIR:                  "${CI_PROJECT_DIR}/scripts"
+  CI_SCRIPTS_DIR:               "${CI_PROJECT_DIR}/scripts/ci"
   BUILD_PATH:                   "${CI_PROJECT_DIR}/gkfs/build"
   INSTALL_PATH:                 "${CI_PROJECT_DIR}/gkfs/install"
   INTEGRATION_TESTS_BIN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
-  INTEGRATION_TESTS_RUN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/run"
-  TESTS_BUILD_PATH:             "${CI_PROJECT_DIR}/test/build"
+  COVERAGE_PATH:                "${CI_PROJECT_DIR}/gkfs/build/.coverage"
   PYTEST:                       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
-  LOG_PATH:                     "${CI_PROJECT_DIR}/logs"
   LD_LIBRARY_PATH:              "${CI_PROJECT_DIR}/deps/install/lib:${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
   GKFS_LOG_LEVEL:               "100"
@@ -34,7 +31,10 @@ check format:
   image: gekkofs/linter:0.8.0
   needs: []
   script:
-    - ${CI_PROJECT_DIR}/scripts/check_format.sh -s "${CI_PROJECT_DIR}/src" -i "${CI_PROJECT_DIR}/include" -v
+    - ${SCRIPTS_DIR}/check_format.sh
+      -s "${CI_PROJECT_DIR}/src"
+      -i "${CI_PROJECT_DIR}/include"
+      -v
 
 
 ################################################################################
@@ -54,22 +54,15 @@ gkfs:
       -DGKFS_ENABLE_CODE_COVERAGE:BOOL=ON
       -DGKFS_BUILD_TESTS:BOOL=ON
       -DGKFS_INSTALL_TESTS:BOOL=ON
-      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
-    - find ${BUILD_PATH} -name "*.o" -delete
-    # cleanup nlohmann_json: it includes around 500MiB of test data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/test/data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/benchmarks/data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/.git
+    # reduce artifacts size
+    - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
   artifacts:
     paths:
       - ${BUILD_PATH}
       - ${INSTALL_PATH}
-    exclude:
-      # remove object files
-      - ${BUILD_PATH}/**/*.o
 
 gkfwd:
   stage: build
@@ -87,22 +80,15 @@ gkfwd:
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DGKFS_ENABLE_FORWARDING:BOOL=ON
       -DGKFS_ENABLE_AGIOS:BOOL=ON
-      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
-    - find ${BUILD_PATH} -name "*.o" -delete
-    # cleanup nlohmann_json: it includes around 500MiB of test data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/test/data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/benchmarks/data
-    - rm -rf ${BUILD_PATH}/_deps/nlohmann_json-src/.git
+    # reduce artifacts size
+    - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
   artifacts:
     paths:
       - ${BUILD_PATH}
       - ${INSTALL_PATH}
-    exclude:
-      # remove object files
-      - ${BUILD_PATH}/**/*.o
 
 
 ################################################################################
@@ -121,19 +107,22 @@ gkfs:integration:
 
   script:
     ## run tests
+    - mkdir -p ${BUILD_PATH}/tests/run
     - cd ${BUILD_PATH}/tests/integration
     - ${PYTEST} -v -n $(nproc)
           ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
+          --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml
 
     ## capture coverage information
     - cd ${BUILD_PATH}
-    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+    - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --capture integration_${SUBTEST}
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
-          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
+          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
+          --log-file "${COVERAGE_PATH}/partial/integration_${SUBTEST}/capture.log"
 
   # fix relative paths so that GitLab can find the correct files
   after_script:
@@ -146,7 +135,6 @@ gkfs:integration:
     expire_in: 1 week
     when: always
     paths:
-      - /tmp/
       - ${BUILD_PATH}
     reports:
       junit: ${BUILD_PATH}/tests/integration/report.xml
@@ -164,19 +152,22 @@ gkfwd:integration:
 
   script:
     ## run tests
+    - mkdir -p ${BUILD_PATH}/tests/run
     - cd ${BUILD_PATH}/tests/integration
     - ${PYTEST} -v -n $(nproc)
           ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
+          --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml
 
     ## capture coverage information
     - cd ${BUILD_PATH}
-    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+    - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --capture integration_${SUBTEST}
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
-          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
+          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
+          --log-file "${COVERAGE_PATH}/partial/integration_${SUBTEST}/capture.log"
 
   # fix relative paths so that GitLab can find the correct files
   after_script:
@@ -189,7 +180,6 @@ gkfwd:integration:
     expire_in: 1 week
     when: always
     paths:
-      - /tmp/
       - ${BUILD_PATH}
     reports:
       junit: ${BUILD_PATH}/tests/integration/report.xml
@@ -206,12 +196,13 @@ gkfs:unit:
     - ctest -j $(nproc) -L unit::all --output-junit report.xml
 
     ## capture coverage information
-    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+    - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --capture unit
           --root-dir ${CI_PROJECT_DIR}
           --build-dir ${BUILD_PATH}
-          --exclusions "${CI_PROJECT_DIR}/scripts/ci/.coverage-exclusions"
+          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
+          --log-file "${COVERAGE_PATH}/partial/unit/capture.log"
   artifacts:
     expire_in: 1 week
     paths:
@@ -230,7 +221,7 @@ coverage:
   script:
     - cd ${BUILD_PATH}
     ## merge the partial coverage files from each test in the pipeline
-    - ${CI_PROJECT_DIR}/scripts/ci/coverage.sh
+    - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --merge
           --root-dir ${CI_PROJECT_DIR}
