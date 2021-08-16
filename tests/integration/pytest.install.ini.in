@@ -15,3 +15,4 @@
 testpaths = @CMAKE_INSTALL_FULL_DATAROOTDIR@/gkfs/tests
 addopts = --bin-dir=@CMAKE_INSTALL_FULL_BINDIR@ --bin-dir=@CMAKE_INSTALL_FULL_LIBDIR@ --lib-dir=@CMAKE_INSTALL_FULL_LIBDIR@ --interface=@GKFS_TESTS_INTERFACE@
 enable_assertion_pass_hook = true
+junit_family = xunit1

@@ -30,46 +30,29 @@
 PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_DIR="${PATCH_DIR}/patches"
 DEPENDENCY=""
-NA_LAYER=""
 CORES=""
-SOURCE=""
-INSTALL=""
-DEP_CONFIG=""
+SOURCE_DIR=""
+INSTALL_DIR=""
+PERFORM_TEST=
 
-VALID_DEP_OPTIONS="mogon2 mogon1 ngio direct all ci"
-
-MOGON1_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "verbs"
-)
-
-MOGON2_DEPS=(
-    "bzip2" "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "psm2"
-)
-
-NGIO_DEPS=(
-    "zstd" "lz4" "snappy" "capstone" "ofi" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "agios" "psm2"
-)
-
-DIRECT_DEPS=(
-  "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
-)
-
-ALL_DEPS=(
-    "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi" "ofi" "mercury" "argobots" "margo" "rocksdb"
-     "syscall_intercept" "date" "agios"
-)
-
-CI_DEPS=(
-    "ofi" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios"
-)
+DEFAULT_PROFILE="default"
+DEFAULT_VERSION="latest"
+PROFILE_NAME=${DEFAULT_PROFILE}
+PROFILE_VERSION=${DEFAULT_VERSION}
+PROFILES_DIR="${PWD}/profiles"
+declare -a PROFILE_DEP_LIST
+declare -A PROFILE_DEP_NAMES
+declare -A PROFILE_WGETDEPS PROFILE_CLONEDEPS PROFILE_SOURCES PROFILE_EXTRA_INSTALL_ARGS
+declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
 usage_short() {
 	echo "
-usage: compile_dep.sh [-h] [-l] [-n <NAPLUGIN>] [-c <CONFIG>] [-d <DEPENDENCY>] [-j <COMPILE_CORES>]
-                      source_path install_path
+usage: compile_dep.sh [-h]
+                      [-l [PROFILE_NAME:[VERSION]]]
+                      [-p PROFILE_NAME[:VERSION]]
+                      [-d DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
+                      [-j COMPILE_CORES]
+                      SOURCES_PATH INSTALL_PATH
 	"
 }
 
@@ -80,87 +63,191 @@ help_msg() {
 This script compiles all GekkoFS dependencies (excluding the fs itself)
 
 positional arguments:
-    source_path 	path to the cloned dependencies path from clone_dep.sh
-    install_path    path to the install path of the compiled dependencies
+    SOURCES_PATH    path to the downloaded sources for the dependencies
+    INSTALL_PATH    path to the installation directory for the built dependencies
 
 
 optional arguments:
     -h, --help  shows this help message and exits
     -l, --list-dependencies
                 list dependencies available for building and installation
-    -n <NAPLUGIN>, --na <NAPLUGIN>
-                network layer that is used for communication. Valid: {bmi,ofi,all}
-                defaults to 'all'
-    -c <CONFIG>, --config <CONFIG>
-                allows additional configurations, e.g., for specific clusters
-                supported values: {mogon1, mogon2, ngio, direct, all, ci}
-                defaults to 'direct'
-    -d <DEPENDENCY>, --dependency <DEPENDENCY>
-                download a specific dependency and ignore --config setting. If unspecified
-                all dependencies are built and installed based on set --config setting.
-                Multiple dependencies are supported: Pass a space-separated string (e.g., \"ofi mercury\"
-    -j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
+    -p, --profile PROFILE_NAME[:VERSION]
+                allows installing a pre-defined set of dependencies as defined
+                in ${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to
+                deploy specific library versions and/or configurations,
+                using a recognizable name. Optionally, PROFILE_NAME may include
+                a specific version for the profile, e.g. 'mogon2:latest' or
+                'ngio:0.8.0', which will download the dependencies defined for
+                that specific version. If unspecified, the 'default:latest' profile
+                will be used, which should include all the possible dependencies.
+    -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
+                build and install a specific dependency, ignoring any --profile
+                option provided. If PROFILE_NAME is unspecified, the 'default'
+                profile will be used. Similarly, if VERSION is unspecified, the
+                'latest' version of the specified profile will be used.
+    -j, --compilecores COMPILE_CORES
                 number of cores that are used to compile the dependencies
                 defaults to number of available cores
     -t, --test  Perform libraries tests.
 "
 }
 
-list_dependencies() {
+list_versions() {
 
-    echo "Available dependencies: "
+    if [[ ! -d "${PROFILES_DIR}" ]]; then
+        echo "Directory '${PROFILES_DIR}' does not exist. No profiles available."
+        exit 1
+    fi
 
-    echo -n "  Mogon 1: "
-    for d in "${MOGON1_DEPS[@]}"; do
-        echo -n "$d "
+    declare -A versions
+
+    while IFS= read -r -d '' filename; do
+        id="$(basename $(dirname ${filename}))"
+        profile="$(basename ${filename%%.specs})"
+
+        versions[$id]+="${profile} "
+    done < <(find -L "${PROFILES_DIR}" -type f -name "*.specs" -print0 | sort -z)
+
+    echo -e "Available versions and configuration profiles:\n"
+
+    for id in "${!versions[@]}"; do
+        echo "  ${id}:"
+        echo -e "    ${versions[${id}]}\n"
     done
-	echo
-    echo -n "  Mogon 2: "
-    for d in "${MOGON2_DEPS[@]}"; do
-        echo -n "$d "
-    done
-	echo
-    echo -n "  NGIO: "
-    for d in "${NGIO_DEPS[@]}"; do
-        echo -n "$d "
-    done
-	echo
-    echo -n "  Direct GekkoFS dependencies: "
-    for d in "${DIRECT_DEPS[@]}"; do
-        echo -n "$d "
-    done
-	echo
-    echo -n "  All: "
-    for d in "${ALL_DEPS[@]}"; do
-        echo -n "$d "
-    done
-    echo
-    echo -n "  ci: "
-    for d in "${CI_DEPS[@]}"; do
-        echo -n "$d "
-    done
-	echo
+
+    exit 0
 }
 
-check_dependency() {
-  local DEP=$1
-  shift
-  local DEP_CONFIG=("$@")
-  # ignore template when specific dependency is set
-  if [[ -n "${DEPENDENCY}" ]]; then
-      # check if specific dependency was set and return from function
-      if echo "${DEPENDENCY}" | grep -q "${DEP}"; then
-        return
-      fi
-  else
-      # if not check if dependency is part of dependency config
-      for e in "${DEP_CONFIG[@]}"; do
-        if [[ "${DEP}" == "${e}" ]]; then
-          return
+list_profiles() {
+
+    local TAG=$1
+
+    if [[ "$TAG" =~ ^(.*):(.*)$ ]]; then
+        PROFILE="${BASH_REMATCH[1]}.specs"
+
+        if [[ -n ${BASH_REMATCH[2]} ]]; then
+            VERSION="${BASH_REMATCH[2]}"
+        else
+            VERSION="latest"
         fi
-      done
-  fi
-  false
+
+    else
+        VERSION="${TAG}"
+    fi
+
+    if [[ ! -d "${PROFILES_DIR}" ]]; then
+        echo "Directory '${PROFILES_DIR}' does not exist. No configuration profiles found."
+        exit 1
+    fi
+
+    if [[ ! -d "${PROFILES_DIR}/${VERSION}" ]]; then
+        echo "Version ${VERSION} does not exist. No configuration profiles found."
+        exit 1
+    fi
+
+    echo -e "Configuration profiles for '${VERSION}':\n"
+
+    find "${PROFILES_DIR}/${VERSION}/${PROFILE}" -type f -name "*.specs" -print0 | sort -z | while IFS= read -r -d '' filename; do
+        basename=$(basename "${filename}")
+        version=$(basename $(dirname "${filename}"))
+        profile="${basename%.*}"
+
+        echo "* ${profile}:${version} (${filename})"
+
+        source "${filename}"
+
+        if [[ -n "${comment}" ]]; then
+            echo -e "\n  ${comment}\n"
+        fi
+
+        for d in "${order[@]}";
+        do
+            if [[ -n ${wgetdeps[${d}]} ]]; then
+                echo "    ${d}: ${wgetdeps[${d}]}"
+            elif [[ -n ${clonedeps[${d}]} ]]; then
+                echo "    ${d}: ${clonedeps[${d}]}"
+            else
+                echo "    ${d}: ???"
+            fi
+        done
+
+        echo ""
+
+        unset wgetdeps
+        unset clonedeps
+        unset clonedeps_args
+        unset clonedeps_patches
+        unset comment
+        unset order
+    done
+    exit 0
+
+}
+
+load_profile() {
+
+    local profile=$1
+    local version=$2
+    shift
+
+    # make sure we are in a known state
+    PROFILE_DEP_NAMES=()
+    PROFILE_DEP_LIST=()
+    PROFILE_CLONEDEPS=()
+    PROFILE_CLONEDEPS_ARGS=()
+    PROFILE_CLONEDEPS_PATCHES=()
+    PROFILE_WGETDEPS=()
+
+    local filename="${PROFILES_DIR}/${version}/${profile}.specs"
+
+    if [[ ! -f "${filename}" ]]; then
+        echo "Profile '${profile}:${version}' does not exist."
+        exit 1
+    fi
+
+    source "${filename}"
+
+    # some checks
+    if [[ -z "${wgetdeps[*]}" && -z "${clonedeps[*]}" ]]; then
+        echo "Profile '${profile}' is invalid."
+        exit 1
+    fi
+
+    if [[ -z "${order[*]}" ]]; then
+        echo "Profile '${profile}' is invalid."
+        exit 1
+    fi
+
+    if [[ "$((${#wgetdeps[@]}+${#clonedeps[@]}))" -ne "${#order[@]}" ]]; then
+        echo "Profile '${profile}' is invalid."
+        exit 1
+    fi
+
+    # propagate results outside of function
+    for i in "${!order[@]}"; do
+        PROFILE_DEP_LIST[$i]="${order[${i}]}"
+        PROFILE_DEP_NAMES["${order[$i]}"]="$i"
+    done
+
+    for k in "${!clonedeps[@]}"; do
+        PROFILE_CLONEDEPS["${k}"]="${clonedeps[${k}]}"
+    done
+
+    for k in "${!clonedeps_args[@]}"; do
+        PROFILE_CLONEDEPS_ARGS["${k}"]="${clonedeps_args[${k}]}"
+    done
+
+    for k in "${!clonedeps_patches[@]}"; do
+        PROFILE_CLONEDEPS_PATCHES["${k}"]="${clonedeps_patches[${k}]}"
+    done
+
+    for k in "${!wgetdeps[@]}"; do
+        PROFILE_WGETDEPS["${k}"]="${wgetdeps[${k}]}"
+    done
+
+    for k in "${!extra_install_args[@]}"; do
+        PROFILE_EXTRA_INSTALL_ARGS["${k}"]="${extra_install_args["${k}"]}"
+    done
 }
 
 prepare_build_dir() {
@@ -180,35 +267,72 @@ find_cmake() {
     echo "${CMAKE}"
 }
 
+
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
     key="$1"
 
     case ${key} in
-    -n | --na)
-        NA_LAYER="$2"
-        shift # past argument
-        shift # past value
-        ;;
-    -c | --config)
+    -p | --profile)
         if [[ -z "$2" ]]; then
-            echo "ERROR: Missing argument for -c/--config option"
+            echo "ERROR: Missing argument for -p/--profile option"
             exit 1
         fi
-        if ! echo "$VALID_DEP_OPTIONS" | grep -q "$2"; then
-            echo "ERROR: Invalid argument for -c/--config option"
-            exit 1
+
+        if [[ "$2" =~ ^(.*):(.*)$ ]]; then
+            PROFILE_NAME="${BASH_REMATCH[1]}"
+            PROFILE_VERSION="${BASH_REMATCH[2]}"
+        else
+            PROFILE_NAME="$2"
+            PROFILE_VERSION="${DEFAULT_VERSION}"
         fi
-        TMP_DEP_CONF="$2"
+
         shift # past argument
         shift # past value
         ;;
     -d | --dependency)
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -d/--dependency option"
             exit
         fi
-        DEPENDENCY="$2"
+
+        PROFILE_NAME=${DEFAULT_PROFILE}
+        PROFILE_VERSION=${DEFAULT_VERSION}
+
+        # e.g. mercury@mogon1:latest
+        if [[ "$2" =~ ^(.*)@(.*):(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}" ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[3]}" ]]; then
+                PROFILE_VERSION="${BASH_REMATCH[3]}"
+            fi
+
+        # e.g. mercury@mogon1
+        elif [[ "$2" =~ ^(.*)@(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}"  ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+        # e.g. mercury
+        else
+            DEPENDENCY="$2"
+        fi
+
+        if [[ ! -n "${DEPENDENCY}" ]]; then
+            echo "ERROR: Missing dependency name."
+            exit 1
+        fi
+
         shift # past argument
         shift # past value
         ;;
@@ -222,7 +346,11 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     -l | --list-dependencies)
-        list_dependencies
+        if [[ -z "$2" ]]; then
+            list_versions
+        else
+            list_profiles "$2"
+        fi
         exit
         ;;
     -h | --help)
@@ -244,14 +372,11 @@ if [[ (-z ${1+x}) || (-z ${2+x}) ]]; then
     usage_short
     exit 1
 fi
-SOURCE="$(readlink -mn "${1}")"
-INSTALL="$(readlink -mn "${2}")"
+
+SOURCE_DIR="$(readlink -mn "${1}")"
+INSTALL_DIR="$(readlink -mn "${2}")"
 
 # deal with optional arguments
-if [[ "${NA_LAYER}" == "" ]]; then
-    echo "Defaulting NAPLUGIN to 'ofi'"
-    NA_LAYER="ofi"
-fi
 if [[ "${CORES}" == "" ]]; then
     CORES=$(grep -c ^processor /proc/cpuinfo)
     echo "CORES = ${CORES} (default)"
@@ -265,253 +390,53 @@ Input must be numeric and greater than 0."
         echo CORES = "${CORES}"
     fi
 fi
-if [[ "${NA_LAYER}" == "bmi" || "${NA_LAYER}" == "ofi" || "${NA_LAYER}" == "all" ]]; then
-    echo NAPLUGIN = "${NA_LAYER}"
-else
-    echo "ERROR: No valid NA plugin selected"
-    usage_short
-    exit
-fi
-# enable predefined dependency template
-case ${TMP_DEP_CONF} in
-mogon1)
-  DEP_CONFIG=("${MOGON1_DEPS[@]}")
-  echo "'Mogon1' dependencies are compiled"
-  ;;
-mogon2)
-  DEP_CONFIG=("${MOGON2_DEPS[@]}")
-  echo "'Mogon2' dependencies are compiled"
-  ;;
-ngio)
-  DEP_CONFIG=("${NGIO_DEPS[@]}")
-  echo "'NGIO' dependencies are compiled"
-  ;;
-all)
-  DEP_CONFIG=("${ALL_DEPS[@]}")
-  echo "'All' dependencies are compiled"
-  ;;
-ci)
-  DEP_CONFIG=("${CI_DEPS[@]}")
-  echo "'CI' dependencies are compiled"
-  ;;
-direct | *)
-  DEP_CONFIG=("${DIRECT_DEPS[@]}")
-  echo "'Direct' GekkoFS dependencies are compiled (default)"
-  ;;
-esac
 
-USE_BMI="-DNA_USE_BMI:BOOL=OFF"
-USE_OFI="-DNA_USE_OFI:BOOL=OFF"
+load_profile "${PROFILE_NAME}" "${PROFILE_VERSION}"
 
 CMAKE=$(find_cmake)
 CMAKE="${CMAKE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
-echo "Source path = ${SOURCE}"
-echo "Install path = ${INSTALL}"
+echo "Sources download path = ${SOURCE_DIR}"
+echo "Installation path = ${INSTALL_DIR}"
 echo "------------------------------------"
 
-mkdir -p "${SOURCE}"
+mkdir -p "${SOURCE_DIR}"
 
 ######### From now on exits on any error ########
 set -e
 
-export CPATH="${CPATH}:${INSTALL}/include"
-export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL}/lib:${INSTALL}/lib64"
-export PKG_CONFIG_PATH="${INSTALL}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+export CPATH="${CPATH}:${INSTALL_DIR}/include"
+export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL_DIR}/lib:${INSTALL_DIR}/lib64"
+export PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
-## Third party dependencies
-
-# Set cluster dependencies first
-
-# build zstd for fast compression in rocksdb
-if check_dependency "zstd" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  zstd"
-    CURR=${SOURCE}/zstd/build/cmake
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Release ..
-    make -j"${CORES}"
-    make install
+if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
+    echo "Dependency '${DEPENDENCY}' not found in '${PROFILE_NAME}:${PROFILE_VERSION}'"
+    exit
 fi
 
-# build zlib for rocksdb
-if check_dependency "lz4" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  lz4"
-    CURR=${SOURCE}/lz4
-    cd "${CURR}"
-    make -j"${CORES}"
-    make DESTDIR="${INSTALL}" PREFIX="" install
-fi
+for dep in "${PROFILE_DEP_LIST[@]}"; do
 
-# build snappy for rocksdb
-if check_dependency "snappy" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  snappy"
-    CURR=${SOURCE}/snappy
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Release ..
-    make -j"${CORES}"
-    make install
-fi
-
-# build bzip2 for rocksdb
-if check_dependency "bzip2" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  bzip2"
-    CURR=${SOURCE}/bzip2
-    cd "${CURR}"
-    make install PREFIX="${INSTALL}"
-fi
-
-# build capstone for syscall-intercept
-if check_dependency "capstone" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  capstone"
-    CURR=${SOURCE}/capstone
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Release ..
-    make -j"${CORES}" install
-fi
-
-# build BMI
-if check_dependency "bmi" "${DEP_CONFIG[@]}"; then
-    if [[ "${NA_LAYER}" == "bmi" || "${NA_LAYER}" == "all" ]]; then
-        USE_BMI="-DNA_USE_BMI:BOOL=ON"
-        echo "############################################################ Installing:  BMI"
-        # BMI
-        CURR=${SOURCE}/bmi
-        prepare_build_dir "${CURR}"
-        cd "${CURR}"
-        ./prepare
-        cd "${CURR}"/build
-        CFLAGS="${CFLAGS} -w" ../configure --prefix="${INSTALL}" --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
-        make -j"${CORES}"
-        make install
-    fi
-fi
-
-# build ofi
-if check_dependency "ofi" "${DEP_CONFIG[@]}"; then
-    if [[ "${NA_LAYER}" == "ofi" || "${NA_LAYER}" == "all" ]]; then
-        USE_OFI="-DNA_USE_OFI:BOOL=ON"
-        echo "############################################################ Installing:  LibFabric"
-        #libfabric
-        CURR=${SOURCE}/libfabric
-        prepare_build_dir ${CURR}
-        cd ${CURR}
-        ./autogen.sh
-        cd ${CURR}/build
-        OFI_CONFIG="../configure --prefix=${INSTALL} --enable-tcp=yes"
-        if check_dependency "verbs" "${DEP_CONFIG[@]}"; then
-            OFI_CONFIG="${OFI_CONFIG} --enable-verbs=yes"
-        elif check_dependency "psm2" "${DEP_CONFIG[@]}"; then
-            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes --with-psm2-src=${SOURCE}/psm2"
-        elif check_dependency "psm2-system" "${DEP_CONFIG[@]}"; then
-            OFI_CONFIG="${OFI_CONFIG} --enable-psm2=yes"
-        fi
-         ${OFI_CONFIG}
-        make -j${CORES}
-        make install
-        [ "${PERFORM_TEST}" ] && make check
-    fi
-fi
-
-# AGIOS
-if check_dependency "agios" "${DEP_CONFIG[@]}"; then
-	echo "############################################################ Installing:  AGIOS"
-	CURR=${SOURCE}/agios
-	prepare_build_dir "${CURR}"
-	cd "${CURR}"/build
-	$CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" ..
-	make install
-fi
-
-# Mercury
-if check_dependency "mercury" "${DEP_CONFIG[@]}"; then
-
-    if [[ "${NA_LAYER}" == "bmi" || "${NA_LAYER}" == "all" ]]; then
-        USE_BMI="-DNA_USE_BMI:BOOL=ON"
+    if [[ -n "${DEPENDENCY}" && "${dep}" != "${DEPENDENCY}" ]]; then
+        continue
     fi
 
-    if [[ "${NA_LAYER}" == "ofi" || "${NA_LAYER}" == "all" ]]; then
-        USE_OFI="-DNA_USE_OFI:BOOL=ON"
+    install_script="${PROFILES_DIR}/${PROFILE_VERSION}/install/${dep}.install"
+
+    echo -e "\n\n######## Installing:  ${dep} ###############################\n"
+
+    if [[ -f "${install_script}" ]]; then
+        source "${install_script}"
+    else
+        echo "WARNING: Install script for '${dep}' not found. Skipping."
+        continue
     fi
 
-    echo "############################################################ Installing:  Mercury"
-    CURR=${SOURCE}/mercury
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig $CMAKE \
-        -DCMAKE_BUILD_TYPE:STRING=Release \
-        -DBUILD_TESTING:BOOL=ON \
-        -DMERCURY_USE_SM_ROUTING:BOOL=ON \
-        -DMERCURY_USE_SELF_FORWARD:BOOL=ON \
-        -DMERCURY_USE_CHECKSUMS:BOOL=OFF \
-        -DMERCURY_USE_BOOST_PP:BOOL=ON \
-        -DMERCURY_USE_EAGER_BULK:BOOL=ON \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
-        -DCMAKE_INSTALL_PREFIX=${INSTALL} \
-        ${USE_BMI} ${USE_OFI} \
-        ..
-    make -j"${CORES}"
-    make install
-fi
+    pkg_install
 
-# Argobots
-if check_dependency "argobots" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  Argobots"
-    CURR=${SOURCE}/argobots
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"
-    ./autogen.sh
-    cd "${CURR}"/build
-    ../configure --prefix="${INSTALL}" --enable-perf-opt --disable-checks
-    make -j"${CORES}"
-    make install
-    [ "${PERFORM_TEST}" ] && make check
-fi
+    [ "${PERFORM_TEST}" ] && pkg_check
 
-# Margo
-if check_dependency "margo" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  Margo"
-    CURR=${SOURCE}/margo
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"
-    ./prepare.sh
-    cd "${CURR}"/build
-    ../configure --prefix="${INSTALL}" PKG_CONFIG_PATH="${INSTALL}"/lib/pkgconfig CFLAGS="${CFLAGS} -Wall -O3"
-    make -j"${CORES}"
-    make install
-    [ "${PERFORM_TEST}" ] && make check
-fi
-
-# Rocksdb
-if check_dependency "rocksdb" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  Rocksdb"
-    CURR=${SOURCE}/rocksdb
-    cd "${CURR}"
-    make clean
-    USE_RTTI=1 make -j"${CORES}" static_lib
-    INSTALL_PATH="${INSTALL}" make install
-fi
-
-# syscall_intercept
-if check_dependency "syscall_intercept" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  Syscall_intercept"
-    CURR=${SOURCE}/syscall_intercept
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    $CMAKE -DCMAKE_PREFIX_PATH="${INSTALL}" -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_EXAMPLES:BOOL=OFF -DBUILD_TESTS:BOOK=OFF ..
-    make install
-fi
-
-# date
-if check_dependency "date" "${DEP_CONFIG[@]}"; then
-    echo "############################################################ Installing:  date"
-    CURR=${SOURCE}/date
-    prepare_build_dir "${CURR}"
-    cd "${CURR}"/build
-    $CMAKE -DCMAKE_INSTALL_PREFIX="${INSTALL}" -DCMAKE_CXX_STANDARD:STRING=14 -DUSE_SYSTEM_TZ_DB:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON ..
-    make install
-fi
+done
 
 echo "Done"
+
+exit 0

@@ -280,7 +280,7 @@ if (GKFS_BUILD_TESTS)
     message(STATUS "[gekkofs] Network interface for tests: ${GKFS_TESTS_INTERFACE}")
 
     message(STATUS "[gekkofs] Check for forwarding tests...")
-    if (ENABLE_FORWARDING)
+    if (GKFS_ENABLE_FORWARDING)
         set(GKFS_TESTS_FORWARDING "ON" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
     else ()
         set(GKFS_TESTS_FORWARDING "OFF" CACHE STRING "Enable I/O forwarding tests (default: OFF)")

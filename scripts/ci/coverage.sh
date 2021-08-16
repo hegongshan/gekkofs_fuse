@@ -33,6 +33,8 @@ export CCOV_BUILD_DIR="${PWD}"
 export CCOV_MODE=""
 export CCOV_CAPTURE_NAME=""
 export CCOV_EXCLUSIONS_FILE=".coverage-exclusions"
+export CCOV_LOG_FILE="/dev/stdout"
+export CCOV_VERBOSE=false
 export GCOVR_EXTRA_OPTIONS=()
 
 usage() {
@@ -64,6 +66,10 @@ Options:
                         and/or [[BUILD_DIR]] tags that will be expanded with the
                         appropriate values.
                         Defaults to .coverage-exclusions.
+  -l, --log-file LOG_FILE
+                        Redirect output to LOG_FILE.
+  -v, --verbose
+                        Increase verbosity.
 EOF
 # EOF is found above and hence cat command stops reading. This is equivalent to
 # echo but much neater when printing out.
@@ -76,8 +82,8 @@ parse_args() {
     # -l is for long options with double dash like --version
     # the comma separates different long options
     options=$(getopt -l \
-                "capture:,merge,help,root-dir:,build-dir:,exclusions:,output:" \
-                -o "cmhr:b:e:o:" -- "$@")
+        "capture:,merge,help,root-dir:,build-dir:,exclusions:,output:,log-file:,verbose" \
+        -o "cmhr:b:e:o:l:v" -- "$@")
 
     # set --:
     # If no arguments follow this option, then the positional parameters are
@@ -162,6 +168,26 @@ parse_args() {
                 export CCOV_EXCLUSIONS_FILE=$1
                 ;;
 
+            -l|--log-file)
+                shift
+
+                if [[ -z $1 ]]; then
+                    echo "Missing mandatory argument for '${opt}'."
+                    exit 1
+                fi
+
+                if [[ $1 =~ ^--.* ]]; then
+                    echo "Invalid argument '${1}' for '${opt}'."
+                    exit 1
+                fi
+
+                export CCOV_LOG_FILE=$1
+                ;;
+
+            -v|--verbose)
+                CCOV_VERBOSE=true
+                ;;
+
             --)
                 shift
                 GCOVR_EXTRA_OPTIONS="$@"
@@ -206,19 +232,24 @@ capture() {
 
     ! [[ -d "${COVERAGE_OUTPUT_DIR}" ]] && mkdir -p "${COVERAGE_OUTPUT_DIR}"
 
-    exclude_args=()
-
-    for p in "${CCOV_EXCLUSIONS[@]}";
-    do
-        exclude_args+=( "--exclude '${p}'" )
-    done
+    if [ "$CCOV_VERBOSE" = true ]; then
+        printf "Executing capture command:"
+        printf "  gcovr"
+        printf "    --root ${CCOV_ROOT_DIR}"
+        printf "    %s\n" "${CCOV_EXCLUSIONS[@]/#/--exclude=}"
+        printf "    --json"
+        printf "    --output ${COVERAGE_OUTPUT_DIR}/coverage.json"
+        printf "    --verbose"
+        printf "    %s\n" "${GCOVR_EXTRA_OPTIONS[@]}"
+    fi
 
     gcovr \
         --root "${CCOV_ROOT_DIR}" \
-        "${CCOV_EXCLUSIONS[@]/#/--exclude=/}" \
+        "${CCOV_EXCLUSIONS[@]/#/--exclude=}" \
         --json \
         --output "${COVERAGE_OUTPUT_DIR}/coverage.json" \
-        ${GCOVR_EXTRA_OPTIONS[@]}
+        --verbose \
+        ${GCOVR_EXTRA_OPTIONS[@]} > "${CCOV_LOG_FILE}" 2>&1
 
     echo "Coverage report written to ${COVERAGE_OUTPUT_DIR}/coverage.json"
 }
@@ -234,6 +265,20 @@ merge() {
     mapfile -d $'\0' tracefiles < \
         <(find "${PWD}/.coverage/partial" -name coverage.json -print0)
 
+
+    if [ "$CCOV_VERBOSE" = true ]; then
+        printf "Executing merge command:"
+        printf "  gcovr"
+        printf "    --root ${CCOV_ROOT_DIR}"
+        printf "    %s\n" "${tracefiles[@]/#/--add-tracefile=}"
+        printf "    --html-details ${COVERAGE_OUTPUT_DIR}/coverage.html"
+        printf "    --xml"
+        printf "    --output ${COVERAGE_OUTPUT_DIR}/coverage-cobertura.xml"
+        printf "    --print-summary"
+        printf "    --verbose"
+        printf "    %s\n" "${GCOVR_EXTRA_OPTIONS[@]}"
+    fi
+
     gcovr \
         --root "${CCOV_ROOT_DIR}" \
         "${tracefiles[@]/#/--add-tracefile=}" \
@@ -241,7 +286,8 @@ merge() {
         --xml \
         --output "${COVERAGE_OUTPUT_DIR}/coverage-cobertura.xml" \
         --print-summary \
-        ${GCOVR_EXTRA_OPTIONS[@]}
+        --verbose \
+        ${GCOVR_EXTRA_OPTIONS[@]} > "${CCOV_LOG_FILE}" 2>&1
 
     echo "Cobertura XML report written to ${COVERAGE_OUTPUT_DIR}/coverage-cobertura.xml"
     echo "HTML report written to ${COVERAGE_OUTPUT_DIR}/coverage.html"
