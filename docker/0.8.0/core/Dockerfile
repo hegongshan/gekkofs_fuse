@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM debian:buster-slim
 
 LABEL Description="Debian-based environment suitable to build GekkoFS and its dependencies"
 
