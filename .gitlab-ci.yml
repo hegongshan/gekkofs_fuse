@@ -63,6 +63,7 @@ gkfs:
     paths:
       - ${BUILD_PATH}
       - ${INSTALL_PATH}
+    expire_in: 1 week
 
 gkfwd:
   stage: build
@@ -89,6 +90,7 @@ gkfwd:
     paths:
       - ${BUILD_PATH}
       - ${INSTALL_PATH}
+    expire_in: 1 week
 
 
 ################################################################################
