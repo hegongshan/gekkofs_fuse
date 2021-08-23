@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM debian:buster-slim
 
 LABEL Description="Environment to generate coverage reports in GekkoFS"
 
