@@ -44,7 +44,7 @@ pkg_install() {
     CURR=${SOURCE_DIR}/rocksdb
     cd "${CURR}"
     make clean
-    USE_RTTI=1 make -j"${CORES}" static_lib
+    PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
     INSTALL_PATH="${INSTALL_DIR}" make install
 }
 
