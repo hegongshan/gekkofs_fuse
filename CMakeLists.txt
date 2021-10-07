@@ -128,8 +128,10 @@ find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
+find_package(Parallax REQUIRED)
 find_package(Threads REQUIRED)
-
+# parallax
+find_package(yaml REQUIRED)
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
 # produces a std::filesystem imported target that takes care of all these
 # details transparently
@@ -207,6 +209,7 @@ target_link_libraries(RocksDB
     # rocksdb libs
     ${LZ4_LIBRARIES}
     )
+
 
 if (${JeMalloc_FOUND})
     target_link_libraries(RocksDB

@@ -78,6 +78,8 @@ struct cli_options {
     string listen;
     string hosts_file;
     string rpc_protocol;
+    string dbbackend;
+    string kreonsize;
 };
 
 /**
@@ -245,8 +247,8 @@ init_environment() {
     GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'",
                                   __func__, metadata_path);
     try {
-        GKFS_DATA->mdb(
-                std::make_shared<gkfs::metadata::MetadataDB>(metadata_path));
+        GKFS_DATA->mdb(std::make_shared<gkfs::metadata::MetadataDB>(
+                metadata_path, GKFS_DATA->dbbackend()));
     } catch(const std::exception& e) {
         GKFS_DATA->spdlogger()->error(
                 "{}() Failed to initialize metadata DB: {}", __func__,
@@ -587,6 +589,22 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
         GKFS_DATA->metadir(GKFS_DATA->rootdir());
 #endif
     }
+
+    if(desc.count("--dbbackend")) {
+        auto dbbackend = opts.dbbackend;
+        GKFS_DATA->dbbackend(dbbackend);
+    } else
+        GKFS_DATA->dbbackend("rocksdb");
+
+    if(desc.count("--keepmd")) {
+        GKFS_DATA->kreon_keep_md(true);
+    }
+    if(desc.count("--reusemd")) {
+        GKFS_DATA->kreon_reuse_md(true);
+    }
+    if(desc.count("--kreonsize")) { // Size in GB
+        GKFS_DATA->kreon_size_md(stoi(opts.kreonsize));
+    }
 }
 
 /**
@@ -605,7 +623,6 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
  */
 int
 main(int argc, const char* argv[]) {
-    // Define arg parsing
     CLI::App desc{"Allowed options"};
     cli_options opts{};
     // clang-format off
@@ -644,6 +661,16 @@ main(int argc, const char* argv[]) {
     desc.add_flag(
                 "--clean-rootdir,-c",
                 "Cleans Rootdir >before< launching the deamon");
+    desc.add_option(
+                "--dbbackend,-d", opts.dbbackend,
+                "Database Backend to use. If not set, rocksdb is used. For parallaxdb, a file called rocksdb with 8GB is needed in metadir");
+    desc.add_flag("--keepmd", "Kreondb - Keeps metadir (default off)");
+    desc.add_flag("--reusemd",
+                    "Kreondb - Avoids initializing the metadata file, (default off)");
+    desc.add_option("--kreonsize",opts.kreonsize,
+                    "Kreondb - Metatada file size in GB (default 8), "
+                    "used only with new files");
+
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on
     try {
@@ -651,6 +678,8 @@ main(int argc, const char* argv[]) {
     } catch(const CLI::ParseError& e) {
         return desc.exit(e);
     }
+
+
     if(desc.count("--version")) {
         cout << GKFS_VERSION_STRING << endl;
 #ifndef NDEBUG

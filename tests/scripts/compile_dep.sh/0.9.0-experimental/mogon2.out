@@ -1,0 +1,14 @@
+######## Installing:  bzip2 ###############################
+######## Installing:  zstd ###############################
+######## Installing:  lz4 ###############################
+######## Installing:  snappy ###############################
+######## Installing:  capstone ###############################
+######## Installing:  libfabric%experimental ###############################
+######## Installing:  mercury ###############################
+######## Installing:  argobots ###############################
+######## Installing:  margo ###############################
+######## Installing:  rocksdb%experimental ###############################
+######## Installing:  syscall_intercept ###############################
+######## Installing:  date ###############################
+######## Installing:  psm2 ###############################
+WARNING: Install script for 'psm2' not found. Skipping.

@@ -47,10 +47,15 @@ target_sources(metadata_db
     PUBLIC
     ${INCLUDE_DIR}/daemon/backend/metadata/db.hpp
     ${INCLUDE_DIR}/daemon/backend/exceptions.hpp
+    ${INCLUDE_DIR}/daemon/backend/metadata/metadata_backend.hpp
+    ${INCLUDE_DIR}/daemon/backend/metadata/rocksdb_backend.hpp
+    ${INCLUDE_DIR}/daemon/backend/metadata/parallax_backend.hpp
     PRIVATE
     ${INCLUDE_DIR}/daemon/backend/metadata/merge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/merge.cpp
     ${CMAKE_CURRENT_LIST_DIR}/db.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/rocksdb_backend.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/parallax_backend.cpp
     )
 
 add_library(metadata_module
@@ -68,9 +73,13 @@ target_link_libraries(metadata_module
   PUBLIC
     spdlog
 )
+add_library(Parallax INTERFACE IMPORTED GLOBAL)
 
 target_link_libraries(metadata_db
-    # Required by RocksDB
+    ${PARALLAX_LIBRARY}
+    ${LOG_LIBRARY}
+    yaml   
+     # Required by RocksDB
     metadata_module
     -ldl
     metadata

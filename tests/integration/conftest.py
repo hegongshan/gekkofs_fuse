@@ -95,16 +95,33 @@ def test_workspace(tmp_path, request):
             request.config.getoption('--lib-dir'))
 
 @pytest.fixture
-def gkfs_daemon(test_workspace, request):
+def gkfs_daemon_rocksdb(test_workspace, request):
     """
     Initializes a local gekkofs daemon
     """
 
     interface = request.config.getoption('--interface')
-    daemon = Daemon(interface, test_workspace)
+    daemon = Daemon(interface, "rocksdb", test_workspace)
 
     yield daemon.run()
     daemon.shutdown()
+
+@pytest.fixture
+def gkfs_daemon_parallaxdb(test_workspace, request):
+    """
+    Initializes a local gekkofs daemon
+    """
+
+    interface = request.config.getoption('--interface')
+    daemon = Daemon(interface, "parallaxdb", test_workspace)
+
+    yield daemon.run()
+    daemon.shutdown()
+
+@pytest.fixture(params=['gkfs_daemon_rocksdb', 'gkfs_daemon_parallaxdb'])
+def gkfs_daemon(request):
+    return request.getfixturevalue(request.param)
+
 
 @pytest.fixture
 def gkfs_client(test_workspace):

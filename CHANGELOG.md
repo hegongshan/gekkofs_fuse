@@ -78,6 +78,8 @@ Note that tests still require `Boost_preprocessor`.
 ([!116](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/116)).
 - Fixed an issue where `LOG_OUTPUT_TRUNC` did not work as expected ([!118](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/118)).
 
+- Added new metadata backend, kreon.
+
 ## [0.8.0] - 2020-09-15
 ### New
 - Both client library and daemon have been extended to support the ofi+verbs

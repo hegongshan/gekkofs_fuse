@@ -25,52 +25,27 @@
 #                                                                              #
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
+find_path(PARALLAX_INCLUDE_DIR
+        NAMES parallax.h
+        )
 
-# vi: ft=bash
+find_library(PARALLAX_LIBRARY
+        NAMES parallax
+        )
 
-declare -A sources
+find_library(LOG_LIBRARY
+	NAMES log
+	)
 
-sources=(
-    ["bzip2"]="https://sourceforge.net/projects/bzip2/files/bzip2-{{VERSION}}.tar.gz"
-    ["zstd"]="https://github.com/facebook/zstd/archive/v{{VERSION}}.tar.gz"
-    ["lz4"]="https://github.com/lz4/lz4/archive/v{{VERSION}}.tar.gz"
-    ["snappy"]="https://github.com/google/snappy/archive/{{VERSION}}.tar.gz"
-    ["capstone"]="https://github.com/aquynh/capstone/archive/{{VERSION}}.tar.gz"
-    ["argobots"]="https://github.com/pmodels/argobots/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb%experimental"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["psm2"]="https://github.com/intel/opa-psm2/archive/PSM2_{{VERSION}}.tar.gz"
-    ["bmi"]="https://github.com/radix-io/bmi/"
-    ["libfabric"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%experimental"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%verbs"]="https://github.com/ofiwg/libfabric.git"
-    ["mercury"]="https://github.com/mercury-hpc/mercury"
-    ["margo"]="https://github.com/mochi-hpc/mochi-margo"
-    ["syscall_intercept"]="https://github.com/pmem/syscall_intercept.git"
-    ["date"]="https://github.com/HowardHinnant/date.git"
-    ["agios"]="https://github.com/francielizanon/agios.git"
-    ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
-    ["parallax"]="https://github.com/CARV-ICS-FORTH/parallax.git"
+set(PARALLAX_INCLUDE_DIRS ${PARALLAX_INCLUDE_DIR})
+set(PARALLAX_LIBRARIES ${PARALLAX_LIBRARY})
+set(PARALLAX_LIBRARIES ${LOG_LIBRARY})
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Parallax DEFAULT_MSG PARALLAX_LIBRARY LOG_LIBRARY PARALLAX_INCLUDE_DIR)
+
+mark_as_advanced(
+        PARALLAX_LIBRARY
+        PARALLAX_INCLUDE_DIR
+	LOG_LIBRARY
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -105,6 +105,16 @@ Options:
   --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
   -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
   --version                   Print version and exit.
+
+  --dbbackend               'rocksdb' (default) or 'kreondb' can be specified as
+                            metadata backend.
+  --keepmd                  'kreondb' specific, persist the metadata file
+                            (default off, file is deleted at the end)
+  --reusemd                 'kreondb' specific, do not recreate the 
+                            metadata file, (default re/create)
+  --kreonsize               'kreondb' specific, size of the metadata file in GB
+                            (default 16, 16 GB)
+  --version                 Print version and exit.
 ```
 
 It is possible to run multiple independent GekkoFS instances on the same node. Note, that when these GekkoFS instances
