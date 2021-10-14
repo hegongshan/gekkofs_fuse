@@ -410,6 +410,10 @@ mkdir -p "${SOURCE_DIR}"
 ## download dependencies
 for dep in "${PROFILE_DEP_NAMES[@]}"; do
 
+    if [[ -n "${DEPENDENCY}" && "${dep}" != "${DEPENDENCY}" ]]; then
+        continue
+    fi
+
     if [[ ! -z "${PROFILE_WGETDEPS[${dep}]:-}" ]]; then
 
         # dependency names can include a TAG after a colon (e.g. ofi:verbs),
