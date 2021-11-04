@@ -421,20 +421,20 @@ echo "------------------------------------"
 mkdir -p "${SOURCE_DIR}"
 
 ## download dependencies
-for dep in "${PROFILE_DEP_NAMES[@]}"; do
+for dep_name in "${PROFILE_DEP_NAMES[@]}"; do
 
-    if [[ -n "${DEPENDENCY}" && "${dep}" != "${DEPENDENCY}" ]]; then
+    if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
         continue
     fi
 
-    if [[ ! -z "${PROFILE_WGETDEPS[${dep}]:-}" ]]; then
+    if [[ ! -z "${PROFILE_WGETDEPS[${dep_name}]:-}" ]]; then
 
         # dependency names can include a TAG after a colon (e.g. ofi:verbs),
         # remove it
-        dep_id=${dep%%:*}
+        dep_id=${dep_name%%:*}
 
         # find required version for dependency
-        dep_version="${PROFILE_WGETDEPS[${dep}]}"
+        dep_version="${PROFILE_WGETDEPS[${dep_name}]}"
 
         # build URL for dependency
         dep_url="${PROFILE_SOURCES[${dep_id}]}"
@@ -448,16 +448,16 @@ for dep in "${PROFILE_DEP_NAMES[@]}"; do
 
         wgetdeps "${dep_id}" "${dep_url}" &
 
-    elif [[ ! -z "${PROFILE_CLONEDEPS[${dep}]:-}" ]]; then
+    elif [[ ! -z "${PROFILE_CLONEDEPS[${dep_name}]:-}" ]]; then
 
         # dependency names can include a TAG after a colon (e.g. ofi:verbs),
         # remove it
-        dep_id=${dep%%:*}
+        dep_id=${dep_name%%:*}
 
         dep_args=""
 
         # find required version for dependency
-        dep_version="${PROFILE_CLONEDEPS[${dep}]}"
+        dep_version="${PROFILE_CLONEDEPS[${dep_name}]}"
 
         # version may be a commit hash, a tag or something like HEAD@BRANCH_NAME
         # if it's the latter, remove the @BRANCH_NAME
@@ -477,14 +477,14 @@ for dep in "${PROFILE_DEP_NAMES[@]}"; do
         dep_url="${dep_url/\{\{VERSION\}\}/${dep_version}}"
 
         # check if extra args are required
-        dep_args+="${PROFILE_CLONEDEPS_ARGS[${dep}]}"
+        dep_args+="${PROFILE_CLONEDEPS_ARGS[${dep_name}]}"
 
-        dep_patch=${PROFILE_CLONEDEPS_PATCHES[${dep}]}
+        dep_patch=${PROFILE_CLONEDEPS_PATCHES[${dep_name}]}
 
-        clonedeps "${dep}" "${dep_url}" "${dep_version}" "${dep_args}" "${dep_patch}" &
+        clonedeps "${dep_name}" "${dep_url}" "${dep_version}" "${dep_args}" "${dep_patch}" &
 
     else
-        echo "Unknown dependency '${dep}'."
+        echo "Unknown dependency '${dep_name}'."
         exit 1
     fi
 done

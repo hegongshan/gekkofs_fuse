@@ -427,20 +427,20 @@ if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
     exit
 fi
 
-for dep in "${PROFILE_DEP_LIST[@]}"; do
+for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
-    if [[ -n "${DEPENDENCY}" && "${dep}" != "${DEPENDENCY}" ]]; then
+    if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
         continue
     fi
 
-    install_script="${PROFILES_DIR}/${PROFILE_VERSION}/install/${dep}.install"
+    install_script="${PROFILES_DIR}/${PROFILE_VERSION}/install/${dep_name}.install"
 
-    echo -e "\n\n######## Installing:  ${dep} ###############################\n"
+    echo -e "\n\n######## Installing:  ${dep_name} ###############################\n"
 
     if [[ -f "${install_script}" ]]; then
         source "${install_script}"
     else
-        echo "WARNING: Install script for '${dep}' not found. Skipping."
+        echo "WARNING: Install script for '${dep_name}' not found. Skipping."
         continue
     fi
 
