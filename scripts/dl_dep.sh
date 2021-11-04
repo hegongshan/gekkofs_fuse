@@ -32,6 +32,8 @@ COMMON_GIT_FLAGS="--quiet --single-branch -c advice.detachedHead=false"
 PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_DIR="${PATCH_DIR}/patches"
 DEPENDENCY=""
+
+EXECUTION_MODE=
 VERBOSE=false
 
 DEFAULT_PROFILE="default"
@@ -289,10 +291,9 @@ wgetdeps() {
 
 usage_short() {
     echo "
-usage: dl_dep.sh [-h]
-                 [-l [[PROFILE_NAME:]VERSION]]
-                 [-p PROFILE_NAME[:VERSION]]
-                 [-d DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
+usage: dl_dep.sh [ -p PROFILE_NAME[:PROFILE_VERSION] |
+                   -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] ]
+                 [ -l [[PROFILE_NAME:]PROFILE_VERSION] ] [ -h ]
                  DESTINATION_PATH
 	"
 }
@@ -309,24 +310,30 @@ positional arguments:
 
 optional arguments:
         -h, --help              shows this help message and exits
-        -l, --list-dependencies [[PROFILE_NAME:]VERSION]
+        -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
                                 list dependency configuration profiles available for download
-        -p, --profile PROFILE_NAME[:VERSION]
+        -p, --profile PROFILE_NAME[:PROFILE_VERSION]
                                 allows downloading a pre-defined set of dependencies as defined
-                                in ${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to 
+                                in \${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to 
                                 deploy specific library versions and/or configurations,
                                 using a recognizable name. Optionally, PROFILE_NAME may include
                                 a specific version for the profile, e.g. 'mogon2:latest' or
                                 'ngio:0.8.0', which will download the dependencies defined for
                                 that specific version. If unspecified, the 'default:latest' profile
                                 will be used, which should include all the possible dependencies.
-        -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
+        -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]]
                                 build and install a specific dependency, ignoring any --profile
                                 option provided. If PROFILE_NAME is unspecified, the 'default'
-                                profile will be used. Similarly, if VERSION is unspecified, the
-                                'latest' version of the specified profile will be used.
+                                profile will be used. Similarly, if PROFILE_VERSION is unspecified,
+                                the 'latest' version of the specified profile will be used.
         -v, --verbose           Increase download verbosity
         "
+}
+
+exec_mode_error() {
+    echo "ERROR: --profile and --dependency options are mutually exclusive"
+    usage_short
+    exit 1
 }
 
 # load default profile for now, might be overridden later
@@ -341,6 +348,9 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
     -p | --profile)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='profile'
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -p/--profile option"
             exit 1
@@ -360,6 +370,9 @@ while [[ $# -gt 0 ]]; do
         ;;
 
     -d | --dependency)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='dependency'
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -d/--dependency option"
             exit 1
