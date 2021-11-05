@@ -36,6 +36,7 @@ INSTALL_DIR=""
 PERFORM_TEST=
 
 EXECUTION_MODE=
+DRY_RUN=false
 
 DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
@@ -49,10 +50,10 @@ declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
 usage_short() {
 	echo "
-usage: compile_dep.sh [ -p PROFILE_NAME[:PROFILE_VERSION] |
-                        -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] ]
-                      [ -l [PROFILE_NAME:[PROFILE_VERSION]] ]
-                      [ -j COMPILE_CORES] [ -h ]
+usage: compile_dep.sh -p PROFILE_NAME[:PROFILE_VERSION] |
+                      -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
+                      -l [PROFILE_NAME:[PROFILE_VERSION]] | -n | -h
+                      [ -j COMPILE_CORES]
                       SOURCES_PATH INSTALL_PATH
 	"
 }
@@ -70,7 +71,7 @@ positional arguments:
 
 optional arguments:
     -h, --help  shows this help message and exits
-    -l, --list-dependencies
+    -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
                 list dependencies available for building and installation
     -p, --profile PROFILE_NAME[:PROFILE_VERSION]
                 allows installing a pre-defined set of dependencies as defined
@@ -91,6 +92,8 @@ optional arguments:
                 number of cores that are used to compile the dependencies
                 defaults to number of available cores
     -t, --test  Perform libraries tests.
+    -n, --dry-run
+                Do not actually run, print only what would be done.
 "
 }
 
@@ -371,6 +374,10 @@ while [[ $# -gt 0 ]]; do
         exit
         #shift # past argument
         ;;
+    -n | --dry-run)
+        DRY_RUN=true
+        shift
+        ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift              # past argument
@@ -438,15 +445,17 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
     echo -e "\n\n######## Installing:  ${dep_name} ###############################\n"
 
     if [[ -f "${install_script}" ]]; then
-        source "${install_script}"
+        [[ "$DRY_RUN" == true ]] || source "${install_script}"
     else
         echo "WARNING: Install script for '${dep_name}' not found. Skipping."
         continue
     fi
 
-    pkg_install
+    if [[ "$DRY_RUN" == false ]]; then
+        pkg_install
 
-    [ "${PERFORM_TEST}" ] && pkg_check
+        [ "${PERFORM_TEST}" ] && pkg_check
+    fi
 
 done
 

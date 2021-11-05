@@ -35,6 +35,7 @@ DEPENDENCY=""
 
 EXECUTION_MODE=
 VERBOSE=false
+DRY_RUN=false
 
 DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
@@ -247,19 +248,19 @@ clonedeps() {
     local ACTION
 
     if [[ -d "${SOURCE_DIR}/${FOLDER}/.git" ]]; then
-        cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q
+        [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q)
         ACTION="Pulled"
     else
-        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE_DIR}/${FOLDER}"
+        [[ "$DRY_RUN" == true ]] || (git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE_DIR}/${FOLDER}")
         ACTION="Cloned"
     fi
     # fix the version
-    cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}"
+    [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}")
     echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS}'"
 
     # apply patch if provided
     if [[ -n "${PATCH}" ]]; then
-        git apply --verbose "${PATCH_DIR}/${PATCH}"
+        [[ "$DRY_RUN" == true ]] || git apply --verbose "${PATCH_DIR}/${PATCH}"
     fi
 }
 
@@ -273,27 +274,30 @@ wgetdeps() {
 
     FOLDER=$1
     URL=$2
-    if [[ -d "${SOURCE_DIR}/${FOLDER}" ]]; then
-        # SC2115 Use "${var:?}" to ensure this never expands to /* .
-        rm -rf "${SOURCE_DIR:?}/${FOLDER:?}"
+
+    if [[ "$DRY_RUN" == false ]]; then
+        if [[ -d "${SOURCE_DIR}/${FOLDER}" ]]; then
+            # SC2115 Use "${var:?}" to ensure this never expands to /* .
+            rm -rf "${SOURCE_DIR:?}/${FOLDER:?}"
+        fi
+        mkdir -p "${SOURCE_DIR}/${FOLDER}"
+        cd "${SOURCE_DIR}"
+        FILENAME="$(basename $URL)"
+        if [[ -f "${SOURCE_DIR}/$FILENAME" ]]; then
+            rm -f "${SOURCE_DIR}/$FILENAME"
+        fi
+        curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
+        tar -xf "$FILENAME" --directory "${SOURCE_DIR}/${FOLDER}" --strip-components=1
+        rm -f "$FILENAME"
     fi
-    mkdir -p "${SOURCE_DIR}/${FOLDER}"
-    cd "${SOURCE_DIR}"
-    FILENAME="$(basename $URL)"
-    if [[ -f "${SOURCE_DIR}/$FILENAME" ]]; then
-        rm -f "${SOURCE_DIR}/$FILENAME"
-    fi
-    curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
-    tar -xf "$FILENAME" --directory "${SOURCE_DIR}/${FOLDER}" --strip-components=1
-    rm -f "$FILENAME"
     echo "Downloaded '${URL}' to '${FOLDER}'"
 }
 
 usage_short() {
     echo "
-usage: dl_dep.sh [ -p PROFILE_NAME[:PROFILE_VERSION] |
-                   -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] ]
-                 [ -l [[PROFILE_NAME:]PROFILE_VERSION] ] [ -h ]
+usage: dl_dep.sh -p PROFILE_NAME[:PROFILE_VERSION] |
+                 -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
+                 -l [[PROFILE_NAME:]PROFILE_VERSION] | -n | -h
                  DESTINATION_PATH
 	"
 }
@@ -326,6 +330,7 @@ optional arguments:
                                 option provided. If PROFILE_NAME is unspecified, the 'default'
                                 profile will be used. Similarly, if PROFILE_VERSION is unspecified,
                                 the 'latest' version of the specified profile will be used.
+        -n, --dry-run           Do not actually run, print only what would be done.
         -v, --verbose           Increase download verbosity
         "
 }
@@ -398,6 +403,10 @@ while [[ $# -gt 0 ]]; do
     -v | --verbose)
         VERBOSE=true
         shift # past argument
+        ;;
+    -n | --dry-run)
+        DRY_RUN=true
+        shift
         ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
