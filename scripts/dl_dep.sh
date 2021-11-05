@@ -41,7 +41,8 @@ DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
 PROFILES_DIR="${PWD}/profiles"
 SOURCES_FILE="${PROFILES_DIR}/sources.list"
-declare -a PROFILE_DEP_NAMES
+declare -a PROFILE_DEP_LIST
+declare -A PROFILE_DEP_NAMES
 declare -A PROFILE_WGETDEPS PROFILE_CLONEDEPS PROFILE_SOURCES
 declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
@@ -164,6 +165,7 @@ load_profile() {
 
     # make sure we are in a known state
     PROFILE_DEP_NAMES=()
+    PROFILE_DEP_LIST=()
     PROFILE_CLONEDEPS=()
     PROFILE_CLONEDEPS_ARGS=()
     PROFILE_CLONEDEPS_PATCHES=()
@@ -196,7 +198,8 @@ load_profile() {
 
     # propagate results outside of function
     for i in "${!order[@]}"; do
-        PROFILE_DEP_NAMES[$i]="${order[${i}]}"
+        PROFILE_DEP_LIST[$i]="${order[${i}]}"
+        PROFILE_DEP_NAMES["${order[$i]}"]="$i"
     done
 
     for k in "${!clonedeps[@]}"; do
@@ -369,7 +372,6 @@ while [[ $# -gt 0 ]]; do
             PROFILE_VERSION="${DEFAULT_VERSION}"
         fi
 
-        load_profile "${PROFILE_NAME}" "${PROFILE_VERSION}"
         shift # past argument
         shift # past value
         ;;
@@ -382,7 +384,43 @@ while [[ $# -gt 0 ]]; do
             echo "ERROR: Missing argument for -d/--dependency option"
             exit 1
         fi
-        DEPENDENCY="$2"
+
+        PROFILE_NAME=${DEFAULT_PROFILE}
+        PROFILE_VERSION=${DEFAULT_VERSION}
+
+        # e.g. mercury@mogon1:latest
+        if [[ "$2" =~ ^(.*)@(.*):(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}" ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[3]}" ]]; then
+                PROFILE_VERSION="${BASH_REMATCH[3]}"
+            fi
+
+        # e.g. mercury@mogon1
+        elif [[ "$2" =~ ^(.*)@(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}"  ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+        # e.g. mercury
+        else
+            DEPENDENCY="$2"
+        fi
+
+        if [[ ! -n "${DEPENDENCY}" ]]; then
+            echo "ERROR: Missing dependency name."
+            exit 1
+        fi
+
         shift # past argument
         shift # past value
         ;;
@@ -424,14 +462,22 @@ if [[ -z ${1+x} ]]; then
 fi
 SOURCE_DIR="$(readlink -mn "${1}")"
 
+load_profile "${PROFILE_NAME}" "${PROFILE_VERSION}"
+
+if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
+    echo "ERROR: '${DEPENDENCY}' not found in '${PROFILE_NAME}:${PROFILE_VERSION}'"
+    exit 1
+fi
+
 echo "Destination path is set to  \"${SOURCE_DIR}\""
 echo "------------------------------------"
 
 mkdir -p "${SOURCE_DIR}"
 
 ## download dependencies
-for dep_name in "${PROFILE_DEP_NAMES[@]}"; do
+for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
+    # in dependency mode, skip any dependencies != DEPENDENCY
     if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
         continue
     fi

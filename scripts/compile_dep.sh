@@ -431,11 +431,12 @@ export PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
     echo "Dependency '${DEPENDENCY}' not found in '${PROFILE_NAME}:${PROFILE_VERSION}'"
-    exit
+    exit 1
 fi
 
 for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
+    # in dependency mode, skip any dependencies != DEPENDENCY
     if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
         continue
     fi
