@@ -418,9 +418,11 @@ CMAKE="${CMAKE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
 echo "Sources download path = ${SOURCE_DIR}"
 echo "Installation path = ${INSTALL_DIR}"
+echo "Profile name: ${PROFILE_NAME}"
+echo "Profile version: ${PROFILE_VERSION}"
 echo "------------------------------------"
 
-mkdir -p "${SOURCE_DIR}"
+mkdir -p "${SOURCE_DIR}" || exit 1
 
 ######### From now on exits on any error ########
 set -e

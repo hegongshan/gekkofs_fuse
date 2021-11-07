@@ -470,9 +470,11 @@ if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
 fi
 
 echo "Destination path is set to  \"${SOURCE_DIR}\""
+echo "Profile name: ${PROFILE_NAME}"
+echo "Profile version: ${PROFILE_VERSION}"
 echo "------------------------------------"
 
-mkdir -p "${SOURCE_DIR}"
+mkdir -p "${SOURCE_DIR}" || exit 1
 
 ## download dependencies
 for dep_name in "${PROFILE_DEP_LIST[@]}"; do
