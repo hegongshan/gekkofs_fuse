@@ -12,6 +12,7 @@ variables:
   INTEGRATION_TESTS_BIN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
   COVERAGE_PATH:                "${CI_PROJECT_DIR}/gkfs/build/.coverage"
   PYTEST:                       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
+  BATS:                         "${CI_PROJECT_DIR}/tests/scripts/bats/bin/bats"
   LD_LIBRARY_PATH:              "${CI_PROJECT_DIR}/deps/install/lib:${CI_PROJECT_DIR}/deps/install/lib64"
   # Configuration variables
   GKFS_LOG_LEVEL:               "100"
@@ -96,6 +97,24 @@ gkfwd:
 ################################################################################
 ## Testing
 ################################################################################
+
+## == tests for scripts ====================
+scripts:
+  stage: test
+  image: gekkofs/testing:0.8.0
+  needs: []
+  parallel:
+    matrix:
+      - SUBTEST: [ dl_dep.sh, compile_dep.sh ]
+  script:
+    - mkdir -p ${BUILD_PATH}/tests/scripts
+    - cd ${BUILD_PATH}/tests/scripts
+    - ${BATS} -r ${CI_PROJECT_DIR}/tests/scripts/${SUBTEST} --formatter junit > report.xml
+  artifacts:
+    expire_in: 1 week
+    reports:
+      junit: ${BUILD_PATH}/tests/scripts/report.xml
+
 
 ## == integration tests for gkfs ===========
 gkfs:integration:

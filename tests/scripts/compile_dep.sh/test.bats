@@ -120,7 +120,7 @@ teardown() {
         run compile_dep.sh -n -d "${dep}" ${source_path} ${install_path}
 
         assert_output --regexp \
-"CORES = 8 \(default\)
+"CORES = [0-9]+ \(default\)
 Sources download path = ${source_path}
 Installation path = ${install_path}
 Profile name: default
@@ -150,7 +150,7 @@ Done"
             run compile_dep.sh -n -d "${dep}@${pn}" ${source_path} ${install_path}
 
             assert_output --regexp \
-"CORES = 8 \(default\)
+"CORES = [0-9]+ \(default\)
 Sources download path = ${source_path}
 Installation path = ${install_path}
 Profile name: ${pn}
@@ -185,7 +185,7 @@ Done"
                 run compile_dep.sh -n -d "${dep}@${pn}" ${source_path} ${install_path}
 
                 assert_output --regexp \
-"CORES = 8 \(default\)
+"CORES = [0-9]+ \(default\)
 Sources download path = ${source_path}
 Installation path = ${install_path}
 Profile name: ${pn}
