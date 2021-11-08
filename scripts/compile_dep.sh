@@ -50,10 +50,12 @@ declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
 usage_short() {
 	echo "
-usage: compile_dep.sh -p PROFILE_NAME[:PROFILE_VERSION] |
+usage: compile_dep.sh -h |
+                      -p PROFILE_NAME[:PROFILE_VERSION] |
                       -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
-                      -l [PROFILE_NAME:[PROFILE_VERSION]] | -n | -h
-                      [ -j COMPILE_CORES]
+                      -l [PROFILE_NAME:[PROFILE_VERSION]] |
+                      -h
+                      [ -P PROFILES_DIR ] [ -j COMPILE_CORES] [ -n ]
                       SOURCES_PATH INSTALL_PATH
 	"
 }
@@ -70,11 +72,11 @@ positional arguments:
 
 
 optional arguments:
-    -h, --help  shows this help message and exits
+    -h, --help  Shows this help message and exits
     -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
-                list dependencies available for building and installation
+                List dependencies available for building and installation
     -p, --profile PROFILE_NAME[:PROFILE_VERSION]
-                allows installing a pre-defined set of dependencies as defined
+                Allows installing a pre-defined set of dependencies as defined
                 in \${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to
                 deploy specific library versions and/or configurations,
                 using a recognizable name. Optionally, PROFILE_NAME may include
@@ -83,15 +85,19 @@ optional arguments:
                 that specific version. If unspecified, the 'default:latest' profile
                 will be used, which should include all the possible dependencies.
     -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]]
-                build and install a specific dependency, ignoring any --profile
+                Build and install a specific dependency, ignoring any --profile
                 option provided. If PROFILE_NAME is unspecified, the 'default'
                 profile will be used. Similarly, if PROFILE_VERSION is
                 unspecified, the 'latest' version of the specified profile will
                 be used.
     -j, --compilecores COMPILE_CORES
-                number of cores that are used to compile the dependencies
-                defaults to number of available cores
+                Set the number of cores that will be used to compile the 
+                dependencies. If unspecified, defaults to the number of 
+                available cores.
     -t, --test  Perform libraries tests.
+    -P, --profiles-dir PROFILES_DIR
+                Choose the directory to be used when searching for profiles.
+                If unspecified, PROFILES_DIR defaults to \${PWD}/profiles.
     -n, --dry-run
                 Do not actually run, print only what would be done.
 "
@@ -359,6 +365,16 @@ while [[ $# -gt 0 ]]; do
         ;;
     -t | --test)
         PERFORM_TEST=true
+        shift
+        ;;
+    -P | --profiles-dir)
+
+        if [[ ! -d "$2" ]]; then
+            echo "ERROR: PROFILES_DIR '$2' does not exist or is not a directory."
+            exit 1
+        fi
+
+        PROFILES_DIR="$2"
         shift
         ;;
     -l | --list-dependencies)

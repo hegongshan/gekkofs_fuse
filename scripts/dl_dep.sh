@@ -217,6 +217,9 @@ load_profile() {
     for k in "${!wgetdeps[@]}"; do
         PROFILE_WGETDEPS["${k}"]="${wgetdeps[${k}]}"
     done
+
+    # load source URLs for dependencies
+    load_sources
 }
 
 load_sources() {
@@ -300,7 +303,9 @@ usage_short() {
     echo "
 usage: dl_dep.sh -p PROFILE_NAME[:PROFILE_VERSION] |
                  -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
-                 -l [[PROFILE_NAME:]PROFILE_VERSION] | -n | -h
+                 -l [[PROFILE_NAME:]PROFILE_VERSION] |
+                 -h
+                 [ -P PROFILES_DIR ] [ -n ]
                  DESTINATION_PATH
 	"
 }
@@ -312,15 +317,15 @@ help_msg() {
 This script gets all GekkoFS dependency sources (excluding the fs itself)
 
 positional arguments:
-        DESTINATION_PATH        path where dependencies should be downloaded
+        DESTINATION_PATH        Path where dependencies should be downloaded
 
 
 optional arguments:
-        -h, --help              shows this help message and exits
+        -h, --help              Shows this help message and exits
         -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
-                                list dependency configuration profiles available for download
+                                List dependency configuration profiles available for download
         -p, --profile PROFILE_NAME[:PROFILE_VERSION]
-                                allows downloading a pre-defined set of dependencies as defined
+                                Allows downloading a pre-defined set of dependencies as defined
                                 in \${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to 
                                 deploy specific library versions and/or configurations,
                                 using a recognizable name. Optionally, PROFILE_NAME may include
@@ -329,10 +334,13 @@ optional arguments:
                                 that specific version. If unspecified, the 'default:latest' profile
                                 will be used, which should include all the possible dependencies.
         -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]]
-                                build and install a specific dependency, ignoring any --profile
+                                Build and install a specific dependency, ignoring any --profile
                                 option provided. If PROFILE_NAME is unspecified, the 'default'
                                 profile will be used. Similarly, if PROFILE_VERSION is unspecified,
                                 the 'latest' version of the specified profile will be used.
+        -P, --profiles-dir PROFILES_DIR
+                                Choose the directory to be used when searching for profiles.
+                                If unspecified, PROFILES_DIR defaults to \${PWD}/profiles.
         -n, --dry-run           Do not actually run, print only what would be done.
         -v, --verbose           Increase download verbosity
         "
@@ -346,9 +354,6 @@ exec_mode_error() {
 
 # load default profile for now, might be overridden later
 load_profile "${DEFAULT_PROFILE}" "${DEFAULT_VERSION}"
-
-# load source URLs for dependencies
-load_sources
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -441,6 +446,17 @@ while [[ $# -gt 0 ]]; do
     -v | --verbose)
         VERBOSE=true
         shift # past argument
+        ;;
+    -P | --profiles-dir)
+
+        if [[ ! -d "$2" ]]; then
+            echo "ERROR: PROFILES_DIR '$2' does not exist or is not a directory."
+            exit 1
+        fi
+
+        PROFILES_DIR="$2"
+        SOURCES_FILE="${PROFILES_DIR}/sources.list"
+        shift
         ;;
     -n | --dry-run)
         DRY_RUN=true
