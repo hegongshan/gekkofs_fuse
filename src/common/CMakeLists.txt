@@ -93,7 +93,7 @@ endif()
 add_library(path_util
   STATIC
   )
-set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
+set_property(TARGET path_util PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_sources(path_util
   PRIVATE
