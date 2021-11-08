@@ -284,6 +284,53 @@ find_cmake() {
     echo "${CMAKE}"
 }
 
+determine_compiler() {
+
+    compiler_is_gnu() {
+        COMPILER_NAME="g++"
+
+        if ! COMPILER_FULL_VERSION="$(g++ -dumpfullversion 2>&1)"; then
+            echo -e "ERROR: Failed to determine compiler version."
+            echo -e ">> ${COMPILER_FULL_VERSION}"
+            exit 1
+        fi
+
+        COMPILER_MAJOR_VERSION="${COMPILER_FULL_VERSION%%.*}"
+    }
+
+    compiler_is_clang() {
+        COMPILER_NAME="clang"
+
+        if ! COMPILER_FULL_VERSION="$(clang -dumpversion 2>&1)"; then
+            echo -e "ERROR: Failed to determine compiler version."
+            echo -e ">> ${COMPILER_FULL_VERSION}"
+            exit 1
+        fi
+
+        COMPILER_MAJOR_VERSION="${COMPILER_FULL_VERSION%%.*}"
+    }
+
+    # We honor the CXX environment variable if defined.
+    # Otherwise, we try to find the compiler by using `command -v`.
+    if [[ -n "${CXX}" && ! "${CXX}" =~ ^(g\+\+|clang)$ ]]; then
+        echo "ERROR: Unknown compiler '${CXX}'"
+        exit 1
+    fi
+
+    if [[ -n "${CXX}" && "${CXX}" =~ ^g\+\+$ ]]; then
+        compiler_is_gnu
+    elif [[ -n "${CXX}" && "$CXX" =~ ^clang$ ]]; then
+        compiler_is_clang
+    elif [[ $(command -v g++) ]]; then
+        compiler_is_gnu
+    elif [[ $(command -v clang) ]]; then
+        compiler_is_clang
+    else
+        echo "ERROR: Unable to determine compiler."
+        exit 1
+    fi
+}
+
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -471,6 +518,7 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
     fi
 
     if [[ "$DRY_RUN" == false ]]; then
+        determine_compiler
         pkg_install
 
         [ "${PERFORM_TEST}" ] && pkg_check

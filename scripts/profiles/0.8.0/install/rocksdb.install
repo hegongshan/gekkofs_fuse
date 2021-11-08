@@ -37,6 +37,9 @@
 ##               downloaded
 ## - INSTALL_DIR: the directory where the package should be installed
 ## - CORES: the number of cores to use when building
+## - COMPILER_NAME: the name of the compiler being used (e.g. g++, clang, etc.)
+## - COMPILER_FULL_VERSION: the compiler's full version (e.g. 9.3.0)
+## - COMPILER_MAJOR_VERSION: the compiler's major version (e.g. 9)
 ## - PERFORM_TEST: whether tests for the package should be executed
 ################################################################################
 
@@ -44,7 +47,15 @@ pkg_install() {
     CURR=${SOURCE_DIR}/rocksdb
     cd "${CURR}"
     make clean
-    PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
+
+    # gcc 9 and clang 8 need -Wno-error=deprecated-copy -Wno-error=pessimizing-move
+    if [[ ("${COMPILER_NAME}" == "g++" && "${COMPILER_MAJOR_VERSION}" -ge 9) || 
+          ("${COMPILER_NAME}" == "clang" && "${COMPILER_MAJOR_VERSION}" -ge 8) ]]; then
+        CXXFLAGS='-Wno-error=deprecated-copy -Wno-error=pessimizing-move' PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
+    else
+        PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
+    fi
+
     INSTALL_PATH="${INSTALL_DIR}" make install
 }
 
