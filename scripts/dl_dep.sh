@@ -502,30 +502,23 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
     if [[ ! -z "${PROFILE_WGETDEPS[${dep_name}]:-}" ]]; then
 
-        # dependency names can include a TAG after a colon (e.g. ofi:verbs),
-        # remove it
-        dep_id=${dep_name%%:*}
-
         # find required version for dependency
         dep_version="${PROFILE_WGETDEPS[${dep_name}]}"
 
         # build URL for dependency
-        dep_url="${PROFILE_SOURCES[${dep_id}]}"
+        dep_url="${PROFILE_SOURCES[${dep_name}]}"
 
         if [[ -z "${dep_url}" ]]; then
-            echo "Missing source URL for '${dep_id}'. Verify ${SOURCES_FILE}."
+            echo "Missing source URL for '${dep_name}'. Verify ${SOURCES_FILE}."
+            wait
             exit 1
         fi
 
         dep_url="${dep_url/\{\{VERSION\}\}/${dep_version}}"
 
-        wgetdeps "${dep_id}" "${dep_url}" &
+        wgetdeps "${dep_name}" "${dep_url}" &
 
     elif [[ ! -z "${PROFILE_CLONEDEPS[${dep_name}]:-}" ]]; then
-
-        # dependency names can include a TAG after a colon (e.g. ofi:verbs),
-        # remove it
-        dep_id=${dep_name%%:*}
 
         dep_args=""
 
@@ -540,10 +533,11 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
         fi
 
         # build URL for dependency
-        dep_url="${PROFILE_SOURCES[${dep_id}]}"
+        dep_url="${PROFILE_SOURCES[${dep_name}]}"
 
         if [[ -z "${dep_url}" ]]; then
-            echo "Missing source URL for '${dep_id}'. Verify ${SOURCES_FILE}."
+            echo "Missing source URL for '${dep_name}'. Verify ${SOURCES_FILE}."
+            wait
             exit 1
         fi
 

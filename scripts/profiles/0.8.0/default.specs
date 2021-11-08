@@ -52,8 +52,8 @@ wgetdeps=(
 clonedeps=(
     ["bmi"]="6ea0b78fce1b964e45102828cdd05df7040a94c8"
     ["libfabric"]="HEAD@v1.8.1"
-#    ["libfabric:experimental"]="HEAD@v1.9.1"
-#    ["libfabric:verbs"]="HEAD@v1.7.2"
+    ["libfabric:experimental"]="HEAD@v1.9.1"
+    ["libfabric:verbs"]="HEAD@v1.7.2"
     ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
     ["margo"]="v0.6.3"
     ["syscall_intercept"]="f7cebb7b7e7512a19b78a31ce236ad6ca22636dd"
@@ -75,8 +75,8 @@ clonedeps_patches=(
 order=(
     "bzip2" "zstd" "lz4" "snappy" "capstone" "bmi"
     "libfabric"
-    #"libfabric:experimental"
-    #"libfabric:verbs"
+    "libfabric:experimental"
+    "libfabric:verbs"
     "mercury" "argobots" "margo" "rocksdb" "rocksdb:experimental"
     "syscall_intercept" "date" "psm2" "agios"
 )
@@ -91,6 +91,6 @@ order=(
 #  - PERFORM_TEST: whether tests for the package should be executed
 extra_install_args=(
     ["libfabric"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
-    #["libfabric:verbs"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2 --enable-verbs=yes"
-    #["libfabric:experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2 --enable-verbs=yes"
+    ["libfabric:verbs"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2 --enable-verbs=yes"
+    ["libfabric:experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2 --enable-verbs=yes"
 )
