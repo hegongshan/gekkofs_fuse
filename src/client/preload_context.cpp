@@ -199,7 +199,7 @@ PreloadContext::relativize_fd_path(int dirfd, const char* raw_path,
 
     std::string path;
 
-    if(raw_path[0] != gkfs::path::separator) {
+    if(raw_path != nullptr && raw_path[0] != gkfs::path::separator) {
         // path is relative
         if(dirfd == AT_FDCWD) {
             // path is relative to cwd
@@ -243,7 +243,7 @@ PreloadContext::relativize_path(const char* raw_path,
 
     std::string path;
 
-    if(raw_path[0] != gkfs::path::separator) {
+    if(raw_path != nullptr && raw_path[0] != gkfs::path::separator) {
         /* Path is not absolute, we need to prepend CWD;
          * First reserve enough space to minimize memory copy
          */
@@ -251,6 +251,7 @@ PreloadContext::relativize_path(const char* raw_path,
     } else {
         path = raw_path;
     }
+
     return gkfs::path::resolve(path, relative_path, resolve_last_link);
 }
 

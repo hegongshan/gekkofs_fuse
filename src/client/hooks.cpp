@@ -203,11 +203,6 @@ hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
     LOG(DEBUG, "{}() called with path: \"{}\", fd: {}, buf: {}, flags: {}",
         __func__, cpath, dirfd, fmt::ptr(buf), flags);
 
-    if(flags & AT_EMPTY_PATH) {
-        LOG(ERROR, "{}() AT_EMPTY_PATH flag not supported", __func__);
-        return -ENOTSUP;
-    }
-
     std::string resolved;
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
