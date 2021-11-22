@@ -8,7 +8,6 @@
 ######## Installing:  argobots ###############################
 ######## Installing:  margo ###############################
 ######## Installing:  rocksdb:experimental ###############################
-WARNING: Install script for 'rocksdb:experimental' not found. Skipping.
 ######## Installing:  syscall_intercept ###############################
 ######## Installing:  date ###############################
 ######## Installing:  psm2 ###############################

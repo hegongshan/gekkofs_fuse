@@ -29,6 +29,20 @@ teardown() {
     assert_output --partial "usage: compile_dep.sh"
 }
 
+@test "[compile_dep.sh] Check no --profile or --dependency options" {
+
+    expected_output=${SCRIPT_TESTDIR}/latest/default.out
+
+    assert_exist $expected_output
+
+    run compile_dep.sh -n bar baz
+
+    while IFS= read -r line
+    do
+        assert_output --partial "$line"
+    done < "$expected_output"
+}
+
 @test "[compile_dep.sh] Check --profile and --dependency option at the same time" {
     run -1 compile_dep.sh -p foobar -d barbaz
     assert_output --partial "ERROR: --profile and --dependency options are mutually exclusive" 

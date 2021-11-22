@@ -29,6 +29,20 @@ teardown() {
     assert_output --partial "usage: dl_dep.sh"
 }
 
+@test "[dl_dep.sh] Check no --profile or --dependency options" {
+
+    expected_output=${SCRIPT_TESTDIR}/latest/default.out
+
+    assert_exist $expected_output
+
+    run dl_dep.sh -n "${BATS_TEST_TMPDIR}"
+
+    while IFS= read -r line
+    do
+        assert_output --partial "$line"
+    done < "$expected_output"
+}
+
 @test "[dl_dep.sh] Check --profile and --dependency option at the same time" {
     run -1 dl_dep.sh -p foobar -d barbaz
     assert_output --partial "ERROR: --profile and --dependency options are mutually exclusive" 

@@ -39,6 +39,8 @@ DRY_RUN=false
 
 DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
+PROFILE_NAME=${DEFAULT_PROFILE}
+PROFILE_VERSION=${DEFAULT_VERSION}
 PROFILES_DIR="${PWD}/profiles"
 SOURCES_FILE="${PROFILES_DIR}/sources.list"
 declare -a PROFILE_DEP_LIST
@@ -389,9 +391,6 @@ while [[ $# -gt 0 ]]; do
             echo "ERROR: Missing argument for -d/--dependency option"
             exit 1
         fi
-
-        PROFILE_NAME=${DEFAULT_PROFILE}
-        PROFILE_VERSION=${DEFAULT_VERSION}
 
         # e.g. mercury@mogon1:latest
         if [[ "$2" =~ ^(.*)@(.*):(.*)$ ]]; then
