@@ -268,7 +268,7 @@ clonedeps() {
 
     # apply patch if provided
     if [[ -n "${PATCH}" ]]; then
-        [[ "$DRY_RUN" == true ]] || git apply --verbose "${PATCH_DIR}/${PATCH}"
+        [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git apply --verbose "${PATCH_DIR}/${PATCH}" )
     fi
 }
 
