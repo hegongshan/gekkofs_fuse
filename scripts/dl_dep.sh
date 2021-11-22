@@ -247,11 +247,12 @@ clonedeps() {
     fi
     trap exit_child EXIT
 
-    local FOLDER=$1
-    local REPO=$2
-    local COMMIT=$3
-    local GIT_FLAGS=$4
-    local PATCH=$5
+    local FOLDER="$1"
+    local REPO="$2"
+    local COMMIT="$3"
+    local PATCH="$4"
+    shift 4
+    local GIT_FLAGS=("$@")
 
     local ACTION
 
@@ -259,12 +260,12 @@ clonedeps() {
         [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q)
         ACTION="Pulled"
     else
-        [[ "$DRY_RUN" == true ]] || (git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE_DIR}/${FOLDER}")
+        [[ "$DRY_RUN" == true ]] || (git clone ${COMMON_GIT_FLAGS} "${GIT_FLAGS[@]}" -- "${REPO}" "${SOURCE_DIR}/${FOLDER}")
         ACTION="Cloned"
     fi
     # fix the version
     [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}")
-    echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS}'"
+    echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS[@]}'"
 
     # apply patch if provided
     if [[ -n "${PATCH}" ]]; then
@@ -519,7 +520,7 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
     elif [[ ! -z "${PROFILE_CLONEDEPS[${dep_name}]:-}" ]]; then
 
-        dep_args=""
+        dep_args=()
 
         # find required version for dependency
         dep_version="${PROFILE_CLONEDEPS[${dep_name}]}"
@@ -527,7 +528,7 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
         # version may be a commit hash, a tag or something like HEAD@BRANCH_NAME
         # if it's the latter, remove the @BRANCH_NAME
         if [[ "${dep_version}" =~ ^(.*)@(.*)$ ]]; then
-            dep_args+="-b ${BASH_REMATCH[2]}"
+            dep_args+=("--branch=${BASH_REMATCH[2]}")
             dep_version=${BASH_REMATCH[1]}
         fi
 
@@ -543,11 +544,16 @@ for dep_name in "${PROFILE_DEP_LIST[@]}"; do
         dep_url="${dep_url/\{\{VERSION\}\}/${dep_version}}"
 
         # check if extra args are required
-        dep_args+="${PROFILE_CLONEDEPS_ARGS[${dep_name}]}"
+        for arg in "${PROFILE_CLONEDEPS_ARGS[${dep_name}]}";
+        do
+            if [[ -n "${arg}" ]]; then
+                dep_args+=("${arg}")
+            fi
+        done
 
         dep_patch=${PROFILE_CLONEDEPS_PATCHES[${dep_name}]}
 
-        clonedeps "${dep_name}" "${dep_url}" "${dep_version}" "${dep_args}" "${dep_patch}" &
+        clonedeps "${dep_name}" "${dep_url}" "${dep_version}" "${dep_patch}" "${dep_args[@]}" &
 
     else
         echo "Unknown dependency '${dep_name}'."
