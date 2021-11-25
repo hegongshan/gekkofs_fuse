@@ -29,8 +29,8 @@
 
 COMMON_CURL_FLAGS="--silent --fail --show-error --location -O"
 COMMON_GIT_FLAGS="--quiet --single-branch -c advice.detachedHead=false"
-PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PATCH_DIR="${PATCH_DIR}/patches"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATCH_DIR="${SCRIPT_DIR}/patches"
 DEPENDENCY=""
 
 EXECUTION_MODE=
@@ -41,7 +41,7 @@ DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
 PROFILE_NAME=${DEFAULT_PROFILE}
 PROFILE_VERSION=${DEFAULT_VERSION}
-PROFILES_DIR="${PWD}/profiles"
+PROFILES_DIR="${SCRIPT_DIR}/profiles"
 SOURCES_FILE="${PROFILES_DIR}/sources.list"
 declare -a PROFILE_DEP_LIST
 declare -A PROFILE_DEP_NAMES

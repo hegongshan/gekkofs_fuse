@@ -27,7 +27,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_DIR="${PATCH_DIR}/patches"
 DEPENDENCY=""
 CORES=""
@@ -42,7 +42,7 @@ DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
 PROFILE_NAME=${DEFAULT_PROFILE}
 PROFILE_VERSION=${DEFAULT_VERSION}
-PROFILES_DIR="${PWD}/profiles"
+PROFILES_DIR="${SCRIPT_DIR}/profiles"
 declare -a PROFILE_DEP_LIST
 declare -A PROFILE_DEP_NAMES
 declare -A PROFILE_WGETDEPS PROFILE_CLONEDEPS PROFILE_SOURCES PROFILE_EXTRA_INSTALL_ARGS
