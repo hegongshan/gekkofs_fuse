@@ -44,11 +44,12 @@
 ################################################################################
 
 pkg_install() {
-    CURR=${SOURCE_DIR}/rocksdb:experimental
+    ID="rocksdb%experimental"
+    CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
     make clean
     PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
-    INSTALL_PATH="${INSTALL_DIR}/rocksdb:experimental" make install
+    INSTALL_PATH="${INSTALL_DIR}/${ID}" make install
 }
 
 pkg_check() {

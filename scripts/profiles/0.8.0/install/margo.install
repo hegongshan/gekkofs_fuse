@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/margo"
+    ID="margo"
+    CURR="${SOURCE_DIR}/${ID}"
     prepare_build_dir "${CURR}"
     cd "${CURR}"
     ./prepare.sh

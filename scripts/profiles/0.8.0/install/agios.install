@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/agios"
+    ID="agios"
+    CURR="${SOURCE_DIR}/${ID}"
     prepare_build_dir "${CURR}"
     cd "${CURR}/build"
     ${CMAKE} -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" ..

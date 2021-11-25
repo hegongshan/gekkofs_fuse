@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/date"
+    ID="date"
+    CURR="${SOURCE_DIR}/${ID}"
     prepare_build_dir "${CURR}"
     cd "${CURR}/build"
     ${CMAKE} -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" -DCMAKE_CXX_STANDARD:STRING=14 -DUSE_SYSTEM_TZ_DB:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON ..

@@ -48,7 +48,7 @@ wgetdeps=(
 
 # Dependencies that must be cloned
 clonedeps=(
-    ["libfabric:experimental"]="HEAD@v1.9.1"
+    ["libfabric%experimental"]="HEAD@v1.9.1"
     ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
     ["margo"]="v0.6.3"
     ["syscall_intercept"]="f7cebb7b7e7512a19b78a31ce236ad6ca22636dd"
@@ -68,7 +68,7 @@ clonedeps_patches=(
 
 # Ordering that MUST be followed when downloading
 order=(
-    "zstd" "lz4" "snappy" "capstone" "libfabric:experimental" "mercury"
+    "zstd" "lz4" "snappy" "capstone" "libfabric%experimental" "mercury"
     "argobots" "margo" "rocksdb" "syscall_intercept" "date" "psm2" "agios"
 )
 
@@ -81,5 +81,5 @@ order=(
 #  - CORES: the number of cores to use when building
 #  - PERFORM_TEST: whether tests for the package should be executed
 extra_install_args=(
-    ["libfabric:experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
+    ["libfabric%experimental"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
 )

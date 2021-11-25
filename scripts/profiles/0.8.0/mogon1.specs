@@ -46,7 +46,7 @@ wgetdeps=(
 
 # Dependencies that must be cloned
 clonedeps=(
-    ["libfabric:verbs"]="HEAD@v1.7.2"
+    ["libfabric%verbs"]="HEAD@v1.7.2"
     ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
     ["margo"]="v0.6.3"
     ["rocksdb"]="6.2.2"
@@ -66,7 +66,7 @@ clonedeps_patches=(
 
 # Ordering that MUST be followed when downloading/installing
 order=(
-    "zstd" "lz4" "snappy" "capstone" "libfabric:verbs" "mercury"
+    "zstd" "lz4" "snappy" "capstone" "libfabric%verbs" "mercury"
     "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
 
@@ -79,5 +79,5 @@ order=(
 #  - CORES: the number of cores to use when building
 #  - PERFORM_TEST: whether tests for the package should be executed
 extra_install_args=(
-    ["libfabric:verbs"]="--enable-verbs=yes"
+    ["libfabric%verbs"]="--enable-verbs=yes"
 )

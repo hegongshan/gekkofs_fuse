@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/bzip2"
+    ID="bzip2"
+    CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
     make install PREFIX="${INSTALL_DIR}"
 }

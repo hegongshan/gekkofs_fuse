@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/lz4"
+    ID="lz4"
+    CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
     make -j"${CORES}"
     make DESTDIR="${INSTALL_DIR}" PREFIX="" install

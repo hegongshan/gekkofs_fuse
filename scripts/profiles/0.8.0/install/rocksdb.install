@@ -44,7 +44,8 @@
 ################################################################################
 
 pkg_install() {
-    CURR=${SOURCE_DIR}/rocksdb
+    ID="rocksdb"
+    CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
     make clean
 
