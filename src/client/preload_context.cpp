@@ -90,7 +90,7 @@ PreloadContext::init_logging() {
     const std::string trunc_val =
             gkfs::env::get_var(gkfs::env::LOG_OUTPUT_TRUNC);
 
-    const bool log_trunc = !(!trunc_val.empty() && trunc_val[0] == 0);
+    const bool log_trunc = (!trunc_val.empty() && trunc_val[0] != '0');
 
     gkfs::log::create_global_logger(log_opts, log_output, log_trunc
 #ifdef GKFS_DEBUG_BUILD
