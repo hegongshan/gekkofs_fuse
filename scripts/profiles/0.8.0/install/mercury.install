@@ -45,8 +45,6 @@
 
 pkg_install() {
 
-    set -x
-
     # if the profile compiles bmi, enable it
     if [[ -n "${PROFILE_DEP_NAMES['bmi']}" ]]; then
         USE_BMI="-DNA_USE_BMI:BOOL=ON"
@@ -54,8 +52,8 @@ pkg_install() {
         USE_BMI="-DNA_USE_BMI:BOOL=OFF"
     fi
 
-    # if the profile compiles libfabric, enable it
-    if [[ -n "${PROFILE_DEP_NAMES['libfabric']}" ]]; then
+    # if the profile provides any flavour of libfabric, enable it
+    if profile_has_dependency "^libfabric.*$"; then
         USE_OFI="-DNA_USE_OFI:BOOL=ON"
     else
         USE_OFI="-DNA_USE_OFI:BOOL=OFF"

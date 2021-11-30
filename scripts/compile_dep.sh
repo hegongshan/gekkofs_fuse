@@ -330,6 +330,41 @@ determine_compiler() {
     fi
 }
 
+# Check whether the loaded profile defines a particular dependency name.
+# The function requires a valid bash regex argument to do the search. The
+# function is meant to be used in a conditional context.
+#
+# Examples:
+#   1. Check whether any flavor of 'libfabric' is defined by the profile:
+#
+#     if profile_has_dependency "^libfabric%.*$"; then
+#        echo "libfabric found"
+#     fi
+#
+#   2. Check whether a specific flavor of 'libfabric' is defined by the profile:
+#
+#     if profile_has_dependency "^libfabric%experimental$"; then
+#        echo "libfabric.experimental found"
+#     fi
+profile_has_dependency() {
+
+    if [[ "$#" -ne 1 ]]; then
+        >&2 echo "FATAL: Missing argument in profile_has_dependency()"
+        exit 1
+    fi
+
+    regex="$1"
+
+    for name in "${PROFILE_DEP_LIST[@]}"; do
+
+        if [[ "${name}" =~ ${regex} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
