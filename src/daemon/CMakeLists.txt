@@ -42,8 +42,8 @@ set(DAEMON_SRC
     )
 set(DAEMON_HEADERS
     ../../include/config.hpp
-    ../../include/version.hpp
-    ../../include/common/cmake_configure.hpp
+    ../../include/version.hpp.in
+    ../../include/common/cmake_configure.hpp.in
     ../../include/common/common_defs.hpp
     ../../include/common/rpc/rpc_types.hpp
     ../../include/common/rpc/rpc_util.hpp

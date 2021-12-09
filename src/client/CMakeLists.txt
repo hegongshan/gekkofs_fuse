@@ -69,7 +69,7 @@ set(PRELOAD_HEADERS
     ../../include/client/syscalls/rets.hpp
     ../../include/client/syscalls/syscall.hpp
     ../../include/client/syscalls/detail/syscall_info.h
-    ../../include/common/cmake_configure.hpp
+    ../../include/common/cmake_configure.hpp.in
     ../../include/common/common_defs.hpp
     ../../include/common/rpc/rpc_types.hpp
     ../../include/common/rpc/rpc_util.hpp
