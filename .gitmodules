@@ -4,3 +4,15 @@
 [submodule "external/fmt"]
 	path = external/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "tests/scripts/bats"]
+	path = tests/scripts/bats
+	url = https://github.com/bats-core/bats-core.git
+[submodule "tests/scripts/helpers/bats-assert"]
+	path = tests/scripts/helpers/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
+[submodule "tests/scripts/helpers/bats-support"]
+	path = tests/scripts/helpers/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "tests/scripts/helpers/bats-file"]
+	path = tests/scripts/helpers/bats-file
+	url = https://github.com/bats-core/bats-file.git

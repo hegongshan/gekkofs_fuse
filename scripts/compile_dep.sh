@@ -27,19 +27,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PATCH_DIR="${PATCH_DIR}/patches"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPENDENCY=""
 CORES=""
 SOURCE_DIR=""
 INSTALL_DIR=""
 PERFORM_TEST=
 
+EXECUTION_MODE=
+DRY_RUN=false
+
 DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
 PROFILE_NAME=${DEFAULT_PROFILE}
 PROFILE_VERSION=${DEFAULT_VERSION}
-PROFILES_DIR="${PWD}/profiles"
+PROFILES_DIR="${SCRIPT_DIR}/profiles"
 declare -a PROFILE_DEP_LIST
 declare -A PROFILE_DEP_NAMES
 declare -A PROFILE_WGETDEPS PROFILE_CLONEDEPS PROFILE_SOURCES PROFILE_EXTRA_INSTALL_ARGS
@@ -47,11 +49,12 @@ declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
 usage_short() {
 	echo "
-usage: compile_dep.sh [-h]
-                      [-l [PROFILE_NAME:[VERSION]]]
-                      [-p PROFILE_NAME[:VERSION]]
-                      [-d DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
-                      [-j COMPILE_CORES]
+usage: compile_dep.sh -h |
+                      -p PROFILE_NAME[:PROFILE_VERSION] |
+                      -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
+                      -l [PROFILE_NAME:[PROFILE_VERSION]] |
+                      -h
+                      [ -P PROFILES_DIR ] [ -j COMPILE_CORES] [ -n ]
                       SOURCES_PATH INSTALL_PATH
 	"
 }
@@ -68,28 +71,41 @@ positional arguments:
 
 
 optional arguments:
-    -h, --help  shows this help message and exits
-    -l, --list-dependencies
-                list dependencies available for building and installation
-    -p, --profile PROFILE_NAME[:VERSION]
-                allows installing a pre-defined set of dependencies as defined
-                in ${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to
+    -h, --help  Shows this help message and exits
+    -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
+                List dependencies available for building and installation
+    -p, --profile PROFILE_NAME[:PROFILE_VERSION]
+                Allows installing a pre-defined set of dependencies as defined
+                in \${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to
                 deploy specific library versions and/or configurations,
                 using a recognizable name. Optionally, PROFILE_NAME may include
                 a specific version for the profile, e.g. 'mogon2:latest' or
                 'ngio:0.8.0', which will download the dependencies defined for
                 that specific version. If unspecified, the 'default:latest' profile
                 will be used, which should include all the possible dependencies.
-    -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
-                build and install a specific dependency, ignoring any --profile
+    -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]]
+                Build and install a specific dependency, ignoring any --profile
                 option provided. If PROFILE_NAME is unspecified, the 'default'
-                profile will be used. Similarly, if VERSION is unspecified, the
-                'latest' version of the specified profile will be used.
+                profile will be used. Similarly, if PROFILE_VERSION is
+                unspecified, the 'latest' version of the specified profile will
+                be used.
     -j, --compilecores COMPILE_CORES
-                number of cores that are used to compile the dependencies
-                defaults to number of available cores
+                Set the number of cores that will be used to compile the 
+                dependencies. If unspecified, defaults to the number of 
+                available cores.
     -t, --test  Perform libraries tests.
+    -P, --profiles-dir PROFILES_DIR
+                Choose the directory to be used when searching for profiles.
+                If unspecified, PROFILES_DIR defaults to \${PWD}/profiles.
+    -n, --dry-run
+                Do not actually run, print only what would be done.
 "
+}
+
+exec_mode_error() {
+    echo "ERROR: --profile and --dependency options are mutually exclusive"
+    usage_short
+    exit 1
 }
 
 list_versions() {
@@ -267,6 +283,88 @@ find_cmake() {
     echo "${CMAKE}"
 }
 
+determine_compiler() {
+
+    compiler_is_gnu() {
+        COMPILER_NAME="g++"
+
+        if ! COMPILER_FULL_VERSION="$(g++ -dumpfullversion 2>&1)"; then
+            echo -e "ERROR: Failed to determine compiler version."
+            echo -e ">> ${COMPILER_FULL_VERSION}"
+            exit 1
+        fi
+
+        COMPILER_MAJOR_VERSION="${COMPILER_FULL_VERSION%%.*}"
+    }
+
+    compiler_is_clang() {
+        COMPILER_NAME="clang"
+
+        if ! COMPILER_FULL_VERSION="$(clang -dumpversion 2>&1)"; then
+            echo -e "ERROR: Failed to determine compiler version."
+            echo -e ">> ${COMPILER_FULL_VERSION}"
+            exit 1
+        fi
+
+        COMPILER_MAJOR_VERSION="${COMPILER_FULL_VERSION%%.*}"
+    }
+
+    # We honor the CXX environment variable if defined.
+    # Otherwise, we try to find the compiler by using `command -v`.
+    if [[ -n "${CXX}" && ! "${CXX}" =~ ^(g\+\+|clang)$ ]]; then
+        echo "ERROR: Unknown compiler '${CXX}'"
+        exit 1
+    fi
+
+    if [[ -n "${CXX}" && "${CXX}" =~ ^g\+\+$ ]]; then
+        compiler_is_gnu
+    elif [[ -n "${CXX}" && "$CXX" =~ ^clang$ ]]; then
+        compiler_is_clang
+    elif [[ $(command -v g++) ]]; then
+        compiler_is_gnu
+    elif [[ $(command -v clang) ]]; then
+        compiler_is_clang
+    else
+        echo "ERROR: Unable to determine compiler."
+        exit 1
+    fi
+}
+
+# Check whether the loaded profile defines a particular dependency name.
+# The function requires a valid bash regex argument to do the search. The
+# function is meant to be used in a conditional context.
+#
+# Examples:
+#   1. Check whether any flavor of 'libfabric' is defined by the profile:
+#
+#     if profile_has_dependency "^libfabric%.*$"; then
+#        echo "libfabric found"
+#     fi
+#
+#   2. Check whether a specific flavor of 'libfabric' is defined by the profile:
+#
+#     if profile_has_dependency "^libfabric%experimental$"; then
+#        echo "libfabric.experimental found"
+#     fi
+profile_has_dependency() {
+
+    if [[ "$#" -ne 1 ]]; then
+        >&2 echo "FATAL: Missing argument in profile_has_dependency()"
+        exit 1
+    fi
+
+    regex="$1"
+
+    for name in "${PROFILE_DEP_LIST[@]}"; do
+
+        if [[ "${name}" =~ ${regex} ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -274,6 +372,9 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
     -p | --profile)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='profile'
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -p/--profile option"
             exit 1
@@ -291,6 +392,8 @@ while [[ $# -gt 0 ]]; do
         shift # past value
         ;;
     -d | --dependency)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='dependency'
 
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -d/--dependency option"
@@ -345,6 +448,16 @@ while [[ $# -gt 0 ]]; do
         PERFORM_TEST=true
         shift
         ;;
+    -P | --profiles-dir)
+
+        if [[ ! -d "$2" ]]; then
+            echo "ERROR: PROFILES_DIR '$2' does not exist or is not a directory."
+            exit 1
+        fi
+
+        PROFILES_DIR="$2"
+        shift
+        ;;
     -l | --list-dependencies)
         if [[ -z "$2" ]]; then
             list_versions
@@ -357,6 +470,10 @@ while [[ $# -gt 0 ]]; do
         help_msg
         exit
         #shift # past argument
+        ;;
+    -n | --dry-run)
+        DRY_RUN=true
+        shift
         ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
@@ -398,9 +515,11 @@ CMAKE="${CMAKE} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
 echo "Sources download path = ${SOURCE_DIR}"
 echo "Installation path = ${INSTALL_DIR}"
+echo "Profile name: ${PROFILE_NAME}"
+echo "Profile version: ${PROFILE_VERSION}"
 echo "------------------------------------"
 
-mkdir -p "${SOURCE_DIR}"
+mkdir -p "${SOURCE_DIR}" || exit 1
 
 ######### From now on exits on any error ########
 set -e
@@ -411,29 +530,33 @@ export PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
     echo "Dependency '${DEPENDENCY}' not found in '${PROFILE_NAME}:${PROFILE_VERSION}'"
-    exit
+    exit 1
 fi
 
-for dep in "${PROFILE_DEP_LIST[@]}"; do
+for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
-    if [[ -n "${DEPENDENCY}" && "${dep}" != "${DEPENDENCY}" ]]; then
+    # in dependency mode, skip any dependencies != DEPENDENCY
+    if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
         continue
     fi
 
-    install_script="${PROFILES_DIR}/${PROFILE_VERSION}/install/${dep}.install"
+    install_script="${PROFILES_DIR}/${PROFILE_VERSION}/install/${dep_name}.install"
 
-    echo -e "\n\n######## Installing:  ${dep} ###############################\n"
+    echo -e "\n\n######## Installing:  ${dep_name} ###############################\n"
 
     if [[ -f "${install_script}" ]]; then
-        source "${install_script}"
+        [[ "$DRY_RUN" == true ]] || source "${install_script}"
     else
-        echo "WARNING: Install script for '${dep}' not found. Skipping."
+        echo "WARNING: Install script for '${dep_name}' not found. Skipping."
         continue
     fi
 
-    pkg_install
+    if [[ "$DRY_RUN" == false ]]; then
+        determine_compiler
+        pkg_install
 
-    [ "${PERFORM_TEST}" ] && pkg_check
+        [ "${PERFORM_TEST}" ] && pkg_check
+    fi
 
 done
 

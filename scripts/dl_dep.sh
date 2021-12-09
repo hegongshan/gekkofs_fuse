@@ -29,16 +29,22 @@
 
 COMMON_CURL_FLAGS="--silent --fail --show-error --location -O"
 COMMON_GIT_FLAGS="--quiet --single-branch -c advice.detachedHead=false"
-PATCH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PATCH_DIR="${PATCH_DIR}/patches"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PATCH_DIR="${SCRIPT_DIR}/patches"
 DEPENDENCY=""
+
+EXECUTION_MODE=
 VERBOSE=false
+DRY_RUN=false
 
 DEFAULT_PROFILE="default"
 DEFAULT_VERSION="latest"
-PROFILES_DIR="${PWD}/profiles"
+PROFILE_NAME=${DEFAULT_PROFILE}
+PROFILE_VERSION=${DEFAULT_VERSION}
+PROFILES_DIR="${SCRIPT_DIR}/profiles"
 SOURCES_FILE="${PROFILES_DIR}/sources.list"
-declare -a PROFILE_DEP_NAMES
+declare -a PROFILE_DEP_LIST
+declare -A PROFILE_DEP_NAMES
 declare -A PROFILE_WGETDEPS PROFILE_CLONEDEPS PROFILE_SOURCES
 declare -A PROFILE_CLONEDEPS_ARGS PROFILE_CLONEDEPS_PATCHES
 
@@ -161,6 +167,7 @@ load_profile() {
 
     # make sure we are in a known state
     PROFILE_DEP_NAMES=()
+    PROFILE_DEP_LIST=()
     PROFILE_CLONEDEPS=()
     PROFILE_CLONEDEPS_ARGS=()
     PROFILE_CLONEDEPS_PATCHES=()
@@ -193,7 +200,8 @@ load_profile() {
 
     # propagate results outside of function
     for i in "${!order[@]}"; do
-        PROFILE_DEP_NAMES[$i]="${order[${i}]}"
+        PROFILE_DEP_LIST[$i]="${order[${i}]}"
+        PROFILE_DEP_NAMES["${order[$i]}"]="$i"
     done
 
     for k in "${!clonedeps[@]}"; do
@@ -211,6 +219,9 @@ load_profile() {
     for k in "${!wgetdeps[@]}"; do
         PROFILE_WGETDEPS["${k}"]="${wgetdeps[${k}]}"
     done
+
+    # load source URLs for dependencies
+    load_sources
 }
 
 load_sources() {
@@ -236,28 +247,29 @@ clonedeps() {
     fi
     trap exit_child EXIT
 
-    local FOLDER=$1
-    local REPO=$2
-    local COMMIT=$3
-    local GIT_FLAGS=$4
-    local PATCH=$5
+    local FOLDER="$1"
+    local REPO="$2"
+    local COMMIT="$3"
+    local PATCH="$4"
+    shift 4
+    local GIT_FLAGS=("$@")
 
     local ACTION
 
     if [[ -d "${SOURCE_DIR}/${FOLDER}/.git" ]]; then
-        cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q
+        [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git fetch -q)
         ACTION="Pulled"
     else
-        git clone ${COMMON_GIT_FLAGS} ${GIT_FLAGS} -- "${REPO}" "${SOURCE_DIR}/${FOLDER}"
+        [[ "$DRY_RUN" == true ]] || (git clone ${COMMON_GIT_FLAGS} "${GIT_FLAGS[@]}" -- "${REPO}" "${SOURCE_DIR}/${FOLDER}")
         ACTION="Cloned"
     fi
     # fix the version
-    cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}"
-    echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS}'"
+    [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git checkout -qf "${COMMIT}")
+    echo "${ACTION} '${REPO}' to '${FOLDER}' with commit '[${COMMIT}]' and flags '${GIT_FLAGS[@]}'"
 
     # apply patch if provided
     if [[ -n "${PATCH}" ]]; then
-        git apply --verbose "${PATCH_DIR}/${PATCH}"
+        [[ "$DRY_RUN" == true ]] || (cd "${SOURCE_DIR}/${FOLDER}" && git apply --verbose "${PATCH_DIR}/${PATCH}" )
     fi
 }
 
@@ -271,28 +283,32 @@ wgetdeps() {
 
     FOLDER=$1
     URL=$2
-    if [[ -d "${SOURCE_DIR}/${FOLDER}" ]]; then
-        # SC2115 Use "${var:?}" to ensure this never expands to /* .
-        rm -rf "${SOURCE_DIR:?}/${FOLDER:?}"
+
+    if [[ "$DRY_RUN" == false ]]; then
+        if [[ -d "${SOURCE_DIR}/${FOLDER}" ]]; then
+            # SC2115 Use "${var:?}" to ensure this never expands to /* .
+            rm -rf "${SOURCE_DIR:?}/${FOLDER:?}"
+        fi
+        mkdir -p "${SOURCE_DIR}/${FOLDER}"
+        cd "${SOURCE_DIR}"
+        FILENAME="$(basename $URL)"
+        if [[ -f "${SOURCE_DIR}/$FILENAME" ]]; then
+            rm -f "${SOURCE_DIR}/$FILENAME"
+        fi
+        curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
+        tar -xf "$FILENAME" --directory "${SOURCE_DIR}/${FOLDER}" --strip-components=1
+        rm -f "$FILENAME"
     fi
-    mkdir -p "${SOURCE_DIR}/${FOLDER}"
-    cd "${SOURCE_DIR}"
-    FILENAME="$(basename $URL)"
-    if [[ -f "${SOURCE_DIR}/$FILENAME" ]]; then
-        rm -f "${SOURCE_DIR}/$FILENAME"
-    fi
-    curl ${COMMON_CURL_FLAGS} "$URL" || error_exit "Failed to download ${URL}" $?
-    tar -xf "$FILENAME" --directory "${SOURCE_DIR}/${FOLDER}" --strip-components=1
-    rm -f "$FILENAME"
     echo "Downloaded '${URL}' to '${FOLDER}'"
 }
 
 usage_short() {
     echo "
-usage: dl_dep.sh [-h]
-                 [-l [[PROFILE_NAME:]VERSION]]
-                 [-p PROFILE_NAME[:VERSION]]
-                 [-d DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
+usage: dl_dep.sh -p PROFILE_NAME[:PROFILE_VERSION] |
+                 -d DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]] |
+                 -l [[PROFILE_NAME:]PROFILE_VERSION] |
+                 -h
+                 [ -P PROFILES_DIR ] [ -n ]
                  DESTINATION_PATH
 	"
 }
@@ -304,36 +320,43 @@ help_msg() {
 This script gets all GekkoFS dependency sources (excluding the fs itself)
 
 positional arguments:
-        DESTINATION_PATH        path where dependencies should be downloaded
+        DESTINATION_PATH        Path where dependencies should be downloaded
 
 
 optional arguments:
-        -h, --help              shows this help message and exits
-        -l, --list-dependencies [[PROFILE_NAME:]VERSION]
-                                list dependency configuration profiles available for download
-        -p, --profile PROFILE_NAME[:VERSION]
-                                allows downloading a pre-defined set of dependencies as defined
-                                in ${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to 
+        -h, --help              Shows this help message and exits
+        -l, --list-dependencies [[PROFILE_NAME:]PROFILE_VERSION]
+                                List dependency configuration profiles available for download
+        -p, --profile PROFILE_NAME[:PROFILE_VERSION]
+                                Allows downloading a pre-defined set of dependencies as defined
+                                in \${PROFILES_DIR}/PROFILE_NAME.specs. This is useful to 
                                 deploy specific library versions and/or configurations,
                                 using a recognizable name. Optionally, PROFILE_NAME may include
                                 a specific version for the profile, e.g. 'mogon2:latest' or
                                 'ngio:0.8.0', which will download the dependencies defined for
                                 that specific version. If unspecified, the 'default:latest' profile
                                 will be used, which should include all the possible dependencies.
-        -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:VERSION]]
-                                build and install a specific dependency, ignoring any --profile
+        -d, --dependency DEPENDENCY_NAME[[@PROFILE_NAME][:PROFILE_VERSION]]
+                                Build and install a specific dependency, ignoring any --profile
                                 option provided. If PROFILE_NAME is unspecified, the 'default'
-                                profile will be used. Similarly, if VERSION is unspecified, the
-                                'latest' version of the specified profile will be used.
+                                profile will be used. Similarly, if PROFILE_VERSION is unspecified,
+                                the 'latest' version of the specified profile will be used.
+        -P, --profiles-dir PROFILES_DIR
+                                Choose the directory to be used when searching for profiles.
+                                If unspecified, PROFILES_DIR defaults to \${PWD}/profiles.
+        -n, --dry-run           Do not actually run, print only what would be done.
         -v, --verbose           Increase download verbosity
         "
 }
 
+exec_mode_error() {
+    echo "ERROR: --profile and --dependency options are mutually exclusive"
+    usage_short
+    exit 1
+}
+
 # load default profile for now, might be overridden later
 load_profile "${DEFAULT_PROFILE}" "${DEFAULT_VERSION}"
-
-# load source URLs for dependencies
-load_sources
 
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -341,6 +364,9 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
     -p | --profile)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='profile'
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -p/--profile option"
             exit 1
@@ -354,17 +380,52 @@ while [[ $# -gt 0 ]]; do
             PROFILE_VERSION="${DEFAULT_VERSION}"
         fi
 
-        load_profile "${PROFILE_NAME}" "${PROFILE_VERSION}"
         shift # past argument
         shift # past value
         ;;
 
     -d | --dependency)
+
+        [ -n "${EXECUTION_MODE}" ] && exec_mode_error || EXECUTION_MODE='dependency'
+
         if [[ -z "$2" ]]; then
             echo "ERROR: Missing argument for -d/--dependency option"
             exit 1
         fi
-        DEPENDENCY="$2"
+
+        # e.g. mercury@mogon1:latest
+        if [[ "$2" =~ ^(.*)@(.*):(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}" ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[3]}" ]]; then
+                PROFILE_VERSION="${BASH_REMATCH[3]}"
+            fi
+
+        # e.g. mercury@mogon1
+        elif [[ "$2" =~ ^(.*)@(.*)$ ]]; then
+            if [[ -n "${BASH_REMATCH[1]}"  ]]; then
+                DEPENDENCY="${BASH_REMATCH[1]}"
+            fi
+
+            if [[ -n "${BASH_REMATCH[2]}"  ]]; then
+                PROFILE_NAME="${BASH_REMATCH[2]}"
+            fi
+        # e.g. mercury
+        else
+            DEPENDENCY="$2"
+        fi
+
+        if [[ ! -n "${DEPENDENCY}" ]]; then
+            echo "ERROR: Missing dependency name."
+            exit 1
+        fi
+
         shift # past argument
         shift # past value
         ;;
@@ -386,6 +447,21 @@ while [[ $# -gt 0 ]]; do
         VERBOSE=true
         shift # past argument
         ;;
+    -P | --profiles-dir)
+
+        if [[ ! -d "$2" ]]; then
+            echo "ERROR: PROFILES_DIR '$2' does not exist or is not a directory."
+            exit 1
+        fi
+
+        PROFILES_DIR="$2"
+        SOURCES_FILE="${PROFILES_DIR}/sources.list"
+        shift
+        ;;
+    -n | --dry-run)
+        DRY_RUN=true
+        shift
+        ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift              # past argument
@@ -402,72 +478,85 @@ if [[ -z ${1+x} ]]; then
 fi
 SOURCE_DIR="$(readlink -mn "${1}")"
 
+load_profile "${PROFILE_NAME}" "${PROFILE_VERSION}"
+
+if [[ -n "${DEPENDENCY}" && ! -n "${PROFILE_DEP_NAMES[${DEPENDENCY}]}" ]]; then
+    echo "ERROR: '${DEPENDENCY}' not found in '${PROFILE_NAME}:${PROFILE_VERSION}'"
+    exit 1
+fi
+
 echo "Destination path is set to  \"${SOURCE_DIR}\""
+echo "Profile name: ${PROFILE_NAME}"
+echo "Profile version: ${PROFILE_VERSION}"
 echo "------------------------------------"
 
-mkdir -p "${SOURCE_DIR}"
+mkdir -p "${SOURCE_DIR}" || exit 1
 
 ## download dependencies
-for dep in "${PROFILE_DEP_NAMES[@]}"; do
+for dep_name in "${PROFILE_DEP_LIST[@]}"; do
 
-    if [[ ! -z "${PROFILE_WGETDEPS[${dep}]:-}" ]]; then
+    # in dependency mode, skip any dependencies != DEPENDENCY
+    if [[ -n "${DEPENDENCY}" && "${dep_name}" != "${DEPENDENCY}" ]]; then
+        continue
+    fi
 
-        # dependency names can include a TAG after a colon (e.g. ofi:verbs),
-        # remove it
-        dep_id=${dep%%:*}
+    if [[ ! -z "${PROFILE_WGETDEPS[${dep_name}]:-}" ]]; then
 
         # find required version for dependency
-        dep_version="${PROFILE_WGETDEPS[${dep}]}"
+        dep_version="${PROFILE_WGETDEPS[${dep_name}]}"
 
         # build URL for dependency
-        dep_url="${PROFILE_SOURCES[${dep_id}]}"
+        dep_url="${PROFILE_SOURCES[${dep_name}]}"
 
         if [[ -z "${dep_url}" ]]; then
-            echo "Missing source URL for '${dep_id}'. Verify ${SOURCES_FILE}."
+            echo "Missing source URL for '${dep_name}'. Verify ${SOURCES_FILE}."
+            wait
             exit 1
         fi
 
         dep_url="${dep_url/\{\{VERSION\}\}/${dep_version}}"
 
-        wgetdeps "${dep_id}" "${dep_url}" &
+        wgetdeps "${dep_name}" "${dep_url}" &
 
-    elif [[ ! -z "${PROFILE_CLONEDEPS[${dep}]:-}" ]]; then
+    elif [[ ! -z "${PROFILE_CLONEDEPS[${dep_name}]:-}" ]]; then
 
-        # dependency names can include a TAG after a colon (e.g. ofi:verbs),
-        # remove it
-        dep_id=${dep%%:*}
-
-        dep_args=""
+        dep_args=()
 
         # find required version for dependency
-        dep_version="${PROFILE_CLONEDEPS[${dep}]}"
+        dep_version="${PROFILE_CLONEDEPS[${dep_name}]}"
 
         # version may be a commit hash, a tag or something like HEAD@BRANCH_NAME
         # if it's the latter, remove the @BRANCH_NAME
         if [[ "${dep_version}" =~ ^(.*)@(.*)$ ]]; then
-            dep_args+="-b ${BASH_REMATCH[2]}"
+            dep_args+=("--branch=${BASH_REMATCH[2]}")
             dep_version=${BASH_REMATCH[1]}
         fi
 
         # build URL for dependency
-        dep_url="${PROFILE_SOURCES[${dep_id}]}"
+        dep_url="${PROFILE_SOURCES[${dep_name}]}"
 
         if [[ -z "${dep_url}" ]]; then
-            echo "Missing source URL for '${dep_id}'. Verify ${SOURCES_FILE}."
+            echo "Missing source URL for '${dep_name}'. Verify ${SOURCES_FILE}."
+            wait
             exit 1
         fi
 
         dep_url="${dep_url/\{\{VERSION\}\}/${dep_version}}"
 
         # check if extra args are required
-        dep_args+="${PROFILE_CLONEDEPS_ARGS[${dep}]}"
+        for arg in "${PROFILE_CLONEDEPS_ARGS[${dep_name}]}";
+        do
+            if [[ -n "${arg}" ]]; then
+                dep_args+=("${arg}")
+            fi
+        done
 
-        dep_patch=${PROFILE_CLONEDEPS_PATCHES[${dep}]}
+        dep_patch=${PROFILE_CLONEDEPS_PATCHES[${dep_name}]}
 
-        clonedeps "${dep}" "${dep_url}" "${dep_version}" "${dep_args}" "${dep_patch}" &
+        clonedeps "${dep_name}" "${dep_url}" "${dep_version}" "${dep_patch}" "${dep_args[@]}" &
 
     else
-        echo "Unknown dependency '${dep}'."
+        echo "Unknown dependency '${dep_name}'."
         exit 1
     fi
 done

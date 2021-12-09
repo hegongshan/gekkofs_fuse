@@ -37,28 +37,21 @@
 ##               downloaded
 ## - INSTALL_DIR: the directory where the package should be installed
 ## - CORES: the number of cores to use when building
+## - COMPILER_NAME: the name of the compiler being used (e.g. g++, clang, etc.)
+## - COMPILER_FULL_VERSION: the compiler's full version (e.g. 9.3.0)
+## - COMPILER_MAJOR_VERSION: the compiler's major version (e.g. 9)
 ## - PERFORM_TEST: whether tests for the package should be executed
 ################################################################################
 
 pkg_install() {
-    CURR="${SOURCE_DIR}/libfabric"
-    prepare_build_dir "${CURR}"
+    ID="rocksdb%experimental"
+    CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
-    ./autogen.sh
-    cd "${CURR}/build"
-    OFI_CONFIG="../configure --prefix=${INSTALL_DIR} --enable-tcp=yes"
-
-    EXTRA_INSTALL_ARGS="${PROFILE_EXTRA_INSTALL_ARGS["libfabric"]}"
-
-    if [[ -n "${EXTRA_INSTALL_ARGS}" ]]; then
-        OFI_CONFIG="${OFI_CONFIG} ${EXTRA_INSTALL_ARGS}"
-    fi
-
-    ${OFI_CONFIG}
-    make -j${CORES}
-    make install
+    make clean
+    PORTABLE=1 USE_SSE=1 USE_RTTI=1 make -j"${CORES}" static_lib
+    INSTALL_PATH="${INSTALL_DIR}/${ID}" make install
 }
 
 pkg_check() {
-    make check
+    :
 }
