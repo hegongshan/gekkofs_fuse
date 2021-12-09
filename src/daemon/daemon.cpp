@@ -150,19 +150,23 @@ register_server_rpcs(margo_instance_id mid) {
 
 void
 init_rpc_server() {
-    hg_addr_t addr_self;
+    hg_addr_t addr_self = nullptr;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
     struct hg_init_info hg_options = HG_INIT_INFO_INITIALIZER;
     hg_options.auto_sm = GKFS_DATA->use_auto_sm() ? HG_TRUE : HG_FALSE;
     hg_options.stats = HG_FALSE;
-    hg_options.na_class = nullptr;
     if(gkfs::rpc::protocol::ofi_psm2 == GKFS_DATA->rpc_protocol())
         hg_options.na_init_info.progress_mode = NA_NO_BLOCK;
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init_opt(GKFS_DATA->bind_addr().c_str(), MARGO_SERVER_MODE,
-                              &hg_options, HG_TRUE,
-                              gkfs::config::rpc::daemon_handler_xstreams);
+    auto margo_config = fmt::format(
+            R"({{ "use_progress_thread" : true, "rpc_thread_count" : {} }})",
+            gkfs::config::rpc::daemon_handler_xstreams);
+    struct margo_init_info args = {nullptr};
+    args.json_config = margo_config.c_str();
+    args.hg_init_info = &hg_options;
+    auto* mid = margo_init_ext(GKFS_DATA->bind_addr().c_str(), MARGO_SERVER_MODE, &args);
+
     if(mid == MARGO_INSTANCE_NULL) {
         throw runtime_error("Failed to initialize the Margo RPC server");
     }
