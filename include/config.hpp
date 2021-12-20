@@ -88,7 +88,7 @@ constexpr auto dirents_buff_size = (8 * 1024 * 1024); // 8 mega
  */
 constexpr auto daemon_io_xstreams = 8;
 // Number of threads used for RPC handlers at the daemon
-constexpr auto daemon_handler_xstreams = 8;
+constexpr auto daemon_handler_xstreams = 4;
 } // namespace rpc
 
 namespace rocksdb {
