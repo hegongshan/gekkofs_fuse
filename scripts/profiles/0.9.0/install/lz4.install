@@ -47,6 +47,11 @@ pkg_install() {
     ID="lz4"
     CURR="${SOURCE_DIR}/${ID}"
     cd "${CURR}"
+    # try to remove binaries first in case they already exist. Otherwise install fails.
+    LZ4_BINS=("${INSTALL_DIR}"/bin/lz4c "${INSTALL_DIR}"/bin/lz4cat "${INSTALL_DIR}"/bin/unlz4 "${INSTALL_DIR}"/bin/lz4)
+    for LZ4_BIN in "${LZ4_BINS[@]}"; do
+        [ -e "$LZ4_BIN" ] && rm "$LZ4_BIN"
+    done
     make -j"${CORES}"
     make DESTDIR="${INSTALL_DIR}" PREFIX="" install
 }
