@@ -165,7 +165,8 @@ init_rpc_server() {
     struct margo_init_info args = {nullptr};
     args.json_config = margo_config.c_str();
     args.hg_init_info = &hg_options;
-    auto* mid = margo_init_ext(GKFS_DATA->bind_addr().c_str(), MARGO_SERVER_MODE, &args);
+    auto* mid = margo_init_ext(GKFS_DATA->bind_addr().c_str(),
+                               MARGO_SERVER_MODE, &args);
 
     if(mid == MARGO_INSTANCE_NULL) {
         throw runtime_error("Failed to initialize the Margo RPC server");

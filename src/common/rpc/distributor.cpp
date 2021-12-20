@@ -209,7 +209,8 @@ GuidedDistributor::locate_data(const string& path,
 
     for(auto const& it : prefix_list) {
         if(0 == path.compare(0, min(it.length(), path.length()), it, 0,
-                             min(it.length(), path.length()))) {}
+                             min(it.length(), path.length()))) {
+        }
         return str_hash(path) % hosts_size_;
     }
 
