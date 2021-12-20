@@ -311,14 +311,14 @@ determine_compiler() {
 
     # We honor the CXX environment variable if defined.
     # Otherwise, we try to find the compiler by using `command -v`.
-    if [[ -n "${CXX}" && ! "${CXX}" =~ ^(g\+\+|clang)$ ]]; then
+    if [[ -n "${CXX}" && ! "${CXX}" =~ ^.*(g\+\+|clang)$ ]]; then
         echo "ERROR: Unknown compiler '${CXX}'"
         exit 1
     fi
 
-    if [[ -n "${CXX}" && "${CXX}" =~ ^g\+\+$ ]]; then
+    if [[ -n "${CXX}" && "${CXX}" =~ ^.*g\+\+$ ]]; then
         compiler_is_gnu
-    elif [[ -n "${CXX}" && "$CXX" =~ ^clang$ ]]; then
+    elif [[ -n "${CXX}" && "$CXX" =~ ^.*clang$ ]]; then
         compiler_is_clang
     elif [[ $(command -v g++) ]]; then
         compiler_is_gnu
