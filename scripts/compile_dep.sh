@@ -456,7 +456,8 @@ while [[ $# -gt 0 ]]; do
         fi
 
         PROFILES_DIR="$2"
-        shift
+        shift # past argument
+        shift # past value
         ;;
     -l | --list-dependencies)
         if [[ -z "$2" ]]; then
@@ -469,7 +470,6 @@ while [[ $# -gt 0 ]]; do
     -h | --help)
         help_msg
         exit
-        #shift # past argument
         ;;
     -n | --dry-run)
         DRY_RUN=true
