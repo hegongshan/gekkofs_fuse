@@ -128,11 +128,6 @@ find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
 
-# boost dependencies
-find_package(Boost 1.53 REQUIRED
-    COMPONENTS
-    program_options
-    )
 
 find_package(Threads REQUIRED)
 
@@ -223,6 +218,12 @@ set_target_properties(spdlog
     PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
     )
+add_library(CLI11 INTERFACE)
+# we cannot use target_include_directories with CMake < 3.11
+set_target_properties(CLI11
+    PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
+    )
 
 add_subdirectory(external/fmt)
 set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -260,6 +261,8 @@ include(CMakeDependentOption)
 cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
 if (GKFS_BUILD_TESTS)
+    # Boost preprocessor header-only is supplied by the Mercury installation
+    find_package(Boost_preprocessor REQUIRED)
     # check symbols exists doesn't work for statx. This is a workaround
     check_cxx_source_compiles("
         #include <fcntl.h>

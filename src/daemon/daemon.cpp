@@ -39,12 +39,12 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
+#include <CLI11/CLI11.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
 #endif
 
-#include <boost/program_options.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -58,12 +58,19 @@ extern "C" {
 }
 
 using namespace std;
-
-namespace po = boost::program_options;
 namespace fs = std::filesystem;
 
 static condition_variable shutdown_please;
 static mutex mtx;
+
+struct cli_options {
+    string mountdir;
+    string rootdir;
+    string metadir;
+    string listen;
+    string hosts_file;
+    string rpc_protocol;
+};
 
 void
 init_io_tasklet_pool() {
@@ -395,10 +402,10 @@ initialize_loggers() {
  * @throws runtime_error
  */
 void
-parse_input(const po::variables_map& vm) {
+parse_input(const cli_options& opts, const CLI::App& desc) {
     auto rpc_protocol = string(gkfs::rpc::protocol::ofi_sockets);
-    if(vm.count("rpc-protocol")) {
-        rpc_protocol = vm["rpc-protocol"].as<string>();
+    if(desc.count("--rpc-protocol")) {
+        rpc_protocol = opts.rpc_protocol;
         if(rpc_protocol != gkfs::rpc::protocol::ofi_verbs &&
            rpc_protocol != gkfs::rpc::protocol::ofi_sockets &&
            rpc_protocol != gkfs::rpc::protocol::ofi_psm2) {
@@ -408,15 +415,15 @@ parse_input(const po::variables_map& vm) {
         }
     }
 
-    auto use_auto_sm = vm.count("auto-sm") != 0;
+    auto use_auto_sm = desc.count("--auto-sm") != 0;
     GKFS_DATA->use_auto_sm(use_auto_sm);
     GKFS_DATA->spdlogger()->debug(
             "{}() Shared memory (auto_sm) for intra-node communication (IPCs) set to '{}'.",
             __func__, use_auto_sm);
 
     string addr{};
-    if(vm.count("listen")) {
-        addr = vm["listen"].as<string>();
+    if(desc.count("--listen")) {
+        addr = opts.listen;
         // ofi+verbs requires an empty addr to bind to the ib interface
         if(rpc_protocol == gkfs::rpc::protocol::ofi_verbs) {
             /*
@@ -437,23 +444,23 @@ parse_input(const po::variables_map& vm) {
     GKFS_DATA->bind_addr(fmt::format("{}://{}", rpc_protocol, addr));
 
     string hosts_file;
-    if(vm.count("hosts-file")) {
-        hosts_file = vm["hosts-file"].as<string>();
+    if(desc.count("--hosts-file")) {
+        hosts_file = opts.hosts_file;
     } else {
         hosts_file = gkfs::env::get_var(gkfs::env::HOSTS_FILE,
                                         gkfs::config::hostfile_path);
     }
     GKFS_DATA->hosts_file(hosts_file);
 
-    assert(vm.count("mountdir"));
-    auto mountdir = vm["mountdir"].as<string>();
+    assert(desc.count("--mountdir"));
+    auto mountdir = opts.mountdir;
     // Create mountdir. We use this dir to get some information on the
     // underlying fs with statfs in gkfs_statfs
     fs::create_directories(mountdir);
     GKFS_DATA->mountdir(fs::canonical(mountdir).native());
 
-    assert(vm.count("rootdir"));
-    auto rootdir = vm["rootdir"].as<string>();
+    assert(desc.count("--rootdir"));
+    auto rootdir = opts.rootdir;
 
 #ifdef GKFS_ENABLE_FORWARDING
     // In forwarding mode, the backend is shared
@@ -462,17 +469,20 @@ parse_input(const po::variables_map& vm) {
     auto rootdir_path = fs::path(rootdir) / fmt::format_int(getpid()).str();
 #endif
 
-    if(vm.count("cleanrd")) {
+    if(desc.count("--clean-rootdir")) {
         // may throw exception (caught in main)
+        GKFS_DATA->spdlogger()->debug("{}() Cleaning rootdir '{}' ...",
+                                      __func__, rootdir_path.native());
         fs::remove_all(rootdir_path.native());
+        GKFS_DATA->spdlogger()->info("{}() Rootdir cleaned.", __func__);
     }
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
                                   rootdir_path.native());
     fs::create_directories(rootdir_path);
     GKFS_DATA->rootdir(rootdir_path.native());
 
-    if(vm.count("metadir")) {
-        auto metadir = vm["metadir"].as<string>();
+    if(desc.count("--metadir")) {
+        auto metadir = opts.metadir;
 
 #ifdef GKFS_ENABLE_FORWARDING
         auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
@@ -487,7 +497,7 @@ parse_input(const po::variables_map& vm) {
                                       metadir_path.native());
     } else {
         // use rootdir as metadata dir
-        auto metadir = vm["rootdir"].as<string>();
+        auto metadir = opts.rootdir;
 
 #ifdef GKFS_ENABLE_FORWARDING
         auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
@@ -501,50 +511,52 @@ parse_input(const po::variables_map& vm) {
 
 int
 main(int argc, const char* argv[]) {
-
     // Define arg parsing
-    po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "Help message");
-    desc.add_options()(
-            "mountdir,m", po::value<string>()->required(),
-            "Virtual mounting directory where GekkoFS is available.");
-    desc.add_options()(
-            "rootdir,r", po::value<string>()->required(),
-            "Local data directory where GekkoFS data for this daemon is stored.");
-    desc.add_options()(
-            "metadir,i", po::value<string>(),
-            "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.");
-    desc.add_options()(
-            "listen,l", po::value<string>(),
-            "Address or interface to bind the daemon to. Default: local hostname.\n"
-            "When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly "
-            "which associates the verbs device with the network interface. In case FI_VERBS_IFACE "
-            "is already defined, the argument is ignored. Default 'ib'.");
-    desc.add_options()("hosts-file,H", po::value<string>(),
-                       "Shared file used by deamons to register their "
-                       "endpoints. (default './gkfs_hosts.txt')");
-    desc.add_options()(
-            "rpc-protocol,P", po::value<string>(),
-            "Used RPC protocol for inter-node communication.\n"
-            "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, "
-            "and Omni-Path, respectively. (Default ofi+sockets)\n"
-            "Libfabric must have enabled support verbs or psm2.");
-    desc.add_options()(
-            "auto-sm",
-            "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
-            "instead of using the RPC protocol. (Default off)");
-    desc.add_options()("clean-rootdir",
-                       "Cleans Rootdir >before< launching the deamon");
-    desc.add_options()("version", "Print version and exit.");
-    po::variables_map vm{};
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-
-    if(vm.count("help")) {
-        cout << desc << "\n";
-        return 1;
+    CLI::App desc{"Allowed options"};
+    cli_options opts{};
+    // clang-format off
+    desc.add_option("--mountdir,-m", opts.mountdir,
+                    "Virtual mounting directory where GekkoFS is available.")
+                    ->required()
+                    ->expected(1);
+    desc.add_option(
+                    "--rootdir,-r", opts.rootdir,
+                    "Local data directory where GekkoFS data for this daemon is stored.")
+                    ->required()
+                    ->expected(1);
+    desc.add_option(
+                    "--metadir,-i", opts.metadir,
+                    "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.");
+    desc.add_option(
+                    "--listen,-l", opts.listen,
+                    "Address or interface to bind the daemon to. Default: local hostname.\n"
+                    "When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly "
+                    "which associates the verbs device with the network interface. In case FI_VERBS_IFACE "
+                    "is already defined, the argument is ignored. Default 'ib'.");
+    desc.add_option("--hosts-file,-H", opts.hosts_file,
+                    "Shared file used by deamons to register their "
+                    "endpoints. (default './gkfs_hosts.txt')");
+    desc.add_option(
+                    "--rpc-protocol,-P", opts.rpc_protocol,
+                    "Used RPC protocol for inter-node communication.\n"
+                    "Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, "
+                    "and Omni-Path, respectively. (Default ofi+sockets)\n"
+                    "Libfabric must have enabled support verbs or psm2.");
+    desc.add_flag(
+                "--auto-sm",
+                "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
+                "instead of using the RPC protocol. (Default off)");
+    desc.add_flag(
+                "--clean-rootdir",
+                "Cleans Rootdir >before< launching the deamon");
+    desc.add_flag("--version", "Print version and exit.");
+    // clang-format on
+    try {
+        desc.parse(argc, argv);
+    } catch(const CLI::ParseError& e) {
+        return desc.exit(e);
     }
-
-    if(vm.count("version")) {
+    if(desc.count("--version")) {
         cout << GKFS_VERSION_STRING << endl;
 #ifndef NDEBUG
         cout << "Debug: ON" << endl;
@@ -560,21 +572,13 @@ main(int argc, const char* argv[]) {
              << endl;
         return 0;
     }
-
-    try {
-        po::notify(vm);
-    } catch(po::required_option& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    }
-
     // intitialize logging framework
     initialize_loggers();
     GKFS_DATA->spdlogger(spdlog::get("main"));
 
     // parse all input parameters and populate singleton structures
     try {
-        parse_input(vm);
+        parse_input(opts, desc);
     } catch(const std::exception& e) {
         cerr << fmt::format("Parsing arguments failed: '{}'. Exiting.",
                             e.what());

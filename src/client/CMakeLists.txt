@@ -87,7 +87,6 @@ set(PRELOAD_LINK_LIBRARIES
     mercury
     hermes
     fmt::fmt
-    Boost::boost
     Threads::Threads
     Date::TZ
     )
