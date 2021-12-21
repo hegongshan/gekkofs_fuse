@@ -261,6 +261,8 @@ include(CMakeDependentOption)
 cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
 if (GKFS_BUILD_TESTS)
+    # Boost preprocessor header-only is supplied by the Mercury installation
+    find_package(Boost_preprocessor REQUIRED)
     # check symbols exists doesn't work for statx. This is a workaround
     check_cxx_source_compiles("
         #include <fcntl.h>
