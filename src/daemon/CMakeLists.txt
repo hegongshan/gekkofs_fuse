@@ -65,6 +65,7 @@ set(DAEMON_LINK_LIBRARIES
     log_util
     env_util
     spdlog
+    CLI11
     fmt::fmt
     path_util
     # margo libs
@@ -72,8 +73,6 @@ set(DAEMON_LINK_LIBRARIES
     mercury
     ${MARGO_LIBRARIES}
     # others
-    Boost::boost
-    Boost::program_options
     Threads::Threads
     )
 set(DAEMON_INCLUDE_DIRS

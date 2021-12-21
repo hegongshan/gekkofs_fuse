@@ -66,12 +66,6 @@ add_executable(gkfs.io
 include(FetchContent)
 
 set(FETCHCONTENT_QUIET OFF)
-FetchContent_Declare(cli11
-    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG dd0d8e4fe729e5b1110232c7a5c9566dad884686 # v1.9.0
-    GIT_SHALLOW ON
-    GIT_PROGRESS ON
-)
 
 FetchContent_Declare(nlohmann_json
     GIT_REPOSITORY https://github.com/nlohmann/json
@@ -80,14 +74,7 @@ FetchContent_Declare(nlohmann_json
     GIT_PROGRESS ON
 )
 
-FetchContent_GetProperties(cli11)
 
-if(NOT cli11_POPULATED)
-    FetchContent_Populate(cli11)
-    message(STATUS "[gkfs.io] CLI11 source dir: ${cli11_SOURCE_DIR}")
-    message(STATUS "[gkfs.io] CLI11 binary dir: ${cli11_BINARY_DIR}")
-    add_subdirectory(${cli11_SOURCE_DIR} ${cli11_BINARY_DIR})
-endif()
 
 FetchContent_GetProperties(nlohmann_json)
 
@@ -109,11 +96,10 @@ endif()
 target_include_directories(gkfs.io PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/gkfs.io>
 )
-
 target_link_libraries(gkfs.io
-    CLI11::CLI11
     nlohmann_json::nlohmann_json
     fmt::fmt
+    CLI11
     # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
     stdc++fs
     )
