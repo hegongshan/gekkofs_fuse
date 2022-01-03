@@ -28,48 +28,55 @@
 
 # vi: ft=bash
 
-declare -A sources
+# Variables to be imported into the scripts
+declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_args
+declare -a order
 
-sources=(
-    ["bzip2"]="https://sourceforge.net/projects/bzip2/files/bzip2-{{VERSION}}.tar.gz"
-    ["zstd"]="https://github.com/facebook/zstd/archive/v{{VERSION}}.tar.gz"
-    ["lz4"]="https://github.com/lz4/lz4/archive/v{{VERSION}}.tar.gz"
-    ["snappy"]="https://github.com/google/snappy/archive/{{VERSION}}.tar.gz"
-    ["capstone"]="https://github.com/aquynh/capstone/archive/{{VERSION}}.tar.gz"
-    ["argobots"]="https://github.com/pmodels/argobots/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb%experimental"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["psm2"]="https://github.com/intel/opa-psm2/archive/PSM2_{{VERSION}}.tar.gz"
-    ["bmi"]="https://github.com/radix-io/bmi/"
-    ["libfabric"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%experimental"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%verbs"]="https://github.com/ofiwg/libfabric.git"
-    ["mercury"]="https://github.com/mercury-hpc/mercury"
-    ["margo"]="https://github.com/mochi-hpc/mochi-margo"
-    ["syscall_intercept"]="https://github.com/pmem/syscall_intercept.git"
-    ["date"]="https://github.com/HowardHinnant/date.git"
-    ["agios"]="https://github.com/francielizanon/agios.git"
-    ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
+# Comment that should be displayed when printing the profile
+comment="Dependencies for NEXTGenIO prototype cluster"
+
+# Dependencies that must be downloaded directly
+wgetdeps=(
+    ["lz4"]="1.9.3"
+    ["capstone"]="4.0.2"
+    ["argobots"]="1.1"
+    ["rocksdb"]="6.26.1"
+    ["psm2"]="11.2.185"
+    ["json-c"]="0.15-20200726"
 )
 
+# Dependencies that must be cloned
+clonedeps=(
+    ["libfabric"]="HEAD@v1.13.2"
+    ["mercury"]="v2.1.0"
+    ["margo"]="v0.9.6"
+    ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
+    ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
+)
 
+# Extra arguments for git clone
+clonedeps_args=(
+    ["mercury"]="--recurse-submodules"
+)
 
+# Patches that should be applied post-clone
+clonedeps_patches=(
+    ["syscall_intercept"]="syscall_intercept.patch"
+)
 
+# Ordering that MUST be followed when downloading
+order=(
+    "lz4" "capstone" "json-c" "psm2" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Extra arguments passed to the installation script. As such, they can
+# reference the following variables:
+#  - CMAKE: a variable that expands to the cmake binary
+#  - SOURCE_DIR: the directory where the sources for the package were
+#               downloaded
+#  - INSTALL_DIR: the directory where the package should be installed
+#  - CORES: the number of cores to use when building
+#  - PERFORM_TEST: whether tests for the package should be executed
+extra_install_args=(
+    ["libfabric"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
+)
