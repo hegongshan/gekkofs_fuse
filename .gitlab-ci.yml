@@ -56,6 +56,7 @@ gkfs:
       -DGKFS_BUILD_TESTS:BOOL=ON
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
+      -DGKFS_USE_GUIDED_DISTRIBUTION:BOOL=ON
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
     # reduce artifacts size

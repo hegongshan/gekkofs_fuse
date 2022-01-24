@@ -35,11 +35,12 @@
 #include <numeric>
 #include <unordered_map>
 #include <fstream>
+
+#ifdef GKFS_USE_GUIDED_DISTRIBUTION
 #include <boost/icl/interval_map.hpp>
+#endif
 
-namespace gkfs {
-
-namespace rpc {
+namespace gkfs::rpc {
 
 using chunkid_t = unsigned int;
 using host_t = unsigned int;
@@ -139,7 +140,7 @@ public:
     std::vector<host_t>
     locate_directory_metadata(const std::string& path) const override;
 };
-
+#ifdef GKFS_USE_GUIDED_DISTRIBUTION
 class GuidedDistributor : public Distributor {
 private:
     host_t localhost_;
@@ -175,8 +176,8 @@ public:
     std::vector<host_t>
     locate_directory_metadata(const std::string& path) const override;
 };
+#endif
 
-} // namespace rpc
-} // namespace gkfs
+} // namespace gkfs::rpc
 
 #endif // GEKKOFS_RPC_LOCATOR_HPP

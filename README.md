@@ -184,13 +184,15 @@ Chunks are distributed randomly to the different GekkoFS servers.
 
 ### Guided Distributor
 
+To use the Guided Distributor, Boost (specifically the Boost *Interval Container Library* (ICL) must be available). 
+
 #### General
 
 The guided distributor allows defining a specific distribution of data on a per directory or file basis. 
 The distribution configurations are defined within a shared file (called `guided_config.txt` henceforth) with the following format:
 `<path> <chunk_number> <host>`
 
-To enable the distributor, the following compilation flags are required:
+To enable the distributor, the following CMake compilation flags are required:
 * `GKFS_USE_GUIDED_DISTRIBUTION` ON
 * `GKFS_USE_GUIDED_DISTRIBUTION_PATH` `<path_guided_config.txt>`
 
