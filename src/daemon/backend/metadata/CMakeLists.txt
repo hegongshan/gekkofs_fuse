@@ -27,6 +27,21 @@
 ################################################################################
 
 add_library(metadata_db STATIC)
+# If it exists, RocksDB has been build with liburing support.
+# If check succeeds, we need to link with liburing with the daemon
+set(CMAKE_REQUIRED_FLAGS "-luring")
+check_cxx_source_compiles("
+        #include <liburing.h>
+        int main() {
+          struct io_uring ring;
+          io_uring_queue_init(1, &ring, 0);
+          return 0;
+        }
+        " HAS_LIBURING)
+set(liburing "")
+if (HAS_LIBURING)
+    set(LIBURING "-luring")
+endif()
 
 target_sources(metadata_db
     PUBLIC
@@ -62,4 +77,5 @@ target_link_libraries(metadata_db
     RocksDB
     spdlog
     path_util
+    ${LIBURING}
     )

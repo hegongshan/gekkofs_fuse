@@ -65,6 +65,11 @@ set(CMAKE_C_FLAGS_MEMCHECK "${WARNINGS_FLAGS} -g -O0 -fsanitize=address -fno-omi
 set(CMAKE_C_FLAGS_MAINTAINER "${WARNINGS_FLAGS} -g -O0 -pg -no-pie")
 mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 
+# CMake and general includes
+include(CheckCXXSourceCompiles)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+
 # Project version
 set(GIT_VERSION_FOUND FALSE)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -116,10 +121,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(BZip2 REQUIRED)
-find_package(Snappy REQUIRED)
-find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
 # margo dependencies
@@ -127,8 +128,6 @@ find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
-
-
 find_package(Threads REQUIRED)
 
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
@@ -193,10 +192,6 @@ target_link_libraries(RocksDB
     INTERFACE
     ${ROCKSDB_LIBRARIES}
     # rocksdb libs
-    ${Snappy_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${ZStd_LIBRARIES}
     ${LZ4_LIBRARIES}
     )
 
@@ -246,8 +241,6 @@ include_directories(
     ${CMAKE_BINARY_DIR}/include
 )
 
-include(GNUInstallDirs)
-
 # Common components
 add_subdirectory(src/common)
 # Daemon
@@ -257,7 +250,6 @@ add_subdirectory(src/client)
 
 option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
 
-include(CMakeDependentOption)
 cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
 if (GKFS_BUILD_TESTS)
