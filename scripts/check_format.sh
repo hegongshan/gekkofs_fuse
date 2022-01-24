@@ -110,7 +110,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ -z $CLANG_FORMAT_BIN ]]; then
     CLANG_FORMAT_BIN=$(command -v clang-format)
     if [[ -z $CLANG_FORMAT_BIN ]]; then
-        CLANG_FORMAT_BIN=$(command -v clang-format-10)
+        CLANG_FORMAT_BIN=$(command -v clang-format-11)
         # if it still doesn't exist exit
         if [[ -z $CLANG_FORMAT_BIN ]]; then
             echo "*** ERR: clang-format not found! Exiting ..."

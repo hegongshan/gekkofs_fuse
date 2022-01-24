@@ -22,14 +22,14 @@ variables:
   GIT_SUBMODULE_STRATEGY:       recursive
 
 # base image
-image: gekkofs/core:0.8.0
+image: gekkofs/core:0.9.0
 
 ################################################################################
 ## Validating
 ################################################################################
 check format:
   stage: lint
-  image: gekkofs/linter:0.8.0
+  image: gekkofs/linter:0.9.0
   needs: []
   script:
     - ${SCRIPTS_DIR}/check_format.sh
@@ -43,7 +43,7 @@ check format:
 ################################################################################
 gkfs:
   stage: build
-  image: gekkofs/deps:0.8.0
+  image: gekkofs/deps:0.9.0
   interruptible: true
   needs: []
   script:
@@ -68,7 +68,7 @@ gkfs:
 
 gkfwd:
   stage: build
-  image: gekkofs/deps:0.8.0
+  image: gekkofs/deps:0.9.0
   interruptible: true
   needs: []
   script:
@@ -101,7 +101,7 @@ gkfwd:
 ## == tests for scripts ====================
 scripts:
   stage: test
-  image: gekkofs/testing:0.8.0
+  image: gekkofs/testing:0.9.0
   needs: []
   parallel:
     matrix:
@@ -119,7 +119,7 @@ scripts:
 ## == integration tests for gkfs ===========
 gkfs:integration:
   stage: test
-  image: gekkofs/testing:0.8.0
+  image: gekkofs/testing:0.9.0
   interruptible: true
   needs: ['gkfs']
   parallel:
@@ -164,7 +164,7 @@ gkfs:integration:
 ## == integration tests for gkfwd ==========
 gkfwd:integration:
   stage: test
-  image: gekkofs/testing:0.8.0
+  image: gekkofs/testing:0.9.0
   interruptible: true
   needs: ['gkfwd']
   parallel:
@@ -209,7 +209,7 @@ gkfwd:integration:
 ## == unit tests for gkfs ==================
 gkfs:unit:
   stage: test
-  image: gekkofs/testing:0.8.0
+  image: gekkofs/testing:0.9.0
   needs: ['gkfs']
   script:
     ## run actual tests
@@ -237,7 +237,7 @@ gkfs:unit:
 ################################################################################
 coverage:
   stage: report
-  image: gekkofs/coverage:0.8.0
+  image: gekkofs/coverage:0.9.0
   needs: [ 'gkfs:integration', 'gkfwd:integration', 'gkfs:unit' ]
   script:
     - cd ${BUILD_PATH}
