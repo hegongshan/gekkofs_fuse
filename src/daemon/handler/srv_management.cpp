@@ -31,6 +31,10 @@
 
 #include <common/rpc/rpc_types.hpp>
 
+extern "C" {
+#include <unistd.h>
+}
+
 using namespace std;
 
 /*

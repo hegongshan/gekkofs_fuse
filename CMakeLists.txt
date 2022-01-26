@@ -137,6 +137,9 @@ find_package(Filesystem REQUIRED)
 
 find_package(Date REQUIRED)
 
+# Import some convenience functions
+include(gkfs-utils)
+
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
 message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
 
@@ -209,12 +212,6 @@ set_target_properties(RocksDB
     INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
     )
 
-add_library(spdlog INTERFACE)
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(spdlog
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
-    )
 add_library(CLI11 INTERFACE)
 # we cannot use target_include_directories with CMake < 3.11
 set_target_properties(CLI11
@@ -249,6 +246,11 @@ add_subdirectory(src/common)
 add_subdirectory(src/daemon)
 # Client library
 add_subdirectory(src/client)
+
+### Mark any CMake variables imported from {fmt} and spdlog as advanced, so
+### that they don't appear in cmake-gui or ccmake. Similarly for FETCHCONTENT
+### variables.
+mark_variables_as_advanced(REGEX "^(FETCHCONTENT|fmt|FMT|spdlog|SPDLOG)_.*$")
 
 option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
 

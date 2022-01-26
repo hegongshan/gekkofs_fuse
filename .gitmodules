@@ -16,3 +16,6 @@
 [submodule "tests/scripts/helpers/bats-file"]
 	path = tests/scripts/helpers/bats-file
 	url = https://github.com/bats-core/bats-file.git
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/gabime/spdlog
