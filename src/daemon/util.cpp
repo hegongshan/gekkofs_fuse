@@ -39,7 +39,8 @@ namespace gkfs::utils {
  * @internal
  * Appends a single line to an existing shared hosts file with the RPC
  * connection information of this daemon. If it doesn't exist, it is created.
- * The line includes the hostname and the RPC server's listening address.
+ * The line includes the hostname (and rootdir_suffix if applicable) and the RPC
+ * server's listening address.
  *
  * NOTE, the shared file system must support strong consistency semantics to
  * ensure each daemon can write its information to the file even if the write
@@ -56,8 +57,13 @@ populate_hosts_file() {
         throw runtime_error(fmt::format("Failed to open hosts file '{}': {}",
                                         hosts_file, strerror(errno)));
     }
-    lfstream << fmt::format("{} {}", gkfs::rpc::get_my_hostname(true),
-                            RPC_DATA->self_addr_str())
+    // if rootdir_suffix is used, append it to hostname
+    auto hostname =
+            GKFS_DATA->rootdir_suffix().empty()
+                    ? gkfs::rpc::get_my_hostname(true)
+                    : fmt::format("{}#{}", gkfs::rpc::get_my_hostname(true),
+                                  GKFS_DATA->rootdir_suffix());
+    lfstream << fmt::format("{} {}", hostname, RPC_DATA->self_addr_str())
              << std::endl;
     if(!lfstream) {
         throw runtime_error(

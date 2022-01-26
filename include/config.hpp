@@ -76,6 +76,10 @@ constexpr auto implicit_data_removal = true;
 // level
 constexpr auto create_exist_check = true;
 } // namespace metadata
+namespace data {
+// directory name below rootdir where chunks are placed
+constexpr auto chunk_dir = "chunks";
+} // namespace data
 
 namespace rpc {
 constexpr auto chunksize = 524288; // in bytes (e.g., 524288 == 512KB)
@@ -94,6 +98,8 @@ constexpr auto daemon_handler_xstreams = 4;
 namespace rocksdb {
 // Write-ahead logging of rocksdb
 constexpr auto use_write_ahead_log = false;
+// directory name where the rocksdb instance is placed
+constexpr auto data_dir = "rocksdb";
 } // namespace rocksdb
 
 } // namespace gkfs::config

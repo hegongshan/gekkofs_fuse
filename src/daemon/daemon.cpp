@@ -73,6 +73,7 @@ static mutex mtx; // mutex to wait on shutdown conditional variable
 struct cli_options {
     string mountdir;
     string rootdir;
+    string rootdir_suffix;
     string metadir;
     string listen;
     string hosts_file;
@@ -239,7 +240,8 @@ init_rpc_server() {
 void
 init_environment() {
     // Initialize metadata db
-    std::string metadata_path = GKFS_DATA->metadir() + "/rocksdb"s;
+    auto metadata_path = fmt::format("{}/{}", GKFS_DATA->metadir(),
+                                     gkfs::config::rocksdb::data_dir);
     GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'",
                                   __func__, metadata_path);
     try {
@@ -286,7 +288,8 @@ init_environment() {
 #endif
 
     // Initialize data backend
-    std::string chunk_storage_path = GKFS_DATA->rootdir() + "/data/chunks"s;
+    auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
+                                          gkfs::config::data::chunk_dir);
     GKFS_DATA->spdlogger()->debug("{}() Initializing storage backend: '{}'",
                                   __func__, chunk_storage_path);
     fs::create_directories(chunk_storage_path);
@@ -333,6 +336,8 @@ init_environment() {
     gkfs::metadata::Metadata root_md{S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO};
     try {
         gkfs::metadata::create("/", root_md);
+    } catch(const gkfs::metadata::ExistsException& e) {
+        // launched on existing directory which is no error
     } catch(const std::exception& e) {
         throw runtime_error("Failed to write root metadentry to KV store: "s +
                             e.what());
@@ -527,7 +532,20 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     // In forwarding mode, the backend is shared
     auto rootdir_path = fs::path(rootdir);
 #else
-    auto rootdir_path = fs::path(rootdir) / fmt::format_int(getpid()).str();
+    auto rootdir_path = fs::path(rootdir);
+    if(desc.count("--rootdir-suffix")) {
+        if(opts.rootdir_suffix == gkfs::config::data::chunk_dir ||
+           opts.rootdir_suffix == gkfs::config::rocksdb::data_dir)
+            throw runtime_error(fmt::format(
+                    "rootdir_suffix '{}' is reserved and not allowed.",
+                    opts.rootdir_suffix));
+        if(opts.rootdir_suffix.find('#') != string::npos)
+            throw runtime_error(fmt::format(
+                    "The character '#' in the rootdir_suffix is reserved and not allowed."));
+        // append path with a directory separator
+        rootdir_path /= opts.rootdir_suffix;
+        GKFS_DATA->rootdir_suffix(opts.rootdir_suffix);
+    }
 #endif
 
     if(desc.count("--clean-rootdir")) {
@@ -592,13 +610,14 @@ main(int argc, const char* argv[]) {
     // clang-format off
     desc.add_option("--mountdir,-m", opts.mountdir,
                     "Virtual mounting directory where GekkoFS is available.")
-                    ->required()
-                    ->expected(1);
+                    ->required();
     desc.add_option(
                     "--rootdir,-r", opts.rootdir,
                     "Local data directory where GekkoFS data for this daemon is stored.")
-                    ->required()
-                    ->expected(1);
+                    ->required();
+    desc.add_option(
+                    "--rootdir-suffix,-s", opts.rootdir_suffix,
+                    "Creates an additional directory within the rootdir, allowing multiple daemons on one node.");
     desc.add_option(
                     "--metadir,-i", opts.metadir,
                     "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.");
@@ -622,7 +641,7 @@ main(int argc, const char* argv[]) {
                 "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                 "instead of using the RPC protocol. (Default off)");
     desc.add_flag(
-                "--clean-rootdir",
+                "--clean-rootdir,-c",
                 "Cleans Rootdir >before< launching the deamon");
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on
