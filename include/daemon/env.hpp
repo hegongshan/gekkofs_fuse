@@ -25,6 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief This file defines all prefixes for environment variables that can be
+ * set by the user.
+ */
 
 #ifndef GKFS_DAEMON_ENV
 #define GKFS_DAEMON_ENV

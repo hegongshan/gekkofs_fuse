@@ -25,7 +25,14 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
+/**
+ * @brief Provides all Margo RPC handler definitions called by Mercury on client
+ * request for all file system data operations.
+ * @internal
+ * The end of the file defines the associates the Margo RPC handler functions
+ * and associates them with their corresponding GekkoFS handler functions.
+ * @endinternal
+ */
 #include <daemon/daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/handler/rpc_util.hpp>
@@ -45,17 +52,41 @@
 #endif
 
 using namespace std;
-/*
- * This file contains all Margo RPC handlers that are concerning management
- * operations
- */
 
 namespace {
 
 /**
- * RPC handler for an incoming write RPC
- * @param handle
- * @return
+ * @brief Serves a write request transferring the chunks associated with this
+ * daemon and store them on the node-local FS.
+ * @internal
+ * The write operation has multiple steps:
+ * 1. Setting up all RPC related information
+ * 2. Allocating space for bulk transfer buffers
+ * 3. By processing the RPC input, the chunk IDs that are hashing to this daemon
+ * are computed based on a client-defined interval (start and endchunk id for
+ * this write operation). The client does _not_ provide the daemons with a list
+ * of chunk IDs because it is dynamic data that cannot be part of an RPC input
+ * struct. Therefore, this information would need to be pulled with a bulk
+ * transfer as well, adding unnecessary latency to the overall write operation.
+ *
+ * For each relevant chunk, a PULL bulk transfer is issued. Once finished, a
+ * non-blocking Argobots tasklet is launched to write the data chunk to the
+ * backend storage. Therefore, bulk transfer and the backend I/O operation are
+ * overlapping for efficiency.
+ * 4. Wait for all tasklets to complete adding up all the complete written data
+ * size as reported by each task.
+ * 5. Respond to client (when all backend write operations are finished) and
+ * cleanup RPC resources. Any error is reported in the RPC output struct. Note,
+ * that backend write operations are not canceled while in-flight when a task
+ * encounters an error.
+ *
+ * Note, refer to the data backend documentation w.r.t. how Argobots tasklets
+ * work and why they are used.
+ *
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
  */
 hg_return_t
 rpc_srv_write(hg_handle_t handle) {
@@ -315,9 +346,37 @@ rpc_srv_write(hg_handle_t handle) {
 }
 
 /**
- * RPC handler for an incoming read RPC
- * @param handle
- * @return
+ * @brief Serves a read request reading the chunks associated with this
+ * daemon from the node-local FS and transferring them back to the client.
+ * @internal
+ * The read operation has multiple steps:
+ * 1. Setting up all RPC related information
+ * 2. Allocating space for bulk transfer buffers
+ * 3. By processing the RPC input, the chunk IDs that are hashing to this daemon
+ * are computed based on a client-defined interval (start and endchunk id for
+ * this read operation). The client does _not_ provide the daemons with a list
+ * of chunk IDs because it is dynamic data that cannot be part of an RPC input
+ * struct. Therefore, this information would need to be pulled with a bulk
+ * transfer as well, adding unnecessary latency to the overall write operation.
+ *
+ * For each relevant chunk, a non-blocking Arbobots tasklet is launched to read
+ * the data chunk from the backend storage to the allocated buffers.
+ * 4. Wait for all tasklets to finish the read operation while PUSH bulk
+ * transferring each chunk back to the client when a tasklet finishes.
+ * Therefore, bulk transfer and the backend I/O operation are overlapping for
+ * efficiency. The read size is added up for all tasklets.
+ * 5. Respond to client (when all bulk transfers are finished) and cleanup RPC
+ * resources. Any error is reported in the RPC output struct. Note, that backend
+ * read operations are not canceled while in-flight when a task encounters an
+ * error.
+ *
+ * Note, refer to the data backend documentation w.r.t. how Argobots tasklets
+ * work and why they are used.
+ *
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
  */
 hg_return_t
 rpc_srv_read(hg_handle_t handle) {
@@ -387,7 +446,7 @@ rpc_srv_read(hg_handle_t handle) {
 #endif
 
     /*
-     * 2. Set up buffers for pull bulk transfers
+     * 2. Set up buffers for push bulk transfers
      */
     void* bulk_buf;                          // buffer for bulk transfer
     vector<char*> bulk_buf_ptrs(in.chunk_n); // buffer-chunk offsets
@@ -547,9 +606,17 @@ rpc_srv_read(hg_handle_t handle) {
 
 
 /**
- * RPC handler for an incoming truncate RPC
- * @param handle
- * @return
+ * @brief Serves a file truncate request and remove all corresponding chunk
+ * files on this daemon.
+ * @internal
+ * A truncate operation includes decreasing the file size of the metadata entry
+ * (if hashing to this daemon) and removing all corresponding chunks exceeding
+ * the new file size.
+ *
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
  */
 hg_return_t
 rpc_srv_truncate(hg_handle_t handle) {
@@ -588,9 +655,13 @@ rpc_srv_truncate(hg_handle_t handle) {
 
 
 /**
- * RPC handler for an incoming chunk stat RPC
- * @param handle
- * @return
+ * @brief Serves a chunk stat request, responding with space information of the
+ * node local file system.
+ * @internal
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
  */
 hg_return_t
 rpc_srv_get_chunk_stat(hg_handle_t handle) {

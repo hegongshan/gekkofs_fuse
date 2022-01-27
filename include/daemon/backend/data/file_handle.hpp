@@ -25,7 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
+/**
+ * @brief Definitions for the file handle abstraction layer used for the backend
+ * file system.
+ */
 #ifndef GEKKOFS_DAEMON_FILE_HANDLE_HPP
 #define GEKKOFS_DAEMON_FILE_HANDLE_HPP
 
@@ -38,21 +41,21 @@ extern "C" {
 namespace gkfs::data {
 
 /**
- * File handle to encapsulate a file descriptor, allowing RAII closing of the
- * file descriptor
+ * @brief File handle class to encapsulate a file descriptor, allowing RAII
+ * closing of the file descriptor.
  */
 class FileHandle {
 
 private:
-    constexpr static const int init_value{-1};
+    constexpr static const int init_value{-1}; ///< initial file descriptor
 
-    int fd_{init_value};
-    std::string path_{};
+    int fd_{init_value}; ///< file descriptor
+    std::string path_{}; ///< chunk file path
 
 public:
     FileHandle() = default;
 
-    explicit FileHandle(int fd, std::string path) noexcept : fd_(fd) {}
+    explicit FileHandle(int fd, const std::string& path) noexcept : fd_(fd) {}
 
     FileHandle(FileHandle&& rhs) = default;
 
@@ -73,19 +76,28 @@ public:
         return !valid();
     }
 
-    bool
+    /**
+     * @brief Checks for valid file descriptor value.
+     * @return boolean if valid file descriptor
+     */
+    [[nodiscard]] bool
     valid() const noexcept {
         return fd_ != init_value;
     }
 
-    int
+    /**
+     * @brief Retusn the file descriptor value used in this file handle
+     * operation.
+     * @return file descriptor value
+     */
+    [[nodiscard]] int
     native() const noexcept {
         return fd_;
     }
 
     /**
-     * Closes file descriptor and resets it to initial value
-     * @return
+     * @brief Closes file descriptor and resets it to initial value
+     * @return boolean if file descriptor was successfully closed
      */
     bool
     close() noexcept {
@@ -101,6 +113,9 @@ public:
         return true;
     }
 
+    /**
+     * @brief Destructor implicitly closes the internal file descriptor.
+     */
     ~FileHandle() {
         if(fd_ != init_value)
             close();

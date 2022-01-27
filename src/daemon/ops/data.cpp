@@ -25,6 +25,9 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Member definitions for ChunkOperation classes.
+ */
 
 #include <daemon/ops/data.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
@@ -45,13 +48,15 @@ namespace gkfs::data {
 
 
 /**
- * Used by an argobots tasklet. Argument args has the following fields:
+ * @internal
+ * Exclusively used by the Argobots tasklet. Argument args has the following
+ fields:
  * const string* path;
    size_t size;
    ABT_eventual* eventual;
- * This function is driven by the IO pool. so there is a maximum allowed number
- of concurrent operations per daemon.
- * @return error<int> is put into eventual to signal that it finished
+ * This function is driven by the IO pool. So, there is a maximum allowed number
+ of concurrent operations allowed per daemon.
+ * @endinternal
  */
 void
 ChunkTruncateOperation::truncate_abt(void* _arg) {
@@ -97,8 +102,10 @@ ChunkTruncateOperation::ChunkTruncateOperation(const string& path)
     : ChunkOperation{path, 1} {}
 
 /**
+ * @internal
  * Starts a tasklet for requested truncate. In essence all chunk files after the
  * given offset is removed Only one truncate call is allowed at a time
+ * @endinternal
  */
 void
 ChunkTruncateOperation::truncate(size_t size) {
@@ -160,6 +167,7 @@ ChunkTruncateOperation::wait_for_task() {
  * ------------------------------------------------------------------------*/
 
 /**
+ * @internal
  * Used by an argobots tasklet. Argument args has the following fields:
  * const string* path;
    const char* buf;
@@ -167,11 +175,11 @@ ChunkTruncateOperation::wait_for_task() {
    size_t size;
    off64_t off;
    ABT_eventual* eventual;
- * This function is driven by the IO pool. so there is a maximum allowed number
+ * This function is driven by the IO pool. So, there is a maximum allowed number
  of concurrent IO operations per daemon.
- * This function is called by tasklets, as this function cannot be allowed to
+ * This function is called by tasklets as this function cannot be allowed to
  block.
- * @return written_size<ssize_t> is put into eventual to signal that it finished
+ * @endinternal
  */
 void
 ChunkWriteOperation::write_file_abt(void* _arg) {
@@ -206,14 +214,11 @@ ChunkWriteOperation::ChunkWriteOperation(const string& path, size_t n)
 }
 
 /**
+ * @internal
  * Write buffer from a single chunk referenced by its ID. Put task into IO
  * queue. On failure the write operations is aborted, throwing an error, and
  * cleaned up. The caller may repeat a failed call.
- * @param chunk_id
- * @param bulk_buf_ptr
- * @param size
- * @param offset
- * @throws ChunkWriteOpException
+ * @endinternal
  */
 void
 ChunkWriteOperation::write_nonblock(size_t idx, const uint64_t chunk_id,
@@ -252,11 +257,6 @@ ChunkWriteOperation::write_nonblock(size_t idx, const uint64_t chunk_id,
     }
 }
 
-/**
- * Waits for all Argobots tasklets to finish and report back the write error
- * code and the size written.
- * @return <int, size_t>
- */
 pair<int, size_t>
 ChunkWriteOperation::wait_for_tasks() {
     GKFS_DATA->spdlogger()->trace("ChunkWriteOperation::{}() enter: path '{}'",
@@ -302,6 +302,7 @@ ChunkWriteOperation::wait_for_tasks() {
  * ------------------------------------------------------------------------*/
 
 /**
+ * @internal
  * Used by an argobots tasklet. Argument args has the following fields:
  * const string* path;
    char* buf;
@@ -313,7 +314,7 @@ ChunkWriteOperation::wait_for_tasks() {
  of concurrent IO operations per daemon.
  * This function is called by tasklets, as this function cannot be allowed to
  block.
- * @return read_size<ssize_t> is put into eventual to signal that it finished
+ * @endinternal
  */
 void
 ChunkReadOperation::read_file_abt(void* _arg) {
@@ -350,13 +351,11 @@ ChunkReadOperation::ChunkReadOperation(const string& path, size_t n)
 }
 
 /**
+ * @internal
  * Read buffer to a single chunk referenced by its ID. Put task into IO queue.
  * On failure the read operations is aborted, throwing an error, and cleaned up.
  * The caller may repeat a failed call.
- * @param chunk_id
- * @param bulk_buf_ptr
- * @param size
- * @param offset
+ * @endinternal
  */
 void
 ChunkReadOperation::read_nonblock(size_t idx, const uint64_t chunk_id,

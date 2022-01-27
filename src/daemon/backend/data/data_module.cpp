@@ -25,7 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
+/**
+ * @brief Definition for GekkoFS data module object that is run once per daemon
+ * instance.
+ */
 #include <daemon/backend/data/data_module.hpp>
 
 namespace gkfs::data {

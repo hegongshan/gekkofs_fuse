@@ -25,14 +25,24 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Utility functions for the daemon context.
+ */
 
 #ifndef GEKKOFS_DAEMON_UTIL_HPP
 #define GEKKOFS_DAEMON_UTIL_HPP
 
 namespace gkfs::utils {
+/**
+ * @brief Registers the daemon's RPC address to the shared hosts file.
+ * @throws std::runtime_error when file stream fails
+ */
 void
 populate_hosts_file();
 
+/**
+ * @brief Attempts to remove the entire hosts file.
+ */
 void
 destroy_hosts_file();
 } // namespace gkfs::utils

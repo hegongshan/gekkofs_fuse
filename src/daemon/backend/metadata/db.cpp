@@ -40,11 +40,33 @@ extern "C" {
 
 namespace gkfs::metadata {
 
+// private functions
 
 /**
- * Called when the daemon is started: Connects to the KV store
- * @param path where KV store data is stored
+ * @internal
+ * Called when RocksDB connection is established.
+ * Used for setting KV store settings
+ * see here: https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
+ * @endinternal
  */
+void
+MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
+    options.max_successive_merges = 128;
+}
+
+// public functions
+
+void
+MetadataDB::throw_rdb_status_excpt(const rdb::Status& s) {
+    assert(!s.ok());
+
+    if(s.IsNotFound()) {
+        throw NotFoundException(s.ToString());
+    } else {
+        throw DBException(s.ToString());
+    }
+}
+
 MetadataDB::MetadataDB(const std::string& path) : path(path) {
 
     /* Get logger instance and set it for data module and chunk storage */
@@ -69,29 +91,6 @@ MetadataDB::MetadataDB(const std::string& path) : path(path) {
     this->db.reset(rdb_ptr);
 }
 
-/**
- * Exception wrapper on Status object. Throws NotFoundException if
- * s.IsNotFound(), general DBException otherwise
- * @param RocksDB status
- * @throws DBException
- */
-void
-MetadataDB::throw_rdb_status_excpt(const rdb::Status& s) {
-    assert(!s.ok());
-
-    if(s.IsNotFound()) {
-        throw NotFoundException(s.ToString());
-    } else {
-        throw DBException(s.ToString());
-    }
-}
-
-/**
- * Gets a KV store value for a key
- * @param key
- * @return value
- * @throws DBException on failure, NotFoundException if entry doesn't exist
- */
 std::string
 MetadataDB::get(const std::string& key) const {
     std::string val;
@@ -102,12 +101,6 @@ MetadataDB::get(const std::string& key) const {
     return val;
 }
 
-/**
- * Puts an entry into the KV store
- * @param key
- * @param val
- * @throws DBException on failure
- */
 void
 MetadataDB::put(const std::string& key, const std::string& val) {
     assert(gkfs::path::is_absolute(key));
@@ -121,11 +114,9 @@ MetadataDB::put(const std::string& key, const std::string& val) {
 }
 
 /**
- * Puts an entry into the KV store if it doesn't exist. This function does not
- * use a mutex.
- * @param key
- * @param val
- * @throws DBException on failure, ExistException if entry already exists
+ * @internal
+ * This function does not use a mutex.
+ * @endinternal
  */
 void
 MetadataDB::put_no_exist(const std::string& key, const std::string& val) {
@@ -134,11 +125,6 @@ MetadataDB::put_no_exist(const std::string& key, const std::string& val) {
     put(key, val);
 }
 
-/**
- * Removes an entry from the KV store
- * @param key
- * @throws DBException on failure, NotFoundException if entry doesn't exist
- */
 void
 MetadataDB::remove(const std::string& key) {
     auto s = db->Delete(write_opts, key);
@@ -147,12 +133,6 @@ MetadataDB::remove(const std::string& key) {
     }
 }
 
-/**
- * checks for existence of an entry
- * @param key
- * @return true if exists
- * @throws DBException on failure
- */
 bool
 MetadataDB::exists(const std::string& key) {
     std::string val;
@@ -167,13 +147,6 @@ MetadataDB::exists(const std::string& key) {
     return true;
 }
 
-/**
- * Updates a metadentry atomically and also allows to change keys
- * @param old_key
- * @param new_key
- * @param val
- * @throws DBException on failure, NotFoundException if entry doesn't exist
- */
 void
 MetadataDB::update(const std::string& old_key, const std::string& new_key,
                    const std::string& val) {
@@ -188,12 +161,9 @@ MetadataDB::update(const std::string& old_key, const std::string& new_key,
 }
 
 /**
- * Increases only the size part of the metadentry via a RocksDB Operand
- * Operation. E.g., called before a write() call
- * @param key
- * @param size
- * @param append
- * @throws DBException on failure
+ * @internal
+ * E.g., called before a write() call
+ * @endinternal
  */
 void
 MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
@@ -205,11 +175,9 @@ MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
 }
 
 /**
- * Decreases only the size part of the metadentry via a RocksDB Operand
- * Operation E.g., called before a truncate() call
- * @param key
- * @param size
- * @throws DBException on failure
+ * @internal
+ * E.g., called before a truncate() call
+ * @endinternal
  */
 void
 MetadataDB::decrease_size(const std::string& key, size_t size) {
@@ -220,13 +188,6 @@ MetadataDB::decrease_size(const std::string& key, size_t size) {
     }
 }
 
-/**
- * Return all the first-level entries of the directory @dir
- *
- * @return vector of pair <std::string name, bool is_dir>,
- *         where name is the name of the entries and is_dir
- *         is true in the case the entry is a directory.
- */
 std::vector<std::pair<std::string, bool>>
 MetadataDB::get_dirents(const std::string& dir) const {
     auto root_path = dir;
@@ -271,13 +232,6 @@ MetadataDB::get_dirents(const std::string& dir) const {
     return entries;
 }
 
-/**
- * Return all the first-level entries of the directory @dir
- *
- * @return vector of pair <std::string name, bool is_dir - size - ctime>,
- *         where name is the name of the entries and is_dir
- *         is true in the case the entry is a directory.
- */
 std::vector<std::tuple<std::string, bool, size_t, time_t>>
 MetadataDB::get_dirents_extended(const std::string& dir) const {
     auto root_path = dir;
@@ -325,8 +279,10 @@ MetadataDB::get_dirents_extended(const std::string& dir) const {
 
 
 /**
+ * @internal
  * Code example for iterating all entries in KV store. This is for debug only as
- * it is too expensive
+ * it is too expensive.
+ * @endinternal
  */
 void
 MetadataDB::iterate_all() {
@@ -338,17 +294,6 @@ MetadataDB::iterate_all() {
         key = iter->key().ToString();
         val = iter->value().ToString();
     }
-}
-
-/**
- * Called when RocksDB connection is established.
- * Used for setting KV store settings
- * see here: https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
- * @param options
- */
-void
-MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
-    options.max_successive_merges = 128;
 }
 
 } // namespace gkfs::metadata

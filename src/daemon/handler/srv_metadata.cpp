@@ -25,6 +25,14 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Provides all Margo RPC handler definitions called by Mercury on client
+ * request for all file system metadata operations.
+ * @internal
+ * The end of the file defines the associates the Margo RPC handler functions
+ * and associates them with their corresponding GekkoFS handler functions.
+ * @endinternal
+ */
 
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/handler/rpc_util.hpp>
@@ -36,13 +44,22 @@
 
 using namespace std;
 
-/*
- * This file contains all Margo RPC handlers that are concerning metadata
- * operations
- */
-
 namespace {
 
+/**
+ * @brief Serves a file/directory create request or returns an error to the
+ * client if the object already exists.
+ * @internal
+ * The create request creates or updates a corresponding entry in the KV store.
+ * If the object already exists, the RPC output struct includes an EEXIST error
+ * code. This is not a hard error. Other unexpected errors are placed in the
+ * output struct as well.
+ *
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_create(hg_handle_t handle) {
     rpc_mk_node_in_t in;
@@ -80,7 +97,19 @@ rpc_srv_create(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a stat request or returns an error to the
+ * client if the object does not exist.
+ * @internal
+ * The stat request reads the corresponding entry in the KV store. The value
+ * string is directly passed to the client. It sets an error code if the object
+ * does not exist or in other unexpected errors.
+ *
+ * All exceptions must be caught here and dealt with accordingly.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_stat(hg_handle_t handle) {
     rpc_path_only_in_t in{};
@@ -122,7 +151,16 @@ rpc_srv_stat(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to decrease the file size in the object's KV store
+ * entry.
+ * @internal
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_decr_size(hg_handle_t handle) {
     rpc_trunc_in_t in{};
@@ -160,7 +198,25 @@ rpc_srv_decr_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to remove a file/directory metadata.
+ * @internal
+ * The handler triggers the removal of the KV store entry but still returns the
+ * file mode and size information to the client. This is because the size is
+ * needed to remove all data chunks. The metadata is removed first to ensure
+ * data isn't removed while the metadata is still available. This could cause
+ * issues because a stat request would say that the file still exists.
+ *
+ * gkfs::config::metadata::implicit_data_removal offers an optimization to
+ * implicitly remove the data chunks on the metadata node. This can increase
+ * remove performance for small files.
+ *
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_remove_metadata(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
@@ -212,6 +268,18 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
+/**
+ * @brief Serves a request to remove all file data chunks on this daemon.
+ * @internal
+ * The handler simply issues the removal of all chunk files on the local file
+ * system.
+ *
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_remove_data(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
@@ -252,7 +320,15 @@ rpc_srv_remove_data(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to update the metadata. This function is UNUSED.
+ * @internal
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_update_metadentry(hg_handle_t handle) {
     // Note: Currently this handler is not called by the client.
@@ -304,7 +380,16 @@ rpc_srv_update_metadentry(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to update the file size to a given value in the KV
+ * store.
+ * @internal
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_update_metadentry_size(hg_handle_t handle) {
     rpc_update_metadentry_size_in_t in{};
@@ -352,7 +437,15 @@ rpc_srv_update_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to return the current file size.
+ * @internal
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_get_metadentry_size(hg_handle_t handle) {
     rpc_path_only_in_t in{};
@@ -396,7 +489,23 @@ rpc_srv_get_metadentry_size(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-
+/**
+ * @brief Serves a request to return all file system objects in a directory.
+ * @internal
+ * This handler triggers a KV store scan starting at the given path prefix that
+ * represents a directory. All KV store entries are returned via a bulk transfer
+ * as it can involve an arbitrary number of entries.
+ *
+ * Note, the bulk buffer size is decided by the client statically although it
+ * doesn't know if it the space is sufficient to accomodate all entries. This is
+ * planned to be fixed in the future.
+ *
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_get_dirents(hg_handle_t handle) {
     rpc_get_dirents_in_t in{};
@@ -532,6 +641,25 @@ rpc_srv_get_dirents(hg_handle_t handle) {
 /* Sends the name-size-ctime of a specific directory
  * Used to accelerate find
  * It mimics get_dirents, but uses a tuple
+ */
+
+/**
+ * @brief Serves a request to return all file system objects in a directory
+ * including their size and create timestamp.
+ * @internal
+ * This is an extension to the above rpc_srv_get_dirents. However, this handler
+ * is an optimization which needs to be refactored and merged with with
+ * rpc_srv_get_dirents due to redundant code (TODO).
+ *
+ * Note, the bulk buffer size is decided by the client statically although it
+ * doesn't know if it the space is sufficient to accommodate all entries. This
+ * is planned to be fixed in the future (TODO).
+ *
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
  */
 hg_return_t
 rpc_srv_get_dirents_extended(hg_handle_t handle) {
@@ -681,7 +809,17 @@ rpc_srv_get_dirents_extended(hg_handle_t handle) {
 }
 
 #ifdef HAS_SYMLINKS
-
+/**
+ * @brief Serves a request create a symbolic link. This function is UNUSED.
+ * @internal
+ * The state of this function is unclear and requires a complete refactor.
+ *
+ * All exceptions must be caught here and dealt with accordingly. Any errors are
+ * placed in the response.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_mk_symlink(hg_handle_t handle) {
     rpc_mk_symlink_in_t in{};

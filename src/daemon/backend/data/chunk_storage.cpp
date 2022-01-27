@@ -25,6 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Chunk storage definitions handles all interactions with the node-local
+ * storage system.
+ */
 
 #include <daemon/backend/data/data_module.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
@@ -55,6 +59,17 @@ ChunkStorage::absolute(const string& internal_path) const {
     return fmt::format("{}/{}", root_path_, internal_path);
 }
 
+/**
+ * @internal
+ * All GekkoFS files are placed within the rootdir directory, each GekkoFS file
+ * is represented by a directory on the local file system.
+ * We do not mirror a directory hierarchy on the local file system.
+ * Therefore the path /mnt/gekkofs_mount/foo/bar has the internal path
+ * /tmp/rootdir/<pid>/data/chunks/foo:bar. Each chunk is then its own file,
+ * numbered by its index, e.g., /tmp/rootdir/<pid>/data/chunks/foo:bar/0 for the
+ * first chunk file.
+ * @endinternal
+ */
 string
 ChunkStorage::get_chunks_dir(const string& file_path) {
     assert(gkfs::path::is_absolute(file_path));
@@ -69,12 +84,6 @@ ChunkStorage::get_chunk_path(const string& file_path,
     return fmt::format("{}/{}", get_chunks_dir(file_path), chunk_id);
 }
 
-/**
- * Creates a chunk directory that all chunk files are placed in.
- * The path to the real file will be used as the directory name
- * @param file_path
- * @throws ChunkStorageException on error
- */
 void
 ChunkStorage::init_chunk_space(const string& file_path) const {
     auto chunk_dir = absolute(get_chunks_dir(file_path));
@@ -89,12 +98,6 @@ ChunkStorage::init_chunk_space(const string& file_path) const {
 
 // public functions
 
-/**
- *
- * @param path
- * @param chunksize
- * @throws ChunkStorageException
- */
 ChunkStorage::ChunkStorage(string& path, const size_t chunksize)
     : root_path_(path), chunksize_(chunksize) {
     /* Get logger instance and set it for data module and chunk storage */
@@ -114,11 +117,6 @@ ChunkStorage::ChunkStorage(string& path, const size_t chunksize)
                 root_path_);
 }
 
-/**
- * Removes chunk directory with all its files
- * @param file_path
- * @throws ChunkStorageException
- */
 void
 ChunkStorage::destroy_chunk_space(const string& file_path) const {
     auto chunk_dir = absolute(get_chunks_dir(file_path));
@@ -136,20 +134,11 @@ ChunkStorage::destroy_chunk_space(const string& file_path) const {
 }
 
 /**
- * Writes a chunk file.
- * On failure throws ChunkStorageException with encapsulated error code
- *
+ * @internal
  * Refer to
  * https://www.gnu.org/software/libc/manual/html_node/I_002fO-Primitives.html
- * for pwrite behavior
- *
- * @param file_path
- * @param chunk_id
- * @param buf
- * @param size
- * @param offset
- * @param eventual
- * @throws ChunkStorageException (caller will handle eventual signalling)
+ * for pwrite behavior.
+ * @endinternal
  */
 ssize_t
 ChunkStorage::write_chunk(const string& file_path,
@@ -196,19 +185,11 @@ ChunkStorage::write_chunk(const string& file_path,
 }
 
 /**
- * Read from a chunk file.
- * On failure throws ChunkStorageException with encapsulated error code
- *
+ * @internal
  * Refer to
  * https://www.gnu.org/software/libc/manual/html_node/I_002fO-Primitives.html
  * for pread behavior
- * @param file_path
- * @param chunk_id
- * @param buf
- * @param size
- * @param offset
- * @param eventual
- * @throws ChunkStorageException (caller will handle eventual signalling)
+ * @endinternal
  */
 ssize_t
 ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
@@ -266,18 +247,16 @@ ChunkStorage::read_chunk(const string& file_path, gkfs::rpc::chnk_id_t chunk_id,
 }
 
 /**
- * Delete all chunks starting with chunk a chunk id.
+ * @internal
  * Note eventual consistency here: While chunks are removed, there is no lock
  * that prevents other processes from modifying anything in that directory. It
  * is the application's responsibility to stop modifying the file while truncate
- * is executed
+ * is executed.
  *
  * If an error is encountered when removing a chunk file, the function will
  * still remove all files and report the error afterwards with
  * ChunkStorageException.
- * @param file_path
- * @param chunk_start
- * @throws ChunkStorageException
+ * @endinternal
  */
 void
 ChunkStorage::trim_chunk_space(const string& file_path,
@@ -308,13 +287,6 @@ ChunkStorage::trim_chunk_space(const string& file_path,
                         __func__, file_path));
 }
 
-/**
- * Truncates a single chunk file to a given length
- * @param file_path
- * @param chunk_id
- * @param length
- * @throws ChunkStorageException
- */
 void
 ChunkStorage::truncate_chunk_file(const string& file_path,
                                   gkfs::rpc::chnk_id_t chunk_id, off_t length) {
@@ -331,10 +303,12 @@ ChunkStorage::truncate_chunk_file(const string& file_path,
 }
 
 /**
- * Calls statfs on the chunk directory to get statistic on its used and free
- * size left
- * @return ChunkStat
- * @throws ChunkStorageException
+ * @internal
+ * Return ChunkStat with following fields:
+ * unsigned long chunk_size;
+   unsigned long chunk_total;
+   unsigned long chunk_free;
+ * @endinternal
  */
 ChunkStat
 ChunkStorage::chunk_stat() const {
