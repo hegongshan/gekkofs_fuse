@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -27,7 +27,7 @@
 ################################################################################
 
 import os, sh, sys, re, pytest, signal
-import random, socket, netifaces
+import random, socket, netifaces, time
 from pathlib import Path
 from itertools import islice
 from time import perf_counter
@@ -323,7 +323,7 @@ class Daemon:
 
                 # ... or it might just be lazy. let's give it some more time
                 logger.debug(f"daemon {pid} found, retrying...")
-
+            time.sleep(1)
         raise RuntimeError("initialization timeout exceeded")
 
     def shutdown(self):
@@ -792,7 +792,7 @@ class FwdDaemon:
 
                 # ... or it might just be lazy. let's give it some more time
                 logger.debug(f"daemon {pid} found, retrying...")
-
+            time.sleep(1)
         raise RuntimeError("initialization timeout exceeded")
 
     def shutdown(self):
