@@ -38,6 +38,8 @@
 
 extern "C" {
 #include <sys/statfs.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 }
 
 namespace fs = std::filesystem;

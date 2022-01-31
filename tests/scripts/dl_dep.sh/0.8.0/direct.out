@@ -1,6 +1,6 @@
 Cloned 'https://github.com/mercury-hpc/mercury' to 'mercury' with commit '[41caa143a07ed179a3149cac4af0dc7aa3f946fd]' and flags '--recurse-submodules'
 Downloaded 'https://github.com/pmodels/argobots/archive/v1.0rc1.tar.gz' to 'argobots'
-Cloned 'https://xgitlab.cels.anl.gov/sds/margo.git' to 'margo' with commit '[v0.6.3]' and flags ''
+Cloned 'https://github.com/mochi-hpc/mochi-margo' to 'margo' with commit '[v0.6.3]' and flags ''
 Downloaded 'https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz' to 'rocksdb'
 Cloned 'https://github.com/pmem/syscall_intercept.git' to 'syscall_intercept' with commit '[f7cebb7b7e7512a19b78a31ce236ad6ca22636dd]' and flags ''
 Cloned 'https://github.com/HowardHinnant/date.git' to 'date' with commit '[e7e1482087f58913b80a20b04d5c58d9d6d90155]' and flags ''

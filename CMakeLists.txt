@@ -65,6 +65,11 @@ set(CMAKE_C_FLAGS_MEMCHECK "${WARNINGS_FLAGS} -g -O0 -fsanitize=address -fno-omi
 set(CMAKE_C_FLAGS_MAINTAINER "${WARNINGS_FLAGS} -g -O0 -pg -no-pie")
 mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 
+# CMake and general includes
+include(CheckCXXSourceCompiles)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+
 # Project version
 set(GIT_VERSION_FOUND FALSE)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -116,10 +121,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(BZip2 REQUIRED)
-find_package(Snappy REQUIRED)
-find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
 # margo dependencies
@@ -127,8 +128,6 @@ find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
-
-
 find_package(Threads REQUIRED)
 
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
@@ -137,6 +136,9 @@ find_package(Threads REQUIRED)
 find_package(Filesystem REQUIRED)
 
 find_package(Date REQUIRED)
+
+# Import some convenience functions
+include(gkfs-utils)
 
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
 message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
@@ -181,9 +183,11 @@ mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
 option(GKFS_USE_GUIDED_DISTRIBUTION "Use guided data distributor " OFF)
 message(STATUS "[gekkofs] Guided data distributor: ${GKFS_USE_GUIDED_DISTRIBUTION}")
 
-set(GKFS_USE_GUIDED_DISTRIBUTION_PATH "/tmp/guided.txt" CACHE STRING "File Path for guided distributor")
-set_property(CACHE GKFS_USE_GUIDED_DISTRIBUTION_PATH PROPERTY STRINGS)
-message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
+if(GKFS_USE_GUIDED_DISTRIBUTION)
+    set(GKFS_USE_GUIDED_DISTRIBUTION_PATH "/tmp/guided.txt" CACHE STRING "File Path for guided distributor")
+    set_property(CACHE GKFS_USE_GUIDED_DISTRIBUTION_PATH PROPERTY STRINGS)
+    message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
+endif()
 
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
@@ -193,10 +197,6 @@ target_link_libraries(RocksDB
     INTERFACE
     ${ROCKSDB_LIBRARIES}
     # rocksdb libs
-    ${Snappy_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-    ${BZIP2_LIBRARIES}
-    ${ZStd_LIBRARIES}
     ${LZ4_LIBRARIES}
     )
 
@@ -212,12 +212,6 @@ set_target_properties(RocksDB
     INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
     )
 
-add_library(spdlog INTERFACE)
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(spdlog
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
-    )
 add_library(CLI11 INTERFACE)
 # we cannot use target_include_directories with CMake < 3.11
 set_target_properties(CLI11
@@ -246,8 +240,6 @@ include_directories(
     ${CMAKE_BINARY_DIR}/include
 )
 
-include(GNUInstallDirs)
-
 # Common components
 add_subdirectory(src/common)
 # Daemon
@@ -255,9 +247,13 @@ add_subdirectory(src/daemon)
 # Client library
 add_subdirectory(src/client)
 
+### Mark any CMake variables imported from {fmt} and spdlog as advanced, so
+### that they don't appear in cmake-gui or ccmake. Similarly for FETCHCONTENT
+### variables.
+mark_variables_as_advanced(REGEX "^(FETCHCONTENT|fmt|FMT|spdlog|SPDLOG)_.*$")
+
 option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
 
-include(CMakeDependentOption)
 cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
 if (GKFS_BUILD_TESTS)
@@ -289,6 +285,13 @@ if (GKFS_BUILD_TESTS)
         set(GKFS_TESTS_FORWARDING "OFF" CACHE STRING "Enable I/O forwarding tests (default: OFF)")
     endif ()
     message(STATUS "[gekkofs] Forwarding tests: ${GKFS_TESTS_FORWARDING}")
+    message(STATUS "[gekkofs] Check for guided distributor tests...")
+    if (GKFS_USE_GUIDED_DISTRIBUTION)
+        set(GKFS_TESTS_GUIDED_DISTRIBUTION "ON" CACHE STRING "Enable guided distributor tests (default: OFF)")
+    else()
+        set(GKFS_TESTS_GUIDED_DISTRIBUTION "OFF" CACHE STRING "Enable guided distributor tests (default: OFF)")
+    endif()
+    message(STATUS "[gekkofs] Guided distributor tests: ${GKFS_TESTS_GUIDED_DISTRIBUTION}")
 
     add_subdirectory(tests)
     add_subdirectory(examples/gfind)

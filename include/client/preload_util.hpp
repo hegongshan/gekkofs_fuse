@@ -37,6 +37,7 @@
 #include <iostream>
 #include <map>
 #include <type_traits>
+#include <optional>
 
 namespace gkfs::metadata {
 

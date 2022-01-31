@@ -26,10 +26,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
+include(FetchContent)
+
 add_subdirectory(arithmetic)
 
 add_library(distributor STATIC)
-include_directories(${Boost_INCLUDE_DIRS})
 set_property(TARGET distributor PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(distributor
     PUBLIC
@@ -37,10 +38,33 @@ target_sources(distributor
     PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/rpc/distributor.cpp
     )
+if(GKFS_USE_GUIDED_DISTRIBUTION)
+  find_package(Boost 1.53 REQUIRED)
+  target_link_libraries(distributor PRIVATE Boost::boost)
+endif()
 
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)
 endif()
+
+# get spdlog
+set(FETCHCONTENT_QUIET ON)
+
+if (EXISTS ${CMAKE_SOURCE_DIR}/external/spdlog)
+  message(STATUS "[gkfs] Using git submodule spdlog...")
+  FetchContent_Declare(spdlog
+      SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog
+      )
+else()
+  message(STATUS "[gkfs] git submodule spdlog not found. Downloading...")
+  FetchContent_Declare(spdlog
+      GIT_REPOSITORY https://github.com/gabime/spdlog.git
+      GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 # v1.9.2
+      GIT_SHALLOW ON
+      GIT_PROGRESS ON
+      )
+endif()
+FetchContent_MakeAvailable(spdlog)
 
 add_library(log_util STATIC)
 set_property(TARGET log_util PROPERTY POSITION_INDEPENDENT_CODE ON)

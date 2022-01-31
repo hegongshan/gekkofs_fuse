@@ -26,55 +26,55 @@
 #                                                                              #
 # SPDX-License-Identifier: LGPL-3.0-or-later                                   #
 ################################################################################
-
-set(PRELOAD_SRC
-    gkfs_functions.cpp
-    hooks.cpp
-    intercept.cpp
-    logging.cpp
-    open_file_map.cpp
-    open_dir.cpp
-    path.cpp
-    preload.cpp
-    preload_context.cpp
-    preload_util.cpp
-    ../common/rpc/rpc_util.cpp
-    rpc/rpc_types.cpp
-    rpc/forward_data.cpp
-    rpc/forward_management.cpp
-    rpc/forward_metadata.cpp
-    syscalls/detail/syscall_info.c
-    )
-set(PRELOAD_HEADERS
-    ../../include/client/gkfs_functions.hpp
-    ../../include/config.hpp
-    ../../include/client/env.hpp
-    ../../include/client/hooks.hpp
-    ../../include/client/intercept.hpp
-    ../../include/client/logging.hpp
-    ../../include/client/make_array.hpp
-    ../../include/client/open_file_map.hpp
-    ../../include/client/open_dir.hpp
-    ../../include/client/path.hpp
-    ../../include/client/preload.hpp
-    ../../include/client/preload_context.hpp
-    ../../include/client/preload_util.hpp
-    ../../include/client/rpc/rpc_types.hpp
-    ../../include/client/rpc/forward_management.hpp
-    ../../include/client/rpc/forward_metadata.hpp
-    ../../include/client/rpc/forward_data.hpp
-    ../../include/client/syscalls/args.hpp
-    ../../include/client/syscalls/decoder.hpp
-    ../../include/client/syscalls/errno.hpp
-    ../../include/client/syscalls/rets.hpp
-    ../../include/client/syscalls/syscall.hpp
-    ../../include/client/syscalls/detail/syscall_info.h
-    ../../include/common/cmake_configure.hpp
-    ../../include/common/common_defs.hpp
-    ../../include/common/rpc/rpc_types.hpp
-    ../../include/common/rpc/rpc_util.hpp
+set(PRELOAD_SOURCES
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/gkfs_functions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/hooks.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/intercept.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/logging.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/open_file_map.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/open_dir.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/path.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/preload.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/preload_context.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/preload_util.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../common/rpc/rpc_util.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/rpc/rpc_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_data.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_management.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_metadata.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/syscalls/detail/syscall_info.c
+    PUBLIC
+    ${INCLUDE_DIR}/client/gkfs_functions.hpp
+    ${INCLUDE_DIR}/config.hpp
+    ${INCLUDE_DIR}/client/env.hpp
+    ${INCLUDE_DIR}/client/hooks.hpp
+    ${INCLUDE_DIR}/client/intercept.hpp
+    ${INCLUDE_DIR}/client/logging.hpp
+    ${INCLUDE_DIR}/client/make_array.hpp
+    ${INCLUDE_DIR}/client/open_file_map.hpp
+    ${INCLUDE_DIR}/client/open_dir.hpp
+    ${INCLUDE_DIR}/client/path.hpp
+    ${INCLUDE_DIR}/client/preload.hpp
+    ${INCLUDE_DIR}/client/preload_context.hpp
+    ${INCLUDE_DIR}/client/preload_util.hpp
+    ${INCLUDE_DIR}/client/rpc/rpc_types.hpp
+    ${INCLUDE_DIR}/client/rpc/forward_management.hpp
+    ${INCLUDE_DIR}/client/rpc/forward_metadata.hpp
+    ${INCLUDE_DIR}/client/rpc/forward_data.hpp
+    ${INCLUDE_DIR}/client/syscalls/args.hpp
+    ${INCLUDE_DIR}/client/syscalls/decoder.hpp
+    ${INCLUDE_DIR}/client/syscalls/errno.hpp
+    ${INCLUDE_DIR}/client/syscalls/rets.hpp
+    ${INCLUDE_DIR}/client/syscalls/syscall.hpp
+    ${INCLUDE_DIR}/client/syscalls/detail/syscall_info.h
+    ${INCLUDE_DIR}/common/cmake_configure.hpp.in
+    ${INCLUDE_DIR}/common/common_defs.hpp
+    ${INCLUDE_DIR}/common/rpc/rpc_types.hpp
+    ${INCLUDE_DIR}/common/rpc/rpc_util.hpp
     )
 set(PRELOAD_LINK_LIBRARIES
+    PRIVATE
     # internal
     metadata
     distributor
@@ -91,22 +91,19 @@ set(PRELOAD_LINK_LIBRARIES
     Date::TZ
     )
 set(PRELOAD_INCLUDE_DIRS
+    PRIVATE
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )
 
-add_library(gkfs_intercept SHARED ${PRELOAD_SRC} ${PRELOAD_HEADERS})
-
-target_link_libraries(gkfs_intercept
-  PRIVATE
-    ${PRELOAD_LINK_LIBRARIES})
-
+add_library(gkfs_intercept SHARED)
+target_sources(gkfs_intercept ${PRELOAD_SOURCES})
+target_link_libraries(gkfs_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
 target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
 
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(gkfs_intercept AUTO)
 endif()
-
 
 install(TARGETS gkfs_intercept
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -115,15 +112,8 @@ install(TARGETS gkfs_intercept
     )
 ################### Forwarding client ###################
 if (GKFS_ENABLE_FORWARDING)
-    set(FWD_PRELOAD_SRC
-        ${PRELOAD_SRC}
-        )
-    set(FWD_PRELOAD_HEADERS
-        ${PRELOAD_HEADERS}
-        )
-
-    add_library(gkfwd_intercept SHARED ${FWD_PRELOAD_SRC} ${FWD_PRELOAD_HEADERS})
-
+    add_library(gkfwd_intercept SHARED)
+    target_sources(gkfwd_intercept ${PRELOAD_SOURCES})
     if (GKFS_ENABLE_AGIOS)
         target_compile_definitions(gkfwd_daemon
             PUBLIC
@@ -141,7 +131,6 @@ if (GKFS_ENABLE_FORWARDING)
     message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
 
     target_link_libraries(gkfwd_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
-
     target_include_directories(gkfwd_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
 
     if(GKFS_ENABLE_CODE_COVERAGE)

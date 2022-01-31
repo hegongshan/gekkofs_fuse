@@ -113,11 +113,11 @@ static void pfind_print_help(pfind_options_t *res) {
          "\tworkdir = \"%s\"\n"
          "\t-newer = \"%s\"\n"
          "\t-name|-regex = \"%s\"\n"
-         "\t-S: num servers = \"%s\"\n"
+         "\t-S: num servers = \"%d\"\n"
          "\t-M: mountdir = \"%s\"\n"
          "Optional flags\n"
          "\t-h: prints the help\n"
-         "\t--help: prints the help without initializing MPI\n",res->workdir,
+         "\t--help: prints the help without initializing MPI\n",res->workdir.c_str(),
          res->timestamp_file, res->name_pattern, res->num_servers,
          res->mountdir );
 }

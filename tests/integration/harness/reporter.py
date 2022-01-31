@@ -30,6 +30,8 @@ import sys, pytest, pluggy, py, platform
 from collections import namedtuple
 from pathlib import Path
 from pprint import pformat
+from _pytest._io import TerminalWriter
+from _io import StringIO
 
 report_width = 80
 
@@ -57,8 +59,7 @@ def _format_exception(report):
 
     if not report.failed:
         return ""
-
-    tw = py.io.TerminalWriter(file=None, stringio=True)
+    tw = TerminalWriter(StringIO())
     tw.hasmarkup = True
     tw.fullwidth = report_width
     report.toterminal(tw)

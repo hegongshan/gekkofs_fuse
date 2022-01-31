@@ -125,7 +125,7 @@ std::vector<host_t>
 ForwarderDistributor::locate_directory_metadata(const std::string& path) const {
     return all_hosts_;
 }
-
+#ifdef GKFS_USE_GUIDED_DISTRIBUTION
 bool
 GuidedDistributor::init_guided() {
     unsigned int destination_host;
@@ -209,8 +209,8 @@ GuidedDistributor::locate_data(const string& path,
 
     for(auto const& it : prefix_list) {
         if(0 == path.compare(0, min(it.length(), path.length()), it, 0,
-                             min(it.length(), path.length())))
-            ;
+                             min(it.length(), path.length()))) {
+        }
         return str_hash(path) % hosts_size_;
     }
 
@@ -227,6 +227,6 @@ GuidedDistributor::locate_file_metadata(const string& path) const {
 GuidedDistributor::locate_directory_metadata(const string& path) const {
     return all_hosts_;
 }
-
+#endif
 } // namespace rpc
 } // namespace gkfs

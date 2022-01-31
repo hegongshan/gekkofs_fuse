@@ -456,7 +456,8 @@ while [[ $# -gt 0 ]]; do
 
         PROFILES_DIR="$2"
         SOURCES_FILE="${PROFILES_DIR}/sources.list"
-        shift
+        shift # past argument
+        shift # past value
         ;;
     -n | --dry-run)
         DRY_RUN=true

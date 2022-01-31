@@ -45,10 +45,11 @@ sources=(
     ["libfabric%experimental"]="https://github.com/ofiwg/libfabric.git"
     ["libfabric%verbs"]="https://github.com/ofiwg/libfabric.git"
     ["mercury"]="https://github.com/mercury-hpc/mercury"
-    ["margo"]="https://xgitlab.cels.anl.gov/sds/margo.git"
+    ["margo"]="https://github.com/mochi-hpc/mochi-margo"
     ["syscall_intercept"]="https://github.com/pmem/syscall_intercept.git"
     ["date"]="https://github.com/HowardHinnant/date.git"
     ["agios"]="https://github.com/francielizanon/agios.git"
+    ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
 )
 
 

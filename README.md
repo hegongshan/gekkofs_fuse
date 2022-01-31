@@ -11,136 +11,46 @@ to I/O, which reduces interferences and improves performance.
 
 # Dependencies
 
-- Upgrade your gcc to version at least 4.8 to get C++11 support
-- CMake >3.6 (>3.11 for GekkoFS testing)
+- \>gcc-8 (including g++) for C++11 support
+- General build tools: Git, Curl, CMake >3.6 (>3.11 for GekkoFS testing), Autoconf, Automake
+- Miscellaneous: Libtool, Libconfig 
 
-## Debian/Ubuntu - Dependencies
+### Debian/Ubuntu
+GekkoFS base dependencies: `apt install git curl cmake autoconf automake libtool libconfig-dev`
 
-- snappy: `sudo apt-get install libsnappy-dev`
-- zlib: `sudo apt-get install zlib1g-dev`
-- bzip2: `sudo apt-get install libbz2-dev`
-- zstandard: `sudo apt-get install libzstd-dev`
-- lz4: `sudo apt-get install liblz4-dev`
-- uuid: `sudo apt-get install uuid-dev`
-- capstone: `sudo apt-get install libcapstone-dev`
+GekkoFS testing support: `apt install python3-dev python3 python3-venv`
 
-### CentOS/Red Hat - Dependencies
+With testing
+### CentOS/Red Hat
+GekkoFS base dependencies: `yum install gcc-c++ git curl cmake autoconf automake libtool libconfig`
 
+GekkoFS testing support: `python38-devel` (**>Python-3.6 required**)
 
-- snappy: `sudo yum install snappy snappy-devel`
-- zlib: `sudo yum install zlib zlib-devel`
-- bzip2: `sudo yum install bzip2 bzip2-devel`
-- zstandard:
-```bash
-   wget https://github.com/facebook/zstd/archive/v1.1.3.tar.gz
-   mv v1.1.3.tar.gz zstd-1.1.3.tar.gz
-   tar zxvf zstd-1.1.3.tar.gz
-   cd zstd-1.1.3
-   make && sudo make install
-```
-- lz4: `sudo yum install lz4 lz4-devel`
-- uuid: `sudo yum install libuuid-devel`
-- capstone: `sudo yum install capstone capstone-devel`
+# Step-by-step installation
 
+1. Make sure the above listed dependencies are available on your machine
+2. Clone GekkoFS: `git clone --recurse-submodules https://storage.bsc.es/gitlab/hpc/gekkofs.git`
+3. Set up the necessary environment variables where the compiled direct GekkoFS dependencies will be installed at (we assume the path `/home/foo/gekkofs_deps/install` in the following)
+   - `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/foo/gekkofs_deps/install/lib:/home/foo/gekkofs_deps/install/lib64`
+4. Download and compile the direct dependencies, e.g.,
+   - Download example: `gekkofs/scripts/dl_dep.sh /home/foo/gekkofs_deps/git`
+   - Compilation example: `gekkofs/scripts/compile_dep.sh /home/foo/gekkofs_deps/git /home/foo/gekkofs_deps/install`
+   - Consult `-h` for additional arguments for each script
+5. Compile GekkoFS and run optional tests
+   - Create build directory: `mkdir gekkofs/build && cd gekkofs/build`
+   - Configure GekkoFS: `cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/home/foo/gekkofs_deps/install ..`
+       - add `-DCMAKE_INSTALL_PREFIX=<install_path>` where the GekkoFS client library and server executable should be available 
+       - add `-DGKFS_BUILD_TESTS=ON` if tests should be build
+   - Build and install GekkoFS: `make -j8 install`
+   - Run tests: `make test`
 
-# Usage
+GekkoFS is now available at:
+- GekkoFS daemon (server): `<install_path>/bin/gkfs_daemon`
+- GekkoFS client interception library: `<install_path>/lib64/libgkfs_intercept.so`
 
-## Clone and compile direct GekkoFS dependencies
+# Run GekkoFS
 
-- Go to the `scripts` folder and first clone all dependencies projects. You can choose the according network (na) plugin
-(execute the script for help):
-
-```bash
-usage: dl_dep.sh [-h] [-l] [-n <NAPLUGIN>] [-c <CONFIG>] [-d <DEPENDENCY>]
-                    source_path
-
-
-This script gets all GekkoFS dependency sources (excluding the fs itself)
-
-positional arguments:
-        source_path              path where the dependency downloads are put
-
-
-optional arguments:
-        -h, --help              shows this help message and exits
-        -l, --list-dependencies
-                                list dependencies available for download with descriptions
-        -n <NAPLUGIN>, --na <NAPLUGIN>
-                                network layer that is used for communication. Valid: {bmi,ofi,all}
-                                defaults to 'ofi'
-        -c <CONFIG>, --config <CONFIG>
-                                allows additional configurations, e.g., for specific clusters
-                                supported values: {mogon2, mogon1, ngio, direct, all}
-                                defaults to 'direct'
-        -d <DEPENDENCY>, --dependency <DEPENDENCY>
-                                download a specific dependency and ignore --config setting. If unspecified
-                                all dependencies are built and installed based on set --config setting.
-                                Multiple dependencies are supported: Pass a space-separated string (e.g., "ofi mercury"
-        -v, --verbose           Increase download verbosity
-```
-- Now use the install script to compile them and install them to the desired directory. You can choose the according
-(na) network plugin (execute the script for help):
-
-```bash
-usage: compile_dep.sh [-h] [-l] [-n <NAPLUGIN>] [-c <CONFIG>] [-d <DEPENDENCY>] [-j <COMPILE_CORES>]
-                      source_path install_path
-
-
-This script compiles all GekkoFS dependencies (excluding the fs itself)
-
-positional arguments:
-    source_path         path to the cloned dependencies path from clone_dep.sh
-    install_path    path to the install path of the compiled dependencies
-
-
-optional arguments:
-    -h, --help  shows this help message and exits
-    -l, --list-dependencies
-                list dependencies available for building and installation
-    -n <NAPLUGIN>, --na <NAPLUGIN>
-                network layer that is used for communication. Valid: {bmi,ofi,all}
-                defaults to 'all'
-    -c <CONFIG>, --config <CONFIG>
-                allows additional configurations, e.g., for specific clusters
-                supported values: {mogon1, mogon2, ngio, direct, all}
-                defaults to 'direct'
-    -d <DEPENDENCY>, --dependency <DEPENDENCY>
-                download a specific dependency and ignore --config setting. If unspecified
-                all dependencies are built and installed based on set --config setting.
-                Multiple dependencies are supported: Pass a space-separated string (e.g., "ofi mercury"
-    -j <COMPILE_CORES>, --compilecores <COMPILE_CORES>
-                number of cores that are used to compile the dependencies
-                defaults to number of available cores
-    -t, --test  Perform libraries tests.
-```
-
-## Compile GekkoFS
-
-If above dependencies have been installed outside of the usual system paths, use CMake's `-DCMAKE_PREFIX_PATH` to
-make this path known to CMake.
-
-```bash
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-```
-
-In order to build self-tests, the *optional* GKFS_BUILD_TESTS CMake option needs
-to be enabled when building. Once that is done, tests can be run by running
-`make test` in the `build` directory:
-
-```bash
-mkdir build && cd build
-cmake -DGKFS_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release ..
-make
-make test
-make install
-```
-
-**IMPORTANT:** Please note that the testing framework requires Python 3.6 and >CMake 3.11 as
-additional dependencies in order to run.
-
-## Run GekkoFS
+## General
 
 On each node a daemon (`gkfs_daemon` binary) has to be started. Other tools can be used to execute
 the binary on many nodes, e.g., `srun`, `mpiexec/mpirun`, `pdsh`, or `pssh`.
@@ -152,51 +62,64 @@ The `-P` argument is used for setting another RPC protocol. See below.
  - `ofi+tcp` for using the libfabric plugin with TCP (slower than sockets)
  - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (reasonably stable)
  - `ofi+psm2` for using the libfabric plugin with Intel Omni-Path (unstable)
- - `bmi+tcp` for using the bmi plugin with TCP (alternative to libfabric)
 
-### Start and shut down daemon directly
+## The GekkoFS hostsfile
 
-`./build/src/daemon/gkfs_daemon -r <fs_data_path> -m <pseudo_mount_dir_path>`
+Each GekkoFS daemon needs to register itself in a shared file (*hostsfile*) which needs to be accessible to _all_ GekkoFS clients and daemons.
+Therefore, the hostsfile describes a file system and which node is part of that specific GekkoFS file system instance.
+In a typical cluster environment this hostsfile should be placed within a POSIX-compliant parallel file system, such as GPFS or Lustre.
 
-Further options:
+*Note: NFS is not strongly consistent and cannot be used for the hosts file!*
+
+## GekkoFS daemon start and shut down
+
+tl;dr example: `<install_path>/bin/gkfs_daemon -r <fs_data_path> -m <pseudo_gkfs_mount_dir_path> -H <hostsfile_path>`
+
+Run the GekkoFS daemon on each node specifying its locally used directory where the file system data and metadata is stored (`-r/--rootdir <fs_data_path>`), e.g., the node-local SSD;
+2. the pseudo mount directory used by clients to access GekkoFS (`-m/--mountdir <pseudo_gkfs_mount_dir_path>`); and
+3. the hostsfile path (`-H/--hostsfile <hostfile_path>`).
+
+Further options are available:
+
 ```bash
-Allowed options:
-  -h [ --help ]             Help message
-  -m [ --mountdir ] arg     Virtual mounting directory where GekkoFS is
-                            available.
-  -r [ --rootdir ] arg      Local data directory where GekkoFS data for this
-                            daemon is stored.
-  -i [ --metadir ] arg      Metadata directory where GekkoFS RocksDB data
-                            directory is located. If not set, rootdir is used.
-  -l [ --listen ] arg       Address or interface to bind the daemon to.
-                            Default: local hostname.
-                            When used with ofi+verbs the FI_VERBS_IFACE
-                            environment variable is set accordingly which
-                            associates the verbs device with the network
-                            interface. In case FI_VERBS_IFACE is already
-                            defined, the argument is ignored. Default 'ib'.
-  -H [ --hosts-file ] arg   Shared file used by deamons to register their
-                            endpoints. (default './gkfs_hosts.txt')
-  -P [ --rpc-protocol ] arg Used RPC protocol for inter-node communication.
-                            Available: {ofi+sockets, ofi+verbs, ofi+psm2} for
-                            TCP, Infiniband, and Omni-Path, respectively.
-                            (Default ofi+sockets)
-                            Libfabric must have enabled support verbs or psm2.
-  --auto-sm                 Enables intra-node communication (IPCs) via the
-                            `na+sm` (shared memory) protocol, instead of using
-                            the RPC protocol. (Default off)
-  --version                 Print version and exit.
+Allowed options
+Usage: bin/gkfs_daemon [OPTIONS]
+
+Options:
+  -h,--help                   Print this help message and exit
+  -m,--mountdir TEXT REQUIRED Virtual mounting directory where GekkoFS is available.
+  -r,--rootdir TEXT REQUIRED  Local data directory where GekkoFS data for this daemon is stored.
+  -i,--metadir TEXT           Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.
+  -l,--listen TEXT            Address or interface to bind the daemon to. Default: local hostname.
+                              When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly which associates the verbs device with the network interface. In case FI_VERBS_IFACE is already defined, the argument is ignored. Default 'ib'.
+  -H,--hosts-file TEXT        Shared file used by deamons to register their endpoints. (default './gkfs_hosts.txt')
+  -P,--rpc-protocol TEXT      Used RPC protocol for inter-node communication.
+                              Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, and Omni-Path, respectively. (Default ofi+sockets)
+                              Libfabric must have enabled support verbs or psm2.
+  --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
+  --clean-rootdir             Cleans Rootdir >before< launching the deamon
+  --version                   Print version and exit.
 ```
 
 Shut it down by gracefully killing the process (SIGTERM).
 
-## Miscellaneous
+## Use the GekkoFS client library
 
-Metadata and actual data will be stored at the `<fs_data_path>`. The path where the application works on is set with
-`<pseudo_mount_dir_path>`.
+tl;dr example: 
+```bash
+export LIBGKFS_ HOSTS_FILE=<hostfile_path>
+LD_PRELOAD=<install_path>/lib64/libgkfs_intercept.so cp ~/some_input_data <pseudo_gkfs_mount_dir_path>/some_input_data
+LD_PRELOAD=<install_path>/lib64/libgkfs_intercept.so md5sum ~/some_input_data <pseudo_gkfs_mount_dir_path>/some_input_data
+```
 
-Run the application with the preload library: `LD_PRELOAD=<path>/build/lib/libgkfs_intercept.so ./application`. In the case of
-an MPI application use the `{mpirun, mpiexec} -x` argument.
+Clients read the hostsfile to determine which daemons are part of the GekkoFS instance. 
+Because the client is an interposition library that is loaded within the context of the application, this information is passed via the environment variable `LIBGKFS_HOSTS_FILE` pointing to the hostsfile path.
+The client library itself is loaded for each application process via the `LD_PRELOAD` environment variable intercepting file system related calls.
+If they are within (or hierarchically under) the GekkoFS mount directory they are processed in the library, otherwise they are passed to the kernel.
+
+Note, if `LD_PRELOAD` is not pointing to the library and, hence the client is not loaded, the mounting directory appear to be empty.
+
+For MPI application, the `LD_PRELOAD` variable can be passed with the `-x` argument for `mpirun/mpiexec`.
 
 ### Logging
 The following environment variables can be used to enable logging in the client
@@ -245,50 +168,60 @@ can be provided to set the path to the log file, and the log module can be
 selected with the `GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace}`
 environment variable.
 
+# Miscellaneous
 
-### External functions
+## External functions
 
 GekkoFS allows to use external functions on your client code, via LD_PRELOAD. 
 Source code needs to be compiled with -fPIC. We include a pfind io500 substitution,
  `examples/gfind/gfind.cpp` and a non-mpi version `examples/gfind/sfind.cpp`
 
-### Data distributors
+## Data distributors
 The data distribution can be selected at compilation time, we have 2 distributors available:
 
-## Simple Hash (Default)
+### Simple Hash (Default)
 Chunks are distributed randomly to the different GekkoFS servers.
 
-## Guided Distributor
-Guided distributor distributes chunks using a shared file with the next format:
+### Guided Distributor
+
+To use the Guided Distributor, Boost (specifically the Boost *Interval Container Library* (ICL) must be available). 
+
+#### General
+
+The guided distributor allows defining a specific distribution of data on a per directory or file basis. 
+The distribution configurations are defined within a shared file (called `guided_config.txt` henceforth) with the following format:
 `<path> <chunk_number> <host>`
 
-Moreover if you prepend a path with #, all the data from that path will go to the same place as the metadata. 
-Specifically defined paths (without#) will be prioritary.
-
-i.e.,
-#/mdt-hard 0 0 
-
-GekkoFS will store data and metadata to the same server. The server will still be random (0 0 has no meaning, yet).
- 
-Chunks not specified, are distributed using the Simple Hash distributor.
-
-To generate such file we need to follow a first execution, using the trace_reads log option
-
-This will enable a `TRACE_READS` level log at the clients offering several lines that can be used to generate the input file.
-In this stage, each node should generate a separated file this can be done in SLURM using the next line :
-`srun -N 10 -n 320 --export="ALL" /bin/bash -c "export LIBGKFS_LOG_OUTPUT=${HOME}/test/GLOBAL.txt;LD_PRELOAD=${GKFS_PRLD} <app>"`
-
-Then, use the `examples/distributors/guided/generate.py` to create the output file.
-* `python examples/distributors/guided/generate.py ~/test/GLOBAL.txt >> guided.txt`
-
-This should work if the nodes are sorted in alphabetical order, which is the usual scenario. Users should take care of multi-server configurations.
-
-Finally, enable the distributor using the next compilation flags:
+To enable the distributor, the following CMake compilation flags are required:
 * `GKFS_USE_GUIDED_DISTRIBUTION` ON
-* `GKFS_USE_GUIDED_DISTRIBUTION_PATH` `<full path to guided.txt>`
+* `GKFS_USE_GUIDED_DISTRIBUTION_PATH` `<path_guided_config.txt>`
+
+To use a custom distribution, a path needs to have the prefix `#` (e.g., `#/mdt-hard 0 0`), in which all the data of all files in that directory goes to the same place as the metadata.
+Note, that a chunk/host configuration is inherited to all children files automatically even if not using the prefix. 
+In this example, `/mdt-hard/file1` is therefore also using the same distribution as the `/mdt-hard` directory.
+If no prefix is used, the Simple Hash distributor is used.
+
+#### Guided configuration file
+
+Creating a guided configuration file is based on an I/O trace file of a previous execution of the application.
+For this the `trace_reads` tracing module is used (see above).
+
+The `trace_reads` module enables a `TRACE_READS` level log at the clients writing the I/O information of the client which is used as the input for a script that creates the guided distributor setting.
+Note that capturing the necessary trace records can involve performance degradation.
+To capture the I/O of each client within a SLURM environment, i.e., enabling the `trace_reads` module and print its output to a user-defined path, the following example can be used:
+`srun -N 10 -n 320 --export="ALL" /bin/bash -c "export LIBGKFS_LOG=trace_reads;LIBGKFS_LOG_OUTPUT=${HOME}/test/GLOBAL.txt;LD_PRELOAD=${GKFS_PRLD} <app>"`
+
+Then, the `examples/distributors/guided/generate.py` scrpt is used to create the guided distributor configuration file:
+* `python examples/distributors/guided/generate.py ~/test/GLOBAL.txt >> guided_config.txt`
+
+Finally, modify `guided_config.txt` to your distribution requirements.
 
 ### Acknowledgment
 
-This software was partially supported by the EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
+This software was partially supported by the EC H2020 funded NEXTGenIO project (Project ID: 671951, www.nextgenio.eu).
 
-This software was partially supported by the ADA-FS project under the SPPEXA project funded by the DFG.
+This software was partially supported by the ADA-FS project under the SPPEXA project (http://www.sppexa.de/) funded by the DFG.
+
+This software is partially supported by the FIDIUM project funded by the DFG.
+
+This software is partially supported by the ADMIRE project (https://www.admire-eurohpc.eu/) funded by the European Union’s Horizon 2020 JTI-EuroHPC Research and Innovation Programme (Grant 956748).
