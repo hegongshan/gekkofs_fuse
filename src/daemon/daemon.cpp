@@ -25,6 +25,13 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief The main source file to launch the daemon.
+ * @internal
+ * This file includes the daemon's main() function and starts all daemon
+ * subroutines. It deals with user input and waits on a signal to shut it down.
+ * @endinternal
+ */
 
 #include <daemon/daemon.hpp>
 #include <version.hpp>
@@ -60,8 +67,8 @@ extern "C" {
 using namespace std;
 namespace fs = std::filesystem;
 
-static condition_variable shutdown_please;
-static mutex mtx;
+static condition_variable shutdown_please; // handler for shutdown signaling
+static mutex mtx; // mutex to wait on shutdown conditional variable
 
 struct cli_options {
     string mountdir;
@@ -72,6 +79,15 @@ struct cli_options {
     string rpc_protocol;
 };
 
+/**
+ * @brief Initializes the Argobots execution streams for non-blocking I/O
+ * @internal
+ * The corresponding execution streams are defined in
+ * gkfs::config::rpc::daemon_io_xstreams. A FIFO thread pool accomodates these
+ * execution streams. Argobots tasklets are created from these pools during I/O
+ * operations.
+ * @endinternal
+ */
 void
 init_io_tasklet_pool() {
     static_assert(gkfs::config::rpc::daemon_io_xstreams >= 0,
@@ -103,8 +119,12 @@ init_io_tasklet_pool() {
 }
 
 /**
- * Registers RPC handlers to Margo instance
- * @param hg_class
+ * @brief Registers RPC handlers to a given Margo instance.
+ * @internal
+ * Registering is done by associating a Margo instance id (mid) with the RPC
+ * name and its handler function including defined input/out structs
+ * @endinternal
+ * @param margo_instance_id
  */
 void
 register_server_rpcs(margo_instance_id mid) {
@@ -148,6 +168,10 @@ register_server_rpcs(margo_instance_id mid) {
                    rpc_chunk_stat_out_t, rpc_srv_get_chunk_stat);
 }
 
+/**
+ * @brief Initializes the daemon RPC server.
+ * @throws std::runtime_error on failure
+ */
 void
 init_rpc_server() {
     hg_addr_t addr_self = nullptr;
@@ -201,6 +225,17 @@ init_rpc_server() {
     register_server_rpcs(mid);
 }
 
+/**
+ * @brief Initializes the daemon environment and setting up its subroutines.
+ * @internal
+ * This includes connecting to the KV store, starting the Argobots I/O execution
+ * streams, initializing the metadata and data backends, and starting the RPC
+ * server.
+ *
+ * Finally, the root metadata entry is created.
+ * @endinternal
+ * @throws std::runtime_error if any step fails
+ */
 void
 init_environment() {
     // Initialize metadata db
@@ -311,7 +346,7 @@ init_environment() {
 
 #ifdef GKFS_ENABLE_AGIOS
 /**
- * Initialize the AGIOS scheduling library
+ * @brief Initialize the AGIOS scheduling library
  */
 void
 agios_initialize() {
@@ -330,7 +365,12 @@ agios_initialize() {
 #endif
 
 /**
- * Destroys the margo, argobots, and mercury environments
+ * @brief Destroys the daemon environment and gracefully shuts down all
+ * subroutines.
+ * @internal
+ * Shutting down includes freeing Argobots execution streams, cleaning
+ * hostsfile, and shutting down the Mercury RPC server.
+ * @endinternal
  */
 void
 destroy_enviroment() {
@@ -364,6 +404,13 @@ destroy_enviroment() {
     GKFS_DATA->close_mdb();
 }
 
+/**
+ * @brief Handler for daemon shutdown signal handling.
+ * @internal
+ * Notifies the waiting thread in main() to wake up.
+ * @endinternal
+ * @param dummy unused but required by signal() called in main()
+ */
 void
 shutdown_handler(int dummy) {
     GKFS_DATA->spdlogger()->info("{}() Received signal: '{}'", __func__,
@@ -371,6 +418,14 @@ shutdown_handler(int dummy) {
     shutdown_please.notify_all();
 }
 
+/**
+ * @brief Initializes the daemon logging environment.
+ * @internal
+ * Reads user input via environment variables regarding the
+ * log path and log level.
+ * @endinternal
+ * Initializes three loggers: main, metadata module, and data module
+ */
 void
 initialize_loggers() {
     std::string path = gkfs::config::log::daemon_log_path;
@@ -402,9 +457,10 @@ initialize_loggers() {
 }
 
 /**
- * Parses input of user
- * @param vm
- * @throws runtime_error
+ * @brief Parses command line arguments from user
+ *
+ * @param vm boost::program_options variable_map
+ * @throws std::runtime_error
  */
 void
 parse_input(const cli_options& opts, const CLI::App& desc) {
@@ -514,6 +570,20 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     }
 }
 
+/**
+ * @brief The initial function called when launching the daemon.
+ * @internal
+ * Launches all subroutines and waits on a conditional variable to shut it down.
+ * Daemon will react to the following signals:
+ *
+ * SIGINT - Interrupt from keyboard (ctrl-c)
+ * SIGTERM - Termination signal (kill <daemon_pid>
+ * SIGKILL - Kill signal (kill -9 <daemon_pid>
+ * @endinternal
+ * @param argc number of command line arguments
+ * @param argv list of the command line arguments
+ * @return exit status: EXIT_SUCCESS (0) or EXIT_FAILURE (1)
+ */
 int
 main(int argc, const char* argv[]) {
     // Define arg parsing
@@ -575,7 +645,7 @@ main(int argc, const char* argv[]) {
 #endif
         cout << "Chunk size: " << gkfs::config::rpc::chunksize << " bytes"
              << endl;
-        return 0;
+        return EXIT_SUCCESS;
     }
     // intitialize logging framework
     initialize_loggers();
@@ -587,7 +657,7 @@ main(int argc, const char* argv[]) {
     } catch(const std::exception& e) {
         cerr << fmt::format("Parsing arguments failed: '{}'. Exiting.",
                             e.what());
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     /*
@@ -603,7 +673,7 @@ main(int argc, const char* argv[]) {
         GKFS_DATA->spdlogger()->error(emsg);
         cerr << emsg << endl;
         destroy_enviroment();
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     signal(SIGINT, shutdown_handler);
@@ -616,5 +686,5 @@ main(int argc, const char* argv[]) {
     GKFS_DATA->spdlogger()->info("{}() Shutting down...", __func__);
     destroy_enviroment();
     GKFS_DATA->spdlogger()->info("{}() Complete. Exiting...", __func__);
-    return 0;
+    return EXIT_SUCCESS;
 }

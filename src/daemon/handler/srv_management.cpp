@@ -25,7 +25,14 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
+/**
+ * @brief Provides all Margo RPC handler definitions called by Mercury on client
+ * request for all file system management operations.
+ * @internal
+ * The end of the file defines the associates the Margo RPC handler functions
+ * and associates them with their corresponding GekkoFS handler functions.
+ * @endinternal
+ */
 #include <daemon/daemon.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 
@@ -37,12 +44,18 @@ extern "C" {
 
 using namespace std;
 
-/*
- * This file contains all Margo RPC handlers that are concerning data operations
- */
-
 namespace {
 
+/**
+ * @brief Responds with general file system meta information requested on client
+ * startup.
+ * @internal
+ * Most notably this is where the client gets the information on which path
+ * GekkoFS is accessible.
+ * @endinteral
+ * @param handle Mercury RPC handle
+ * @return Mercury error code to Mercury
+ */
 hg_return_t
 rpc_srv_get_fs_config(hg_handle_t handle) {
     rpc_config_out_t out{};

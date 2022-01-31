@@ -31,13 +31,21 @@
 
 #include <common/rpc/rpc_util.hpp>
 
-#include <fstream>
-#include <iostream>
-
 using namespace std;
 
 namespace gkfs::utils {
 
+/**
+ * @internal
+ * Appends a single line to an existing shared hosts file with the RPC
+ * connection information of this daemon. If it doesn't exist, it is created.
+ * The line includes the hostname and the RPC server's listening address.
+ *
+ * NOTE, the shared file system must support strong consistency semantics to
+ * ensure each daemon can write its information to the file even if the write
+ * access is simultaneous.
+ * @endinternal
+ */
 void
 populate_hosts_file() {
     const auto& hosts_file = GKFS_DATA->hosts_file();
@@ -59,6 +67,13 @@ populate_hosts_file() {
     lfstream.close();
 }
 
+/**
+ * @internal
+ * This function removes the entire hosts file even if just one daemon is
+ * shutdown. This makes sense because the data distribution calculation would be
+ * misaligned if the entry of the current daemon was only removed.
+ * @endinternal
+ */
 void
 destroy_hosts_file() {
     std::remove(GKFS_DATA->hosts_file().c_str());

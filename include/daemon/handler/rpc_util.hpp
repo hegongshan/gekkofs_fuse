@@ -25,6 +25,13 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Provide helper functions for Margo's RPC interfaces reduce code
+ * verbosity of the RPC handler functions.
+ * @internal
+ * Note, this is a temporary solution and is planned to be refactored.
+ * @endinternal
+ */
 
 #ifndef GEKKOFS_DAEMON_RPC_UTIL_HPP
 #define GEKKOFS_DAEMON_RPC_UTIL_HPP
@@ -39,6 +46,16 @@ extern "C" {
 
 namespace gkfs::rpc {
 
+/**
+ * @brief Frees all given RPC resources allocated by Margo.
+ * @tparam InputType Any RPC input struct from client requests
+ * @tparam OutputType Any RPC output struct for client response
+ * @param handle Pointer to Mercury RPC handle
+ * @param input Pointer to input struct
+ * @param output Pointer to output struct
+ * @param bulk_handle Pointer to Mercury bulk handle
+ * @return Mercury error code. HG_SUCCESS on success.
+ */
 template <typename InputType, typename OutputType>
 inline hg_return_t
 cleanup(hg_handle_t* handle, InputType* input, OutputType* output,
@@ -67,6 +84,20 @@ cleanup(hg_handle_t* handle, InputType* input, OutputType* output,
     return ret;
 }
 
+/**
+ * @brief Responds to a client request.
+ * @internal
+ * Note, Mercury frees the output struct itself after it responded to the
+ * client. Attempting to explicitly free the output struct can cause segfaults
+ * because the response is non-blocking and we could free the resources before
+ * Mercury has responded.
+ * @endinternal
+ *
+ * @tparam OutputType Any RPC output struct for client response
+ * @param handle Pointer to Mercury RPC handle
+ * @param output Pointer to output struct
+ * @return Mercury error code. HG_SUCCESS on success.
+ */
 template <typename OutputType>
 inline hg_return_t
 respond(hg_handle_t* handle, OutputType* output) {
@@ -78,7 +109,17 @@ respond(hg_handle_t* handle, OutputType* output) {
     }
     return ret;
 }
-
+/**
+ * @brief Combines responding to the client and cleaning up all RPC resources
+ * after.
+ * @tparam InputType Any RPC input struct from client requests
+ * @tparam OutputType Any RPC output struct for client response
+ * @param handle Pointer to Mercury RPC handle
+ * @param input Pointer to input struct
+ * @param output Pointer to output struct
+ * @param bulk_handle Pointer to Mercury bulk handle
+ * @return Mercury error code. HG_SUCCESS on success.
+ */
 template <typename InputType, typename OutputType>
 inline hg_return_t
 cleanup_respond(hg_handle_t* handle, InputType* input, OutputType* output,
@@ -89,13 +130,29 @@ cleanup_respond(hg_handle_t* handle, InputType* input, OutputType* output,
     return cleanup(handle, input, static_cast<OutputType*>(nullptr),
                    bulk_handle);
 }
-
+/**
+ * @brief Combines responding to the client and cleaning up all RPC resources
+ * after.
+ * @tparam InputType Any RPC input struct from client requests
+ * @tparam OutputType Any RPC output struct for client response
+ * @param handle Pointer to Mercury RPC handle
+ * @param input Pointer to input struct
+ * @param output Pointer to output struct
+ * @return Mercury error code. HG_SUCCESS on success.
+ */
 template <typename InputType, typename OutputType>
 inline hg_return_t
 cleanup_respond(hg_handle_t* handle, InputType* input, OutputType* output) {
     return cleanup_respond(handle, input, output, nullptr);
 }
-
+/**
+ * @brief Combines responding to the client and cleaning up all RPC resources
+ * after.
+ * @tparam OutputType Any RPC output struct for client response
+ * @param handle Pointer to Mercury RPC handle
+ * @param output Pointer to output struct
+ * @return Mercury error code. HG_SUCCESS on success.
+ */
 template <typename OutputType>
 inline hg_return_t
 cleanup_respond(hg_handle_t* handle, OutputType* output) {

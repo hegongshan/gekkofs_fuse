@@ -25,6 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Declare all Margo RPC handler functions by name that
+ * were registered in the daemon's main source file.
+ */
 
 #ifndef GKFS_DAEMON_RPC_DEFS_HPP
 #define GKFS_DAEMON_RPC_DEFS_HPP

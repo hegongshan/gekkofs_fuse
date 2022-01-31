@@ -25,7 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
-
+/**
+ * @brief The main header file defining singletons and including needed headers
+ * in the daemon.
+ */
 #ifndef GKFS_DAEMON_DAEMON_HPP
 #define GKFS_DAEMON_DAEMON_HPP
 
@@ -47,8 +50,14 @@ extern "C" {
 #include <common/rpc/distributor.hpp>
 
 #define GKFS_DATA                                                              \
-    (static_cast<gkfs::daemon::FsData*>(gkfs::daemon::FsData::getInstance()))
+    (static_cast<gkfs::daemon::FsData*>(                                       \
+            gkfs::daemon::FsData::getInstance())) ///< GKFS_DATA macro to access
+                                                  ///< the FsData singleton
+                                                  ///< across the daemon
 #define RPC_DATA                                                               \
-    (static_cast<gkfs::daemon::RPCData*>(gkfs::daemon::RPCData::getInstance()))
+    (static_cast<gkfs::daemon::RPCData*>(                                      \
+            gkfs::daemon::RPCData::getInstance())) ///< RPC_DATA macro to access
+                                                   ///< the RPCData singleton
+                                                   ///< across the daemon
 
 #endif // GKFS_DAEMON_DAEMON_HPP

@@ -64,6 +64,7 @@
 
 # .idea
 *.idea/
+.run/
 
 # OS generated files
 .DS_Store

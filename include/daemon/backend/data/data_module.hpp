@@ -25,6 +25,10 @@
 
   SPDX-License-Identifier: GPL-3.0-or-later
 */
+/**
+ * @brief Declaration for GekkoFS data module object that is run once per daemon
+ * instance.
+ */
 
 #ifndef GEKKOFS_DAEMON_DATA_LOGGING_HPP
 #define GEKKOFS_DAEMON_DATA_LOGGING_HPP
@@ -33,12 +37,16 @@
 
 namespace gkfs::data {
 
+/**
+ * @brief The data module class providing the data backend for the daemon as a
+ * singleton.
+ */
 class DataModule {
 
 private:
-    DataModule() {}
+    DataModule() = default;
 
-    std::shared_ptr<spdlog::logger> log_;
+    std::shared_ptr<spdlog::logger> log_; ///< Logging instance for data backend
 
 public:
     static constexpr const char* LOGGER_NAME = "DataModule";
@@ -54,16 +62,26 @@ public:
     void
     operator=(DataModule const&) = delete;
 
-    const std::shared_ptr<spdlog::logger>&
+    /**
+     * @brief Returns the data module log handle.
+     * @return Pointer to the spdlog instance
+     */
+    [[nodiscard]] const std::shared_ptr<spdlog::logger>&
     log() const;
 
+    /**
+     * @brief Attaches a logging instance to the data module.
+     * @param log spdlog shared pointer instance
+     */
     void
     log(const std::shared_ptr<spdlog::logger>& log);
 };
 
 #define GKFS_DATA_MOD                                                          \
     (static_cast<gkfs::data::DataModule*>(                                     \
-            gkfs::data::DataModule::getInstance()))
+            gkfs::data::DataModule::getInstance())) ///< macro to access the
+                                                    ///< DataModule singleton
+                                                    ///< across the daemon
 
 } // namespace gkfs::data
 
