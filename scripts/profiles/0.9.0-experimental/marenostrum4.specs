@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -33,26 +33,26 @@ declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_arg
 declare -a order
 
 # Comment that should be displayed when printing the profile
-comment="Dependencies for Mogon 1 supercomputer"
+comment="Dependencies for Marenostrum 4 supercomputer"
 
 # Dependencies that must be downloaded directly
 wgetdeps=(
-    ["zstd"]="1.3.2" 
-    ["lz4"]="1.8.0"
-    ["snappy"]="1.1.7"
-    ["capstone"]="4.0.1"
-    ["argobots"]="1.0rc1"
+    ["lz4"]="1.9.3"
+    ["capstone"]="4.0.2"
+    ["argobots"]="1.1"
+    ["rocksdb"]="6.26.1"
+    ["psm2"]="11.2.185"
+    ["json-c"]="0.15-20200726"
 )
 
 # Dependencies that must be cloned
 clonedeps=(
-    ["libfabric%verbs"]="HEAD@v1.7.2"
-    ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
-    ["margo"]="v0.6.3"
-    ["rocksdb"]="6.2.2"
-    ["syscall_intercept"]="f7cebb7b7e7512a19b78a31ce236ad6ca22636dd"
+    ["libfabric"]="HEAD@v1.13.2"
+    ["mercury"]="v2.1.0"
+    ["margo"]="v0.9.6"
+    ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
     ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
-    ["parallax"]="56e8b7b30908b1bc48f6c58ab03262498f44dad9"
+    ["parallax"]="0ab2f77aa866dfa697c130dc2f319b530b3007e5"
 )
 
 # Extra arguments for git clone
@@ -65,10 +65,9 @@ clonedeps_patches=(
     ["syscall_intercept"]="syscall_intercept.patch"
 )
 
-# Ordering that MUST be followed when downloading/installing
+# Ordering that MUST be followed when downloading
 order=(
-    "zstd" "lz4" "snappy" "capstone" "libfabric%verbs" "mercury"
-    "argobots" "margo" "rocksdb" "syscall_intercept" "date" "parallax"
+    "lz4" "capstone" "json-c" "psm2" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "parallax"
 )
 
 # Extra arguments passed to the installation script. As such, they can
@@ -80,5 +79,5 @@ order=(
 #  - CORES: the number of cores to use when building
 #  - PERFORM_TEST: whether tests for the package should be executed
 extra_install_args=(
-    ["libfabric%verbs"]="--enable-verbs=yes"
+    ["libfabric"]="--enable-psm2=no --enable-sockets=yes"
 )

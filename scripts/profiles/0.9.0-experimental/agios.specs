@@ -33,12 +33,15 @@ declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_arg
 declare -a order
 
 # Comment that should be displayed when printing the profile
-comment="Direct dependencies"
+comment="All dependencies (except transport-specific and experimental)"
 
 # Dependencies that must be downloaded directly
 wgetdeps=(
+    ["lz4"]="1.9.3"
+    ["capstone"]="4.0.2"
     ["argobots"]="1.1"
     ["rocksdb"]="6.26.1"
+    ["json-c"]="0.15-20200726"
 )
 
 # Dependencies that must be cloned
@@ -47,6 +50,8 @@ clonedeps=(
     ["mercury"]="v2.1.0"
     ["margo"]="v0.9.6"
     ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
+    ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
+    ["agios"]="c26a6544200f823ebb8f890dd94e653d148bf226@development"
     ["parallax"]="0ab2f77aa866dfa697c130dc2f319b530b3007e5"
 )
 
@@ -62,7 +67,7 @@ clonedeps_patches=(
 
 # Ordering that MUST be followed when downloading
 order=(
-    "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "parallax"
+    "lz4" "capstone" "json-c" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "agios" "parallax"
 )
 
 # Extra arguments passed to the installation script. As such, they can

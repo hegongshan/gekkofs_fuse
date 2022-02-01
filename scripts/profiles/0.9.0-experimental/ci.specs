@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -37,19 +37,19 @@ comment="Dependencies required by the CI"
 
 # Dependencies that must be downloaded directly
 wgetdeps=(
-    ["argobots"]="1.0rc1"
-    ["rocksdb"]="6.2.2"
+    ["argobots"]="1.1"
+    ["rocksdb"]="6.26.1"
     )
 
 # Dependencies that must be cloned
 clonedeps=(
-    ["libfabric"]="HEAD@v1.8.1"
-    ["mercury"]="41caa143a07ed179a3149cac4af0dc7aa3f946fd"
-    ["margo"]="v0.6.3"
-    ["syscall_intercept"]="f7cebb7b7e7512a19b78a31ce236ad6ca22636dd"
+    ["libfabric"]="HEAD@v1.13.2"
+    ["mercury"]="v2.1.0"
+    ["margo"]="v0.9.6"
+    ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
     ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
     ["agios"]="c26a6544200f823ebb8f890dd94e653d148bf226@development"
-    ["parallax"]="56e8b7b30908b1bc48f6c58ab03262498f44dad9"
+    ["parallax"]="0ab2f77aa866dfa697c130dc2f319b530b3007e5"
     )
 
 # Extra arguments for git clone

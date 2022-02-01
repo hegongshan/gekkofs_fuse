@@ -1,7 +1,7 @@
 Downloaded 'https://github.com/lz4/lz4/archive/v1.9.3.tar.gz' to 'lz4'
 Downloaded 'https://github.com/aquynh/capstone/archive/4.0.2.tar.gz' to 'capstone'
 Downloaded 'https://github.com/json-c/json-c/archive/json-c-0.15-20200726.tar.gz' to 'json-c'
-Cloned 'https://github.com/ofiwg/libfabric.git' to 'libfabric' with commit '[HEAD]' and flags '--branch=v1.13.2'
+Cloned 'https://github.com/ofiwg/libfabric.git' to 'libfabric%verbs' with commit '[HEAD]' and flags '--branch=v1.13.2'
 Cloned 'https://github.com/mercury-hpc/mercury' to 'mercury' with commit '[v2.1.0]' and flags '--recurse-submodules'
 Downloaded 'https://github.com/pmodels/argobots/archive/v1.1.tar.gz' to 'argobots'
 Cloned 'https://github.com/mochi-hpc/mochi-margo' to 'margo' with commit '[v0.9.6]' and flags ''
