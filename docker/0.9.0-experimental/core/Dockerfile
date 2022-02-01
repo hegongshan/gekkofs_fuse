@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 LABEL Description="Debian-based environment suitable to build GekkoFS and its dependencies"
 
@@ -13,21 +13,19 @@ RUN apt-get update && \
 		automake \
 		gcc \
 		g++ \
+		procps \
 		# AGIOS dependencies
 		libconfig-dev \
 		# Mercury dependencies
 		libltdl-dev \
 		lbzip2 \
+        # Margo dependencies \
+        libjson-c-dev \
 		# RocksDB dependencies
-		libsnappy-dev \
 		liblz4-dev \
-		libzstd-dev \
-		libbz2-dev \
-		zlib1g-dev \
 		# syscall_intercept dependencies
 		libcapstone-dev \
 		# GekkoFS dependencies
-		libboost-filesystem-dev \
 		libboost-program-options-dev \
 		uuid-dev && \
     # install cmake 3.14 since it's needed for some dependencies
