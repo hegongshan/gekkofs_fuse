@@ -35,7 +35,8 @@
 #include <iostream>
 #include <daemon/backend/metadata/parallax_backend.hpp>
 #include <mutex>
-
+#include <unistd.h>
+#include <fcntl.h>
 using namespace std;
 extern "C" {
 #include <sys/stat.h>
