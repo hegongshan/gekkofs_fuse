@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -192,6 +192,54 @@ def test_mkdir(gkfs_daemon, gkfs_client):
 
 
     return
+
+#@pytest.mark.xfail(reason="invalid errno returned on success")
+def test_finedir(gkfs_daemon, gkfs_client):
+    """Tests several corner cases for directories scan"""
+
+    topdir = gkfs_daemon.mountdir / "finetop"
+    longer = Path(topdir.parent, topdir.name + "_fine")
+    file_a  = topdir / "file_"
+    file_b  = topdir / "dir_b"
+    
+    # create topdir
+    ret = gkfs_client.mkdir(
+            topdir,
+            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval == 0
+
+    ret = gkfs_client.readdir(topdir)
+
+    # XXX: This might change in the future if we add '.' and '..'
+    assert len(ret.dirents) == 0
+
+    # populate top directory
+
+    for files in range (1,11):
+        ret = gkfs_client.open(
+                str(file_a) + str(files),
+                os.O_CREAT, 
+                stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        
+        assert ret.retval != -1
+
+        ret = gkfs_client.readdir(topdir)
+
+        assert len(ret.dirents) == files
+
+    for files in range(11, 20):
+        ret = gkfs_client.open(
+                str(file_a) + str(files),
+                os.O_CREAT,
+                stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+        
+        assert ret.retval != -1
+    
+    ret = gkfs_client.readdir(topdir)
+    
+    assert len(ret.dirents) == 19
+
 
 def test_extended(gkfs_daemon, gkfs_shell, gkfs_client):
     topdir = gkfs_daemon.mountdir / "test_extended"
