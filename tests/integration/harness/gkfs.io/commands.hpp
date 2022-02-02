@@ -88,6 +88,9 @@ void
 write_validate_init(CLI::App& app);
 
 void
+directory_validate_init(CLI::App& app);
+
+void
 write_random_init(CLI::App& app);
 
 void
