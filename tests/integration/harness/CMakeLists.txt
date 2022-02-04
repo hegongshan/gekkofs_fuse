@@ -61,6 +61,7 @@ add_executable(gkfs.io
     gkfs.io/chdir.cpp
     gkfs.io/getcwd_validate.cpp
     gkfs.io/symlink.cpp
+    gkfs.io/directory_validate.cpp
 )
 
 include(FetchContent)

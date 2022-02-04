@@ -319,6 +319,15 @@ class WriteValidateOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('WriteValidateReturn', ['retval', 'errno'])(**data)
 
+class DirectoryValidateOutputSchema(Schema):
+    """Schema to deserialize the results of a write() execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('DirectoryValidateReturn', ['retval', 'errno'])(**data)
 
 class WriteRandomOutputSchema(Schema):
     """Schema to deserialize the results of a write() execution"""
@@ -409,6 +418,7 @@ class IOParser:
         'write_random': WriteRandomOutputSchema(),
         'write_validate' : WriteValidateOutputSchema(),
         'truncate': TruncateOutputSchema(),
+        'directory_validate' : DirectoryValidateOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
         'chdir'   : ChdirOutputSchema(),

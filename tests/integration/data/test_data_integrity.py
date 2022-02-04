@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -32,23 +32,31 @@ import errno
 import stat
 import os
 import ctypes
-import sh
 import sys
 import pytest
 import string
 import random
 from harness.logger import logger
 
-nonexisting = "nonexisting"
-chunksize_start = 128192
-chunksize_end = 2097153
-step = 4096*9
 
 def generate_random_data(size):
     return ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(size)])
 
 
+def check_write(gkfs_client, i, file):
+        buf = bytes(generate_random_data(i), sys.stdout.encoding)
+        
+        ret = gkfs_client.write(file, buf, i)
 
+        assert ret.retval == i
+        ret = gkfs_client.stat(file)
+
+        assert ret.retval == 0
+        assert (ret.statbuf.st_size == i)
+
+        ret = gkfs_client.read(file, i)
+        assert ret.retval== i
+        assert ret.buf == buf
 
 #@pytest.mark.xfail(reason="invalid errno returned on success")
 def test_data_integrity(gkfs_daemon, gkfs_client):
@@ -89,29 +97,36 @@ def test_data_integrity(gkfs_daemon, gkfs_client):
     # Read data
     # Compare buffer
 
-    
-    for i in range (1, 512, 64):
-        buf = bytes(generate_random_data(i), sys.stdout.encoding)
-        
-        ret = gkfs_client.write(file_a, buf, i)
+    ret = gkfs_client.write_validate(file_a, 1)
+    assert ret.retval == 1    
 
-        assert ret.retval == i
-        ret = gkfs_client.stat(file_a)
+    ret = gkfs_client.write_validate(file_a, 256)
+    assert ret.retval == 1  
 
-        assert ret.retval == 0
-        assert (ret.statbuf.st_size == i)
+    ret = gkfs_client.write_validate(file_a, 512)
+    assert ret.retval == 1  
 
-        ret = gkfs_client.read(file_a, i)
-        assert ret.retval== i
-        assert ret.buf == buf
+    # Step 2 - Compare bigger sizes exceeding typical chunksize and not aligned
+    ret = gkfs_client.write_validate(file_a, 128192)
+    assert ret.retval == 1
 
+    # < 1 chunk   
+    ret = gkfs_client.write_validate(file_a, 400000)
+    assert ret.retval == 1
 
-    # Step 2 - Compare bigger sizes exceeding typical chunksize
-    for i in range (chunksize_start, chunksize_end, step):
-        ret = gkfs_client.write_validate(file_a, i)
-        assert ret.retval == 1
+    # > 1 chunk < 2 chunks
+    ret = gkfs_client.write_validate(file_a, 600000)
+    assert ret.retval == 1
 
+    # > 1 chunk < 2 chunks
+    ret = gkfs_client.write_validate(file_a, 900000)
+    assert ret.retval == 1
 
-    return
+    # > 2 chunks
+    ret = gkfs_client.write_validate(file_a, 1100000) 
+    assert ret.retval == 1
 
+    # > 4 chunks
+    ret = gkfs_client.write_validate(file_a, 2097153) 
+    assert ret.retval == 1
 
