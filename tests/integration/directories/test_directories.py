@@ -215,16 +215,18 @@ def test_finedir(gkfs_daemon, gkfs_client):
     # populate top directory
 
     for files in range (1,4):
-        file_name = str(file_a) + str(files)
         ret = gkfs_client.directory_validate(
-                Path(file_name), files) 
+                topdir, 1) 
         assert ret.retval == files
 
+
+    ret = gkfs_client.directory_validate(
+                topdir, 1000) 
+    assert ret.retval == 1000+3
 
 
 def test_extended(gkfs_daemon, gkfs_shell, gkfs_client):
     topdir = gkfs_daemon.mountdir / "test_extended"
-    longer = Path(topdir.parent, topdir.name + "_plus")
     dir_a  = topdir / "dir_a"
     dir_b  = topdir / "dir_b"
     file_a = topdir / "file_a"
@@ -288,11 +290,3 @@ def test_opendir(gkfs_daemon, gkfs_client, directory_path):
     assert ret.dirp is None
     assert ret.errno == errno.ENOENT
 
-# def test_stat(gkfs_daemon):
-#     pass
-#
-# def test_rmdir(gkfs_daemon):
-#     pass
-#
-# def test_closedir(gkfs_daemon):
-#     pass

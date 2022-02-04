@@ -69,60 +69,125 @@ to_json(json& record, const directory_validate_output& out) {
     record = serialize(out);
 }
 
-void
-directory_validate_exec(const directory_validate_options& opts) {
 
-    int fd = ::creat(opts.pathname.c_str(), S_IRWXU);
-   
-    if(fd == -1) {
-        if(1) {
-            fmt::print(
-                    "directory_validate(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
-                    opts.pathname, opts.count, fd, errno, ::strerror(errno));
-            return;
-        }
-        json out = directory_validate_output{-2, errno};
-        fmt::print("{}\n", out.dump(2));
+/**
+ * returns the number of elements existing in the path
+ * @param opts
+ * @param dir Path checked
+ * @returns The number of elements in the directory
+ */
+int 
+number_of_elements(const directory_validate_options& opts, const std::string dir) {
+    int num_elements = 0;
 
-        return;
-    }
-
-    ::close(fd);
-
-    // Do a readdir
-    std::string dir = ::dirname((char*)opts.pathname.c_str());
     ::DIR* dirp = ::opendir(dir.c_str());
 
     if(dirp == NULL) {
         if(opts.verbose) {
             fmt::print("readdir(pathname=\"{}\") = {}, errno: {} [{}]\n",
-                       opts.pathname, "NULL", errno, ::strerror(errno));
-            return;
+                       dir, "NULL", errno, ::strerror(errno));
+            return -3;
         }
 
     std::cout << "Error create directory" << std::endl;
         json out = directory_validate_output{-3, errno};
         fmt::print("{}\n", out.dump(2));
 
-        return;
+        return -3;
     }
 
-    std::vector<struct ::dirent> entries;
     struct ::dirent* entry;
 
     while((entry = ::readdir(dirp)) != NULL) {
-        entries.push_back(*entry);
+        num_elements++;
     }
+
+    return num_elements;
+}
+
+
+/**
+ * Creates `count` files, with a suffix starting at the number of elements existing in the path
+ * @param opts
+ * @param path Path where the file is created
+ * @param count Number of files to create
+ * @returns The number of elements created plus the number of elements already in the directory (calculated, not checked)
+ */
+int
+create_n_files (const directory_validate_options& opts, const std::string path, int count) {
+
+    // Read Directory and get number of entries
+    int num_elements = number_of_elements(opts, path);
+
+    for (int i = num_elements; i < count+num_elements; i++) {   
+        std::string filename = path+"/file_auto_"+std::to_string(i);
+        int fd = ::creat(filename.c_str(), S_IRWXU);
+        if(fd == -1) {
+            if(opts.verbose) {
+                fmt::print(
+                        "directory_validate(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
+                        filename, i, fd, errno, ::strerror(errno));
+                return -2;
+            }
+            json out = directory_validate_output{-2, errno};
+            fmt::print("{}\n", out.dump(2));
+
+            return -2;
+        }
+
+        ::close(fd);
+    }
+    return num_elements+count;
+}
+
+/**
+ * Creates `count` files, and returns the number of elements in the path
+ * If count == 0, the path is the filename to be created. Parent directory is checked
+ * @param opts
+ */
+void
+directory_validate_exec(const directory_validate_options& opts) {
+
+    if (opts.count == 0)  {
+        int fd = ::creat(opts.pathname.c_str(), S_IRWXU);
+    
+        if(fd == -1) {
+            if(opts.verbose) {
+                fmt::print(
+                        "directory_validate(pathname=\"{}\", count={}) = {}, errno: {} [{}]\n",
+                        opts.pathname, opts.count, fd, errno, ::strerror(errno));
+                return;
+            }
+            json out = directory_validate_output{-2, errno};
+            fmt::print("{}\n", out.dump(2));
+
+            return;
+        }
+
+        ::close(fd);
+    }
+    else {
+        int created = create_n_files(opts, opts.pathname, opts.count);
+        if (created <= 0) return;
+    }
+
+    // Do a readdir
+    std::string dir = opts.pathname;
+
+    if (opts.count == 0)
+        dir = ::dirname((char*)opts.pathname.c_str());
+    
+    auto num_elements = number_of_elements(opts, dir); 
 
     if(opts.verbose) {
         fmt::print("readdir(pathname=\"{}\") = [\n{}],\nerrno: {} [{}]\n",
-                   opts.pathname, fmt::join(entries, ",\n"), errno,
+                   opts.pathname, num_elements, errno,
                    ::strerror(errno));
         return;
     }
     
     errno = 0;
-    json out = directory_validate_output{(int) entries.size(), errno};
+    json out = directory_validate_output{num_elements, errno};
     fmt::print("{}\n", out.dump(2));
     return;
     
@@ -135,17 +200,17 @@ directory_validate_init(CLI::App& app) {
     auto opts = std::make_shared<directory_validate_options>();
     auto* cmd = app.add_subcommand(
             "directory_validate",
-            "Create a file and execute a direntry system call and count the number of elements");
+            "Create count files in the directory and execute a direntry system call and returns the number of elements");
 
     // Add options to cmd, binding them to opts
     cmd->add_flag("-v,--verbose", opts->verbose,
                   "Produce human writeable output");
 
-    cmd->add_option("pathname", opts->pathname, "file name, entries will be checked in last directory")
+    cmd->add_option("pathname", opts->pathname, "directory to check or filename to create (if count is 0), elements will be checked in the parent dir")
             ->required()
             ->type_name("");
 
-    cmd->add_option("count", opts->count, "Number of files to check")
+    cmd->add_option("count", opts->count, "Number of files to create. If 0, it creates only the entry in the pathname.")
             ->required()
             ->type_name("");
 
