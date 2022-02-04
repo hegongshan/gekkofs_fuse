@@ -81,6 +81,16 @@ FsData::rootdir(const std::string& rootdir) {
 }
 
 const std::string&
+FsData::rootdir_suffix() const {
+    return rootdir_suffix_;
+}
+
+void
+FsData::rootdir_suffix(const std::string& rootdir_suffix) {
+    FsData::rootdir_suffix_ = rootdir_suffix;
+}
+
+const std::string&
 FsData::mountdir() const {
     return mountdir_;
 }

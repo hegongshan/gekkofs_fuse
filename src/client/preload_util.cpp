@@ -174,6 +174,14 @@ load_hostfile(const std::string& path) {
                 "Hosts file found but no suitable addresses could be extracted");
     }
     extract_protocol(hosts[0].second);
+    // sort hosts so that data always hashes to the same place during restart
+    std::sort(hosts.begin(), hosts.end());
+    // remove rootdir suffix from host after sorting as no longer required
+    for(auto& h : hosts) {
+        auto idx = h.first.rfind("#");
+        if(idx != string::npos)
+            h.first.erase(idx, h.first.length());
+    }
     return hosts;
 }
 
@@ -362,7 +370,6 @@ read_hosts_file() {
     }
 
     LOG(INFO, "Hosts pool size: {}", hosts.size());
-    sort(hosts.begin(), hosts.end()); // Sort hosts by alphanumerical value.
     return hosts;
 }
 

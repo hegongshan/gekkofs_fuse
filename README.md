@@ -83,12 +83,13 @@ Further options are available:
 
 ```bash
 Allowed options
-Usage: bin/gkfs_daemon [OPTIONS]
+Usage: src/daemon/gkfs_daemon [OPTIONS]
 
 Options:
   -h,--help                   Print this help message and exit
   -m,--mountdir TEXT REQUIRED Virtual mounting directory where GekkoFS is available.
   -r,--rootdir TEXT REQUIRED  Local data directory where GekkoFS data for this daemon is stored.
+  -s,--rootdir-suffix TEXT    Creates an additional directory within the rootdir, allowing multiple daemons on one node.
   -i,--metadir TEXT           Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.
   -l,--listen TEXT            Address or interface to bind the daemon to. Default: local hostname.
                               When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly which associates the verbs device with the network interface. In case FI_VERBS_IFACE is already defined, the argument is ignored. Default 'ib'.
@@ -97,27 +98,34 @@ Options:
                               Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, and Omni-Path, respectively. (Default ofi+sockets)
                               Libfabric must have enabled support verbs or psm2.
   --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
-  --clean-rootdir             Cleans Rootdir >before< launching the deamon
+  -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
   --version                   Print version and exit.
 ```
+
+It is possible to run multiple independent GekkoFS instances on the same node. Note, that when these GekkoFS instances
+are part of the same file system, use the same `rootdir` with different `rootdir-suffixe`s.
 
 Shut it down by gracefully killing the process (SIGTERM).
 
 ## Use the GekkoFS client library
 
-tl;dr example: 
+tl;dr example:
+
 ```bash
 export LIBGKFS_ HOSTS_FILE=<hostfile_path>
 LD_PRELOAD=<install_path>/lib64/libgkfs_intercept.so cp ~/some_input_data <pseudo_gkfs_mount_dir_path>/some_input_data
 LD_PRELOAD=<install_path>/lib64/libgkfs_intercept.so md5sum ~/some_input_data <pseudo_gkfs_mount_dir_path>/some_input_data
 ```
 
-Clients read the hostsfile to determine which daemons are part of the GekkoFS instance. 
-Because the client is an interposition library that is loaded within the context of the application, this information is passed via the environment variable `LIBGKFS_HOSTS_FILE` pointing to the hostsfile path.
-The client library itself is loaded for each application process via the `LD_PRELOAD` environment variable intercepting file system related calls.
-If they are within (or hierarchically under) the GekkoFS mount directory they are processed in the library, otherwise they are passed to the kernel.
+Clients read the hostsfile to determine which daemons are part of the GekkoFS instance. Because the client is an
+interposition library that is loaded within the context of the application, this information is passed via the
+environment variable `LIBGKFS_HOSTS_FILE` pointing to the hostsfile path. The client library itself is loaded for each
+application process via the `LD_PRELOAD` environment variable intercepting file system related calls. If they are
+within (or hierarchically under) the GekkoFS mount directory they are processed in the library, otherwise they are
+passed to the kernel.
 
-Note, if `LD_PRELOAD` is not pointing to the library and, hence the client is not loaded, the mounting directory appear to be empty.
+Note, if `LD_PRELOAD` is not pointing to the library and, hence the client is not loaded, the mounting directory appears
+to be empty.
 
 For MPI application, the `LD_PRELOAD` variable can be passed with the `-x` argument for `mpirun/mpiexec`.
 

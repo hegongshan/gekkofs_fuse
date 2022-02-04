@@ -50,20 +50,21 @@ namespace daemon {
 class FsData {
 
 private:
-    FsData() {}
+    FsData() = default;
 
     // logger
     std::shared_ptr<spdlog::logger> spdlogger_;
 
     // paths
-    std::string rootdir_;
-    std::string mountdir_;
-    std::string metadir_;
+    std::string rootdir_{};
+    std::string rootdir_suffix_{};
+    std::string mountdir_{};
+    std::string metadir_{};
 
     // RPC management
-    std::string rpc_protocol_;
-    std::string bind_addr_;
-    std::string hosts_file_;
+    std::string rpc_protocol_{};
+    std::string bind_addr_{};
+    std::string hosts_file_{};
     bool use_auto_sm_;
 
     // Database
@@ -103,6 +104,12 @@ public:
 
     void
     rootdir(const std::string& rootdir_);
+
+    const std::string&
+    rootdir_suffix() const;
+
+    void
+    rootdir_suffix(const std::string& rootdir_suffix_);
 
     const std::string&
     mountdir() const;
