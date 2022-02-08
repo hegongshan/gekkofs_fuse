@@ -18,10 +18,13 @@ RUN apt-get update && \
 	make -j8 install && \
     # install sphinx, breathe and exhale
     pip3 install \
-        'sphinx==4.0.2' \
+        'sphinx==4.4.0' \
         sphinx_rtd_theme \
-        'breathe==4.30.0' \
-        'exhale==0.2.3' && \
+        'breathe==4.31.0' \
+        'exhale==0.2.4' \
+        'sphinx-copybutton==0.4.0' \
+        'sphinx-multiversion==0.2.4' \
+        'myst_parser==0.15.1' && \
     # Clean apt cache to reduce image layer size
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/doxygen-1.9.2 && \
