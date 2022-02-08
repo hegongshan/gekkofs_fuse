@@ -1,6 +1,6 @@
 /*
-  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
-  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
+  Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain
+  Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany
 
   This software was partially supported by the
   EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
@@ -35,10 +35,7 @@
 #include <numeric>
 #include <unordered_map>
 #include <fstream>
-
-#ifdef GKFS_USE_GUIDED_DISTRIBUTION
-#include <boost/icl/interval_map.hpp>
-#endif
+#include <map>
 
 namespace gkfs::rpc {
 
@@ -140,15 +137,28 @@ public:
     std::vector<host_t>
     locate_directory_metadata(const std::string& path) const override;
 };
-#ifdef GKFS_USE_GUIDED_DISTRIBUTION
+
+/*
+ * Class IntervalSet
+ * FROM
+ *https://stackoverflow.com/questions/55646605/is-there-a-collection-for-storing-discrete-intervals
+ **/
+class IntervalSet {
+    std::map<chunkid_t, chunkid_t> _intervals;
+
+public:
+    void Add(chunkid_t, chunkid_t);
+    bool
+    IsInsideInterval(unsigned int) const;
+};
+
 class GuidedDistributor : public Distributor {
 private:
     host_t localhost_;
     unsigned int hosts_size_{0};
     std::vector<host_t> all_hosts_;
     std::hash<std::string> str_hash;
-    std::unordered_map<std::string,
-                       boost::icl::interval_map<chunkid_t, unsigned int>>
+    std::unordered_map<std::string, std::pair<IntervalSet, unsigned int>>
             map_interval;
     std::vector<std::string> prefix_list; // Should not be very long
     bool
@@ -176,7 +186,6 @@ public:
     std::vector<host_t>
     locate_directory_metadata(const std::string& path) const override;
 };
-#endif
 
 } // namespace gkfs::rpc
 
