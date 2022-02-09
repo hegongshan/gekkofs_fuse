@@ -240,7 +240,7 @@ gkfs:unit:
 ################################################################################
 documentation:
   stage: docs
-  image: gekkofs/docs:0.8.0
+  image: gekkofs/docs:0.9.0
   needs: []
   rules:
     # we only build the documentation automatically if we are on the
