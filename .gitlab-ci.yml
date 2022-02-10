@@ -2,7 +2,9 @@ stages:
   - lint
   - build
   - test
+  - docs
   - report
+  - deploy
 
 variables:
   SCRIPTS_DIR:                  "${CI_PROJECT_DIR}/scripts"
@@ -234,6 +236,42 @@ gkfs:unit:
 
 
 ################################################################################
+## Generation of documentation
+################################################################################
+documentation:
+  stage: docs
+  image: gekkofs/docs:0.9.0
+  needs: []
+  rules:
+    # we only build the documentation automatically if we are on the
+    # `master` branch, but since we also would like to test the documentation
+    # against our CI, we allow developers to also build it manually
+    - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "detached"'
+      when: never
+    - if: '$CI_MERGE_REQUEST_ID != ""'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_REF_SLUG == "master"'
+      when: always
+
+  script:
+    - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
+    - cmake
+      -Wdev
+      -Wdeprecate
+      -DCMAKE_BUILD_TYPE=Debug
+      -DGKFS_BUILD_DOCUMENTATION:BOOL=ON
+      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
+      ${CI_PROJECT_DIR}
+    - make docs
+  artifacts:
+    paths:
+      - ${BUILD_PATH}/docs
+    expire_in: 2 weeks
+
+
+################################################################################
 ## Generation of code coverage reports
 ################################################################################
 coverage:
@@ -254,3 +292,27 @@ coverage:
     paths:
       - ${BUILD_PATH}/.coverage
     expire_in: 2 weeks
+
+
+################################################################################
+## Deployment of documentation and reports
+################################################################################
+#
+## for the deploy stage to work as expected, we need to run rsync with the
+## appropriate credentials provided by sysadmins. For that, the specific values
+## for DEPLOY_KEY_FILE, DEPLOY_USERNAME, DEPLOY_GROUP, DEPLOY_SERVER and
+## DEPLOY_PATH must be defined as protected variables.
+deploy:
+  image: bscstorage/deployer
+  stage: deploy
+  needs: [ 'documentation' ]
+  only:
+    - master
+  script:
+    - chmod 400 ${DEPLOY_KEY_FILE}
+    - rsync -e "ssh -i ${DEPLOY_KEY_FILE}"
+        -avzr
+        --delete
+        --chown=${DEPLOY_USERNAME}:${DEPLOY_GROUP}
+        ${BUILD_PATH}/docs/sphinx/sphinx_docs/
+        ${DEPLOY_USERNAME}@${DEPLOY_SERVER}:${DEPLOY_PATH}
