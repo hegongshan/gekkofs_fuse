@@ -464,7 +464,8 @@ initialize_loggers() {
 /**
  * @brief Parses command line arguments from user
  *
- * @param vm boost::program_options variable_map
+ * @param opts CLI values
+ * @param desc CLI allowed options
  * @throws std::runtime_error
  */
 void
