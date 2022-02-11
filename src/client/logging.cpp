@@ -30,8 +30,7 @@
 #include <client/logging.hpp>
 #include <client/env.hpp>
 #include <client/make_array.hpp>
-
-#include <boost/algorithm/string.hpp>
+#include <regex>
 
 extern "C" {
 #include <date/tz.h>
@@ -43,6 +42,38 @@ extern "C" {
 #include <hermes/logging.hpp>
 
 #endif
+
+namespace {
+enum class split_str_mode {
+    is_any_of,
+    is_exactly_of // not used at the moment
+};                ///> Mode for string splitter
+
+/**
+ * @brief Splits a string by a given delimiter for a given split_mode
+ * @param input String to be splitted
+ * @param delimiter split token
+ * @param split_mode <split_str_node> how the string is split
+ * @return vector<string> entries for splitted string
+ */
+std::vector<std::string>
+split_str(const std::string& input, const std::string_view delimiter,
+          const split_str_mode split_mode) {
+    std::vector<std::string> out{};
+    std::string regex_builder{};
+    if(split_mode == split_str_mode::is_any_of) {
+        regex_builder = fmt::format("[{}]+", delimiter);
+    } else {
+        regex_builder = delimiter;
+    }
+    const std::regex line_re(regex_builder,
+                             std::regex::ECMAScript | std::regex::optimize);
+    std::copy(
+            std::sregex_token_iterator(input.begin(), input.end(), line_re, -1),
+            std::sregex_token_iterator(), std::back_inserter(out));
+    return out;
+}
+} // namespace
 
 namespace gkfs::log {
 
@@ -150,20 +181,16 @@ process_log_options(const std::string gkfs_debug) {
     return log::none;
 
 #endif // ! GKFS_ENABLE_LOGGING
-
     log_level dm = log::none;
 
-    std::vector<std::string> tokens;
-
     // skip separating white spaces and commas
-    boost::split(tokens, gkfs_debug, boost::is_any_of(" ,"));
+    auto tokens = ::split_str(gkfs_debug, " ,", ::split_str_mode::is_any_of);
 
     for(const auto& t : tokens) {
 
         bool is_known = false;
 
         for(const auto& opt : debug_opts) {
-
             // none disables any future and previous flags observed
             if(t == "none") {
                 return log::none;
@@ -225,17 +252,14 @@ process_log_options(const std::string gkfs_debug) {
 
 std::bitset<512>
 process_log_filter(const std::string& log_filter) {
-
     std::bitset<512> filtered_syscalls;
-    std::vector<std::string> tokens;
 
     if(log_filter.empty()) {
         return filtered_syscalls;
     }
 
     // skip separating white spaces and commas
-    boost::split(tokens, log_filter,
-                 [](char c) { return c == ' ' || c == ','; });
+    auto tokens = ::split_str(log_filter, " ,", ::split_str_mode::is_any_of);
 
     for(const auto& t : tokens) {
         const auto sc = syscall::lookup_by_name(t);
@@ -373,9 +397,7 @@ logger::logger(const std::string& opts, const std::string& path, bool trunc
 
         // mercury message might contain one or more sub-messages
         // separated by '\n'
-        std::vector<std::string> sub_msgs;
-        boost::split(sub_msgs, msg, boost::is_any_of("\n"),
-                     boost::token_compress_on);
+        auto sub_msgs = ::split_str(msg, "\n", ::split_str_mode::is_any_of);
 
         for(const auto& m : sub_msgs) {
             if(!m.empty()) {
