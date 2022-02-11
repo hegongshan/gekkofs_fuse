@@ -1,6 +1,6 @@
 /*
-  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
-  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
+  Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain
+  Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany
 
   This software was partially supported by the
   EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
@@ -125,7 +125,31 @@ std::vector<host_t>
 ForwarderDistributor::locate_directory_metadata(const std::string& path) const {
     return all_hosts_;
 }
-#ifdef GKFS_USE_GUIDED_DISTRIBUTION
+
+void
+IntervalSet::Add(chunkid_t smaller, chunkid_t bigger) {
+    const auto next = _intervals.upper_bound(smaller);
+    if(next != _intervals.cbegin()) {
+        const auto prev = std::prev(next);
+        if(next != _intervals.cend() && next->first <= bigger + 1) {
+            bigger = next->second;
+            _intervals.erase(next);
+        }
+        if(prev->second + 1 >= smaller) {
+            smaller = prev->first;
+            _intervals.erase(prev);
+        }
+    }
+    _intervals[smaller] = bigger;
+}
+
+bool
+IntervalSet::IsInsideInterval(unsigned int v) const {
+    const auto suspectNext = _intervals.upper_bound(v);
+    const auto suspect = std::prev(suspectNext);
+    return suspect->first <= v && v <= suspect->second;
+}
+
 bool
 GuidedDistributor::init_guided() {
     unsigned int destination_host;
@@ -148,16 +172,15 @@ GuidedDistributor::init_guided() {
         }
 
         auto I = map_interval.find(path);
-        if(I == map_interval.end())
-            map_interval[path] += make_pair(
-                    boost::icl::discrete_interval<chunkid_t>::right_open(
-                            chunk_id, chunk_id + 1),
-                    destination_host + 1);
-        else if(I->second.find(chunk_id) == I->second.end())
-            I->second.insert(make_pair(
-                    boost::icl::discrete_interval<chunkid_t>::right_open(
-                            chunk_id, chunk_id + 1),
-                    destination_host + 1));
+        if(I == map_interval.end()) {
+            auto tmp = IntervalSet();
+            tmp.Add(chunk_id, chunk_id + 1);
+            map_interval[path] = make_pair(tmp, destination_host + 1);
+        } else if(I->second.first.IsInsideInterval(chunk_id)) {
+            auto is = I->second.first;
+            is.Add(chunk_id, chunk_id + 1);
+            I->second = (make_pair(is, destination_host + 1));
+        }
     }
     mapfile.close();
     return true;
@@ -200,9 +223,9 @@ GuidedDistributor::locate_data(const string& path,
                                const chunkid_t& chnk_id) const {
     auto it = map_interval.find(path);
     if(it != map_interval.end()) {
-        auto it_f = it->second.find(chnk_id);
-        if(it_f != it->second.end()) {
-            return (it_f->second -
+        auto it_f = it->second.first.IsInsideInterval(chnk_id);
+        if(it_f) {
+            return (it->second.second -
                     1); // Decrement destination host from the interval_map
         }
     }
@@ -227,6 +250,6 @@ GuidedDistributor::locate_file_metadata(const string& path) const {
 GuidedDistributor::locate_directory_metadata(const string& path) const {
     return all_hosts_;
 }
-#endif
+
 } // namespace rpc
 } // namespace gkfs
