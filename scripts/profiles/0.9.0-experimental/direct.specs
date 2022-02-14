@@ -47,7 +47,7 @@ clonedeps=(
     ["mercury"]="v2.1.0"
     ["margo"]="v0.9.6"
     ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
-    ["parallax"]="0ab2f77aa866dfa697c130dc2f319b530b3007e5"
+    ["parallax"]="86a219fcddcd850895195821d393b8a061dc00ba"
 )
 
 # Extra arguments for git clone
