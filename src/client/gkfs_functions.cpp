@@ -130,7 +130,7 @@ namespace gkfs::syscall {
  * @return 0 on success, -1 on failure
  */
 int
-gkfs_open(const std::string& path, mode_t mode, int flags) {
+gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
 
     if(flags & O_PATH) {
         LOG(ERROR, "`O_PATH` flag is not supported");
@@ -172,6 +172,12 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
                     return -1;
                 }
                 md = *md_;
+
+                if(rename == false && md.blocks() == -1) {
+                    LOG(ERROR, "File is renamed '{}': '{}' - rename: {}", path,
+                        rename);
+                    return -1;
+                }
             } else {
                 LOG(ERROR, "Error creating file: '{}'", strerror(errno));
                 return -1;
@@ -202,7 +208,24 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
         return gkfs_open(md.target_path(), mode, flags);
     }
+
+
+    /// The file is a renamed file, so we need to get the metadata of the
+    /// original file.
+    /// This does not work as we will check that this is a -1.
+    if(!md.target_path().empty()) {
+        LOG(ERROR, "File '{}' is renamed, reentering with '{}'", path,
+            md.target_path());
+        return gkfs_open(md.target_path(), mode, flags, true);
+    }
+
 #endif
+
+    if(rename == false && md.blocks() == -1) {
+        LOG(ERROR, "File '{}' is renamed __", path);
+        errno = ENOENT;
+        return -1;
+    }
 
     if(S_ISDIR(md.mode())) {
         return gkfs_opendir(path);
@@ -310,6 +333,33 @@ gkfs_access(const std::string& path, const int mask, bool follow_links) {
 }
 
 /**
+ * gkfs wrapper for rename() system calls
+ * errno may be set
+ * @param old_path
+ * @param new_path
+ * @return 0 on success, -1 on failure
+ */
+int
+gkfs_rename(const string& old_path, const string& new_path) {
+    auto md = gkfs::utils::get_metadata(old_path, false);
+    if(!md) {
+        return -1;
+    }
+    auto md2 = gkfs::utils::get_metadata(new_path, false);
+    if(md2) {
+        return -1;
+    }
+
+    auto err = gkfs::rpc::forward_rename(old_path, new_path, md.value());
+    if(err) {
+        errno = err;
+        return -1;
+    }
+
+    return 0;
+}
+
+/**
  * gkfs wrapper for stat() system calls
  * errno may be set
  * @param path
@@ -320,7 +370,7 @@ gkfs_access(const std::string& path, const int mask, bool follow_links) {
 int
 gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
-    if(!md) {
+    if(!md or md.value().blocks() == -1) {
         return -1;
     }
     gkfs::utils::metadata_to_stat(path, *md, *buf);
@@ -344,7 +394,8 @@ int
 gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
            struct statx* buf, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
-    if(!md) {
+
+    if(!md or md.value().blocks() == -1) {
         return -1;
     }
 

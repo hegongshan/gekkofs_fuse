@@ -67,6 +67,7 @@ init_commands(CLI::App& app) {
     unlink_init(app);
     dup_validate_init(app);
     syscall_coverage_init(app);
+    rename_init(app);
 }
 
 

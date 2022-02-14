@@ -41,7 +41,7 @@ struct linux_dirent64;
 namespace gkfs::syscall {
 
 int
-gkfs_open(const std::string& path, mode_t mode, int flags);
+gkfs_open(const std::string& path, mode_t mode, int flags, bool rename = false);
 
 int
 gkfs_create(const std::string& path, mode_t mode);
@@ -148,6 +148,11 @@ gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp,
 
 int
 gkfs_rmdir(const std::string& path);
+
+
+int
+gkfs_rename(const std::string& old_path_resolved,
+            const std::string& new_path_resolved);
 
 } // namespace gkfs::syscall
 

@@ -465,6 +465,14 @@ class FileCompareOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('FileCompareReturn', ['retval', 'errno'])(**data)
 
+class RenameOutputSchema(Schema):
+    """Schema to deserialize the results of an lrename() execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('RenameReturn', ['retval', 'errno'])(**data)
 
 
 class IOParser:
@@ -500,6 +508,7 @@ class IOParser:
         'symlink' : SymlinkOutputSchema(),
         'dup_validate' : DupValidateOutputSchema(),
         'syscall_coverage' : SyscallCoverageOutputSchema(),
+        'rename' : RenameOutputSchema(),
     }
 
     def parse(self, command, output):

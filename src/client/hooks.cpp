@@ -865,8 +865,8 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            LOG(WARNING, "{}() not supported", __func__);
-            return -ENOTSUP;
+            // LOG(WARNING, "{}() not supported", __func__);
+            break;
 
         default:
             LOG(ERROR, "{}() relativize status unknown", __func__);
@@ -890,8 +890,8 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            LOG(WARNING, "{}() not supported", __func__);
-            return -ENOTSUP;
+            return with_errno(gkfs::syscall::gkfs_rename(oldpath_resolved,
+                                                         newpath_resolved));
 
         default:
             LOG(ERROR, "{}() relativize status unknown", __func__);

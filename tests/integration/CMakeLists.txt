@@ -125,6 +125,10 @@ gkfs_add_python_test(
     PYTHON_VERSION 3.6
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
     SOURCE syscalls/
+    NAME test_rename
+    PYTHON_VERSION 3.6
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests/integration
+    SOURCE rename/
 )
 
 if(GKFS_INSTALL_TESTS)
@@ -214,7 +218,13 @@ if(GKFS_INSTALL_TESTS)
     )
     endif ()
 
-    
+    install(DIRECTORY rename
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/gkfs/tests/integration
+        FILES_MATCHING
+            REGEX ".*\\.py"
+            PATTERN "__pycache__" EXCLUDE
+            PATTERN ".pytest_cache" EXCLUDE
+    )
 endif()
 
 

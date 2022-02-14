@@ -56,6 +56,10 @@ int
 forward_stat(const std::string& path, std::string& attr);
 
 int
+forward_rename(const std::string& path, const std::string& path2,
+               const gkfs::metadata::Metadata& md);
+
+int
 forward_remove(const std::string& path);
 
 int

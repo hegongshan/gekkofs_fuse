@@ -852,18 +852,19 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
     }
     GKFS_DATA->spdlogger()->debug("{}() Got RPC with path '{}'", __func__,
                                   in.path);
-
+    // do update
     try {
-        gkfs::metadata::Metadata md = {gkfs::metadata::LINK_MODE,
-                                       in.target_path};
-        // create metadentry
-        gkfs::metadata::create(in.path, md);
+        gkfs::metadata::Metadata md = gkfs::metadata::get(in.path);
+        md.target_path(in.target_path);
+        gkfs::metadata::update(in.path, md);
         out.err = 0;
     } catch(const std::exception& e) {
-        GKFS_DATA->spdlogger()->error("{}() Failed to create metadentry: '{}'",
-                                      __func__, e.what());
-        out.err = -1;
+        // TODO handle NotFoundException
+        GKFS_DATA->spdlogger()->error("{}() Failed to update entry", __func__);
+        out.err = 1;
     }
+
+
     GKFS_DATA->spdlogger()->debug("{}() Sending output err '{}'", __func__,
                                   out.err);
     auto hret = margo_respond(handle, &out);
