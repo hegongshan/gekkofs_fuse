@@ -585,12 +585,14 @@ function(sphinx_add_docs _target)
 
     file(APPEND "${_target_sphinx_conf}"
         "\n# Setup the exhale extension"
+        "\nfrom exhale import utils"
         "\nexhale_args = {"
         "\n    'containmentFolder': '${_exhale_containment_folder}',"
         "\n    'rootFileName': '${_exhale_root_file_name}',"
         "\n    'rootFileTitle': '${_exhale_root_file_title}',"
         "\n    'doxygenStripFromPath': '${CMAKE_SOURCE_DIR}',"
-        "\n    'createTreeView': True"
+        "\n    'createTreeView': True,"
+        "\n    'customSpecificationsMapping': utils.makeCustomSpecificationsMapping(specificationsForKind)"
         "\n}")
   endif()
 

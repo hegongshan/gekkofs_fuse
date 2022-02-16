@@ -84,3 +84,23 @@ html_static_path = ['_static']
 
 # -- Extension configuration -------------------------------------------------
 copybutton_prompt_text = '$ '
+
+# -- Modify Exhale parsing behavior ------------------------------------------
+def specificationsForKind(kind):
+    '''
+    For a given input ``kind``, return the list of reStructuredText specifications
+    for the associated Breathe directive.
+    Refer to https://breathe.readthedocs.io/en/latest/directives.html for
+    the corresponding available doxygen directives
+    '''
+    # Change the defaults for .. doxygenclass:: and .. doxygenstruct::
+    if kind == "class" or kind == "struct":
+        return [
+          ":members:",
+          ":protected-members:",
+          ":private-members:",
+          ":undoc-members:"
+        ]
+    # An empty list signals to Exhale to use the defaults
+    else:
+        return []
