@@ -219,6 +219,15 @@ void
 FsData::parallax_size_md(unsigned int size_md) {
     FsData::parallax_size_md_ = static_cast<unsigned long long>(
             size_md * 1024ull * 1024ull * 1024ull);
+            
+const std::shared_ptr<gkfs::utils::Stats>&
+FsData::stats() const {
+    return stats_;
+}
+
+void
+FsData::stats(const std::shared_ptr<gkfs::utils::Stats>& stats) {
+    stats_ = stats;
 }
 
 } // namespace gkfs::daemon

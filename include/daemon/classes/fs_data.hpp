@@ -46,6 +46,11 @@ namespace data {
 class ChunkStorage;
 }
 
+/* Forward declarations */
+namespace utils {
+class Stats;
+}
+
 namespace daemon {
 
 class FsData {
@@ -84,6 +89,9 @@ private:
     bool ctime_state_;
     bool link_cnt_state_;
     bool blocks_state_;
+
+    // Statistics
+    std::shared_ptr<gkfs::utils::Stats> stats_;
 
 public:
     static FsData*
@@ -209,6 +217,13 @@ public:
 
     void
     parallax_size_md(unsigned int size_md);
+    
+    const std::shared_ptr<gkfs::utils::Stats>&
+    stats() const;
+
+    void
+    stats(const std::shared_ptr<gkfs::utils::Stats>& stats);
+
 };
 
 } // namespace daemon

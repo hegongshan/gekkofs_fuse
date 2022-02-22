@@ -291,6 +291,9 @@ init_environment() {
     }
 #endif
 
+    // Initialize Stats
+    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>());
+
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
                                           gkfs::config::data::chunk_dir);

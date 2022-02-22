@@ -63,6 +63,7 @@ set(DAEMON_LINK_LIBRARIES
     metadata_db
     storage
     distributor
+    statistics
     log_util
     env_util
     spdlog
