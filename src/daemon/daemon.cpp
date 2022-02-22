@@ -52,6 +52,7 @@
 #include <daemon/scheduler/agios.hpp>
 #endif
 
+#include <common/statistics/stats.hpp>
 
 #include <filesystem>
 #include <iostream>
@@ -292,7 +293,7 @@ init_environment() {
 #endif
 
     // Initialize Stats
-    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>());
+    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(GKFS_DATA->output_stats()));
 
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
@@ -423,6 +424,7 @@ destroy_enviroment() {
         fs::remove_all(GKFS_DATA->metadir(), ecode);
         fs::remove_all(GKFS_DATA->rootdir(), ecode);
     }
+    GKFS_DATA->close_stats();
 }
 
 /**
@@ -582,9 +584,14 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     fs::create_directories(rootdir_path);
     GKFS_DATA->rootdir(rootdir_path.native());
 
+    if (desc.count("--output-stats")) {
+        GKFS_DATA->output_stats(true);    
+    }
+    
+
     if(desc.count("--metadir")) {
         auto metadir = opts.metadir;
-
+   
 #ifdef GKFS_ENABLE_FORWARDING
         auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
 #else
@@ -714,6 +721,9 @@ main(int argc, const char* argv[]) {
     desc.add_option("--parallaxsize", opts.parallax_size,
                     "parallaxdb - metadata file size in GB (default 8GB), "
                     "used only with new files");
+     desc.add_flag("--output-stats",
+                "Creates a thread that outputs the server stats each 10s");
+
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on
     try {

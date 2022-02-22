@@ -7,6 +7,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Added Stats gathering in servers
 ### New
 
 - Added new experimental metadata backend:

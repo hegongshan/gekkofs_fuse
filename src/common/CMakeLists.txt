@@ -39,6 +39,15 @@ target_sources(distributor
     ${CMAKE_CURRENT_LIST_DIR}/rpc/distributor.cpp
     )
 
+add_library(statistics STATIC)
+set_property(TARGET statistics PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_sources(statistics
+    PUBLIC
+    ${INCLUDE_DIR}/common/statistics/stats.hpp
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/statistics/stats.cpp
+    )
+
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)
 endif()

@@ -27,86 +27,107 @@
 */
 
 
-#include "/home/rnou/gekkofs/include/common/statistics/stats.hpp"
+#include <common/statistics/stats.hpp>
 
 using namespace std;
 
-namespace gkfs::utils{
+namespace gkfs::utils {
 
-    Stats::Stats(){
+Stats::Stats(bool output_thread) {
 
-        // Init clocks
-        start = std::chrono::steady_clock::now();
-        last_cached = std::chrono::steady_clock::now();
-        // Init cached (4 mean values)
-      
-        for (auto e : all_IOPS_OP) 
-            for (int i = 0; i < 4; i++) CACHED_IOPS[e].push_back(0.0);
+    // Init clocks
+    start = std::chrono::steady_clock::now();
+    last_cached = std::chrono::steady_clock::now();
+    // Init cached (4 mean values)
 
-        for (auto e : all_SIZE_OP) 
-            for (int i = 0; i < 4; i++) CACHED_SIZE[e].push_back(0.0);
+    for(auto e : all_IOPS_OP)
+        for(int i = 0; i < 4; i++) CACHED_IOPS[e].push_back(0.0);
+
+    for(auto e : all_SIZE_OP)
+        for(int i = 0; i < 4; i++) CACHED_SIZE[e].push_back(0.0);
 
 
-        // To simplify the control we add an element into the different maps
-        // Statistaclly will be negligible... and we get a faster flow
+    // To simplify the control we add an element into the different maps
+    // Statistaclly will be negligible... and we get a faster flow
 
-        for (auto e : all_IOPS_OP) {
-            IOPS[e] = 0;
-            TIME_IOPS[e].push_back(std::chrono::steady_clock::now());
-        }
-
-        for (auto e : all_SIZE_OP) {
-            SIZE[e] = 0; 
-            TIME_SIZE[e].push_back(pair(std::chrono::steady_clock::now(),0.0));
-        }
+    for(auto e : all_IOPS_OP) {
+        IOPS[e] = 0;
+        TIME_IOPS[e].push_back(std::chrono::steady_clock::now());
     }
 
-    void Stats::add_value_iops (enum IOPS_OP iop){
-        IOPS[iop]++;
-        auto now = std::chrono::steady_clock::now();
-
-        
-        if ( (now - TIME_IOPS[iop].front()) > std::chrono::duration(10s) ) {
-            TIME_IOPS[iop].pop_front();
-        }
-        else if (TIME_IOPS[iop].size() >= MAX_STATS) TIME_IOPS[iop].pop_front();
-
-        TIME_IOPS[iop].push_back(std::chrono::steady_clock::now());
+    for(auto e : all_SIZE_OP) {
+        SIZE[e] = 0;
+        TIME_SIZE[e].push_back(pair(std::chrono::steady_clock::now(), 0.0));
     }
 
-    void Stats::add_value_size (enum SIZE_OP iop, unsigned long long value){
-        auto now = std::chrono::steady_clock::now();
-        SIZE[iop] += value;
-        if ( (now - TIME_SIZE[iop].front().first) > std::chrono::duration(10s) ) {
-            TIME_SIZE[iop].pop_front();
-        }
-        else if (TIME_SIZE[iop].size() >= MAX_STATS) TIME_SIZE[iop].pop_front();
+    output_thread_ = output_thread;
 
-        TIME_SIZE[iop].push_back(pair( std::chrono::steady_clock::now(), value ) );
-        
-        if (iop == SIZE_OP::READ_SIZE) IOPS[IOPS_OP::IOPS_READ]++;
-        else if (iop == SIZE_OP::WRITE_SIZE) IOPS[IOPS_OP::IOPS_WRITE]++;
+    if (output_thread_) {
+        t_output = std::thread([this] { output(std::chrono::duration(10s)); });
     }
+}
 
-    /**
-     * @brief Get the total mean value of the asked stat
-     * This can be provided inmediately without cost
-     * @return mean value
-     */
-    double Stats::get_mean (enum SIZE_OP sop){
-        auto now = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - start);
-        double value = (double)SIZE[sop] / (double)duration.count();
-        return value;
-
+Stats::~Stats() {
+    // We do not need a mutex for that
+    if (output_thread_) {
+        running = false;
+        t_output.join();
     }
+}
 
-    double Stats::get_mean (enum IOPS_OP iop){
-        auto now = std::chrono::steady_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - start);
-        double value = (double)IOPS[iop] / (double)duration.count();
-        return value;
-    }
+void
+Stats::add_value_iops(enum IOPS_OP iop) {
+    IOPS[iop]++;
+    auto now = std::chrono::steady_clock::now();
+
+
+    if((now - TIME_IOPS[iop].front()) > std::chrono::duration(10s)) {
+        TIME_IOPS[iop].pop_front();
+    } else if(TIME_IOPS[iop].size() >= MAX_STATS)
+        TIME_IOPS[iop].pop_front();
+
+    TIME_IOPS[iop].push_back(std::chrono::steady_clock::now());
+}
+
+void
+Stats::add_value_size(enum SIZE_OP iop, unsigned long long value) {
+    auto now = std::chrono::steady_clock::now();
+    SIZE[iop] += value;
+    if((now - TIME_SIZE[iop].front().first) > std::chrono::duration(10s)) {
+        TIME_SIZE[iop].pop_front();
+    } else if(TIME_SIZE[iop].size() >= MAX_STATS)
+        TIME_SIZE[iop].pop_front();
+
+    TIME_SIZE[iop].push_back(pair(std::chrono::steady_clock::now(), value));
+
+    if(iop == SIZE_OP::READ_SIZE)
+        IOPS[IOPS_OP::IOPS_READ]++;
+    else if(iop == SIZE_OP::WRITE_SIZE)
+        IOPS[IOPS_OP::IOPS_WRITE]++;
+}
+
+/**
+ * @brief Get the total mean value of the asked stat
+ * This can be provided inmediately without cost
+ * @return mean value
+ */
+double
+Stats::get_mean(enum SIZE_OP sop) {
+    auto now = std::chrono::steady_clock::now();
+    auto duration =
+            std::chrono::duration_cast<std::chrono::seconds>(now - start);
+    double value = (double) SIZE[sop] / (double) duration.count();
+    return value;
+}
+
+double
+Stats::get_mean(enum IOPS_OP iop) {
+    auto now = std::chrono::steady_clock::now();
+    auto duration =
+            std::chrono::duration_cast<std::chrono::seconds>(now - start);
+    double value = (double) IOPS[iop] / (double) duration.count();
+    return value;
+}
 
 
 /**
@@ -115,50 +136,92 @@ namespace gkfs::utils{
  * // TODO: cache
  * @return std::vector< double > with 4 means
  */
-    std::vector< double > Stats::get_four_means (enum SIZE_OP sop){
-        std::vector < double > results = {0,0,0,0};
-        auto now = std::chrono::steady_clock::now();
-        for (auto e : TIME_SIZE[sop]) {
-            auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - e.first).count();
-            if (duration > 10) break;
+std::vector<double>
+Stats::get_four_means(enum SIZE_OP sop) {
+    std::vector<double> results = {0, 0, 0, 0};
+    auto now = std::chrono::steady_clock::now();
+    for(auto e : TIME_SIZE[sop]) {
+        auto duration =
+                std::chrono::duration_cast<std::chrono::minutes>(now - e.first)
+                        .count();
+        if(duration > 10)
+            break;
 
-            results[3] += e.second;
-            if (duration > 5) continue;
-            results[2] += e.second;
-            if (duration > 1) continue;
-            results[1] += e.second;
+        results[3] += e.second;
+        if(duration > 5)
+            continue;
+        results[2] += e.second;
+        if(duration > 1)
+            continue;
+        results[1] += e.second;
+    }
+
+    results[0] = get_mean(sop);
+    results[3] /= 10 * 60;
+    results[2] /= 5 * 60;
+    results[1] /= 60;
+
+    return results;
+}
+
+
+std::vector<double>
+Stats::get_four_means(enum IOPS_OP iop) {
+    std::vector<double> results = {0, 0, 0, 0};
+    auto now = std::chrono::steady_clock::now();
+    for(auto e : TIME_IOPS[iop]) {
+        auto duration =
+                std::chrono::duration_cast<std::chrono::minutes>(now - e)
+                        .count();
+        if(duration > 10)
+            break;
+
+        results[3]++;
+        if(duration > 5)
+            continue;
+        results[2]++;
+        if(duration > 1)
+            continue;
+        results[1]++;
+    }
+
+    results[0] = get_mean(iop);
+    results[3] /= 10 * 60;
+    results[2] /= 5 * 60;
+    results[1] /= 60;
+
+    return results;
+}
+
+void
+Stats::dump() {
+    for(auto e : all_IOPS_OP) {
+        auto tmp = get_four_means(e);
+
+        std::cout << "Stats " << IOPS_OP_S[static_cast<int>(e)] << " ";
+        for(auto mean : tmp) {
+            std::cout << mean << " - ";
         }
-
-        results[0] = get_mean(sop);
-        results[3] /= 10*60;
-        results[2] /= 5*60;
-        results[1] /= 60;
-
-        return results;
+        std::cout << std::endl;
     }
+    for(auto e : all_SIZE_OP) {
+        auto tmp = get_four_means(e);
 
-
-    std::vector< double > Stats::get_four_means (enum IOPS_OP iop){
-            std::vector < double > results = {0,0,0,0};
-            auto now = std::chrono::steady_clock::now();
-            for (auto e : TIME_IOPS[iop]) {
-                auto duration = std::chrono::duration_cast<std::chrono::minutes>(now - e).count();
-                if (duration > 10) break;
-
-                results[3] ++;
-                if (duration > 5) continue;
-                results[2] ++;
-                if (duration > 1) continue;
-                results[1] ++;
-            }
-
-            results[0] = get_mean(iop);
-            results[3] /= 10*60;
-            results[2] /= 5*60;
-            results[1] /= 60;
-
-            return results;
+        std::cout << "Stats " << SIZE_OP_S[static_cast<int>(e)] << " ";
+        for(auto mean : tmp) {
+            std::cout << mean << " - ";
+        }
+        std::cout << std::endl;
     }
+}
+void
+Stats::output(std::chrono::seconds d) {
 
+    while(running) {
+        dump();
 
-} // namespace gkfs::utils::stats
+        std::this_thread::sleep_for(d);
+    }
+}
+
+} // namespace gkfs::utils

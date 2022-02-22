@@ -230,4 +230,21 @@ FsData::stats(const std::shared_ptr<gkfs::utils::Stats>& stats) {
     stats_ = stats;
 }
 
+void
+FsData::close_stats() {
+    stats_.reset();
+}
+
+
+bool
+FsData::output_stats() const {
+    return output_stats_;
+}
+
+void
+FsData::output_stats(bool output_stats) {
+    FsData::output_stats_ = output_stats;
+}
+
+
 } // namespace gkfs::daemon

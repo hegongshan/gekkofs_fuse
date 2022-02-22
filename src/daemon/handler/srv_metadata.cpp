@@ -41,6 +41,7 @@
 #include <daemon/ops/metadentry.hpp>
 
 #include <common/rpc/rpc_types.hpp>
+#include <common/statistics/stats.hpp>
 
 using namespace std;
 
@@ -89,6 +90,9 @@ rpc_srv_create(hg_handle_t handle) {
     auto hret = margo_respond(handle, &out);
     if(hret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
+    } else {
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IOPS_OP::IOPS_CREATE);
     }
 
     // Destroy handle when finished

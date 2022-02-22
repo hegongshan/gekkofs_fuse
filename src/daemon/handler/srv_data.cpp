@@ -42,6 +42,7 @@
 #include <common/rpc/rpc_types.hpp>
 #include <common/rpc/distributor.hpp>
 #include <common/arithmetic/arithmetic.hpp>
+#include <common/statistics/stats.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
@@ -113,6 +114,9 @@ rpc_srv_write(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
+    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SIZE_OP::WRITE_SIZE,
+                                       bulk_size);
+
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
@@ -404,6 +408,10 @@ rpc_srv_read(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
+
+    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SIZE_OP::READ_SIZE,
+                                       bulk_size);
+
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;

@@ -92,6 +92,7 @@ private:
 
     // Statistics
     std::shared_ptr<gkfs::utils::Stats> stats_;
+    bool output_stats_ = false;
 
 public:
     static FsData*
@@ -224,7 +225,16 @@ public:
     void
     stats(const std::shared_ptr<gkfs::utils::Stats>& stats);
 
+    void
+    close_stats();
+
+    bool
+    output_stats() const;
+
+    void
+    output_stats(bool output_stats);
 };
+
 
 } // namespace daemon
 } // namespace gkfs
