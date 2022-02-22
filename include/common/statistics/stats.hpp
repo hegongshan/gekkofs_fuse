@@ -42,6 +42,14 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+
+
+// PROMETHEUS
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/registry.h>
+
+using namespace prometheus;
 /**
  * Provides storage capabilities to provide stats about GekkoFS
  * The information is per server.
@@ -159,6 +167,14 @@ private:
      */
     void
     dump(std::ofstream& of);
+
+
+    // Prometheus structs
+    std::shared_ptr<Exposer> exposer;
+    Registry registry;
+    Family<Counter>* family_counter;
+    Counter* IOPS_create;
+
 
 public:
     /**

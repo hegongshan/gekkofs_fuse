@@ -51,6 +51,21 @@ Stats::Stats(bool output_thread, std::string stats_file) {
         TIME_SIZE[e].push_back(pair(std::chrono::steady_clock::now(), 0.0));
     }
 
+
+    // Prometheus 
+    exposer = std::make_shared<Exposer>("127.0.0.1:8080");
+    
+    family_counter = &BuildCounter()
+                        .Name("IOPS")
+                        .Help("Number of IOPS")
+                        .Register(registry);
+    
+    IOPS_create = &family_counter->Add({{"operation","Create"}});
+
+
+    IOPS_create->Increment();
+
+
     output_thread_ = output_thread;
 
     if(output_thread_) {
