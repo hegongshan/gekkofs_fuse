@@ -30,7 +30,10 @@ GekkoFS testing support: `python38-devel` (**>Python-3.6 required**)
 
 1. Make sure the above listed dependencies are available on your machine
 2. Clone GekkoFS: `git clone --recurse-submodules https://storage.bsc.es/gitlab/hpc/gekkofs.git`
-3. Set up the necessary environment variables where the compiled direct GekkoFS dependencies will be installed at (we assume the path `/home/foo/gekkofs_deps/install` in the following)
+   - (Optional) (Optional) If you checked out the sources using `git` without the `--recursive` option, you need to
+     execute the following command from the root of the source directory: `git submodule update --init`
+3. Set up the necessary environment variables where the compiled direct GekkoFS dependencies will be installed at (we
+   assume the path `/home/foo/gekkofs_deps/install` in the following)
    - `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/foo/gekkofs_deps/install/lib:/home/foo/gekkofs_deps/install/lib64`
 4. Download and compile the direct dependencies, e.g.,
    - Download example: `gekkofs/scripts/dl_dep.sh /home/foo/gekkofs_deps/git`
@@ -58,10 +61,12 @@ the binary on many nodes, e.g., `srun`, `mpiexec/mpirun`, `pdsh`, or `pssh`.
 You need to decide what Mercury NA plugin you want to use for network communication. `ofi+sockets` is the default.
 The `-P` argument is used for setting another RPC protocol. See below.
 
- - `ofi+sockets` for using the libfabric plugin with TCP (stable)
- - `ofi+tcp` for using the libfabric plugin with TCP (slower than sockets)
- - `ofi+verbs` for using the libfabric plugin with Infiniband verbs (reasonably stable)
- - `ofi+psm2` for using the libfabric plugin with Intel Omni-Path (unstable)
+- `ofi+sockets` for using the libfabric plugin with TCP (stable)
+- `ofi+tcp` for using the libfabric plugin with TCP (slower than sockets)
+- `ofi+verbs` for using the libfabric plugin with Infiniband verbs (reasonably stable) and requires
+  the [rdma-core (formerly libibverbs)](https://github.com/linux-rdma/rdma-core) library
+- `ofi+psm2` for using the libfabric plugin with Intel Omni-Path (unstable) and requires
+  the [opa-psm2](https://github.com/cornelisnetworks/opa-psm2>) library
 
 ## The GekkoFS hostsfile
 

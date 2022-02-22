@@ -75,15 +75,9 @@ order to function properly. We list them here for informational purposes.
     the :ref:`step-by-step installation<step_by_step_installation>` section
     before attempting a manual install.
 
-- `RocksDB <https://github.com/facebook/rocksdb/>`_ version 6.2.2 or newer and its dependencies:
-
-  - `bzip2 <https://www.sourceware.org/bzip2/>`_ version 1.0.6 or newer.
-
-  - `zstd <https://github.com/facebook/zstd>`_ version 1.3.2 or newer.
+- `RocksDB <https://github.com/facebook/rocksdb/>`_ version 6.2.2 or newer and its used compression library:
 
   - `lz4 <https://github.com/lz4/lz4>`_ version 1.8.0 or newer.
-
-  - `snappy <https://github.com/google/snappy>`_ version 1.1.7 or newer.
 
 
 - `Margo <https://github.com/mochi-hpc/mochi-margo/releases>`_ version 0.6.3 and its dependencies:
@@ -91,7 +85,7 @@ order to function properly. We list them here for informational purposes.
   - `Argobots <https://github.com/pmodels/argobots/releases/tag/v1.0.1>`_ version 1.0rc1.
   - `Mercury <https://github.com/mercury-hpc/mercury/releases/tag/v2.0.0>`_ version 2.0.0.
 
-    - `libfabric <https://github.com/ofiwg/libfabric>`_ and/or `bmi <https://github.com/radix-io/bmi/>`_.
+    - `libfabric <https://github.com/ofiwg/libfabric>`_ version 1.9 or newer.
 
 
 - `syscall_intercept <https://github.com/pmem/syscall_intercept>`_ (commit f7cebb7 or newer) and its dependencies:
