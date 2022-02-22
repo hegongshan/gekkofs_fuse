@@ -39,8 +39,8 @@ updated fields should show in a diff view:
   +++ b/examples/gfind/gfind.cpp
   @@ -1,6 +1,6 @@
    /*
-  -  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
-  -  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
+  -  Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain
+  -  Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany
   +  Copyright 2018-2020, Barcelona Supercomputing Center (BSC), Spain
   +  Copyright 2015-2020, Johannes Gutenberg Universitaet Mainz, Germany
 
