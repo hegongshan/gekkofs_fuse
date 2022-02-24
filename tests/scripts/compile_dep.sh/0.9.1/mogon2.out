@@ -1,0 +1,13 @@
+######## Installing:  lz4 ###############################
+######## Installing:  capstone ###############################
+######## Installing:  json-c ###############################
+######## Installing:  psm2 ###############################
+WARNING: Install script for 'psm2' not found. Skipping.
+######## Installing:  libfabric ###############################
+######## Installing:  mercury ###############################
+######## Installing:  argobots ###############################
+######## Installing:  margo ###############################
+######## Installing:  rocksdb ###############################
+######## Installing:  syscall_intercept ###############################
+######## Installing:  date ###############################
+######## Installing:  parallax ###############################

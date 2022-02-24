@@ -106,14 +106,15 @@ Options:
   -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
   --version                   Print version and exit.
 
-  --dbbackend               'rocksdb' (default) or 'kreondb' can be specified as
-                            metadata backend.
-  --keepmd                  'kreondb' specific, persist the metadata file
+  --dbbackend               'rocksdb' (default) or 'parallaxdb' can be specified as
+                            metadata backend, in that case a file in 'metadir' named
+                            rocksdbx is created. Parallaxdb support is experimental.
+  --keepmd                  'parallaxdb' specific, persist the metadata file
                             (default off, file is deleted at the end)
-  --reusemd                 'kreondb' specific, do not recreate the 
+  --reusemd                 'parallaxdb' specific, do not recreate the 
                             metadata file, (default re/create)
-  --kreonsize               'kreondb' specific, size of the metadata file in GB
-                            (default 16, 16 GB)
+  --kreonsize               'parallaxdb' specific, size of the metadata file in GB. Minimal is 8 GB
+                            (default 8, 8 GB)
   --version                 Print version and exit.
 ```
 

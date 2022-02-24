@@ -62,14 +62,13 @@ ParallaxBackend::~ParallaxBackend() {
  */
 ParallaxBackend::ParallaxBackend(const std::string& path) {
 
-
     // We try to open options.yml if it exists, if not we create it by default
     int options = open("options.yml", O_RDWR | O_CREAT, 0644);
     int64_t sizeOptions;
     sizeOptions = lseek(options, 0, SEEK_END);
     if(sizeOptions == 0) {
         std::string optcontent =
-                "level0_size: 1\ngc_interval: 10\ngrowth_factor: 4\nmedium_log_LRU_cache_size: 400\nlevel_medium_inplace: 3\n";
+                "level0_size: 64\ngc_interval: 10\ngrowth_factor: 4\nmedium_log_LRU_cache_size: 400\nlevel_medium_inplace: 3\n";
         write(options, optcontent.c_str(), optcontent.length());
     }
 
