@@ -236,6 +236,14 @@ Then, the `examples/distributors/guided/generate.py` scrpt is used to create the
 
 Finally, modify `guided_config.txt` to your distribution requirements.
 
+### Metadata Backends
+There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based on `PARALLAX` from `FORTH` 
+is available.
+To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=ON`.
+
+Once it is enabled, `--dbbackend` option will be functional.
+
+
 ### Acknowledgment
 
 This software was partially supported by the EC H2020 funded NEXTGenIO project (Project ID: 671951, www.nextgenio.eu).

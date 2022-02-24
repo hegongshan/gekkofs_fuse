@@ -96,7 +96,8 @@ ParallaxBackend::ParallaxBackend(const std::string& path) {
         }
     }
     if(GKFS_DATA->kreon_reuse_md() && size == 0) {
-        GKFS_METADATA_MOD->log()->error("KREON database reused but size is 0");
+        GKFS_METADATA_MOD->log()->error(
+                "PARALLAX database reused but size is 0");
         exit(EXIT_FAILURE);
     }
 

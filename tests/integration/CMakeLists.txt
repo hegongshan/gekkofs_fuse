@@ -29,6 +29,33 @@
 # ensure helper programs in the testing harness get built
 add_subdirectory(harness)
 
+# Create daemon factories from template, depending of the databases
+unset(DBS)
+if (GKFS_ENABLE_ROCKSDB)
+    set (DBS "'gkfs_daemon_rocksdb'")
+endif()
+if (GKFS_ENABLE_PARALLAX)
+    if (DBS)
+        set (DBS "${DBS},'gkfs_daemon_parallaxdb'")
+    else()
+        set (DBS "'gkfs_daemon_parallaxdb'")
+    endif()
+endif()
+
+if (GKFS_ENABLE_PARALLAX AND GKFS_ENABLE_ROCKSDB)
+    set (DBS "'gkfs_daemon_rocksdb','gkfs_daemon_parallaxdb'")
+endif()
+
+# We enable rocksdb by default
+if (NOT DBS)
+        set (DBS "'gkfs_daemon_rocksdb'")
+endif()
+
+FIND_PATH(BUILD_PATH CMakeLists.txt . )
+FILE(READ ${BUILD_PATH}/conftest.template CONF_TEST_FILE)
+STRING(REGEX REPLACE "'gkfs_daemon_rocksdb'" "${DBS}" MOD_CONF_TEST_FILE "${CONF_TEST_FILE}" )
+FILE(WRITE ${BUILD_PATH}/conftest.py "${MOD_CONF_TEST_FILE}")
+
 gkfs_enable_python_testing(
     BINARY_DIRECTORIES ${CMAKE_BINARY_DIR}/src/daemon/
                        ${CMAKE_BINARY_DIR}/src/client/
@@ -171,4 +198,9 @@ if(GKFS_INSTALL_TESTS)
             PATTERN ".pytest_cache" EXCLUDE
     )
     endif ()
+
+    
 endif()
+
+
+

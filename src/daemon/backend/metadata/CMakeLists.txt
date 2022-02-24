@@ -43,20 +43,75 @@ if (HAS_LIBURING)
     set(LIBURING "-luring")
 endif()
 
-target_sources(metadata_db
+set(DB_DEFAULT_SOURCES 
     PUBLIC
     ${INCLUDE_DIR}/daemon/backend/metadata/db.hpp
     ${INCLUDE_DIR}/daemon/backend/exceptions.hpp
     ${INCLUDE_DIR}/daemon/backend/metadata/metadata_backend.hpp
-    ${INCLUDE_DIR}/daemon/backend/metadata/rocksdb_backend.hpp
-    ${INCLUDE_DIR}/daemon/backend/metadata/parallax_backend.hpp
     PRIVATE
     ${INCLUDE_DIR}/daemon/backend/metadata/merge.hpp
     ${CMAKE_CURRENT_LIST_DIR}/merge.cpp
     ${CMAKE_CURRENT_LIST_DIR}/db.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rocksdb_backend.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/parallax_backend.cpp
-    )
+)
+
+
+if (GKFS_ENABLE_ROCKSDB)
+      # Rocksdb dependencies
+      find_package(LZ4 REQUIRED)
+      find_package(JeMalloc) # required if rocksdb has been build with jemalloc
+      find_package(RocksDB REQUIRED)
+      # Imported target
+      add_library(RocksDB INTERFACE IMPORTED GLOBAL)
+      target_link_libraries(RocksDB
+          INTERFACE
+          ${ROCKSDB_LIBRARIES}
+          # rocksdb libs
+          ${LZ4_LIBRARIES}
+          )
+
+
+      if (${JeMalloc_FOUND})
+          target_link_libraries(RocksDB
+              INTERFACE
+              ${JEMALLOC_LIBRARIES}
+              )
+      endif ()
+      # we cannot use target_include_directories with CMake < 3.11
+      set_target_properties(RocksDB
+          PROPERTIES
+          INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
+          )
+
+      set(DB_ROCKSDB_SOURCES
+      PUBLIC
+      ${INCLUDE_DIR}/daemon/backend/metadata/rocksdb_backend.hpp
+      PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/rocksdb_backend.cpp
+      )
+      target_compile_definitions(metadata_db
+      PUBLIC
+      GKFS_ENABLE_ROCKSDB
+      )
+      
+endif()
+
+if (GKFS_ENABLE_PARALLAX)
+      find_package(Parallax REQUIRED)
+      set(DB_PARALLAX_SOURCES
+      PUBLIC
+      ${INCLUDE_DIR}/daemon/backend/metadata/parallax_backend.hpp
+      PRIVATE
+      ${CMAKE_CURRENT_LIST_DIR}/parallax_backend.cpp
+      )
+      target_compile_definitions(metadata_db
+      PUBLIC
+      GKFS_ENABLE_PARALLAX
+      )
+      add_library(Parallax INTERFACE IMPORTED GLOBAL)
+endif()
+
+target_sources(metadata_db 
+${DB_DEFAULT_SOURCES} ${DB_PARALLAX_SOURCES} ${DB_ROCKSDB_SOURCES})
 
 add_library(metadata_module
   STATIC
@@ -73,7 +128,8 @@ target_link_libraries(metadata_module
   PUBLIC
     spdlog
 )
-add_library(Parallax INTERFACE IMPORTED GLOBAL)
+
+
 
 target_link_libraries(metadata_db
     ${PARALLAX_LIBRARY}

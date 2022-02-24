@@ -51,9 +51,17 @@ struct MetadataDBFactory {
     static std::unique_ptr<AbstractMetadataBackend>
     create(const std::string& path, const std::string_view id) {
 
+
         if(id == "parallaxdb") {
+#ifdef GKFS_ENABLE_PARALLAX
             return std::make_unique<ParallaxBackend>(path);
+#else
+            GKFS_METADATA_MOD->log()->error("PARALLAX not compiled");
+            exit(EXIT_FAILURE);
+#endif
         }
+
+
         // Default rocksdb
         return std::make_unique<RocksDBBackend>(path);
     }

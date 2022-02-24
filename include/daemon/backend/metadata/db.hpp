@@ -38,8 +38,9 @@
 #include <tuple>
 #include <daemon/backend/metadata/metadata_backend.hpp>
 #include <daemon/backend/metadata/rocksdb_backend.hpp>
+#ifdef GKFS_ENABLE_PARALLAX
 #include <daemon/backend/metadata/parallax_backend.hpp>
-
+#endif
 namespace rdb = rocksdb;
 
 namespace gkfs::metadata {
