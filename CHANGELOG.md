@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Support for different databases backend
 New Docker Images and scripts (0.9.1)
 ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
+- Added `--clean-rootdir-finish` argument to remove rootdir/metadir at the end.
 
 ## [0.9.0] - 2022-02-22
 ### New

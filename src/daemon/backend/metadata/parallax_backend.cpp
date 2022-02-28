@@ -52,8 +52,6 @@ namespace gkfs::metadata {
  */
 ParallaxBackend::~ParallaxBackend() {
     par_close(par_db_);
-    if(GKFS_DATA->kreon_keep_md() == false)
-        unlink(par_path_.c_str());
 }
 
 /**
@@ -85,23 +83,15 @@ ParallaxBackend::ParallaxBackend(const std::string& path) {
     }
 
     // Check size if we want to reuse it
-    if(GKFS_DATA->kreon_reuse_md()) {
-
-        size = lseek(fd, 0, SEEK_END);
-        if(size == -1) {
-            printf("[%s:%s:%d] failed to determine volume size exiting...\n",
-                   __FILE__, __func__, __LINE__);
-            perror("ioctl");
-            exit(EXIT_FAILURE);
-        }
-    }
-    if(GKFS_DATA->kreon_reuse_md() && size == 0) {
-        GKFS_METADATA_MOD->log()->error(
-                "PARALLAX database reused but size is 0");
+    size = lseek(fd, 0, SEEK_END);
+    if(size == -1) {
+        printf("[%s:%s:%d] failed to determine volume size exiting...\n",
+               __FILE__, __func__, __LINE__);
+        perror("ioctl");
         exit(EXIT_FAILURE);
     }
 
-    if(GKFS_DATA->kreon_reuse_md() == false) {
+    if(size == 0) {
         size = GKFS_DATA->kreon_size_md();
 
         lseek(fd, size - 1, SEEK_SET);
@@ -113,12 +103,6 @@ ParallaxBackend::ParallaxBackend(const std::string& path) {
         std::string cmd = "kv_format.parallax --device " + par_path_ +
                           " --max_regions_num 1 ";
         system(cmd.c_str());
-
-        /*
-                fd = open(par_path_.c_str(), O_RDONLY);
-                size = lseek(fd, 0, SEEK_END);
-                close(fd);
-        */
     }
 
     par_options_.create_flag = PAR_CREATE_DB;

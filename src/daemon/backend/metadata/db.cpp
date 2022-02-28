@@ -59,11 +59,17 @@ struct MetadataDBFactory {
             GKFS_METADATA_MOD->log()->error("PARALLAX not compiled");
             exit(EXIT_FAILURE);
 #endif
+        } else if(id == "rocksdb") {
+#ifdef GKFS_ENABLE_ROCKSDB
+            return std::make_unique<RocksDBBackend>(path);
+#else
+            GKFS_METADATA_MOD->log()->error("ROCKSDB not compiled");
+            exit(EXIT_FAILURE);
+#endif
         }
 
-
-        // Default rocksdb
-        return std::make_unique<RocksDBBackend>(path);
+        GKFS_METADATA_MOD->log()->error("No valid metadata backend selected");
+        exit(EXIT_FAILURE);
     }
 };
 

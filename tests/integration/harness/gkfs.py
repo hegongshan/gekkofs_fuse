@@ -251,7 +251,9 @@ class Daemon:
                  '--rootdir', self.rootdir,
                  '-l', self._address,
                  '--metadir', self._metadir,
-                 '--dbbackend', self._database ]
+                 '--dbbackend', self._database]
+        if self._database == "parallaxdb" :
+            args.append('--clean-rootdir-finish')
 
         logger.debug(f"spawning daemon")
         logger.debug(f"cmdline: {self._cmd} " + " ".join(map(str, args)))

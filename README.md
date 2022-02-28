@@ -104,15 +104,12 @@ Options:
                               Libfabric must have enabled support verbs or psm2.
   --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
   -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
+  -f, --clean-rootdir-finish Cleans Rootdir >After< the deamon finishes
   --version                   Print version and exit.
 
   --dbbackend               'rocksdb' (default) or 'parallaxdb' can be specified as
                             metadata backend, in that case a file in 'metadir' named
                             rocksdbx is created. Parallaxdb support is experimental.
-  --keepmd                  'parallaxdb' specific, persist the metadata file
-                            (default off, file is deleted at the end)
-  --reusemd                 'parallaxdb' specific, do not recreate the 
-                            metadata file, (default re/create)
   --kreonsize               'parallaxdb' specific, size of the metadata file in GB. Minimal is 8 GB
                             (default 8, 8 GB)
   --version                 Print version and exit.
@@ -239,7 +236,7 @@ Finally, modify `guided_config.txt` to your distribution requirements.
 ### Metadata Backends
 There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based on `PARALLAX` from `FORTH` 
 is available.
-To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=ON`.
+To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
 
 Once it is enabled, `--dbbackend` option will be functional.
 

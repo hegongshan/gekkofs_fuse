@@ -74,6 +74,12 @@ Further options are available
                                Libfabric must have enabled support verbs or psm2.
    --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
    -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
+   -f,--clean-rootdir-finish   Cleans Rootdir >after< finishing the deamon
+    --dbbackend               'rocksdb' (default) or 'parallaxdb' can be specified as
+                                metadata backend, in that case a file in 'metadir' named
+                                rocksdbx is created. Parallaxdb support is experimental.
+    --kreonsize               'parallaxdb' specific, size of the metadata file in GB. Minimal is 8 GB
+                              (default 8, 8 GB)
    --version                   Print version and exit.
 ````
 

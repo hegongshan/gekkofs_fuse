@@ -409,6 +409,19 @@ destroy_enviroment() {
 
     GKFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
     GKFS_DATA->close_mdb();
+
+
+    // Delete rootdir/metadir if requested
+    if(!GKFS_DATA->keep_rootdir()) {
+        GKFS_DATA->spdlogger()->info("{}() Removing RootDir/MetaDir/MetaFile",
+                                     __func__);
+        fs::remove_all(GKFS_DATA->metadir(), ecode);
+#ifdef GKFS_ENABLE_PARALLAX
+        // some metadata backends uses a file instead of a dir.
+        fs::remove_all(GKFS_DATA->metadir() + "x", ecode);
+#endif
+        fs::remove_all(GKFS_DATA->rootdir(), ecode);
+    }
 }
 
 /**
@@ -558,6 +571,11 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
         fs::remove_all(rootdir_path.native());
         GKFS_DATA->spdlogger()->info("{}() Rootdir cleaned.", __func__);
     }
+
+    if(desc.count("--clean-rootdir-finish")) {
+        GKFS_DATA->keep_rootdir(false);
+    }
+
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
                                   rootdir_path.native());
     fs::create_directories(rootdir_path);
@@ -596,12 +614,6 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     } else
         GKFS_DATA->dbbackend("rocksdb");
 
-    if(desc.count("--keepmd")) {
-        GKFS_DATA->kreon_keep_md(true);
-    }
-    if(desc.count("--reusemd")) {
-        GKFS_DATA->kreon_reuse_md(true);
-    }
     if(desc.count("--kreonsize")) { // Size in GB
         GKFS_DATA->kreon_size_md(stoi(opts.kreonsize));
     }
@@ -661,16 +673,17 @@ main(int argc, const char* argv[]) {
     desc.add_flag(
                 "--clean-rootdir,-c",
                 "Cleans Rootdir >before< launching the deamon");
+    desc.add_flag(
+                "--clean-rootdir-finish,-f",
+                "Cleans Rootdir >after< the deamon finishes");
     desc.add_option(
                 "--dbbackend,-d", opts.dbbackend,
-                "Database Backend to use. If not set, rocksdb is used. For parallaxdb, a file called rocksdb with 8GB is needed in metadir");
-    desc.add_flag("--keepmd", "Kreondb - Keeps metadir (default off)");
-    desc.add_flag("--reusemd",
-                    "Kreondb - Avoids initializing the metadata file, (default off)");
+                "Database Backend to use. If not set, rocksdb is used. For parallaxdb, a file called rocksdbx with 8GB will be created in metadir");
+   
+   
     desc.add_option("--kreonsize",opts.kreonsize,
-                    "Kreondb - Metatada file size in GB (default 8), "
+                    "parallaxdb - Metatada file size in GB (default 8), "
                     "used only with new files");
-
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on
     try {

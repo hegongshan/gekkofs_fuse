@@ -37,11 +37,13 @@
 #include <daemon/backend/exceptions.hpp>
 #include <tuple>
 #include <daemon/backend/metadata/metadata_backend.hpp>
+#ifdef GKFS_ENABLE_ROCKSDB
 #include <daemon/backend/metadata/rocksdb_backend.hpp>
+#endif
 #ifdef GKFS_ENABLE_PARALLAX
 #include <daemon/backend/metadata/parallax_backend.hpp>
 #endif
-namespace rdb = rocksdb;
+
 
 namespace gkfs::metadata {
 

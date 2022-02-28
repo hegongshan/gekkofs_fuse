@@ -71,9 +71,9 @@ private:
     // Database
     std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
     std::string dbbackend_;
+    bool keep_rootdir_ = true;
     // Kreon
-    bool reuse_md_ = false;
-    bool keep_md_ = false;
+
     unsigned long long size_md_ = 8589934592ull;
 
     // Storage backend
@@ -206,16 +206,10 @@ public:
     blocks_state(bool blocks_state);
 
     bool
-    kreon_keep_md() const;
+    keep_rootdir() const;
 
     void
-    kreon_keep_md(bool keep_md);
-
-    bool
-    kreon_reuse_md() const;
-
-    void
-    kreon_reuse_md(bool reuse_md);
+    keep_rootdir(bool keep_rootdir_);
 
     unsigned long long
     kreon_size_md() const;

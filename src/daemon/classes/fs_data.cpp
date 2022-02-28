@@ -211,23 +211,13 @@ FsData::blocks_state(bool blocks_state) {
 }
 
 bool
-FsData::kreon_keep_md() const {
-    return keep_md_;
+FsData::keep_rootdir() const {
+    return keep_rootdir_;
 }
 
 void
-FsData::kreon_keep_md(bool keep_md) {
-    FsData::keep_md_ = keep_md;
-}
-
-bool
-FsData::kreon_reuse_md() const {
-    return reuse_md_;
-}
-
-void
-FsData::kreon_reuse_md(bool reuse_md) {
-    FsData::reuse_md_ = reuse_md;
+FsData::keep_rootdir(bool keep_rootdir) {
+    FsData::keep_rootdir_ = keep_rootdir;
 }
 
 unsigned long long
