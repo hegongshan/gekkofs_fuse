@@ -78,6 +78,8 @@ rpc_srv_create(hg_handle_t handle) {
         // create metadentry
         gkfs::metadata::create(in.path, md);
         out.err = 0;
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IOPS_OP::IOPS_CREATE);
     } catch(const gkfs::metadata::ExistsException& e) {
         out.err = EEXIST;
     } catch(const std::exception& e) {
@@ -85,14 +87,12 @@ rpc_srv_create(hg_handle_t handle) {
                                       __func__, e.what());
         out.err = -1;
     }
+
     GKFS_DATA->spdlogger()->debug("{}() Sending output err '{}'", __func__,
                                   out.err);
     auto hret = margo_respond(handle, &out);
     if(hret != HG_SUCCESS) {
         GKFS_DATA->spdlogger()->error("{}() Failed to respond", __func__);
-    } else {
-        GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IOPS_OP::IOPS_CREATE);
     }
 
     // Destroy handle when finished
@@ -125,6 +125,8 @@ rpc_srv_stat(hg_handle_t handle) {
     assert(ret == HG_SUCCESS);
     GKFS_DATA->spdlogger()->debug("{}() path: '{}'", __func__, in.path);
     std::string val;
+
+    GKFS_DATA->stats()->add_value_iops(gkfs::utils::Stats::IOPS_OP::IOPS_STATS);
 
     try {
         // get the metadata
@@ -245,6 +247,8 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
             if(S_ISREG(md.mode()) && (md.size() != 0))
                 GKFS_DATA->storage()->destroy_chunk_space(in.path);
         }
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IOPS_OP::IOPS_REMOVE);
     } catch(const gkfs::metadata::DBException& e) {
         GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
                                       in.path, e.what());
@@ -539,6 +543,8 @@ rpc_srv_get_dirents(hg_handle_t handle) {
     vector<pair<string, bool>> entries{};
     try {
         entries = gkfs::metadata::get_dirents(in.path);
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IOPS_OP::IOPS_DIRENTS);
     } catch(const ::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Error during get_dirents(): '{}'",
                                       __func__, e.what());

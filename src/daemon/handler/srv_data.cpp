@@ -114,6 +114,7 @@ rpc_srv_write(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
+
     GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SIZE_OP::WRITE_SIZE,
                                        bulk_size);
 
@@ -237,6 +238,9 @@ rpc_srv_write(hg_handle_t handle) {
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
+#ifdef GKFS_CHUNK_STATS
+        GKFS_DATA->stats()->add_write(in.path, chnk_id_file);
+#endif
 #endif
 
         chnk_ids_host[chnk_id_curr] =
@@ -521,6 +525,7 @@ rpc_srv_read(hg_handle_t handle) {
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
+        GKFS_DATA->stats()->add_read(in.path, chnk_id_file);
 #endif
 
         chnk_ids_host[chnk_id_curr] =

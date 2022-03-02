@@ -33,19 +33,10 @@ using namespace std;
 
 namespace gkfs::utils {
 
-Stats::Stats(bool output_thread) {
+Stats::Stats(bool output_thread, std::string stats_file) {
 
     // Init clocks
     start = std::chrono::steady_clock::now();
-    last_cached = std::chrono::steady_clock::now();
-    // Init cached (4 mean values)
-
-    for(auto e : all_IOPS_OP)
-        for(int i = 0; i < 4; i++) CACHED_IOPS[e].push_back(0.0);
-
-    for(auto e : all_SIZE_OP)
-        for(int i = 0; i < 4; i++) CACHED_SIZE[e].push_back(0.0);
-
 
     // To simplify the control we add an element into the different maps
     // Statistaclly will be negligible... and we get a faster flow
@@ -62,17 +53,65 @@ Stats::Stats(bool output_thread) {
 
     output_thread_ = output_thread;
 
-    if (output_thread_) {
-        t_output = std::thread([this] { output(std::chrono::duration(10s)); });
+    if(output_thread_) {
+        t_output = std::thread([this, stats_file] {
+            output(std::chrono::duration(10s), stats_file);
+        });
     }
 }
 
 Stats::~Stats() {
     // We do not need a mutex for that
-    if (output_thread_) {
+    if(output_thread_) {
         running = false;
         t_output.join();
     }
+}
+
+void
+Stats::add_read(std::string path, unsigned long long chunk) {
+    CHUNK_READ[pair(path, chunk)]++;
+}
+
+void
+Stats::add_write(std::string path, unsigned long long chunk) {
+    CHUNK_WRITE[pair(path, chunk)]++;
+}
+
+
+void
+Stats::output_map(std::ofstream& output) {
+    // Ordering
+    map<unsigned int, std::set<pair<std::string, unsigned long long>>>
+            ORDER_WRITE;
+
+    map<unsigned int, std::set<pair<std::string, unsigned long long>>>
+            ORDER_READ;
+
+    for(auto i : CHUNK_READ) {
+        ORDER_READ[i.second].insert(i.first);
+    }
+
+    for(auto i : CHUNK_WRITE) {
+        ORDER_WRITE[i.second].insert(i.first);
+    }
+
+    auto CHUNK_MAP =
+            [](std::string caption,
+               map<unsigned int,
+                   std::set<pair<std::string, unsigned long long>>>& ORDER,
+               std::ofstream& output) {
+                output << caption << std::endl;
+                for(auto k : ORDER) {
+                    output << k.first << " -- ";
+                    for(auto v : k.second) {
+                        output << v.first << " // " << v.second << endl;
+                    }
+                }
+            };
+
+    CHUNK_MAP("READ CHUNK MAP", ORDER_READ, output);
+    CHUNK_MAP("WRITE CHUNK MAP", ORDER_WRITE, output);
 }
 
 void
@@ -155,11 +194,11 @@ Stats::get_four_means(enum SIZE_OP sop) {
             continue;
         results[1] += e.second;
     }
-
-    results[0] = get_mean(sop);
-    results[3] /= 10 * 60;
-    results[2] /= 5 * 60;
-    results[1] /= 60;
+    // Mean in MB/s
+    results[0] = get_mean(sop) / (1024.0 * 1024.0);
+    results[3] /= 10 * 60 * (1024.0 * 1024.0);
+    results[2] /= 5 * 60 * (1024.0 * 1024.0);
+    results[1] /= 60 * (1024.0 * 1024.0);
 
     return results;
 }
@@ -194,33 +233,48 @@ Stats::get_four_means(enum IOPS_OP iop) {
 }
 
 void
-Stats::dump() {
+Stats::dump(std::ofstream& of) {
     for(auto e : all_IOPS_OP) {
         auto tmp = get_four_means(e);
 
-        std::cout << "Stats " << IOPS_OP_S[static_cast<int>(e)] << " ";
+        of << "Stats " << IOPS_OP_S[static_cast<int>(e)]
+           << " IOPS/s (avg, 1 min, 5 min, 10 min) \t\t";
         for(auto mean : tmp) {
-            std::cout << mean << " - ";
+            of << std::setprecision(4) << std::setw(9) << mean << " - ";
         }
-        std::cout << std::endl;
+        of << std::endl;
     }
     for(auto e : all_SIZE_OP) {
         auto tmp = get_four_means(e);
 
-        std::cout << "Stats " << SIZE_OP_S[static_cast<int>(e)] << " ";
+        of << "Stats " << SIZE_OP_S[static_cast<int>(e)]
+           << " MB/s (avg, 1 min, 5 min, 10 min) \t\t";
         for(auto mean : tmp) {
-            std::cout << mean << " - ";
+            of << std::setprecision(4) << std::setw(9) << mean << " - ";
         }
-        std::cout << std::endl;
+        of << std::endl;
     }
+    of << std::endl;
 }
 void
-Stats::output(std::chrono::seconds d) {
+Stats::output(std::chrono::seconds d, std::string file_output) {
+    int times = 0;
+    std::ofstream of(file_output, std::ios_base::openmode::_S_trunc);
 
     while(running) {
-        dump();
+        dump(of);
+        std::chrono::seconds a = 0s;
 
-        std::this_thread::sleep_for(d);
+        times++;
+#ifdef GKFS_CHUNK_STATS
+        if(times % 4 == 0)
+            output_map(of);
+#endif
+
+        while(running and a < d) {
+            a += 1s;
+            std::this_thread::sleep_for(1s);
+        }
     }
 }
 

@@ -33,12 +33,15 @@
 #include <unistd.h>
 #include <cassert>
 #include <map>
+#include <set>
 #include <vector>
 #include <deque>
 #include <chrono>
 #include <initializer_list>
 #include <thread>
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 /**
  * Provides storage capabilities to provide stats about GekkoFS
  * The information is per server.
@@ -70,27 +73,25 @@ public:
         IOPS_CREATE,
         IOPS_WRITE,
         IOPS_READ,
-        IOPS_MKDIR,
-        IOPS_RMDIR,
+        IOPS_STATS,
+        IOPS_DIRENTS,
         IOPS_REMOVE,
     };
 
-    enum class SIZE_OP { METADATA_SIZE, WRITE_SIZE, READ_SIZE, DATA_SIZE };
+    enum class SIZE_OP { WRITE_SIZE, READ_SIZE };
 
 private:
     constexpr static const std::initializer_list<Stats::IOPS_OP> all_IOPS_OP = {
-            IOPS_OP::IOPS_CREATE, IOPS_OP::IOPS_WRITE, IOPS_OP::IOPS_READ,
-            IOPS_OP::IOPS_MKDIR,  IOPS_OP::IOPS_RMDIR, IOPS_OP::IOPS_REMOVE};
+            IOPS_OP::IOPS_CREATE, IOPS_OP::IOPS_WRITE,   IOPS_OP::IOPS_READ,
+            IOPS_OP::IOPS_STATS,  IOPS_OP::IOPS_DIRENTS, IOPS_OP::IOPS_REMOVE};
 
     constexpr static const std::initializer_list<Stats::SIZE_OP> all_SIZE_OP = {
-            SIZE_OP::METADATA_SIZE, SIZE_OP::DATA_SIZE, SIZE_OP::WRITE_SIZE,
-            SIZE_OP::READ_SIZE};
+            SIZE_OP::WRITE_SIZE, SIZE_OP::READ_SIZE};
 
-    const std::vector<std::string> IOPS_OP_S = {"IOPS_CREATE", "IOPS_WRITE",
-                                                "IOPS_READ",   "IOPS_MKDIR",
-                                                "IOPS_RMDIR",  "IOPS_REMOVE"};
-    const std::vector<std::string> SIZE_OP_S = {"METADATA_SIZE", "WRITE_SIZE",
-                                                "READ_SIZE", "DATA_SIZE"};
+    const std::vector<std::string> IOPS_OP_S = {"IOPS_CREATE",  "IOPS_WRITE",
+                                                "IOPS_READ",    "IOPS_STATS",
+                                                "IOPS_DIRENTS", "IOPS_REMOVE"};
+    const std::vector<std::string> SIZE_OP_S = {"WRITE_SIZE", "READ_SIZE"};
     std::chrono::time_point<std::chrono::steady_clock> last_cached;
     /* Measures when we started the server */
     std::chrono::time_point<std::chrono::steady_clock> start;
@@ -108,8 +109,6 @@ private:
     std::map<IOPS_OP,
              std::deque<std::chrono::time_point<std::chrono::steady_clock>>>
             TIME_IOPS;
-    // We will store 1, 5, and 10 minute mean;
-    std::map<IOPS_OP, std::vector<double>> CACHED_IOPS;
 
     // For size operations we need to store the timestamp and
     // the size
@@ -118,8 +117,6 @@ private:
                      std::chrono::time_point<std::chrono::steady_clock>,
                      unsigned long long>>>
             TIME_SIZE;
-    // We will store 1, 5, and 10 minute mean;
-    std::map<enum SIZE_OP, std::vector<double>> CACHED_SIZE;
 
     // Thread that outputs stats info
     std::thread t_output;
@@ -132,22 +129,63 @@ private:
      * Debug Function
      *
      * @param d is the time between output
+     * @param file_output is the output file
      */
     void
-    output(std::chrono::seconds d);
+    output(std::chrono::seconds d, std::string file_output);
+
+    std::map<std::pair<std::string, unsigned long long>, unsigned int>
+            CHUNK_READ;
+    std::map<std::pair<std::string, unsigned long long>, unsigned int>
+            CHUNK_WRITE;
+
+    /**
+     * @brief Called by output to generate CHUNK map
+     *
+     * @param output is the output stream
+     */
+    void
+    output_map(std::ofstream& output);
+
+
+    /**
+     * @brief Dumps all the means from the stats
+     * @param of Output stream
+     */
+    void
+    dump(std::ofstream& of);
 
 public:
     /**
      * @brief Starts the Stats module and initializes structures
-     *
+     * @param output_thread creates an aditional thread that outputs the stats
+     * @param filename file where to write the output
      */
-    Stats(bool output_thread);
+    Stats(bool output_thread, std::string filename);
 
     /**
      * @brief Destroys the class, and any associated thread
      *
      */
     ~Stats();
+
+    /**
+     * @brief Adds a new read access to the chunk/path specified
+     *
+     * @param path
+     * @param chunk
+     */
+    void
+    add_read(std::string path, unsigned long long chunk);
+    /**
+     * @brief Adds a new write access to the chunk/path specified
+     *
+     * @param path
+     * @param chunk
+     */
+    void
+    add_write(std::string path, unsigned long long chunk);
+
 
     /**
      * Add a new value for a IOPS, that does not involve any size
@@ -200,14 +238,6 @@ public:
      * @return std::vector< double > with 4 means
      */
     std::vector<double> get_four_means(enum IOPS_OP);
-
-
-    /**
-     * @brief Dumps all the means from the stats
-     *
-     */
-    void
-    dump();
 };
 
 } // namespace gkfs::utils

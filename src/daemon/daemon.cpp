@@ -82,6 +82,7 @@ struct cli_options {
     string rpc_protocol;
     string dbbackend;
     string parallax_size;
+    string stats_file;
 };
 
 /**
@@ -293,7 +294,8 @@ init_environment() {
 #endif
 
     // Initialize Stats
-    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(GKFS_DATA->output_stats()));
+    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(
+            GKFS_DATA->output_stats(), GKFS_DATA->stats_file()));
 
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
@@ -584,14 +586,14 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     fs::create_directories(rootdir_path);
     GKFS_DATA->rootdir(rootdir_path.native());
 
-    if (desc.count("--output-stats")) {
-        GKFS_DATA->output_stats(true);    
+    if(desc.count("--output-stats")) {
+        GKFS_DATA->output_stats(true);
     }
-    
+
 
     if(desc.count("--metadir")) {
         auto metadir = opts.metadir;
-   
+
 #ifdef GKFS_ENABLE_FORWARDING
         auto metadir_path = fs::path(metadir) / fmt::format_int(getpid()).str();
 #else
@@ -653,6 +655,9 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
 
     if(desc.count("--parallaxsize")) { // Size in GB
         GKFS_DATA->parallax_size_md(stoi(opts.parallax_size));
+    if(desc.count("--output-stats")) {
+        auto stats_file = opts.stats_file;
+        GKFS_DATA->stats_file(stats_file);
     }
 }
 
@@ -721,8 +726,9 @@ main(int argc, const char* argv[]) {
     desc.add_option("--parallaxsize", opts.parallax_size,
                     "parallaxdb - metadata file size in GB (default 8GB), "
                     "used only with new files");
-     desc.add_flag("--output-stats",
-                "Creates a thread that outputs the server stats each 10s");
+    desc.add_option(
+                "--output-stats", opts.stats_file,
+                "Creates a thread that outputs the server stats each 10s, to the file specified");
 
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on

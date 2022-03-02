@@ -93,6 +93,7 @@ private:
     // Statistics
     std::shared_ptr<gkfs::utils::Stats> stats_;
     bool output_stats_ = false;
+    std::string stats_file_;
 
 public:
     static FsData*
@@ -233,6 +234,12 @@ public:
 
     void
     output_stats(bool output_stats);
+
+    std::string
+    stats_file() const;
+
+    void
+    stats_file(std::string stats_file);
 };
 
 

@@ -227,7 +227,7 @@ FsData::stats() const {
 
 void
 FsData::stats(const std::shared_ptr<gkfs::utils::Stats>& stats) {
-    stats_ = stats;
+    FsData::stats_ = stats;
 }
 
 void
@@ -246,5 +246,14 @@ FsData::output_stats(bool output_stats) {
     FsData::output_stats_ = output_stats;
 }
 
+std::string
+FsData::stats_file() const {
+    return stats_file_;
+}
+
+void
+FsData::stats_file(std::string stats_file) {
+    FsData::stats_file_ = stats_file;
+}
 
 } // namespace gkfs::daemon
