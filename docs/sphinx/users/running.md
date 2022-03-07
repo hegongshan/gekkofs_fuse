@@ -79,6 +79,7 @@ Options:
                               RocksDB is default if not set. Parallax support is experimental.
                               Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
   --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
+  --output-stats TEXT         Outputs the stats to the file each 10s.
   --version                   Print version and exit.
 ````
 

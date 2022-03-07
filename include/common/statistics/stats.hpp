@@ -76,54 +76,59 @@ public:
         IOPS_STATS,
         IOPS_DIRENTS,
         IOPS_REMOVE,
-    };
+    }; ///< enum storing IOPS Stats
 
-    enum class SIZE_OP { WRITE_SIZE, READ_SIZE };
+    enum class SIZE_OP { WRITE_SIZE, READ_SIZE }; ///< enum storing Size Stats
 
 private:
     constexpr static const std::initializer_list<Stats::IOPS_OP> all_IOPS_OP = {
-            IOPS_OP::IOPS_CREATE, IOPS_OP::IOPS_WRITE,   IOPS_OP::IOPS_READ,
-            IOPS_OP::IOPS_STATS,  IOPS_OP::IOPS_DIRENTS, IOPS_OP::IOPS_REMOVE};
+            IOPS_OP::IOPS_CREATE,
+            IOPS_OP::IOPS_WRITE,
+            IOPS_OP::IOPS_READ,
+            IOPS_OP::IOPS_STATS,
+            IOPS_OP::IOPS_DIRENTS,
+            IOPS_OP::IOPS_REMOVE}; ///< Enum IOPS iterator
 
     constexpr static const std::initializer_list<Stats::SIZE_OP> all_SIZE_OP = {
-            SIZE_OP::WRITE_SIZE, SIZE_OP::READ_SIZE};
+            SIZE_OP::WRITE_SIZE, SIZE_OP::READ_SIZE}; ///< Enum SIZE iterator
 
-    const std::vector<std::string> IOPS_OP_S = {"IOPS_CREATE",  "IOPS_WRITE",
-                                                "IOPS_READ",    "IOPS_STATS",
-                                                "IOPS_DIRENTS", "IOPS_REMOVE"};
-    const std::vector<std::string> SIZE_OP_S = {"WRITE_SIZE", "READ_SIZE"};
-    std::chrono::time_point<std::chrono::steady_clock> last_cached;
-    /* Measures when we started the server */
-    std::chrono::time_point<std::chrono::steady_clock> start;
-    // How many stats will be stored
-    const unsigned int MAX_STATS = 1000000;
+    const std::vector<std::string> IOPS_OP_S = {
+            "IOPS_CREATE", "IOPS_WRITE",   "IOPS_READ",
+            "IOPS_STATS",  "IOPS_DIRENTS", "IOPS_REMOVE"}; ///< Stats Labels
+    const std::vector<std::string> SIZE_OP_S = {"WRITE_SIZE",
+                                                "READ_SIZE"}; ///< Stats Labels
 
-    // Stores total value for global mean
-    std::map<IOPS_OP, unsigned long> IOPS;
-    std::map<SIZE_OP, unsigned long> SIZE;
+    std::chrono::time_point<std::chrono::steady_clock>
+            start; ///< When we started the server
+
+    const unsigned int MAX_STATS = 1000000; ///< How many stats will be stored
 
 
-    // Stores timestamp when an operation comes
-    // removes if first operation if > 10 minutes
-    // Different means will be stored and cached 1 minuted
+    std::map<IOPS_OP, unsigned long>
+            IOPS; ///< Stores total value for global mean
+    std::map<SIZE_OP, unsigned long>
+            SIZE; ///< Stores total value for global mean
+
     std::map<IOPS_OP,
              std::deque<std::chrono::time_point<std::chrono::steady_clock>>>
-            TIME_IOPS;
+            TIME_IOPS; ///< Stores timestamp when an operation comes removes if
+                       ///< first operation if > 10 minutes Different means will
+                       ///< be stored and cached 1 minuted
 
-    // For size operations we need to store the timestamp and
-    // the size
+
     std::map<enum SIZE_OP,
              std::deque<std::pair<
                      std::chrono::time_point<std::chrono::steady_clock>,
                      unsigned long long>>>
-            TIME_SIZE;
+            TIME_SIZE; ///< For size operations we need to store the timestamp
+                       ///< and the size
 
-    // Thread that outputs stats info
-    std::thread t_output;
-    bool output_thread_;
 
-    // Controls the destruction of the class/stops the thread
-    bool running = true;
+    std::thread t_output; ///< Thread that outputs stats info
+    bool output_thread_;  ///< Enables or disables the output thread
+
+    bool running =
+            true; ///< Controls the destruction of the class/stops the thread
     /**
      * @brief Sends all the stats to the screen
      * Debug Function
@@ -135,9 +140,9 @@ private:
     output(std::chrono::seconds d, std::string file_output);
 
     std::map<std::pair<std::string, unsigned long long>, unsigned int>
-            CHUNK_READ;
+            CHUNK_READ; ///< Stores the number of times a chunk/file is read
     std::map<std::pair<std::string, unsigned long long>, unsigned int>
-            CHUNK_WRITE;
+            CHUNK_WRITE; ///< Stores the number of times a chunk/file is write
 
     /**
      * @brief Called by output to generate CHUNK map
