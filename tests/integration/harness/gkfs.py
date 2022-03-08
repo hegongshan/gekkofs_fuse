@@ -251,7 +251,8 @@ class Daemon:
                  '--rootdir', self.rootdir,
                  '-l', self._address,
                  '--metadir', self._metadir,
-                 '--dbbackend', self._database]
+                 '--dbbackend', self._database, 
+                 '--output-stats', self.logdir / 'stats.log' ]
         if self._database == "parallaxdb" :
             args.append('--clean-rootdir-finish')
 

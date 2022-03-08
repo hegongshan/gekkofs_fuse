@@ -52,6 +52,10 @@ if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)
 endif()
 
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(statistics AUTO)
+endif()
+
 # get spdlog
 set(FETCHCONTENT_QUIET ON)
 

@@ -586,11 +586,6 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     fs::create_directories(rootdir_path);
     GKFS_DATA->rootdir(rootdir_path.native());
 
-    if(desc.count("--output-stats")) {
-        GKFS_DATA->output_stats(true);
-    }
-
-
     if(desc.count("--metadir")) {
         auto metadir = opts.metadir;
 
@@ -655,9 +650,13 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
 
     if(desc.count("--parallaxsize")) { // Size in GB
         GKFS_DATA->parallax_size_md(stoi(opts.parallax_size));
+    }
     if(desc.count("--output-stats")) {
         auto stats_file = opts.stats_file;
         GKFS_DATA->stats_file(stats_file);
+        GKFS_DATA->output_stats(true);
+        GKFS_DATA->spdlogger()->debug("{}() Stats Enabled: '{}'", __func__,
+                                      stats_file);
     }
 }
 

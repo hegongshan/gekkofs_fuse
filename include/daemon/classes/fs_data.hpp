@@ -219,7 +219,7 @@ public:
 
     void
     parallax_size_md(unsigned int size_md);
-    
+
     const std::shared_ptr<gkfs::utils::Stats>&
     stats() const;
 
