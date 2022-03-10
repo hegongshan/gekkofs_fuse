@@ -173,6 +173,9 @@ hook_fstatfs(unsigned int fd, struct statfs* buf);
 int
 hook_fsync(unsigned int fd);
 
+int
+hook_getxattr(const char* path, const char* name, void* value, size_t size);
+
 } // namespace gkfs::hook
 
 #endif

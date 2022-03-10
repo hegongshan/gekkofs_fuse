@@ -774,6 +774,13 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
             *result = gkfs::hook::hook_fsync(static_cast<unsigned int>(arg0));
             break;
 
+        case SYS_getxattr:
+            *result = gkfs::hook::hook_getxattr(
+                    reinterpret_cast<const char*>(arg0),
+                    reinterpret_cast<const char*>(arg1),
+                    reinterpret_cast<void*>(arg2), static_cast<size_t>(arg4));
+            break;
+
         default:
             // ignore any other syscalls, i.e.: pass them on to the kernel
             // (syscalls forwarded to the kernel that return are logged in

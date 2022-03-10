@@ -182,7 +182,6 @@ hook_lstat(const char* path, struct stat* buf) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept_wrapper(SYS_lstat, rel_path.c_str(), buf);
-    ;
 }
 
 int
@@ -953,6 +952,19 @@ hook_fsync(unsigned int fd) {
     }
 
     return syscall_no_intercept_wrapper(SYS_fsync, fd);
+}
+
+int
+hook_getxattr(const char* path, const char* name, void* value, size_t size) {
+
+    LOG(DEBUG, "{}() called with path '{}' name '{}' value '{}' size '{}'",
+        __func__, path, name, fmt::ptr(value), size);
+
+    std::string rel_path;
+    if(CTX->relativize_path(path, rel_path)) {
+        return -ENOTSUP;
+    }
+    return syscall_no_intercept_wrapper(SYS_getxattr, path, name, value, size);
 }
 
 } // namespace gkfs::hook
