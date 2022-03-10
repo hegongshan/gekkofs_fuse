@@ -30,8 +30,13 @@
 #ifndef GEKKOFS_HOOKS_HPP
 #define GEKKOFS_HOOKS_HPP
 
+extern "C" {
 #include <sys/types.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+}
+
 
 struct statfs;
 struct linux_dirent;
@@ -101,6 +106,11 @@ hook_access(const char* path, int mask);
 int
 hook_faccessat(int dirfd, const char* cpath, int mode);
 
+#ifdef SYS_faccessat2
+int
+hook_faccessat2(int dirfd, const char* cpath, int mode, int flags);
+#endif
+
 off_t
 hook_lseek(unsigned int fd, off_t offset, unsigned int whence);
 
@@ -162,6 +172,9 @@ hook_fstatfs(unsigned int fd, struct statfs* buf);
 
 int
 hook_fsync(unsigned int fd);
+
+int
+hook_getxattr(const char* path, const char* name, void* value, size_t size);
 
 } // namespace gkfs::hook
 

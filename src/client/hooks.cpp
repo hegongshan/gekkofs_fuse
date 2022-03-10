@@ -182,7 +182,6 @@ hook_lstat(const char* path, struct stat* buf) {
         return with_errno(gkfs::syscall::gkfs_stat(rel_path, buf));
     }
     return syscall_no_intercept_wrapper(SYS_lstat, rel_path.c_str(), buf);
-    ;
 }
 
 int
@@ -454,6 +453,40 @@ hook_faccessat(int dirfd, const char* cpath, int mode) {
             return -EINVAL;
     }
 }
+
+#ifdef SYS_faccessat2
+int
+hook_faccessat2(int dirfd, const char* cpath, int mode, int flags) {
+
+    LOG(DEBUG,
+        "{}() called with dirfd: '{}', path: '{}', mode: '{}', flags: '{}'",
+        __func__, dirfd, cpath, mode, flags);
+
+    std::string resolved;
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
+    switch(rstatus) {
+        case gkfs::preload::RelativizeStatus::fd_unknown:
+            return syscall_no_intercept_wrapper(SYS_faccessat2, dirfd, cpath,
+                                                mode, flags);
+
+        case gkfs::preload::RelativizeStatus::external:
+            return syscall_no_intercept_wrapper(SYS_faccessat2, dirfd,
+                                                resolved.c_str(), mode, flags);
+
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
+            return -ENOTDIR;
+
+        case gkfs::preload::RelativizeStatus::internal:
+            // we do not use permissions and therefore do not handle `flags` for
+            // now
+            return with_errno(gkfs::syscall::gkfs_access(resolved, mode));
+
+        default:
+            LOG(ERROR, "{}() relativize status unknown: {}", __func__);
+            return -EINVAL;
+    }
+}
+#endif
 
 off_t
 hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
@@ -919,6 +952,19 @@ hook_fsync(unsigned int fd) {
     }
 
     return syscall_no_intercept_wrapper(SYS_fsync, fd);
+}
+
+int
+hook_getxattr(const char* path, const char* name, void* value, size_t size) {
+
+    LOG(DEBUG, "{}() called with path '{}' name '{}' value '{}' size '{}'",
+        __func__, path, name, fmt::ptr(value), size);
+
+    std::string rel_path;
+    if(CTX->relativize_path(path, rel_path)) {
+        return -ENOTSUP;
+    }
+    return syscall_no_intercept_wrapper(SYS_getxattr, path, name, value, size);
 }
 
 } // namespace gkfs::hook

@@ -622,7 +622,13 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
                     static_cast<int>(arg0), reinterpret_cast<const char*>(arg1),
                     static_cast<int>(arg2));
             break;
-
+#ifdef SYS_faccessat2
+        case SYS_faccessat2:
+            *result = gkfs::hook::hook_faccessat2(
+                    static_cast<int>(arg0), reinterpret_cast<const char*>(arg1),
+                    static_cast<int>(arg2), static_cast<int>(arg3));
+            break;
+#endif
         case SYS_lseek:
             *result = gkfs::hook::hook_lseek(static_cast<unsigned int>(arg0),
                                              static_cast<off_t>(arg1),
@@ -766,6 +772,13 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
 
         case SYS_fsync:
             *result = gkfs::hook::hook_fsync(static_cast<unsigned int>(arg0));
+            break;
+
+        case SYS_getxattr:
+            *result = gkfs::hook::hook_getxattr(
+                    reinterpret_cast<const char*>(arg0),
+                    reinterpret_cast<const char*>(arg1),
+                    reinterpret_cast<void*>(arg2), static_cast<size_t>(arg4));
             break;
 
         default:

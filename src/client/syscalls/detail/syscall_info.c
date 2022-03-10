@@ -382,6 +382,9 @@ const struct syscall_info syscall_table[] = {
     SYSCALL(readlinkat,              4,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(ptr, "buf"),               S_NARG(arg, "bufsiz")),
     SYSCALL(fchmodat,                3,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "filename"),        S_NARG(octal_mode, "mode")),
     SYSCALL(faccessat,               3,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(octal_mode, "mode")),
+#ifdef SYS_faccessat2
+    SYSCALL(faccessat2,              4,  S_RET(rdec),    S_NARG(atfd, "dfd"),           S_NARG(cstr, "pathname"),        S_NARG(octal_mode, "mode"),       S_NARG(arg, "flags")),
+#endif
     SYSCALL(pselect6,                6,  S_RET(rdec),    S_NARG(dec, "nfds"),           S_NARG(ptr, "readfds"),          S_NARG(ptr, "writefds"),          S_NARG(ptr, "exceptfds"),    S_NARG(ptr, "timeval"),      S_NARG(ptr, "sigmask")),
     SYSCALL(ppoll,                   5,  S_RET(rdec),    S_NARG(ptr, "fds"),            S_NARG(dec, "nfds"),             S_NARG(ptr, "tmo_p"),             S_NARG(ptr, "sigmask"),      S_NARG(dec, "sigsetsize")),
     SYSCALL(unshare,                 1,  S_RET(rdec),    S_NARG(arg, "unshare_flags")),
@@ -658,6 +661,9 @@ const struct named_syscall_entry syscalls_by_name[] = {
     SYSCALL_BY_NAME(exit),
     SYSCALL_BY_NAME(exit_group),
     SYSCALL_BY_NAME(faccessat),
+#ifdef SYS_faccessat2
+    SYSCALL_BY_NAME(faccessat2),
+#endif
     SYSCALL_BY_NAME(fadvise64),
     SYSCALL_BY_NAME(fallocate),
     SYSCALL_BY_NAME(fanotify_init),
