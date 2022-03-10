@@ -455,6 +455,40 @@ hook_faccessat(int dirfd, const char* cpath, int mode) {
     }
 }
 
+#ifdef SYS_faccessat2
+int
+hook_faccessat2(int dirfd, const char* cpath, int mode, int flags) {
+
+    LOG(DEBUG,
+        "{}() called with dirfd: '{}', path: '{}', mode: '{}', flags: '{}'",
+        __func__, dirfd, cpath, mode, flags);
+
+    std::string resolved;
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
+    switch(rstatus) {
+        case gkfs::preload::RelativizeStatus::fd_unknown:
+            return syscall_no_intercept_wrapper(SYS_faccessat2, dirfd, cpath,
+                                                mode, flags);
+
+        case gkfs::preload::RelativizeStatus::external:
+            return syscall_no_intercept_wrapper(SYS_faccessat2, dirfd,
+                                                resolved.c_str(), mode, flags);
+
+        case gkfs::preload::RelativizeStatus::fd_not_a_dir:
+            return -ENOTDIR;
+
+        case gkfs::preload::RelativizeStatus::internal:
+            // we do not use permissions and therefore do not handle `flags` for
+            // now
+            return with_errno(gkfs::syscall::gkfs_access(resolved, mode));
+
+        default:
+            LOG(ERROR, "{}() relativize status unknown: {}", __func__);
+            return -EINVAL;
+    }
+}
+#endif
+
 off_t
 hook_lseek(unsigned int fd, off_t offset, unsigned int whence) {
 
