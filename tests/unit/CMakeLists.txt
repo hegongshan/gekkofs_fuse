@@ -32,7 +32,7 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_Declare(catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG 255aa5f2afe1a622c97422f65ace6ca915be0d8d # v2.11.3
+    GIT_TAG 216713a4066b79d9803d374f261ccb30c0fb451f # v2.13.8
     GIT_SHALLOW ON
     GIT_PROGRESS ON
     )
