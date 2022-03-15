@@ -6,5 +6,5 @@ Downloaded 'https://github.com/facebook/rocksdb/archive/v6.26.1.tar.gz' to 'rock
 Cloned 'https://github.com/pmem/syscall_intercept.git' to 'syscall_intercept' with commit '[2c8765fa292bc9c28a22624c528580d54658813d]' and flags ''
 Cloned 'https://github.com/HowardHinnant/date.git' to 'date' with commit '[e7e1482087f58913b80a20b04d5c58d9d6d90155]' and flags ''
 Cloned 'https://github.com/francielizanon/agios.git' to 'agios' with commit '[c26a6544200f823ebb8f890dd94e653d148bf226]' and flags '--branch=development'
-Cloned 'https://github.com/CARV-ICS-FORTH/parallax.git' to 'parallax' with commit '[24750a64efee4352fcc7ac5533acb887ff6d4647]' and flags ''
+Cloned 'https://github.com/CARV-ICS-FORTH/parallax.git' to 'parallax' with commit '[c130decd7a71c60c20b98d6a23924f05f754c3cd]' and flags ''
 Done
