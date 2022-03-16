@@ -210,16 +210,6 @@ FsData::blocks_state(bool blocks_state) {
     FsData::blocks_state_ = blocks_state;
 }
 
-bool
-FsData::keep_rootdir() const {
-    return keep_rootdir_;
-}
-
-void
-FsData::keep_rootdir(bool keep_rootdir) {
-    FsData::keep_rootdir_ = keep_rootdir;
-}
-
 unsigned long long
 FsData::kreon_size_md() const {
     return size_md_;

@@ -205,12 +205,6 @@ public:
     void
     blocks_state(bool blocks_state);
 
-    bool
-    keep_rootdir() const;
-
-    void
-    keep_rootdir(bool keep_rootdir_);
-
     unsigned long long
     kreon_size_md() const;
 

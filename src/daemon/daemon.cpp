@@ -69,6 +69,7 @@ namespace fs = std::filesystem;
 
 static condition_variable shutdown_please; // handler for shutdown signaling
 static mutex mtx; // mutex to wait on shutdown conditional variable
+static bool keep_rootdir = true;
 
 struct cli_options {
     string mountdir;
@@ -413,7 +414,7 @@ destroy_enviroment() {
 
 
     // Delete rootdir/metadir if requested
-    if(!GKFS_DATA->keep_rootdir()) {
+    if(!keep_rootdir) {
         GKFS_DATA->spdlogger()->info("{}() Removing rootdir and metadir ...",
                                      __func__);
         fs::remove_all(GKFS_DATA->metadir(), ecode);
@@ -566,11 +567,11 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
         GKFS_DATA->spdlogger()->debug("{}() Cleaning rootdir '{}' ...",
                                       __func__, rootdir_path.native());
         fs::remove_all(rootdir_path.native());
-        GKFS_DATA->spdlogger()->info("{}() Rootdir cleaned.", __func__);
+        GKFS_DATA->spdlogger()->info("{}() rootdir cleaned.", __func__);
     }
 
     if(desc.count("--clean-rootdir-finish")) {
-        GKFS_DATA->keep_rootdir(false);
+        keep_rootdir = false;
     }
 
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
@@ -586,7 +587,13 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
 #else
         auto metadir_path = fs::path(metadir);
 #endif
-
+        if(desc.count("--clean-rootdir")) {
+            // may throw exception (caught in main)
+            GKFS_DATA->spdlogger()->debug("{}() Cleaning metadir '{}' ...",
+                                          __func__, metadir_path.native());
+            fs::remove_all(metadir_path.native());
+            GKFS_DATA->spdlogger()->info("{}() metadir cleaned.", __func__);
+        }
         fs::create_directories(metadir_path);
         GKFS_DATA->metadir(fs::canonical(metadir_path).native());
 
@@ -691,10 +698,10 @@ main(int argc, const char* argv[]) {
                 "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                 "instead of using the RPC protocol. (Default off)");
     desc.add_flag(
-                "--clean-rootdir,-c",
+                "--clean-rootdir",
                 "Cleans Rootdir >before< launching the deamon");
     desc.add_flag(
-                "--clean-rootdir-finish,-f",
+                "--clean-rootdir-finish,-c",
                 "Cleans Rootdir >after< the deamon finishes");
     desc.add_option(
                 "--dbbackend,-d", opts.dbbackend,
