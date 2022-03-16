@@ -243,7 +243,8 @@ void
 init_environment() {
     // Initialize metadata db
     auto metadata_path = fmt::format("{}/{}", GKFS_DATA->metadir(),
-                                     gkfs::config::rocksdb::data_dir);
+                                     gkfs::config::metadata::dir);
+    fs::create_directories(metadata_path);
     GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'",
                                   __func__, metadata_path);
     try {
@@ -413,13 +414,9 @@ destroy_enviroment() {
 
     // Delete rootdir/metadir if requested
     if(!GKFS_DATA->keep_rootdir()) {
-        GKFS_DATA->spdlogger()->info("{}() Removing RootDir/MetaDir/MetaFile",
+        GKFS_DATA->spdlogger()->info("{}() Removing rootdir and metadir ...",
                                      __func__);
         fs::remove_all(GKFS_DATA->metadir(), ecode);
-#ifdef GKFS_ENABLE_PARALLAX
-        // some metadata backends uses a file instead of a dir.
-        fs::remove_all(GKFS_DATA->metadir() + "x", ecode);
-#endif
         fs::remove_all(GKFS_DATA->rootdir(), ecode);
     }
 }
@@ -551,7 +548,7 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     auto rootdir_path = fs::path(rootdir);
     if(desc.count("--rootdir-suffix")) {
         if(opts.rootdir_suffix == gkfs::config::data::chunk_dir ||
-           opts.rootdir_suffix == gkfs::config::rocksdb::data_dir)
+           opts.rootdir_suffix == gkfs::config::metadata::dir)
             throw runtime_error(fmt::format(
                     "rootdir_suffix '{}' is reserved and not allowed.",
                     opts.rootdir_suffix));
@@ -609,10 +606,33 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     }
 
     if(desc.count("--dbbackend")) {
-        auto dbbackend = opts.dbbackend;
-        GKFS_DATA->dbbackend(dbbackend);
+        if(opts.dbbackend == gkfs::metadata::rocksdb_backend ||
+           opts.dbbackend == gkfs::metadata::parallax_backend) {
+#ifndef GKFS_ENABLE_PARALLAX
+            if(opts.dbbackend == gkfs::metadata::parallax_backend) {
+                throw runtime_error(fmt::format(
+                        "dbbackend '{}' was not compiled and is disabled. "
+                        "Pass -DGKFS_ENABLE_PARALLAX:BOOL=ON to CMake to enable.",
+                        opts.dbbackend));
+            }
+#endif
+#ifndef GKFS_ENABLE_ROCKSDB
+            if(opts.dbbackend == gkfs::metadata::rocksdb_backend) {
+                throw runtime_error(fmt::format(
+                        "dbbackend '{}' was not compiled and is disabled. "
+                        "Pass -DGKFS_ENABLE_ROCKSDB:BOOL=ON to CMake to enable.",
+                        opts.dbbackend));
+            }
+#endif
+            GKFS_DATA->dbbackend(opts.dbbackend);
+        } else {
+            throw runtime_error(
+                    fmt::format("dbbackend '{}' is not valid. Consult `--help`",
+                                opts.dbbackend));
+        }
+
     } else
-        GKFS_DATA->dbbackend("rocksdb");
+        GKFS_DATA->dbbackend(gkfs::metadata::rocksdb_backend);
 
     if(desc.count("--kreonsize")) { // Size in GB
         GKFS_DATA->kreon_size_md(stoi(opts.kreonsize));
@@ -678,11 +698,11 @@ main(int argc, const char* argv[]) {
                 "Cleans Rootdir >after< the deamon finishes");
     desc.add_option(
                 "--dbbackend,-d", opts.dbbackend,
-                "Database Backend to use. If not set, rocksdb is used. For parallaxdb, a file called rocksdbx with 8GB will be created in metadir");
-   
-   
+                "Metadata database backend to use. Available: {rocksdb, parallaxdb}'\n"
+                "RocksDB is default if not set. Parallax support is experimental.\n"
+                "Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.");
     desc.add_option("--kreonsize",opts.kreonsize,
-                    "parallaxdb - Metatada file size in GB (default 8), "
+                    "parallaxdb - metadata file size in GB (default 8GB), "
                     "used only with new files");
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on

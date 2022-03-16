@@ -57,6 +57,9 @@ constexpr auto daemon_log_level = 4; // info
 } // namespace log
 
 namespace metadata {
+// directory name where the metadata db instance is placed
+constexpr auto dir = "metadata";
+
 // which metadata should be considered apart from size and mode
 constexpr auto use_atime = false;
 constexpr auto use_ctime = false;
@@ -98,8 +101,6 @@ constexpr auto daemon_handler_xstreams = 4;
 namespace rocksdb {
 // Write-ahead logging of rocksdb
 constexpr auto use_write_ahead_log = false;
-// directory name where the rocksdb instance is placed
-constexpr auto data_dir = "rocksdb";
 } // namespace rocksdb
 
 } // namespace gkfs::config

@@ -58,7 +58,8 @@ ParallaxBackend::~ParallaxBackend() {
  * Called when the daemon is started: Connects to the KV store
  * @param path where KV store data is stored
  */
-ParallaxBackend::ParallaxBackend(const std::string& path) {
+ParallaxBackend::ParallaxBackend(const std::string& path)
+    : par_path_(std::move(path)) {
 
     // We try to open options.yml if it exists, if not we create it by default
     int options = open("options.yml", O_RDWR | O_CREAT, 0644);
@@ -71,9 +72,6 @@ ParallaxBackend::ParallaxBackend(const std::string& path) {
     }
 
     close(options);
-
-    // Kreon
-    par_path_ = path + "x"; // file is rocksdb (add an x)
     int64_t size;
 
     int fd = open(par_path_.c_str(), O_RDWR | O_CREAT, 0644);
@@ -99,7 +97,8 @@ ParallaxBackend::ParallaxBackend(const std::string& path) {
         write(fd, tmp.c_str(), 1);
         close(fd);
 
-        // We format the database
+        // We format the database TODO this doesn't work kv_format.parallax is
+        // not in path
         std::string cmd = "kv_format.parallax --device " + par_path_ +
                           " --max_regions_num 1 ";
         system(cmd.c_str());

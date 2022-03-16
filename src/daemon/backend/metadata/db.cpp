@@ -34,11 +34,12 @@
 #include <common/metadata.hpp>
 #include <common/path_util.hpp>
 #include <iostream>
+#include <filesystem>
 
 extern "C" {
 #include <sys/stat.h>
 }
-
+namespace fs = std::filesystem;
 
 namespace gkfs::metadata {
 
@@ -51,23 +52,24 @@ struct MetadataDBFactory {
     static std::unique_ptr<AbstractMetadataBackend>
     create(const std::string& path, const std::string_view id) {
 
-
-        if(id == "parallaxdb") {
+        if(id == gkfs::metadata::parallax_backend) {
 #ifdef GKFS_ENABLE_PARALLAX
-            return std::make_unique<ParallaxBackend>(path);
-#else
-            GKFS_METADATA_MOD->log()->error("PARALLAX not compiled");
-            exit(EXIT_FAILURE);
+            auto metadata_path = fmt::format("{}/{}", path,
+                                             gkfs::metadata::parallax_backend);
+            GKFS_METADATA_MOD->log()->trace("Using Parallax file '{}'",
+                                            metadata_path);
+            return std::make_unique<ParallaxBackend>(metadata_path);
 #endif
-        } else if(id == "rocksdb") {
+        } else if(id == gkfs::metadata::rocksdb_backend) {
 #ifdef GKFS_ENABLE_ROCKSDB
-            return std::make_unique<RocksDBBackend>(path);
-#else
-            GKFS_METADATA_MOD->log()->error("ROCKSDB not compiled");
-            exit(EXIT_FAILURE);
+            auto metadata_path =
+                    fmt::format("{}/{}", path, gkfs::metadata::rocksdb_backend);
+            fs::create_directories(metadata_path);
+            GKFS_METADATA_MOD->log()->trace("Using RocksDB directory '{}'",
+                                            metadata_path);
+            return std::make_unique<RocksDBBackend>(metadata_path);
 #endif
         }
-
         GKFS_METADATA_MOD->log()->error("No valid metadata backend selected");
         exit(EXIT_FAILURE);
     }
@@ -83,13 +85,13 @@ struct MetadataDBFactory {
 MetadataDB::MetadataDB(const std::string& path, const std::string_view database)
     : path_(path) {
 
-    backend_ = MetadataDBFactory::create(path, database);
-
     /* Get logger instance and set it for data module and chunk storage */
     GKFS_METADATA_MOD->log(spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME));
     assert(GKFS_METADATA_MOD->log());
     log_ = spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME);
     assert(log_);
+
+    backend_ = MetadataDBFactory::create(path, database);
 }
 
 MetadataDB::~MetadataDB() {

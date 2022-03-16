@@ -47,13 +47,15 @@
 
 namespace gkfs::metadata {
 
+constexpr auto rocksdb_backend = "rocksdb";
+constexpr auto parallax_backend = "parallaxdb";
+
 
 class MetadataDB {
 private:
     std::string path_;
     std::shared_ptr<spdlog::logger> log_;
     std::unique_ptr<AbstractMetadataBackend> backend_;
-
 
 public:
     MetadataDB(const std::string& path, const std::string_view database);
