@@ -677,7 +677,7 @@ main(int argc, const char* argv[]) {
                     "Creates an additional directory within the rootdir, allowing multiple daemons on one node.");
     desc.add_option(
                     "--metadir,-i", opts.metadir,
-                    "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.");
+                    "Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.");
     desc.add_option(
                     "--listen,-l", opts.listen,
                     "Address or interface to bind the daemon to. Default: local hostname.\n"
@@ -705,7 +705,7 @@ main(int argc, const char* argv[]) {
                 "Cleans Rootdir >after< the deamon finishes");
     desc.add_option(
                 "--dbbackend,-d", opts.dbbackend,
-                "Metadata database backend to use. Available: {rocksdb, parallaxdb}'\n"
+                "Metadata database backend to use. Available: {rocksdb, parallaxdb}\n"
                 "RocksDB is default if not set. Parallax support is experimental.\n"
                 "Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.");
     desc.add_option("--parallaxsize", opts.parallax_size,
