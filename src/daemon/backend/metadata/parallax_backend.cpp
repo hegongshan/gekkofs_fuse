@@ -90,7 +90,7 @@ ParallaxBackend::ParallaxBackend(const std::string& path)
     }
 
     if(size == 0) {
-        size = GKFS_DATA->kreon_size_md();
+        size = GKFS_DATA->parallax_size_md();
 
         lseek(fd, size - 1, SEEK_SET);
         std::string tmp = "x";
@@ -334,8 +334,6 @@ ParallaxBackend::decrease_size_impl(const std::string& key, size_t size) {
 std::vector<std::pair<std::string, bool>>
 ParallaxBackend::get_dirents_impl(const std::string& dir) const {
     auto root_path = dir;
-    //   lock_guard<recursive_mutex> lock_guard(kreon_mutex_);
-
     struct par_key K;
 
     str2par(root_path, K);

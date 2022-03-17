@@ -80,7 +80,7 @@ struct cli_options {
     string hosts_file;
     string rpc_protocol;
     string dbbackend;
-    string kreonsize;
+    string parallax_size;
 };
 
 /**
@@ -641,8 +641,8 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     } else
         GKFS_DATA->dbbackend(gkfs::metadata::rocksdb_backend);
 
-    if(desc.count("--kreonsize")) { // Size in GB
-        GKFS_DATA->kreon_size_md(stoi(opts.kreonsize));
+    if(desc.count("--parallaxsize")) { // Size in GB
+        GKFS_DATA->parallax_size_md(stoi(opts.parallax_size));
     }
 }
 
@@ -708,7 +708,7 @@ main(int argc, const char* argv[]) {
                 "Metadata database backend to use. Available: {rocksdb, parallaxdb}'\n"
                 "RocksDB is default if not set. Parallax support is experimental.\n"
                 "Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.");
-    desc.add_option("--kreonsize",opts.kreonsize,
+    desc.add_option("--parallaxsize", opts.parallax_size,
                     "parallaxdb - metadata file size in GB (default 8GB), "
                     "used only with new files");
     desc.add_flag("--version", "Print version and exit.");

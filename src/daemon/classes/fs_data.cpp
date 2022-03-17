@@ -211,14 +211,14 @@ FsData::blocks_state(bool blocks_state) {
 }
 
 unsigned long long
-FsData::kreon_size_md() const {
-    return size_md_;
+FsData::parallax_size_md() const {
+    return parallax_size_md_;
 }
 
 void
-FsData::kreon_size_md(unsigned int size_md) {
-    FsData::size_md_ =
-            (unsigned long long) size_md * 1024ull * 1024ull * 1024ull;
+FsData::parallax_size_md(unsigned int size_md) {
+    FsData::parallax_size_md_ = static_cast<unsigned long long>(
+            size_md * 1024ull * 1024ull * 1024ull);
 }
 
 } // namespace gkfs::daemon

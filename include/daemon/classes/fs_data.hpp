@@ -71,10 +71,9 @@ private:
     // Database
     std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
     std::string dbbackend_;
-    bool keep_rootdir_ = true;
-    // Kreon
 
-    unsigned long long size_md_ = 8589934592ull;
+    // Parallax
+    unsigned long long parallax_size_md_ = 8589934592ull;
 
     // Storage backend
     std::shared_ptr<gkfs::data::ChunkStorage> storage_;
@@ -206,10 +205,10 @@ public:
     blocks_state(bool blocks_state);
 
     unsigned long long
-    kreon_size_md() const;
+    parallax_size_md() const;
 
     void
-    kreon_size_md(unsigned int size_md);
+    parallax_size_md(unsigned int size_md);
 };
 
 } // namespace daemon

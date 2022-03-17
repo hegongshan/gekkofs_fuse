@@ -78,7 +78,7 @@ Further options are available
     --dbbackend               'rocksdb' (default) or 'parallaxdb' can be specified as
                                 metadata backend, in that case a file in 'metadir' named
                                 rocksdbx is created. Parallaxdb support is experimental.
-    --kreonsize               'parallaxdb' specific, size of the metadata file in GB. Minimal is 8 GB
+    --parallax_size               'parallaxdb' specific, size of the metadata file in GB. Minimal is 8 GB
                               (default 8, 8 GB)
    --version                   Print version and exit.
 ````

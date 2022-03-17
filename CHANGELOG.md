@@ -1,25 +1,39 @@
 # Changelog
+
 All notable changes to GekkoFS project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
+to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Parallax experimental integration 
-Support for different databases backend
-New Docker Images and scripts (0.9.1)
-([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
-- Added `--clean-rootdir-finish` argument to remove rootdir/metadir at the end.
+
+### New
+
+- Added new experimental metadata backend:
+  Parallax ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
+    - Added support to use multiple metadata backends.
+    - Added `--clean-rootdir-finish` argument to remove rootdir/metadir at the end when the daemon finishes.
+
+### Changed
+
+- `-c` argument has been moved to `--clean-rootdir-finish` and is now used to clean rootdir/metadir on daemon
+  shutdown ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
+
+### Removed
+
+### Fixed
 
 ## [0.9.0] - 2022-02-22
+
 ### New
+
 - GekkoFS now uses C++17 (!74).
-- Added a new `dirents_extended` function which can improve `find` operations.
-A corresponding example how to use this function can be found at 
-`examples/gfind/gfind.cpp` with a non-mpi version at `examples/gfind/sfind.cpp` 
-([!73](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/73)).
-- Code coverage reports for the source code are now generated and tracked 
-([!77](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/77)).
+- Added a new `dirents_extended` function which can improve `find` operations. A corresponding example how to use this
+  function can be found at
+  `examples/gfind/gfind.cpp` with a non-mpi version at `examples/gfind/sfind.cpp`
+  ([!73](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/73)).
+- Code coverage reports for the source code are now generated and tracked
+  ([!77](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/77)).
 - Considerable overhaul and new features of the GekkoFS testing facilities 
 ([!120](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/120), 
 [!121](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/121)).
@@ -81,8 +95,6 @@ Note that tests still require `Boost_preprocessor`.
 - Fixed an issue where `ls` failed because newer kernels use `fstatat()` with `EMPTY_PATH` 
 ([!116](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/116)).
 - Fixed an issue where `LOG_OUTPUT_TRUNC` did not work as expected ([!118](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/118)).
-
-- Added new metadata backend, kreon.
 
 ## [0.8.0] - 2020-09-15
 ### New
