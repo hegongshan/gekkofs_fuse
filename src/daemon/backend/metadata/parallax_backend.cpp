@@ -68,25 +68,31 @@ ParallaxBackend::ParallaxBackend(const std::string& path)
     if(sizeOptions == 0) {
         std::string optcontent =
                 "level0_size: 64\ngc_interval: 10\ngrowth_factor: 4\nmedium_log_LRU_cache_size: 400\nlevel_medium_inplace: 3\n";
-        write(options, optcontent.c_str(), optcontent.length());
+        auto write_size =
+                write(options, optcontent.c_str(), optcontent.length());
+        if(write_size < 0 ||
+           static_cast<unsigned long>(write_size) < optcontent.length()) {
+            throw std::runtime_error(fmt::format(
+                    "Failed to write Parallax options.yml: err '{}'",
+                    write_size));
+        }
     }
 
     close(options);
     int64_t size;
 
     int fd = open(par_path_.c_str(), O_RDWR | O_CREAT, 0644);
-    if(fd == -1) {
-        perror("open");
-        exit(EXIT_FAILURE);
+    if(fd < 0) {
+        throw std::runtime_error(
+                fmt::format("Failed to open Parallax DB file. fd '{}'", fd));
     }
 
     // Check size if we want to reuse it
     size = lseek(fd, 0, SEEK_END);
     if(size == -1) {
-        printf("[%s:%s:%d] failed to determine volume size exiting...\n",
-               __FILE__, __func__, __LINE__);
-        perror("ioctl");
-        exit(EXIT_FAILURE);
+        throw std::runtime_error(fmt::format(
+                "[{}:{}:{}] failed to determine volume size exiting...",
+                __FILE__, __func__, __LINE__));
     }
 
     if(size == 0) {
@@ -94,14 +100,23 @@ ParallaxBackend::ParallaxBackend(const std::string& path)
 
         lseek(fd, size - 1, SEEK_SET);
         std::string tmp = "x";
-        write(fd, tmp.c_str(), 1);
+        auto write_size = write(fd, tmp.c_str(), 1);
+        if(write_size < 1) {
+            throw std::runtime_error(
+                    fmt::format("Failed to write to Parallax db file: err '{}'",
+                                write_size));
+        }
         close(fd);
 
         // We format the database TODO this doesn't work kv_format.parallax is
         // not in path
         std::string cmd = "kv_format.parallax --device " + par_path_ +
                           " --max_regions_num 1 ";
-        system(cmd.c_str());
+        auto err = system(cmd.c_str());
+        if(err < 0) {
+            throw std::runtime_error(fmt::format(
+                    "Failed to format parallax device: err '{}'", err));
+        }
     }
 
     par_options_.create_flag = PAR_CREATE_DB;
