@@ -10,3 +10,6 @@ WARNING: Install script for 'psm2' not found. Skipping.
 ######## Installing:  rocksdb ###############################
 ######## Installing:  syscall_intercept ###############################
 ######## Installing:  date ###############################
+######## Installing:  agios ###############################
+######## Installing:  parallax ###############################
+Done

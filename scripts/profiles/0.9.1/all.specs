@@ -33,7 +33,7 @@ declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_arg
 declare -a order
 
 # Comment that should be displayed when printing the profile
-comment="Dependencies for Omnipath supercomputer"
+comment="Dependencies for Mogon 2 supercomputer"
 
 # Dependencies that must be downloaded directly
 wgetdeps=(
@@ -52,6 +52,8 @@ clonedeps=(
     ["margo"]="v0.9.6"
     ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
     ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
+    ["agios"]="c26a6544200f823ebb8f890dd94e653d148bf226@development"
+    ["parallax"]="c130decd7a71c60c20b98d6a23924f05f754c3cd"
 )
 
 # Extra arguments for git clone
@@ -67,6 +69,7 @@ clonedeps_patches=(
 # Ordering that MUST be followed when downloading
 order=(
     "lz4" "capstone" "json-c" "psm2" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+    "agios" "parallax"
 )
 
 # Extra arguments passed to the installation script. As such, they can

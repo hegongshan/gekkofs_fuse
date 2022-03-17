@@ -51,7 +51,6 @@ clonedeps=(
     ["margo"]="v0.9.6"
     ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
     ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
-    ["parallax"]="c130decd7a71c60c20b98d6a23924f05f754c3cd"
 )
 
 # Extra arguments for git clone
@@ -67,7 +66,7 @@ clonedeps_patches=(
 # Ordering that MUST be followed when downloading/installing
 order=(
     "lz4" "capstone" "json-c" "libfabric%verbs" "mercury" "argobots" "margo" "rocksdb"
-    "syscall_intercept" "date" "parallax"
+    "syscall_intercept" "date"
 )
 
 # Extra arguments passed to the installation script. As such, they can
