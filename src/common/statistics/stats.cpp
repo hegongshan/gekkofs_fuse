@@ -33,6 +33,15 @@ using namespace std;
 
 namespace gkfs::utils {
 
+static std::string GetHostName() {
+  char hostname[1024];
+
+  if (::gethostname(hostname, sizeof(hostname))) {
+    return {};
+  }
+  return hostname;
+}
+
 Stats::Stats(bool output_thread, std::string stats_file) {
 
     // Init clocks
@@ -53,18 +62,28 @@ Stats::Stats(bool output_thread, std::string stats_file) {
 
 
     // Prometheus 
-    exposer = std::make_shared<Exposer>("127.0.0.1:8080");
-    
+    //exposer = std::make_shared<Exposer>("127.0.0.1:8080");
+    const auto labels = Gateway::GetInstanceLabel(GetHostName());
+    gateway = std::make_shared<Gateway>("127.0.0.1", "9091", "GekkoFS", labels);
+    registry = std::make_shared<Registry>();
     family_counter = &BuildCounter()
                         .Name("IOPS")
                         .Help("Number of IOPS")
-                        .Register(registry);
+                        .Register(*registry);
     
-    IOPS_create = &family_counter->Add({{"operation","Create"}});
+    for(auto e : all_IOPS_OP) {
+        IOPS_Prometheus[e] = &family_counter->Add({{"operation",IOPS_OP_S[static_cast<int>(e)]}});
+    }
 
+    family_summary = &BuildSummary()
+                        .Name("SIZE")
+                        .Help("Size of OPs")
+                        .Register(*registry);
+    for(auto e : all_SIZE_OP) {
+        SIZE_Prometheus[e] = &family_summary->Add({{"operation",SIZE_OP_S[static_cast<int>(e)]}},Summary::Quantiles{});
+    }
 
-    IOPS_create->Increment();
-
+    gateway->RegisterCollectable(registry);
 
     output_thread_ = output_thread;
 
@@ -141,6 +160,7 @@ Stats::add_value_iops(enum IOPS_OP iop) {
         TIME_IOPS[iop].pop_front();
 
     TIME_IOPS[iop].push_back(std::chrono::steady_clock::now());
+    IOPS_Prometheus[iop]->Increment();
 }
 
 void
@@ -153,11 +173,12 @@ Stats::add_value_size(enum SIZE_OP iop, unsigned long long value) {
         TIME_SIZE[iop].pop_front();
 
     TIME_SIZE[iop].push_back(pair(std::chrono::steady_clock::now(), value));
+    SIZE_Prometheus[iop]->Observe(value);
 
     if(iop == SIZE_OP::READ_SIZE)
-        IOPS[IOPS_OP::IOPS_READ]++;
+        add_value_iops(IOPS_OP::IOPS_READ);
     else if(iop == SIZE_OP::WRITE_SIZE)
-        IOPS[IOPS_OP::IOPS_WRITE]++;
+        add_value_iops(IOPS_OP::IOPS_WRITE);
 }
 
 /**
@@ -286,6 +307,9 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
             output_map(of);
 #endif
 
+    // Prometheus Output
+     auto res = gateway->Push();
+    std::cout << "result " << res << std::endl;
         while(running and a < d) {
             a += 1s;
             std::this_thread::sleep_for(1s);

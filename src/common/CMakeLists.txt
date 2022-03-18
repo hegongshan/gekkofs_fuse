@@ -49,12 +49,14 @@ target_sources(statistics
     )
 
     find_package(prometheus-cpp REQUIRED)
+  
     target_link_libraries(statistics
   PRIVATE
   
     prometheus-cpp-pull
     prometheus-cpp-push
     prometheus-cpp-core
+    curl
     )
 
 if(GKFS_ENABLE_CODE_COVERAGE)

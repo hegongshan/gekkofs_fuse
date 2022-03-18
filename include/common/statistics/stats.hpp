@@ -46,8 +46,10 @@
 
 // PROMETHEUS
 #include <prometheus/counter.h>
+#include <prometheus/summary.h>
 #include <prometheus/exposer.h>
 #include <prometheus/registry.h>
+#include <prometheus/gateway.h>
 
 using namespace prometheus;
 /**
@@ -171,9 +173,14 @@ private:
 
     // Prometheus structs
     std::shared_ptr<Exposer> exposer;
-    Registry registry;
+    ///< Push 
+    std::shared_ptr<Gateway> gateway;
+    std::shared_ptr<Registry> registry;
     Family<Counter>* family_counter;
-    Counter* IOPS_create;
+    Family<Summary>* family_summary;
+    std::map<IOPS_OP, Counter*> IOPS_Prometheus;
+    std::map<SIZE_OP, Summary*> SIZE_Prometheus;
+
 
 
 public:
