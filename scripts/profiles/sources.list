@@ -50,6 +50,7 @@ sources=(
     ["date"]="https://github.com/HowardHinnant/date.git"
     ["agios"]="https://github.com/francielizanon/agios.git"
     ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
+    ["parallax"]="https://github.com/CARV-ICS-FORTH/parallax.git"
 )
 
 

@@ -34,50 +34,33 @@
 
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <rocksdb/db.h>
 #include <daemon/backend/exceptions.hpp>
 #include <tuple>
+#include <daemon/backend/metadata/metadata_backend.hpp>
+#ifdef GKFS_ENABLE_ROCKSDB
+#include <daemon/backend/metadata/rocksdb_backend.hpp>
+#endif
+#ifdef GKFS_ENABLE_PARALLAX
+#include <daemon/backend/metadata/parallax_backend.hpp>
+#endif
 
-namespace rdb = rocksdb;
 
 namespace gkfs::metadata {
 
-/**
- * @brief MetadataDB class providing an abstraction layer to the KV store
- * RocksDB.
- */
+constexpr auto rocksdb_backend = "rocksdb";
+constexpr auto parallax_backend = "parallaxdb";
+
+
 class MetadataDB {
 private:
-    std::unique_ptr<rdb::DB> db;  ///< RocksDB instance
-    rdb::Options options;         ///< RocksDB configuration
-    rdb::WriteOptions write_opts; ///< RocksDB write configuration
-    std::string path;             ///< Path to where RocksDB persists its data
-    std::shared_ptr<spdlog::logger> log_; ///< MetadataDB internal logger
-
-    /**
-     * @brief Sets up specific settings to optimize RocksDB instance to
-     * environment on launch.
-     * @param options RocksDB configurations
-     */
-    static void
-    optimize_rocksdb_options(rdb::Options& options);
+    std::string path_;
+    std::shared_ptr<spdlog::logger> log_;
+    std::unique_ptr<AbstractMetadataBackend> backend_;
 
 public:
-    /**
-     * @brief Exception wrapper on Status object.
-     * @param s RocksDB status
-     * @throws Throws NotFoundException if s.IsNotFound(), general DBException
-     * otherwise
-     */
-    static inline void
-    throw_rdb_status_excpt(const rdb::Status& s);
+    MetadataDB(const std::string& path, const std::string_view database);
 
-    /**
-     * @brief Constructor, called when daemon is started and connects to KV
-     * store.
-     * @param path Path to where RocksDB persists its data
-     */
-    explicit MetadataDB(const std::string& path);
+    ~MetadataDB();
 
     /**
      * @brief Gets the KV store value for a key.
@@ -182,7 +165,7 @@ public:
      * is therefore unused.
      */
     void
-    iterate_all();
+    iterate_all() const;
 };
 
 } // namespace gkfs::metadata

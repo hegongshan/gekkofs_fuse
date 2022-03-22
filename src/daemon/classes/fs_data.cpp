@@ -110,6 +110,16 @@ FsData::metadir(const std::string& metadir) {
     FsData::metadir_ = metadir;
 }
 
+std::string_view
+FsData::dbbackend() const {
+    return dbbackend_;
+}
+
+void
+FsData::dbbackend(const std::string& dbbackend) {
+    FsData::dbbackend_ = dbbackend;
+}
+
 const std::string&
 FsData::rpc_protocol() const {
     return rpc_protocol_;
@@ -198,6 +208,17 @@ FsData::blocks_state() const {
 void
 FsData::blocks_state(bool blocks_state) {
     FsData::blocks_state_ = blocks_state;
+}
+
+unsigned long long
+FsData::parallax_size_md() const {
+    return parallax_size_md_;
+}
+
+void
+FsData::parallax_size_md(unsigned int size_md) {
+    FsData::parallax_size_md_ = static_cast<unsigned long long>(
+            size_md * 1024ull * 1024ull * 1024ull);
 }
 
 } // namespace gkfs::daemon

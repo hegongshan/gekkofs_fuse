@@ -108,6 +108,11 @@ dependencies:
 - `AGIOS <https://github.com/francielizanon/agios>`_ (commit c26a654 or
   newer) to enable the :code:`GekkoFWD` I/O forwarding mode.
 
+- `PARALLAX` There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based on `PARALLAX` from `FORTH` 
+is available. To enable it, use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
+  Once it is enabled, `--dbbackend` option will be functional.
+
+
 .. _step_by_step_installation:
 
 Step-by-step installation

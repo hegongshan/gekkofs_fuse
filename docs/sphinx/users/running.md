@@ -57,24 +57,29 @@ metadata locally, and at which path clients can access the file system (mount po
 Further options are available
 
 ```bash
- Allowed options
- Usage: src/daemon/gkfs_daemon [OPTIONS]
+Allowed options
+Usage: src/daemon/gkfs_daemon [OPTIONS]
 
- Options:
-   -h,--help                   Print this help message and exit
-   -m,--mountdir TEXT REQUIRED Virtual mounting directory where GekkoFS is available.
-   -r,--rootdir TEXT REQUIRED  Local data directory where GekkoFS data for this daemon is stored.
-   -s,--rootdir-suffix TEXT    Creates an additional directory within the rootdir, allowing multiple daemons on one node.
-   -i,--metadir TEXT           Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.
-   -l,--listen TEXT            Address or interface to bind the daemon to. Default: local hostname.
-                               When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly which associates the verbs device with the network interface. In case FI_VERBS_IFACE is already defined, the argument is ignored. Default 'ib'.
-   -H,--hosts-file TEXT        Shared file used by deamons to register their endpoints. (default './gkfs_hosts.txt')
-   -P,--rpc-protocol TEXT      Used RPC protocol for inter-node communication.
-                               Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, and Omni-Path, respectively. (Default ofi+sockets)
-                               Libfabric must have enabled support verbs or psm2.
-   --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
-   -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
-   --version                   Print version and exit.
+Options:
+  -h,--help                   Print this help message and exit
+  -m,--mountdir TEXT REQUIRED Virtual mounting directory where GekkoFS is available.
+  -r,--rootdir TEXT REQUIRED  Local data directory where GekkoFS data for this daemon is stored.
+  -s,--rootdir-suffix TEXT    Creates an additional directory within the rootdir, allowing multiple daemons on one node.
+  -i,--metadir TEXT           Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.
+  -l,--listen TEXT            Address or interface to bind the daemon to. Default: local hostname.
+                              When used with ofi+verbs the FI_VERBS_IFACE environment variable is set accordingly which associates the verbs device with the network interface. In case FI_VERBS_IFACE is already defined, the argument is ignored. Default 'ib'.
+  -H,--hosts-file TEXT        Shared file used by deamons to register their endpoints. (default './gkfs_hosts.txt')
+  -P,--rpc-protocol TEXT      Used RPC protocol for inter-node communication.
+                              Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, and Omni-Path, respectively. (Default ofi+sockets)
+                              Libfabric must have enabled support verbs or psm2.
+  --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
+  --clean-rootdir             Cleans Rootdir >before< launching the deamon
+  -c,--clean-rootdir-finish   Cleans Rootdir >after< the deamon finishes
+  -d,--dbbackend TEXT         Metadata database backend to use. Available: {rocksdb, parallaxdb}
+                              RocksDB is default if not set. Parallax support is experimental.
+                              Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
+  --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
+  --version                   Print version and exit.
 ````
 
 Shut it down by gracefully killing the process (SIGTERM).

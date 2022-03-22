@@ -119,17 +119,13 @@ include(gkfs-code-coverage)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
-# Rocksdb dependencies
-find_package(LZ4 REQUIRED)
-find_package(JeMalloc) # required if rocksdb has been build with jemalloc
-find_package(RocksDB REQUIRED)
+
 # margo dependencies
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
 find_package(Margo REQUIRED)
 find_package(Syscall_intercept REQUIRED)
 find_package(Threads REQUIRED)
-
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
 # produces a std::filesystem imported target that takes care of all these
 # details transparently
@@ -182,6 +178,8 @@ if (GKFS_ENABLE_AGIOS)
     find_package(AGIOS REQUIRED)
 endif ()
 
+option(GKFS_ENABLE_PARALLAX "Enable Parallax db backend" OFF)
+option(GKFS_ENABLE_ROCKSDB "Enable ROCKSDB backend" ON)
 
 set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
 add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
@@ -199,26 +197,7 @@ endif()
 
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
-# Imported target
-add_library(RocksDB INTERFACE IMPORTED GLOBAL)
-target_link_libraries(RocksDB
-    INTERFACE
-    ${ROCKSDB_LIBRARIES}
-    # rocksdb libs
-    ${LZ4_LIBRARIES}
-    )
 
-if (${JeMalloc_FOUND})
-    target_link_libraries(RocksDB
-        INTERFACE
-        ${JEMALLOC_LIBRARIES}
-        )
-endif ()
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(RocksDB
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
-    )
 
 add_library(CLI11 INTERFACE)
 # we cannot use target_include_directories with CMake < 3.11

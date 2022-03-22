@@ -1,0 +1,85 @@
+################################################################################
+# Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany          #
+#                                                                              #
+# This software was partially supported by the                                 #
+# EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
+#                                                                              #
+# This software was partially supported by the                                 #
+# ADA-FS project under the SPPEXA project funded by the DFG.                   #
+#                                                                              #
+# This file is part of GekkoFS.                                                #
+#                                                                              #
+# GekkoFS is free software: you can redistribute it and/or modify              #
+# it under the terms of the GNU General Public License as published by         #
+# the Free Software Foundation, either version 3 of the License, or            #
+# (at your option) any later version.                                          #
+#                                                                              #
+# GekkoFS is distributed in the hope that it will be useful,                   #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
+# GNU General Public License for more details.                                 #
+#                                                                              #
+# You should have received a copy of the GNU General Public License            #
+# along with GekkoFS.  If not, see <https://www.gnu.org/licenses/>.            #
+#                                                                              #
+# SPDX-License-Identifier: GPL-3.0-or-later                                    #
+################################################################################
+
+# vi: ft=bash
+
+# Variables to be imported into the scripts
+declare -A wgetdeps clonedeps clonedeps_args clonedeps_patches extra_install_args
+declare -a order
+
+# Comment that should be displayed when printing the profile
+comment="Dependencies for Mogon 2 supercomputer"
+
+# Dependencies that must be downloaded directly
+wgetdeps=(
+    ["lz4"]="1.9.3"
+    ["capstone"]="4.0.2"
+    ["argobots"]="1.1"
+    ["rocksdb"]="6.26.1"
+    ["psm2"]="11.2.185"
+    ["json-c"]="0.15-20200726"
+)
+
+# Dependencies that must be cloned
+clonedeps=(
+    ["libfabric"]="HEAD@v1.13.2"
+    ["mercury"]="v2.1.0"
+    ["margo"]="v0.9.6"
+    ["syscall_intercept"]="2c8765fa292bc9c28a22624c528580d54658813d"
+    ["date"]="e7e1482087f58913b80a20b04d5c58d9d6d90155"
+    ["agios"]="c26a6544200f823ebb8f890dd94e653d148bf226@development"
+    ["parallax"]="c130decd7a71c60c20b98d6a23924f05f754c3cd"
+)
+
+# Extra arguments for git clone
+clonedeps_args=(
+    ["mercury"]="--recurse-submodules"
+)
+
+# Patches that should be applied post-clone
+clonedeps_patches=(
+    ["syscall_intercept"]="syscall_intercept.patch"
+)
+
+# Ordering that MUST be followed when downloading
+order=(
+    "lz4" "capstone" "json-c" "psm2" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
+    "agios" "parallax"
+)
+
+# Extra arguments passed to the installation script. As such, they can
+# reference the following variables:
+#  - CMAKE: a variable that expands to the cmake binary
+#  - SOURCE_DIR: the directory where the sources for the package were
+#               downloaded
+#  - INSTALL_DIR: the directory where the package should be installed
+#  - CORES: the number of cores to use when building
+#  - PERFORM_TEST: whether tests for the package should be executed
+extra_install_args=(
+    ["libfabric"]="--enable-psm2=yes --with-psm2-src=${SOURCE_DIR}/psm2"
+)

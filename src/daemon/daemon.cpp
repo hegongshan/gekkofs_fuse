@@ -69,6 +69,7 @@ namespace fs = std::filesystem;
 
 static condition_variable shutdown_please; // handler for shutdown signaling
 static mutex mtx; // mutex to wait on shutdown conditional variable
+static bool keep_rootdir = true;
 
 struct cli_options {
     string mountdir;
@@ -78,6 +79,8 @@ struct cli_options {
     string listen;
     string hosts_file;
     string rpc_protocol;
+    string dbbackend;
+    string parallax_size;
 };
 
 /**
@@ -241,12 +244,13 @@ void
 init_environment() {
     // Initialize metadata db
     auto metadata_path = fmt::format("{}/{}", GKFS_DATA->metadir(),
-                                     gkfs::config::rocksdb::data_dir);
+                                     gkfs::config::metadata::dir);
+    fs::create_directories(metadata_path);
     GKFS_DATA->spdlogger()->debug("{}() Initializing metadata DB: '{}'",
                                   __func__, metadata_path);
     try {
-        GKFS_DATA->mdb(
-                std::make_shared<gkfs::metadata::MetadataDB>(metadata_path));
+        GKFS_DATA->mdb(std::make_shared<gkfs::metadata::MetadataDB>(
+                metadata_path, GKFS_DATA->dbbackend()));
     } catch(const std::exception& e) {
         GKFS_DATA->spdlogger()->error(
                 "{}() Failed to initialize metadata DB: {}", __func__,
@@ -407,6 +411,15 @@ destroy_enviroment() {
 
     GKFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
     GKFS_DATA->close_mdb();
+
+
+    // Delete rootdir/metadir if requested
+    if(!keep_rootdir) {
+        GKFS_DATA->spdlogger()->info("{}() Removing rootdir and metadir ...",
+                                     __func__);
+        fs::remove_all(GKFS_DATA->metadir(), ecode);
+        fs::remove_all(GKFS_DATA->rootdir(), ecode);
+    }
 }
 
 /**
@@ -536,7 +549,7 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     auto rootdir_path = fs::path(rootdir);
     if(desc.count("--rootdir-suffix")) {
         if(opts.rootdir_suffix == gkfs::config::data::chunk_dir ||
-           opts.rootdir_suffix == gkfs::config::rocksdb::data_dir)
+           opts.rootdir_suffix == gkfs::config::metadata::dir)
             throw runtime_error(fmt::format(
                     "rootdir_suffix '{}' is reserved and not allowed.",
                     opts.rootdir_suffix));
@@ -554,8 +567,13 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
         GKFS_DATA->spdlogger()->debug("{}() Cleaning rootdir '{}' ...",
                                       __func__, rootdir_path.native());
         fs::remove_all(rootdir_path.native());
-        GKFS_DATA->spdlogger()->info("{}() Rootdir cleaned.", __func__);
+        GKFS_DATA->spdlogger()->info("{}() rootdir cleaned.", __func__);
     }
+
+    if(desc.count("--clean-rootdir-finish")) {
+        keep_rootdir = false;
+    }
+
     GKFS_DATA->spdlogger()->debug("{}() Root directory: '{}'", __func__,
                                   rootdir_path.native());
     fs::create_directories(rootdir_path);
@@ -569,7 +587,13 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
 #else
         auto metadir_path = fs::path(metadir);
 #endif
-
+        if(desc.count("--clean-rootdir")) {
+            // may throw exception (caught in main)
+            GKFS_DATA->spdlogger()->debug("{}() Cleaning metadir '{}' ...",
+                                          __func__, metadir_path.native());
+            fs::remove_all(metadir_path.native());
+            GKFS_DATA->spdlogger()->info("{}() metadir cleaned.", __func__);
+        }
         fs::create_directories(metadir_path);
         GKFS_DATA->metadir(fs::canonical(metadir_path).native());
 
@@ -586,6 +610,39 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
 #else
         GKFS_DATA->metadir(GKFS_DATA->rootdir());
 #endif
+    }
+
+    if(desc.count("--dbbackend")) {
+        if(opts.dbbackend == gkfs::metadata::rocksdb_backend ||
+           opts.dbbackend == gkfs::metadata::parallax_backend) {
+#ifndef GKFS_ENABLE_PARALLAX
+            if(opts.dbbackend == gkfs::metadata::parallax_backend) {
+                throw runtime_error(fmt::format(
+                        "dbbackend '{}' was not compiled and is disabled. "
+                        "Pass -DGKFS_ENABLE_PARALLAX:BOOL=ON to CMake to enable.",
+                        opts.dbbackend));
+            }
+#endif
+#ifndef GKFS_ENABLE_ROCKSDB
+            if(opts.dbbackend == gkfs::metadata::rocksdb_backend) {
+                throw runtime_error(fmt::format(
+                        "dbbackend '{}' was not compiled and is disabled. "
+                        "Pass -DGKFS_ENABLE_ROCKSDB:BOOL=ON to CMake to enable.",
+                        opts.dbbackend));
+            }
+#endif
+            GKFS_DATA->dbbackend(opts.dbbackend);
+        } else {
+            throw runtime_error(
+                    fmt::format("dbbackend '{}' is not valid. Consult `--help`",
+                                opts.dbbackend));
+        }
+
+    } else
+        GKFS_DATA->dbbackend(gkfs::metadata::rocksdb_backend);
+
+    if(desc.count("--parallaxsize")) { // Size in GB
+        GKFS_DATA->parallax_size_md(stoi(opts.parallax_size));
     }
 }
 
@@ -605,7 +662,6 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
  */
 int
 main(int argc, const char* argv[]) {
-    // Define arg parsing
     CLI::App desc{"Allowed options"};
     cli_options opts{};
     // clang-format off
@@ -621,7 +677,7 @@ main(int argc, const char* argv[]) {
                     "Creates an additional directory within the rootdir, allowing multiple daemons on one node.");
     desc.add_option(
                     "--metadir,-i", opts.metadir,
-                    "Metadata directory where GekkoFS' RocksDB data directory is located. If not set, rootdir is used.");
+                    "Metadata directory where GekkoFS RocksDB data directory is located. If not set, rootdir is used.");
     desc.add_option(
                     "--listen,-l", opts.listen,
                     "Address or interface to bind the daemon to. Default: local hostname.\n"
@@ -642,8 +698,19 @@ main(int argc, const char* argv[]) {
                 "Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, "
                 "instead of using the RPC protocol. (Default off)");
     desc.add_flag(
-                "--clean-rootdir,-c",
+                "--clean-rootdir",
                 "Cleans Rootdir >before< launching the deamon");
+    desc.add_flag(
+                "--clean-rootdir-finish,-c",
+                "Cleans Rootdir >after< the deamon finishes");
+    desc.add_option(
+                "--dbbackend,-d", opts.dbbackend,
+                "Metadata database backend to use. Available: {rocksdb, parallaxdb}\n"
+                "RocksDB is default if not set. Parallax support is experimental.\n"
+                "Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.");
+    desc.add_option("--parallaxsize", opts.parallax_size,
+                    "parallaxdb - metadata file size in GB (default 8GB), "
+                    "used only with new files");
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on
     try {
@@ -651,6 +718,8 @@ main(int argc, const char* argv[]) {
     } catch(const CLI::ParseError& e) {
         return desc.exit(e);
     }
+
+
     if(desc.count("--version")) {
         cout << GKFS_VERSION_STRING << endl;
 #ifndef NDEBUG

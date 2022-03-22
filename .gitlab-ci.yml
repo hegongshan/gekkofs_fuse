@@ -24,14 +24,14 @@ variables:
   GIT_SUBMODULE_STRATEGY:       recursive
 
 # base image
-image: gekkofs/core:0.9.0
+image: gekkofs/core:0.9.1
 
 ################################################################################
 ## Validating
 ################################################################################
 check format:
   stage: lint
-  image: gekkofs/linter:0.9.0
+  image: gekkofs/linter:0.9.1
   needs: []
   script:
     - ${SCRIPTS_DIR}/check_format.sh
@@ -45,7 +45,7 @@ check format:
 ################################################################################
 gkfs:
   stage: build
-  image: gekkofs/deps:0.9.0
+  image: gekkofs/deps:0.9.1
   interruptible: true
   needs: []
   script:
@@ -59,6 +59,8 @@ gkfs:
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       -DGKFS_USE_GUIDED_DISTRIBUTION:BOOL=ON
+      -DGKFS_ENABLE_PARALLAX:BOOL=ON
+      -DGKFS_ENABLE_ROCKSDB:BOOL=ON
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
     # reduce artifacts size
@@ -71,7 +73,7 @@ gkfs:
 
 gkfwd:
   stage: build
-  image: gekkofs/deps:0.9.0
+  image: gekkofs/deps:0.9.1
   interruptible: true
   needs: []
   script:
@@ -85,6 +87,8 @@ gkfwd:
       -DGKFS_INSTALL_TESTS:BOOL=ON
       -DGKFS_ENABLE_FORWARDING:BOOL=ON
       -DGKFS_ENABLE_AGIOS:BOOL=ON
+      -DGKFS_ENABLE_PARALLAX:BOOL=OFF
+      -DGKFS_ENABLE_ROCKSDB:BOOL=ON
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
@@ -104,15 +108,13 @@ gkfwd:
 ## == tests for scripts ====================
 scripts:
   stage: test
-  image: gekkofs/testing:0.9.0
+  image: gekkofs/testing:0.9.1
   needs: []
-  parallel:
-    matrix:
-      - SUBTEST: [ dl_dep.sh, compile_dep.sh ]
   script:
     - mkdir -p ${BUILD_PATH}/tests/scripts
     - cd ${BUILD_PATH}/tests/scripts
-    - ${BATS} -r ${CI_PROJECT_DIR}/tests/scripts/${SUBTEST} --formatter junit > report.xml
+    - ${BATS} -r ${CI_PROJECT_DIR}/tests/scripts/dl_dep.sh --formatter junit
+    - ${BATS} -r ${CI_PROJECT_DIR}/tests/scripts/compile_dep.sh --formatter junit
   artifacts:
     expire_in: 1 week
     reports:
@@ -122,7 +124,7 @@ scripts:
 ## == integration tests for gkfs ===========
 gkfs:integration:
   stage: test
-  image: gekkofs/testing:0.9.0
+  image: gekkofs/testing:0.9.1
   interruptible: true
   needs: ['gkfs']
   parallel:
@@ -131,9 +133,10 @@ gkfs:integration:
 
   script:
     ## run tests
+    - export PATH=${PATH}:/usr/local/bin
     - mkdir -p ${BUILD_PATH}/tests/run
     - cd ${BUILD_PATH}/tests/integration
-    - ${PYTEST} -v -n $(nproc)
+    - ${PYTEST} -v -n 1
           ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
           --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml
@@ -167,7 +170,7 @@ gkfs:integration:
 ## == integration tests for gkfwd ==========
 gkfwd:integration:
   stage: test
-  image: gekkofs/testing:0.9.0
+  image: gekkofs/testing:0.9.1
   interruptible: true
   needs: ['gkfwd']
   parallel:
@@ -212,9 +215,11 @@ gkfwd:integration:
 ## == unit tests for gkfs ==================
 gkfs:unit:
   stage: test
-  image: gekkofs/testing:0.9.0
+  image: gekkofs/testing:0.9.1
   needs: ['gkfs']
   script:
+    ## Add path to mkfs.kreon
+    - export PATH=${PATH}:/usr/local/bin
     ## run actual tests
     - cd ${BUILD_PATH}/tests/unit
     - ctest -j $(nproc) -L unit::all --output-junit report.xml
@@ -240,7 +245,7 @@ gkfs:unit:
 ################################################################################
 documentation:
   stage: docs
-  image: gekkofs/docs:0.9.0
+  image: gekkofs/docs:0.9.1
   needs: []
   rules:
     # we only build the documentation automatically if we are on the
@@ -276,7 +281,7 @@ documentation:
 ################################################################################
 coverage:
   stage: report
-  image: gekkofs/coverage:0.9.0
+  image: gekkofs/coverage:0.9.1
   needs: [ 'gkfs:integration', 'gkfwd:integration', 'gkfs:unit' ]
   script:
     - cd ${BUILD_PATH}

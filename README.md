@@ -103,7 +103,12 @@ Options:
                               Available: {ofi+sockets, ofi+verbs, ofi+psm2} for TCP, Infiniband, and Omni-Path, respectively. (Default ofi+sockets)
                               Libfabric must have enabled support verbs or psm2.
   --auto-sm                   Enables intra-node communication (IPCs) via the `na+sm` (shared memory) protocol, instead of using the RPC protocol. (Default off)
-  -c,--clean-rootdir          Cleans Rootdir >before< launching the deamon
+  --clean-rootdir             Cleans Rootdir >before< launching the deamon
+  -c,--clean-rootdir-finish   Cleans Rootdir >after< the deamon finishes
+  -d,--dbbackend TEXT         Metadata database backend to use. Available: {rocksdb, parallaxdb}
+                              RocksDB is default if not set. Parallax support is experimental.
+                              Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
+  --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
   --version                   Print version and exit.
 ```
 
@@ -224,6 +229,14 @@ Then, the `examples/distributors/guided/generate.py` scrpt is used to create the
 * `python examples/distributors/guided/generate.py ~/test/GLOBAL.txt >> guided_config.txt`
 
 Finally, modify `guided_config.txt` to your distribution requirements.
+
+### Metadata Backends
+There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based on `PARALLAX` from `FORTH` 
+is available.
+To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
+
+Once it is enabled, `--dbbackend` option will be functional.
+
 
 ### Acknowledgment
 

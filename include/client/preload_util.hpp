@@ -32,7 +32,6 @@
 
 #include <client/preload.hpp>
 #include <common/metadata.hpp>
-
 #include <string>
 #include <iostream>
 #include <map>

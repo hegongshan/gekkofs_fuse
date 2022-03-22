@@ -34,6 +34,7 @@
 #include <unordered_map>
 #include <map>
 #include <functional> //std::hash
+#include <string_view>
 
 /* Forward declarations */
 namespace gkfs {
@@ -69,6 +70,11 @@ private:
 
     // Database
     std::shared_ptr<gkfs::metadata::MetadataDB> mdb_;
+    std::string dbbackend_;
+
+    // Parallax
+    unsigned long long parallax_size_md_ = 8589934592ull;
+
     // Storage backend
     std::shared_ptr<gkfs::data::ChunkStorage> storage_;
 
@@ -122,6 +128,12 @@ public:
 
     void
     metadir(const std::string& metadir_);
+
+    std::string_view
+    dbbackend() const;
+
+    void
+    dbbackend(const std::string& dbbackend_);
 
     const std::shared_ptr<gkfs::metadata::MetadataDB>&
     mdb() const;
@@ -191,6 +203,12 @@ public:
 
     void
     blocks_state(bool blocks_state);
+
+    unsigned long long
+    parallax_size_md() const;
+
+    void
+    parallax_size_md(unsigned int size_md);
 };
 
 } // namespace daemon

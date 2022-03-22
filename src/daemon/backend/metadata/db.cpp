@@ -33,14 +33,47 @@
 
 #include <common/metadata.hpp>
 #include <common/path_util.hpp>
+#include <iostream>
+#include <filesystem>
 
 extern "C" {
 #include <sys/stat.h>
 }
+namespace fs = std::filesystem;
 
 namespace gkfs::metadata {
 
-// private functions
+/**
+ * Factory to create DB instances
+ * @param path where KV store data is stored
+ * @param id parallax or rocksdb (default) backend
+ */
+struct MetadataDBFactory {
+    static std::unique_ptr<AbstractMetadataBackend>
+    create(const std::string& path, const std::string_view id) {
+
+        if(id == gkfs::metadata::parallax_backend) {
+#ifdef GKFS_ENABLE_PARALLAX
+            auto metadata_path = fmt::format("{}/{}", path,
+                                             gkfs::metadata::parallax_backend);
+            GKFS_METADATA_MOD->log()->trace("Using Parallax file '{}'",
+                                            metadata_path);
+            return std::make_unique<ParallaxBackend>(metadata_path);
+#endif
+        } else if(id == gkfs::metadata::rocksdb_backend) {
+#ifdef GKFS_ENABLE_ROCKSDB
+            auto metadata_path =
+                    fmt::format("{}/{}", path, gkfs::metadata::rocksdb_backend);
+            fs::create_directories(metadata_path);
+            GKFS_METADATA_MOD->log()->trace("Using RocksDB directory '{}'",
+                                            metadata_path);
+            return std::make_unique<RocksDBBackend>(metadata_path);
+#endif
+        }
+        GKFS_METADATA_MOD->log()->error("No valid metadata backend selected");
+        exit(EXIT_FAILURE);
+    }
+};
 
 /**
  * @internal
@@ -49,25 +82,8 @@ namespace gkfs::metadata {
  * see here: https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide
  * @endinternal
  */
-void
-MetadataDB::optimize_rocksdb_options(rdb::Options& options) {
-    options.max_successive_merges = 128;
-}
-
-// public functions
-
-void
-MetadataDB::throw_rdb_status_excpt(const rdb::Status& s) {
-    assert(!s.ok());
-
-    if(s.IsNotFound()) {
-        throw NotFoundException(s.ToString());
-    } else {
-        throw DBException(s.ToString());
-    }
-}
-
-MetadataDB::MetadataDB(const std::string& path) : path(path) {
+MetadataDB::MetadataDB(const std::string& path, const std::string_view database)
+    : path_(path) {
 
     /* Get logger instance and set it for data module and chunk storage */
     GKFS_METADATA_MOD->log(spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME));
@@ -75,30 +91,22 @@ MetadataDB::MetadataDB(const std::string& path) : path(path) {
     log_ = spdlog::get(GKFS_METADATA_MOD->LOGGER_NAME);
     assert(log_);
 
-    // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
-    options.IncreaseParallelism();
-    options.OptimizeLevelStyleCompaction();
-    // create the DB if it's not already present
-    options.create_if_missing = true;
-    options.merge_operator.reset(new MetadataMergeOperator);
-    MetadataDB::optimize_rocksdb_options(options);
-    write_opts.disableWAL = !(gkfs::config::rocksdb::use_write_ahead_log);
-    rdb::DB* rdb_ptr = nullptr;
-    auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
-    if(!s.ok()) {
-        throw std::runtime_error("Failed to open RocksDB: " + s.ToString());
-    }
-    this->db.reset(rdb_ptr);
+    backend_ = MetadataDBFactory::create(path, database);
 }
 
+MetadataDB::~MetadataDB() {
+    backend_.reset();
+}
+
+/**
+ * Gets a KV store value for a key
+ * @param key
+ * @return value
+ * @throws DBException on failure, NotFoundException if entry doesn't exist
+ */
 std::string
 MetadataDB::get(const std::string& key) const {
-    std::string val;
-    auto s = db->Get(rdb::ReadOptions(), key, &val);
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
-    return val;
+    return backend_->get(key);
 }
 
 void
@@ -106,11 +114,7 @@ MetadataDB::put(const std::string& key, const std::string& val) {
     assert(gkfs::path::is_absolute(key));
     assert(key == "/" || !gkfs::path::has_trailing_slash(key));
 
-    auto cop = CreateOperand(val);
-    auto s = db->Merge(write_opts, key, cop.serialize());
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
+    backend_->put(key, val);
 }
 
 /**
@@ -120,44 +124,27 @@ MetadataDB::put(const std::string& key, const std::string& val) {
  */
 void
 MetadataDB::put_no_exist(const std::string& key, const std::string& val) {
-    if(exists(key))
-        throw ExistsException(key);
-    put(key, val);
+
+    backend_->put_no_exist(key, val);
 }
 
 void
 MetadataDB::remove(const std::string& key) {
-    auto s = db->Delete(write_opts, key);
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
+
+    backend_->remove(key);
 }
 
 bool
 MetadataDB::exists(const std::string& key) {
-    std::string val;
-    auto s = db->Get(rdb::ReadOptions(), key, &val);
-    if(!s.ok()) {
-        if(s.IsNotFound()) {
-            return false;
-        } else {
-            MetadataDB::throw_rdb_status_excpt(s);
-        }
-    }
-    return true;
+
+    return backend_->exists(key);
 }
 
 void
 MetadataDB::update(const std::string& old_key, const std::string& new_key,
                    const std::string& val) {
-    // TODO use rdb::Put() method
-    rdb::WriteBatch batch;
-    batch.Delete(old_key);
-    batch.Put(new_key, val);
-    auto s = db->Write(write_opts, &batch);
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
+
+    backend_->update(old_key, new_key, val);
 }
 
 /**
@@ -167,11 +154,8 @@ MetadataDB::update(const std::string& old_key, const std::string& new_key,
  */
 void
 MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
-    auto uop = IncreaseSizeOperand(size, append);
-    auto s = db->Merge(write_opts, key, uop.serialize());
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
+
+    backend_->increase_size(key, size, append);
 }
 
 /**
@@ -181,11 +165,8 @@ MetadataDB::increase_size(const std::string& key, size_t size, bool append) {
  */
 void
 MetadataDB::decrease_size(const std::string& key, size_t size) {
-    auto uop = DecreaseSizeOperand(size);
-    auto s = db->Merge(write_opts, key, uop.serialize());
-    if(!s.ok()) {
-        MetadataDB::throw_rdb_status_excpt(s);
-    }
+
+    backend_->decrease_size(key, size);
 }
 
 std::vector<std::pair<std::string, bool>>
@@ -198,38 +179,7 @@ MetadataDB::get_dirents(const std::string& dir) const {
         root_path.push_back('/');
     }
 
-    rocksdb::ReadOptions ropts;
-    auto it = db->NewIterator(ropts);
-
-    std::vector<std::pair<std::string, bool>> entries;
-
-    for(it->Seek(root_path); it->Valid() && it->key().starts_with(root_path);
-        it->Next()) {
-
-        if(it->key().size() == root_path.size()) {
-            // we skip this path cause it is exactly the root_path
-            continue;
-        }
-
-        /***** Get File name *****/
-        auto name = it->key().ToString();
-        if(name.find_first_of('/', root_path.size()) != std::string::npos) {
-            // skip stuff deeper then one level depth
-            continue;
-        }
-        // remove prefix
-        name = name.substr(root_path.size());
-
-        // relative path of directory entries must not be empty
-        assert(!name.empty());
-
-        Metadata md(it->value().ToString());
-        auto is_dir = S_ISDIR(md.mode());
-
-        entries.emplace_back(std::move(name), is_dir);
-    }
-    assert(it->status().ok());
-    return entries;
+    return backend_->get_dirents(root_path);
 }
 
 std::vector<std::tuple<std::string, bool, size_t, time_t>>
@@ -242,39 +192,7 @@ MetadataDB::get_dirents_extended(const std::string& dir) const {
         root_path.push_back('/');
     }
 
-    rocksdb::ReadOptions ropts;
-    auto it = db->NewIterator(ropts);
-
-    std::vector<std::tuple<std::string, bool, size_t, time_t>> entries;
-
-    for(it->Seek(root_path); it->Valid() && it->key().starts_with(root_path);
-        it->Next()) {
-
-        if(it->key().size() == root_path.size()) {
-            // we skip this path cause it is exactly the root_path
-            continue;
-        }
-
-        /***** Get File name *****/
-        auto name = it->key().ToString();
-        if(name.find_first_of('/', root_path.size()) != std::string::npos) {
-            // skip stuff deeper then one level depth
-            continue;
-        }
-        // remove prefix
-        name = name.substr(root_path.size());
-
-        // relative path of directory entries must not be empty
-        assert(!name.empty());
-
-        Metadata md(it->value().ToString());
-        auto is_dir = S_ISDIR(md.mode());
-
-        entries.emplace_back(std::forward_as_tuple(std::move(name), is_dir,
-                                                   md.size(), md.ctime()));
-    }
-    assert(it->status().ok());
-    return entries;
+    return backend_->get_dirents_extended(root_path);
 }
 
 
@@ -285,15 +203,8 @@ MetadataDB::get_dirents_extended(const std::string& dir) const {
  * @endinternal
  */
 void
-MetadataDB::iterate_all() {
-    std::string key;
-    std::string val;
-    // Do RangeScan on parent inode
-    auto iter = db->NewIterator(rdb::ReadOptions());
-    for(iter->SeekToFirst(); iter->Valid(); iter->Next()) {
-        key = iter->key().ToString();
-        val = iter->value().ToString();
-    }
+MetadataDB::iterate_all() const {
+    backend_->iterate_all();
 }
 
 } // namespace gkfs::metadata

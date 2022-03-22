@@ -225,14 +225,14 @@ class FwdClientCreator:
 
 
 class Daemon:
-    def __init__(self, interface, workspace):
+    def __init__(self, interface, database, workspace):
 
         self._address = get_ephemeral_address(interface)
         self._workspace = workspace
-
+        self._database = database
         self._cmd = sh.Command(gkfs_daemon_cmd, self._workspace.bindirs)
         self._env = os.environ.copy()
-
+        self._metadir = self.rootdir
         libdirs = ':'.join(
                 filter(None, [os.environ.get('LD_LIBRARY_PATH', '')] +
                              [str(p) for p in self._workspace.libdirs]))
@@ -249,7 +249,11 @@ class Daemon:
 
         args = [ '--mountdir', self.mountdir,
                  '--rootdir', self.rootdir,
-                 '-l', self._address ]
+                 '-l', self._address,
+                 '--metadir', self._metadir,
+                 '--dbbackend', self._database]
+        if self._database == "parallaxdb" :
+            args.append('--clean-rootdir-finish')
 
         logger.debug(f"spawning daemon")
         logger.debug(f"cmdline: {self._cmd} " + " ".join(map(str, args)))
@@ -267,7 +271,7 @@ class Daemon:
         logger.debug("waiting for daemon to be ready")
 
         try:
-            self.wait_until_active(self._proc.pid, 60.0)
+            self.wait_until_active(self._proc.pid, 720.0)
         except Exception as ex:
             logger.error(f"daemon initialization failed: {ex}")
 
@@ -307,7 +311,7 @@ class Daemon:
 
         while perf_counter() - init_time < timeout:
             try:
-                logger.debug(f"checking log file")
+                # logger.debug(f"checking log file")
                 with open(self.logdir / gkfs_daemon_log_file) as log:
                     for line in islice(log, max_lines):
                         if re.search(gkfs_daemon_active_log_pattern, line) is not None:
@@ -365,6 +369,7 @@ class _proxy_exec():
 
     def __call__(self, *args, **kwargs):
         return self._client.run(self._name, *args, **kwargs)
+
 
 class Client:
     """
@@ -776,7 +781,7 @@ class FwdDaemon:
 
         while perf_counter() - init_time < timeout:
             try:
-                logger.debug(f"checking log file")
+#                logger.debug(f"checking log file")
                 with open(self.logdir / gkfwd_daemon_log_file) as log:
                     for line in islice(log, max_lines):
                         if re.search(gkfwd_daemon_active_log_pattern, line) is not None:
