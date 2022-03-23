@@ -39,6 +39,7 @@ comment="Dependencies required by the CI"
 wgetdeps=(
     ["argobots"]="1.1"
     ["rocksdb"]="6.26.1"
+    ["prometheus-cpp"]="v1.0.0"
     )
 
 # Dependencies that must be cloned
@@ -65,7 +66,7 @@ clonedeps_patches=(
 # Ordering that MUST be followed when downloading
 order=(
     "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept"
-    "date" "agios" "parallax" 
+    "date" "agios" "parallax" "prometheus-cpp" 
 )
 
 # Extra arguments passed to the installation script. As such, they can

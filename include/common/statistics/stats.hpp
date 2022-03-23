@@ -173,14 +173,13 @@ private:
 
     // Prometheus structs
     std::shared_ptr<Exposer> exposer;
-    ///< Push 
+    ///< Push
     std::shared_ptr<Gateway> gateway;
     std::shared_ptr<Registry> registry;
     Family<Counter>* family_counter;
     Family<Summary>* family_summary;
     std::map<IOPS_OP, Counter*> IOPS_Prometheus;
     std::map<SIZE_OP, Summary*> SIZE_Prometheus;
-
 
 
 public:

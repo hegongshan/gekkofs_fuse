@@ -33,13 +33,14 @@ using namespace std;
 
 namespace gkfs::utils {
 
-static std::string GetHostName() {
-  char hostname[1024];
+static std::string
+GetHostName() {
+    char hostname[1024];
 
-  if (::gethostname(hostname, sizeof(hostname))) {
-    return {};
-  }
-  return hostname;
+    if(::gethostname(hostname, sizeof(hostname))) {
+        return {};
+    }
+    return hostname;
 }
 
 Stats::Stats(bool output_thread, std::string stats_file) {
@@ -61,26 +62,29 @@ Stats::Stats(bool output_thread, std::string stats_file) {
     }
 
 
-    // Prometheus 
-    //exposer = std::make_shared<Exposer>("127.0.0.1:8080");
+    // Prometheus
+    // exposer = std::make_shared<Exposer>("127.0.0.1:8080");
     const auto labels = Gateway::GetInstanceLabel(GetHostName());
     gateway = std::make_shared<Gateway>("127.0.0.1", "9091", "GekkoFS", labels);
     registry = std::make_shared<Registry>();
     family_counter = &BuildCounter()
-                        .Name("IOPS")
-                        .Help("Number of IOPS")
-                        .Register(*registry);
-    
+                              .Name("IOPS")
+                              .Help("Number of IOPS")
+                              .Register(*registry);
+
     for(auto e : all_IOPS_OP) {
-        IOPS_Prometheus[e] = &family_counter->Add({{"operation",IOPS_OP_S[static_cast<int>(e)]}});
+        IOPS_Prometheus[e] = &family_counter->Add(
+                {{"operation", IOPS_OP_S[static_cast<int>(e)]}});
     }
 
     family_summary = &BuildSummary()
-                        .Name("SIZE")
-                        .Help("Size of OPs")
-                        .Register(*registry);
+                              .Name("SIZE")
+                              .Help("Size of OPs")
+                              .Register(*registry);
     for(auto e : all_SIZE_OP) {
-        SIZE_Prometheus[e] = &family_summary->Add({{"operation",SIZE_OP_S[static_cast<int>(e)]}},Summary::Quantiles{});
+        SIZE_Prometheus[e] = &family_summary->Add(
+                {{"operation", SIZE_OP_S[static_cast<int>(e)]}},
+                Summary::Quantiles{});
     }
 
     gateway->RegisterCollectable(registry);
@@ -307,9 +311,9 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
             output_map(of);
 #endif
 
-    // Prometheus Output
-     auto res = gateway->Push();
-    std::cout << "result " << res << std::endl;
+        // Prometheus Output
+        auto res = gateway->Push();
+        std::cout << "result " << res << std::endl;
         while(running and a < d) {
             a += 1s;
             std::this_thread::sleep_for(1s);
