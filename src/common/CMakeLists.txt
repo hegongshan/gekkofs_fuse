@@ -58,7 +58,7 @@ if(GKFS_ENABLE_PROMETHEUS)
     curl)
 endif()
 
-    target_link_libraries(statistics
+  target_link_libraries(statistics
   PRIVATE
   ${PROMETHEUS_LIB}
   )

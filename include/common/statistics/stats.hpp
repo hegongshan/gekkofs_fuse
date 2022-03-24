@@ -45,7 +45,7 @@
 
 
 // PROMETHEUS includes
-#ifdef GKFS_PROMETHEUS
+#ifdef GKFS_ENABLE_PROMETHEUS
 #include <prometheus/counter.h>
 #include <prometheus/summary.h>
 #include <prometheus/exposer.h>
@@ -176,7 +176,7 @@ private:
 
 
 // Prometheus Push structs
-#ifdef GKFS_PROMETHEUS
+#ifdef GKFS_ENABLE_PROMETHEUS
     std::shared_ptr<Gateway> gateway;   ///< Prometheus Gateway
     std::shared_ptr<Registry> registry; ///< Prometheus Counters Registry
     Family<Counter>* family_counter;    ///< Prometheus IOPS counter

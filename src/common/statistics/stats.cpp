@@ -33,6 +33,17 @@ using namespace std;
 
 namespace gkfs::utils {
 
+#ifdef GKFS_ENABLE_PROMETHEUS
+static std::string
+GetHostName() {
+    char hostname[1024];
+
+    if(::gethostname(hostname, sizeof(hostname))) {
+        return {};
+    }
+    return hostname;
+}
+#endif
 
 void
 Stats::setup_Prometheus(std::string gateway_ip, std::string gateway_port) {

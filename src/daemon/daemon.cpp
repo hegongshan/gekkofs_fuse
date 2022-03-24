@@ -662,7 +662,7 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     }
 
 #ifdef GKFS_ENABLE_PROMETHEUS
-    if(desc.count("--prometheus_gateway")) {
+    if(desc.count("--prometheus-gateway")) {
         auto gateway = opts.prometheus_gateway;
         GKFS_DATA->prometheus_gateway(gateway);
         GKFS_DATA->spdlogger()->debug("{}() Prometheus Gateway: '{}'", __func__,
