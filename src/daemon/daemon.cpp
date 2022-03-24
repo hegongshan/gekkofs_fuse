@@ -83,6 +83,7 @@ struct cli_options {
     string dbbackend;
     string parallax_size;
     string stats_file;
+    string prometheus_gateway;
 };
 
 /**
@@ -295,7 +296,8 @@ init_environment() {
 
     // Initialize Stats
     GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(
-            GKFS_DATA->output_stats(), GKFS_DATA->stats_file()));
+            GKFS_DATA->output_stats(), GKFS_DATA->stats_file(),
+            GKFS_DATA->prometheus_gateway()));
 
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
@@ -658,6 +660,15 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
         GKFS_DATA->spdlogger()->debug("{}() Stats Enabled: '{}'", __func__,
                                       stats_file);
     }
+
+#ifdef GKFS_ENABLE_PROMETHEUS
+    if(desc.count("--prometheus_gateway")) {
+        auto gateway = opts.prometheus_gateway;
+        GKFS_DATA->prometheus_gateway(gateway);
+        GKFS_DATA->spdlogger()->debug("{}() Prometheus Gateway: '{}'", __func__,
+                                      gateway);
+    }
+#endif
 }
 
 /**
@@ -728,6 +739,10 @@ main(int argc, const char* argv[]) {
     desc.add_option(
                 "--output-stats", opts.stats_file,
                 "Creates a thread that outputs the server stats each 10s, to the file specified");
+
+    desc.add_option(
+                "--prometheus-gateway", opts.prometheus_gateway,
+                "Defines the prometheus gateway, default is 127.0.0.1:9091, experimental enable at compilation");
 
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on

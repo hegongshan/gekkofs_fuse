@@ -11,12 +11,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### New
 
 - Added Stats ([!128](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/128)) gathering in servers
-- GKFS_CHUNK_STATS enables chunk usage output
-- Stats output can be enabled with --output-stats <filename>
+  - GKFS_CHUNK_STATS enables chunk usage output
+  - Stats output can be enabled with --output-stats <filename>
 - Added new experimental metadata backend:
   Parallax ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
     - Added support to use multiple metadata backends.
     - Added `--clean-rootdir-finish` argument to remove rootdir/metadir at the end when the daemon finishes.
+- Added Prometheus Ouput ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132))
+  - New option to define gateway --prometheus-gateway <gateway:port>
+  - Prometheus output is optional with "GKFS_ENABLE_PROMETHEUS"
 
 ### Changed
 

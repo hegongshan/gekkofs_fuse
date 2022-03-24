@@ -48,16 +48,20 @@ target_sources(statistics
     ${CMAKE_CURRENT_LIST_DIR}/statistics/stats.cpp
     )
 
+
+if(GKFS_ENABLE_PROMETHEUS)
     find_package(prometheus-cpp REQUIRED)
-  
-    target_link_libraries(statistics
-  PRIVATE
-  
+    set(PROMETHEUS_LIB
     prometheus-cpp-pull
     prometheus-cpp-push
     prometheus-cpp-core
-    curl
-    )
+    curl)
+endif()
+
+    target_link_libraries(statistics
+  PRIVATE
+  ${PROMETHEUS_LIB}
+  )
 
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)

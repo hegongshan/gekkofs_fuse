@@ -95,6 +95,9 @@ private:
     bool output_stats_ = false;
     std::string stats_file_;
 
+    // Prometheus
+    std::string prometheus_gateway_ = "127.0.0.1:9091";
+
 public:
     static FsData*
     getInstance() {
@@ -240,6 +243,12 @@ public:
 
     void
     stats_file(std::string stats_file);
+
+    std::string
+    prometheus_gateway() const;
+
+    void
+    prometheus_gateway(std::string prometheus_gateway_);
 };
 
 

@@ -44,7 +44,8 @@
 #include <fstream>
 
 
-// PROMETHEUS
+// PROMETHEUS includes
+#ifdef GKFS_PROMETHEUS
 #include <prometheus/counter.h>
 #include <prometheus/summary.h>
 #include <prometheus/exposer.h>
@@ -52,6 +53,9 @@
 #include <prometheus/gateway.h>
 
 using namespace prometheus;
+#endif
+
+
 /**
  * Provides storage capabilities to provide stats about GekkoFS
  * The information is per server.
@@ -171,16 +175,15 @@ private:
     dump(std::ofstream& of);
 
 
-    // Prometheus structs
-    std::shared_ptr<Exposer> exposer;
-    ///< Push
-    std::shared_ptr<Gateway> gateway;
-    std::shared_ptr<Registry> registry;
-    Family<Counter>* family_counter;
-    Family<Summary>* family_summary;
+// Prometheus Push structs
+#ifdef GKFS_PROMETHEUS
+    std::shared_ptr<Gateway> gateway;   ///< Prometheus Gateway
+    std::shared_ptr<Registry> registry; ///< Prometheus Counters Registry
+    Family<Counter>* family_counter;    ///< Prometheus IOPS counter
+    Family<Summary>* family_summary;    ///< Prometheus SIZE counter
     std::map<IOPS_OP, Counter*> IOPS_Prometheus;
     std::map<SIZE_OP, Summary*> SIZE_Prometheus;
-
+#endif
 
 public:
     /**
@@ -188,13 +191,24 @@ public:
      * @param output_thread creates an aditional thread that outputs the stats
      * @param filename file where to write the output
      */
-    Stats(bool output_thread, std::string filename);
+    Stats(bool output_thread, std::string filename,
+          std::string prometheus_gateway);
 
     /**
      * @brief Destroys the class, and any associated thread
      *
      */
     ~Stats();
+
+
+    /**
+     * @brief Set the up Prometheus gateway and structures
+     *
+     * @param gateway_ip
+     * @param gateway_port
+     */
+    void
+    setup_Prometheus(std::string gateway_ip, std::string gateway_port);
 
     /**
      * @brief Adds a new read access to the chunk/path specified

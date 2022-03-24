@@ -80,6 +80,7 @@ Options:
                               Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
   --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
   --output-stats TEXT         Outputs the stats to the file each 10s.
+  --prometheus-gateway TEXT   Defines the ip:port of the Prometheus Push gateway
   --version                   Print version and exit.
 ````
 

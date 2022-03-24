@@ -110,6 +110,7 @@ Options:
                               Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
   --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
   --output-stats TEXT         Enables the output of the stats on the FILE (each 10s) for debug
+  --prometheus-gateway TEXT   Defines the ip:port of the Prometheus Push gateway
   --version                   Print version and exit.
 ```
 
@@ -238,6 +239,9 @@ To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disab
 
 Once it is enabled, `--dbbackend` option will be functional.
 
+### Stats
+Pushing stats to Prometheus is enabled with the `-DGKFS_ENABLE_PROMETHEUS` and the setup of the `--output-stats <FILE>`. 
+Without the last one, the push to the gateway is disabled.
 
 ### Acknowledgment
 

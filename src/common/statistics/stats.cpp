@@ -33,17 +33,43 @@ using namespace std;
 
 namespace gkfs::utils {
 
-static std::string
-GetHostName() {
-    char hostname[1024];
 
-    if(::gethostname(hostname, sizeof(hostname))) {
-        return {};
+void
+Stats::setup_Prometheus(std::string gateway_ip, std::string gateway_port) {
+// Prometheus Push model. Gateway
+#ifdef GKFS_ENABLE_PROMETHEUS
+    const auto labels = Gateway::GetInstanceLabel(GetHostName());
+    gateway = std::make_shared<Gateway>(gateway_ip, gateway_port, "GekkoFS",
+                                        labels);
+
+    registry = std::make_shared<Registry>();
+    family_counter = &BuildCounter()
+                              .Name("IOPS")
+                              .Help("Number of IOPS")
+                              .Register(*registry);
+
+    for(auto e : all_IOPS_OP) {
+        IOPS_Prometheus[e] = &family_counter->Add(
+                {{"operation", IOPS_OP_S[static_cast<int>(e)]}});
     }
-    return hostname;
+
+    family_summary = &BuildSummary()
+                              .Name("SIZE")
+                              .Help("Size of OPs")
+                              .Register(*registry);
+
+    for(auto e : all_SIZE_OP) {
+        SIZE_Prometheus[e] = &family_summary->Add(
+                {{"operation", SIZE_OP_S[static_cast<int>(e)]}},
+                Summary::Quantiles{});
+    }
+
+    gateway->RegisterCollectable(registry);
+#endif /// GKFS_ENABLE_PROMETHEUS
 }
 
-Stats::Stats(bool output_thread, std::string stats_file) {
+Stats::Stats(bool output_thread, std::string stats_file,
+             std::string prometheus_gateway) {
 
     // Init clocks
     start = std::chrono::steady_clock::now();
@@ -61,33 +87,15 @@ Stats::Stats(bool output_thread, std::string stats_file) {
         TIME_SIZE[e].push_back(pair(std::chrono::steady_clock::now(), 0.0));
     }
 
-
-    // Prometheus
-    // exposer = std::make_shared<Exposer>("127.0.0.1:8080");
-    const auto labels = Gateway::GetInstanceLabel(GetHostName());
-    gateway = std::make_shared<Gateway>("127.0.0.1", "9091", "GekkoFS", labels);
-    registry = std::make_shared<Registry>();
-    family_counter = &BuildCounter()
-                              .Name("IOPS")
-                              .Help("Number of IOPS")
-                              .Register(*registry);
-
-    for(auto e : all_IOPS_OP) {
-        IOPS_Prometheus[e] = &family_counter->Add(
-                {{"operation", IOPS_OP_S[static_cast<int>(e)]}});
+#ifdef GKFS_ENABLE_PROMETHEUS
+    try {
+        auto pos_separator = prometheus_gateway.find(":");
+        setup_Prometheus(prometheus_gateway.substr(0, pos_separator),
+                         prometheus_gateway.substr(pos_separator + 1));
+    } catch(const std::exception& e) {
+        setup_Prometheus("127.0.0.1", "9091");
     }
-
-    family_summary = &BuildSummary()
-                              .Name("SIZE")
-                              .Help("Size of OPs")
-                              .Register(*registry);
-    for(auto e : all_SIZE_OP) {
-        SIZE_Prometheus[e] = &family_summary->Add(
-                {{"operation", SIZE_OP_S[static_cast<int>(e)]}},
-                Summary::Quantiles{});
-    }
-
-    gateway->RegisterCollectable(registry);
+#endif
 
     output_thread_ = output_thread;
 
@@ -164,7 +172,9 @@ Stats::add_value_iops(enum IOPS_OP iop) {
         TIME_IOPS[iop].pop_front();
 
     TIME_IOPS[iop].push_back(std::chrono::steady_clock::now());
+#ifdef GKFS_ENABLE_PROMETHEUS
     IOPS_Prometheus[iop]->Increment();
+#endif
 }
 
 void
@@ -177,8 +187,9 @@ Stats::add_value_size(enum SIZE_OP iop, unsigned long long value) {
         TIME_SIZE[iop].pop_front();
 
     TIME_SIZE[iop].push_back(pair(std::chrono::steady_clock::now(), value));
+#ifdef GKFS_ENABLE_PROMETHEUS
     SIZE_Prometheus[iop]->Observe(value);
-
+#endif
     if(iop == SIZE_OP::READ_SIZE)
         add_value_iops(IOPS_OP::IOPS_READ);
     else if(iop == SIZE_OP::WRITE_SIZE)
@@ -310,10 +321,11 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
         if(times % 4 == 0)
             output_map(of);
 #endif
-
+#ifdef GKFS_ENABLE_PROMETHEUS
         // Prometheus Output
         auto res = gateway->Push();
         std::cout << "result " << res << std::endl;
+#endif
         while(running and a < d) {
             a += 1s;
             std::this_thread::sleep_for(1s);

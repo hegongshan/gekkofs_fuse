@@ -257,4 +257,14 @@ FsData::stats_file(std::string stats_file) {
     FsData::stats_file_ = stats_file;
 }
 
+std::string
+FsData::prometheus_gateway() const {
+    return prometheus_gateway_;
+}
+
+void
+FsData::prometheus_gateway(std::string prometheus_gateway) {
+    FsData::prometheus_gateway_ = prometheus_gateway;
+}
+
 } // namespace gkfs::daemon
