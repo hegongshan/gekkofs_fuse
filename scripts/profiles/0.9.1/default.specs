@@ -42,7 +42,6 @@ wgetdeps=(
     ["argobots"]="1.1"
     ["rocksdb"]="6.26.1"
     ["json-c"]="0.15-20200726"
-    ["prometheus-cpp"]="v1.0.0"
 )
 
 # Dependencies that must be cloned
@@ -66,7 +65,7 @@ clonedeps_patches=(
 
 # Ordering that MUST be followed when downloading
 order=(
-    "lz4" "capstone" "json-c" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date" "prometheus-cpp"
+    "lz4" "capstone" "json-c" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
 )
 
 # Extra arguments passed to the installation script. As such, they can

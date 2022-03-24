@@ -334,8 +334,7 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
 #endif
 #ifdef GKFS_ENABLE_PROMETHEUS
         // Prometheus Output
-        auto res = gateway->Push();
-        std::cout << "result " << res << std::endl;
+        gateway->Push();
 #endif
         while(running and a < d) {
             a += 1s;
