@@ -828,7 +828,7 @@ rpc_srv_get_dirents_extended(hg_handle_t handle) {
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 
-#ifdef HAS_SYMLINKS
+#if defined(HAS_SYMLINKS) || defined(HAS_RENAME)
 /**
  * @brief Serves a request create a symbolic link. This function is UNUSED.
  * @internal

@@ -172,12 +172,13 @@ gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
                     return -1;
                 }
                 md = *md_;
-
-                if(rename == false && md.blocks() == -1) {
-                    LOG(ERROR, "File is renamed '{}': '{}' - rename: {}", path,
-                        rename);
-                    return -1;
-                }
+                #ifdef HAS_RENAME
+                    if(rename == false && md.blocks() == -1) {
+                        LOG(DEBUG, "File is renamed '{}': '{}' - rename: {}", path,
+                            rename);
+                        return -1;
+                    }
+                #endif
             } else {
                 LOG(ERROR, "Error creating file: '{}'", strerror(errno));
                 return -1;
@@ -208,25 +209,23 @@ gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
         }
         return gkfs_open(md.target_path(), mode, flags);
     }
-
+#endif
+#ifdef HAS_RENAME
 
     /// The file is a renamed file, so we need to get the metadata of the
     /// original file.
-    /// This does not work as we will check that this is a -1.
     if(!md.target_path().empty()) {
-        LOG(ERROR, "File '{}' is renamed, reentering with '{}'", path,
+        LOG(DEBUG, "File '{}' is renamed, reentering with '{}'", path,
             md.target_path());
         return gkfs_open(md.target_path(), mode, flags, true);
     }
 
-#endif
-
     if(rename == false && md.blocks() == -1) {
-        LOG(ERROR, "File '{}' is renamed __", path);
+        LOG(DEBUG, "File '{}' is renamed __", path);
         errno = ENOENT;
         return -1;
     }
-
+#endif
     if(S_ISDIR(md.mode())) {
         return gkfs_opendir(path);
     }
@@ -332,6 +331,7 @@ gkfs_access(const std::string& path, const int mask, bool follow_links) {
     return 0;
 }
 
+#ifdef HAS_RENAME
 /**
  * gkfs wrapper for rename() system calls
  * errno may be set
@@ -358,6 +358,7 @@ gkfs_rename(const string& old_path, const string& new_path) {
 
     return 0;
 }
+#endif
 
 /**
  * gkfs wrapper for stat() system calls
@@ -370,9 +371,15 @@ gkfs_rename(const string& old_path, const string& new_path) {
 int
 gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
-    if(!md or md.value().blocks() == -1) {
+    if(!md) {
         return -1;
     }
+    #ifdef HAS_RENAME
+        if (md.value().blocks() == -1) {
+            errno = ENOENT;
+            return -1;
+        }
+    #endif
     gkfs::utils::metadata_to_stat(path, *md, *buf);
     return 0;
 }
@@ -395,10 +402,15 @@ gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
            struct statx* buf, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
 
-    if(!md or md.value().blocks() == -1) {
+    if(!md) {
         return -1;
     }
-
+    #ifdef HAS_RENAME
+        if (md.value().blocks() == -1) {
+            errno = ENOENT;
+            return -1;
+        }
+    #endif
     struct stat tmp {};
 
     gkfs::utils::metadata_to_stat(path, *md, tmp);

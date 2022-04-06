@@ -149,11 +149,11 @@ gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp,
 int
 gkfs_rmdir(const std::string& path);
 
-
+#ifdef HAS_RENAME
 int
 gkfs_rename(const std::string& old_path_resolved,
             const std::string& new_path_resolved);
-
+#endif
 } // namespace gkfs::syscall
 
 // gkfs_getsingleserverdir is using extern "C" to demangle it for C usage

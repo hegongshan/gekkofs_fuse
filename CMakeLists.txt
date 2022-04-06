@@ -153,6 +153,12 @@ if (SYMLINK_SUPPORT)
 endif ()
 message(STATUS "[gekkofs] Symlink support: ${SYMLINK_SUPPORT}")
 
+option(RENAME_SUPPORT "Compile with support for rename ops" ON)
+if (RENAME_SUPPORT)
+    add_definitions(-DHAS_RENAME)
+endif ()
+message(STATUS "[gekkofs] Rename support: ${RENAME_SUPPORT}")
+
 set(MAX_INTERNAL_FDS 256 CACHE STRING "Number of file descriptors reserved for internal use")
 add_definitions(-DMAX_INTERNAL_FDS=${MAX_INTERNAL_FDS})
 message(STATUS "[gekkofs] File descriptors reserved for internal use: ${MAX_INTERNAL_FDS}")

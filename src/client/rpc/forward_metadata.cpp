@@ -341,6 +341,7 @@ forward_update_metadentry(
     }
 }
 
+#ifdef HAS_RENAME
 /**
  * Send an RPC for a rename metadentry request.
  * Steps.. SetUp a blkcnt of -1
@@ -450,6 +451,7 @@ forward_rename(const string& path, const string& path2,
     }
 }
 
+#endif
 
 /**
  * Send an RPC request for an update to the file size.
