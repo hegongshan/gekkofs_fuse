@@ -79,7 +79,7 @@ rpc_srv_create(hg_handle_t handle) {
         gkfs::metadata::create(in.path, md);
         out.err = 0;
         GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IOPS_OP::IOPS_CREATE);
+                gkfs::utils::Stats::IopsOp::iops_create);
     } catch(const gkfs::metadata::ExistsException& e) {
         out.err = EEXIST;
     } catch(const std::exception& e) {
@@ -126,7 +126,7 @@ rpc_srv_stat(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug("{}() path: '{}'", __func__, in.path);
     std::string val;
 
-    GKFS_DATA->stats()->add_value_iops(gkfs::utils::Stats::IOPS_OP::IOPS_STATS);
+    GKFS_DATA->stats()->add_value_iops(gkfs::utils::Stats::IopsOp::iops_stats);
 
     try {
         // get the metadata
@@ -248,7 +248,7 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
                 GKFS_DATA->storage()->destroy_chunk_space(in.path);
         }
         GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IOPS_OP::IOPS_REMOVE);
+                gkfs::utils::Stats::IopsOp::iops_remove);
     } catch(const gkfs::metadata::DBException& e) {
         GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
                                       in.path, e.what());
@@ -544,7 +544,7 @@ rpc_srv_get_dirents(hg_handle_t handle) {
     try {
         entries = gkfs::metadata::get_dirents(in.path);
         GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IOPS_OP::IOPS_DIRENTS);
+                gkfs::utils::Stats::IopsOp::iops_dirent);
     } catch(const ::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Error during get_dirents(): '{}'",
                                       __func__, e.what());

@@ -42,6 +42,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <config.hpp>
 
 
 // PROMETHEUS includes
@@ -64,78 +65,72 @@ using namespace prometheus;
  */
 namespace gkfs::utils {
 
-/*
-    Number of operations (Create, write/ read, remove, mkdir...)
-    Size of database (metadata keys, should be not needed, any)
-    Size of data (+write - delete)
-    Server Bandwidth (write / read operations)
+/**
+ *
+ * Number of operations (Create, write/ read, remove, mkdir...)
+ * Size of database (metadata keys, should be not needed, any)
+ * Size of data (+write - delete)
+ * Server Bandwidth (write / read operations)
+ *
+ * mean, (lifetime of the server)
+ * 1 minute mean
+ * 5 minute mean
+ * 10 minute mean
+ *
+ * To provide the stats that we need,
+ * we need to store the info and the timestamp to calculate it
+ * A vector should work, with a maximum of elements,
+ */
 
-    mean, (lifetime of the server)
-    1 minute mean
-    5 minute mean
-    10 minute mean
-
-    To provide the stats that we need,
-    we need to store the info and the timestamp to calculate it
-    A vector should work, with a maximum of elements,
-    The stats will only be calculated when requested
-    a cached value will be send (with a deadline)
-    */
 class Stats {
 public:
-    enum class IOPS_OP {
-        IOPS_CREATE,
-        IOPS_WRITE,
-        IOPS_READ,
-        IOPS_STATS,
-        IOPS_DIRENTS,
-        IOPS_REMOVE,
+    enum class IopsOp {
+        iops_create,
+        iops_write,
+        iops_read,
+        iops_stats,
+        iops_dirent,
+        iops_remove,
     }; ///< enum storing IOPS Stats
 
-    enum class SIZE_OP { WRITE_SIZE, READ_SIZE }; ///< enum storing Size Stats
+    enum class SizeOp { write_size, read_size }; ///< enum storing Size Stats
 
 private:
-    constexpr static const std::initializer_list<Stats::IOPS_OP> all_IOPS_OP = {
-            IOPS_OP::IOPS_CREATE,
-            IOPS_OP::IOPS_WRITE,
-            IOPS_OP::IOPS_READ,
-            IOPS_OP::IOPS_STATS,
-            IOPS_OP::IOPS_DIRENTS,
-            IOPS_OP::IOPS_REMOVE}; ///< Enum IOPS iterator
+    constexpr static const std::initializer_list<Stats::IopsOp> all_IopsOp = {
+            IopsOp::iops_create, IopsOp::iops_write,
+            IopsOp::iops_read,   IopsOp::iops_stats,
+            IopsOp::iops_dirent, IopsOp::iops_remove}; ///< Enum IOPS iterator
 
-    constexpr static const std::initializer_list<Stats::SIZE_OP> all_SIZE_OP = {
-            SIZE_OP::WRITE_SIZE, SIZE_OP::READ_SIZE}; ///< Enum SIZE iterator
+    constexpr static const std::initializer_list<Stats::SizeOp> all_SizeOp = {
+            SizeOp::write_size, SizeOp::read_size}; ///< Enum SIZE iterator
 
-    const std::vector<std::string> IOPS_OP_S = {
+    const std::vector<std::string> IopsOp_s = {
             "IOPS_CREATE", "IOPS_WRITE",   "IOPS_READ",
             "IOPS_STATS",  "IOPS_DIRENTS", "IOPS_REMOVE"}; ///< Stats Labels
-    const std::vector<std::string> SIZE_OP_S = {"WRITE_SIZE",
-                                                "READ_SIZE"}; ///< Stats Labels
+    const std::vector<std::string> SizeOp_s = {"WRITE_SIZE",
+                                               "READ_SIZE"}; ///< Stats Labels
 
     std::chrono::time_point<std::chrono::steady_clock>
             start; ///< When we started the server
 
-    const unsigned int MAX_STATS = 1000000; ///< How many stats will be stored
 
-
-    std::map<IOPS_OP, unsigned long>
+    std::map<IopsOp, unsigned long>
             IOPS; ///< Stores total value for global mean
-    std::map<SIZE_OP, unsigned long>
+    std::map<SizeOp, unsigned long>
             SIZE; ///< Stores total value for global mean
 
-    std::map<IOPS_OP,
+    std::map<IopsOp,
              std::deque<std::chrono::time_point<std::chrono::steady_clock>>>
-            TIME_IOPS; ///< Stores timestamp when an operation comes removes if
-                       ///< first operation if > 10 minutes Different means will
-                       ///< be stored and cached 1 minuted
+            TimeIops; ///< Stores timestamp when an operation comes removes if
+                      ///< first operation if > 10 minutes Different means will
+                      ///< be stored and cached 1 minuted
 
 
-    std::map<enum SIZE_OP,
-             std::deque<std::pair<
-                     std::chrono::time_point<std::chrono::steady_clock>,
-                     unsigned long long>>>
-            TIME_SIZE; ///< For size operations we need to store the timestamp
-                       ///< and the size
+    std::map<SizeOp, std::deque<std::pair<
+                             std::chrono::time_point<std::chrono::steady_clock>,
+                             unsigned long long>>>
+            TimeSize; ///< For size operations we need to store the timestamp
+                      ///< and the size
 
 
     std::thread t_output; ///< Thread that outputs stats info
@@ -154,9 +149,9 @@ private:
     output(std::chrono::seconds d, std::string file_output);
 
     std::map<std::pair<std::string, unsigned long long>, unsigned int>
-            CHUNK_READ; ///< Stores the number of times a chunk/file is read
+            chunkRead; ///< Stores the number of times a chunk/file is read
     std::map<std::pair<std::string, unsigned long long>, unsigned int>
-            CHUNK_WRITE; ///< Stores the number of times a chunk/file is write
+            chunkWrite; ///< Stores the number of times a chunk/file is write
 
     /**
      * @brief Called by output to generate CHUNK map
@@ -179,10 +174,12 @@ private:
 #ifdef GKFS_ENABLE_PROMETHEUS
     std::shared_ptr<Gateway> gateway;   ///< Prometheus Gateway
     std::shared_ptr<Registry> registry; ///< Prometheus Counters Registry
-    Family<Counter>* family_counter;    ///< Prometheus IOPS counter
-    Family<Summary>* family_summary;    ///< Prometheus SIZE counter
-    std::map<IOPS_OP, Counter*> IOPS_Prometheus;
-    std::map<SIZE_OP, Summary*> SIZE_Prometheus;
+    Family<Counter>* family_counter;    ///< Prometheus IOPS counter (managed by
+                                        ///< Prometheus cpp)
+    Family<Summary>* family_summary;    ///< Prometheus SIZE counter (managed by
+                                        ///< Prometheus cpp)
+    std::map<IopsOp, Counter*> iops_Prometheus; ///< Prometheus IOPS metrics
+    std::map<SizeOp, Summary*> size_Prometheus; ///< Prometheus SIZE metrics
 #endif
 
 public:
@@ -190,9 +187,10 @@ public:
      * @brief Starts the Stats module and initializes structures
      * @param output_thread creates an aditional thread that outputs the stats
      * @param filename file where to write the output
+     * @param prometheus_gateway ip:port to expose the metrics
      */
-    Stats(bool output_thread, std::string filename,
-          std::string prometheus_gateway);
+    Stats(bool output_thread, const std::string& filename,
+          const std::string& prometheus_gateway);
 
     /**
      * @brief Destroys the class, and any associated thread
@@ -204,28 +202,29 @@ public:
     /**
      * @brief Set the up Prometheus gateway and structures
      *
-     * @param gateway_ip
-     * @param gateway_port
+     * @param gateway_ip ip of the prometheus gateway
+     * @param gateway_port port of the prometheus gateway
      */
     void
-    setup_Prometheus(std::string gateway_ip, std::string gateway_port);
+    setup_Prometheus(const std::string& gateway_ip,
+                     const std::string& gateway_port);
 
     /**
      * @brief Adds a new read access to the chunk/path specified
      *
-     * @param path
-     * @param chunk
+     * @param path path of the chunk
+     * @param chunk chunk number
      */
     void
-    add_read(std::string path, unsigned long long chunk);
+    add_read(const std::string& path, unsigned long long chunk);
     /**
      * @brief Adds a new write access to the chunk/path specified
      *
-     * @param path
-     * @param chunk
+     * @param path path of the chunk
+     * @param chunk chunk number
      */
     void
-    add_write(std::string path, unsigned long long chunk);
+    add_write(const std::string& path, unsigned long long chunk);
 
 
     /**
@@ -233,52 +232,56 @@ public:
      * No value needed as they are simple (1 create, 1 read...)
      * Size operations internally call this operation (read,write)
      *
-     * @param IOPS_OP Which operation to add
+     * @param IopsOp Which operation to add
      */
 
-    void add_value_iops(enum IOPS_OP);
+    void add_value_iops(enum IopsOp);
 
     /**
      * @brief Store a new stat point, with a size value.
      * If it involves a IO operations it will call the corresponding
      * operation
      *
-     * @param SIZE_OP Which operation we refer
-     * @param value to store (SIZE_OP)
+     * @param SizeOp Which operation we refer
+     * @param value to store (SizeOp)
      */
     void
-    add_value_size(enum SIZE_OP, unsigned long long value);
+    add_value_size(enum SizeOp, unsigned long long value);
 
     /**
      * @brief Get the total mean value of the asked stat
      * This can be provided inmediately without cost
+     * @param IopsOp Which operation to get
      * @return mean value
      */
-    double get_mean(enum IOPS_OP);
+    double get_mean(enum IopsOp);
 
 
     /**
      * @brief Get the total mean value of the asked stat
      * This can be provided inmediately without cost
+     * @param SizeOp Which operation to get
      * @return mean value
      */
-    double get_mean(enum SIZE_OP);
+    double get_mean(enum SizeOp);
 
     /**
      * @brief Get all the means (total, 1,5 and 10 minutes) for a SIZE_OP
      * Returns precalculated values if we just calculated them 1 minute ago
+     * @param SizeOp Which operation to get
      *
      * @return std::vector< double > with 4 means
      */
-    std::vector<double> get_four_means(enum SIZE_OP);
+    std::vector<double> get_four_means(enum SizeOp);
 
     /**
      * @brief Get all the means (total, 1,5 and 10 minutes) for a IOPS_OP
      * Returns precalculated values if we just calculated them 1 minute ago
+     * @param IopsOp Which operation to get
      *
      * @return std::vector< double > with 4 means
      */
-    std::vector<double> get_four_means(enum IOPS_OP);
+    std::vector<double> get_four_means(enum IopsOp);
 };
 
 } // namespace gkfs::utils

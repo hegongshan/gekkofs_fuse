@@ -242,6 +242,8 @@ Once it is enabled, `--dbbackend` option will be functional.
 ### Stats
 Pushing stats to Prometheus is enabled with the `-DGKFS_ENABLE_PROMETHEUS` and the setup of the `--output-stats <FILE>`. 
 Without the last one, the push to the gateway is disabled.
+Stats for each chunk (read-write access) can be enabled with `-DGKFS_CHUNK_STATS`. The server will store file/chunk number stats.
+
 
 ### Acknowledgment
 

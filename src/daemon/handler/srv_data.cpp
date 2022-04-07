@@ -115,7 +115,7 @@ rpc_srv_write(hg_handle_t handle) {
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
 
-    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SIZE_OP::WRITE_SIZE,
+    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SizeOp::write_size,
                                        bulk_size);
 
 #ifdef GKFS_ENABLE_AGIOS
@@ -413,7 +413,7 @@ rpc_srv_read(hg_handle_t handle) {
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
 
-    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SIZE_OP::READ_SIZE,
+    GKFS_DATA->stats()->add_value_size(gkfs::utils::Stats::SizeOp::read_size,
                                        bulk_size);
 
 #ifdef GKFS_ENABLE_AGIOS

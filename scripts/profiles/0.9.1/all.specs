@@ -44,6 +44,7 @@ wgetdeps=(
     ["psm2"]="11.2.185"
     ["json-c"]="0.15-20200726"
     ["curl"]="7.82.0"
+    ["prometheus-cpp"]="v1.0.0"
 )
 
 # Dependencies that must be cloned
@@ -70,7 +71,7 @@ clonedeps_patches=(
 # Ordering that MUST be followed when downloading
 order=(
     "lz4" "capstone" "json-c" "psm2" "libfabric" "mercury" "argobots" "margo" "rocksdb" "syscall_intercept" "date"
-    "agios" "curl" "parallax"
+    "agios" "curl" "prometheus-cpp" "parallax"
 )
 
 # Extra arguments passed to the installation script. As such, they can

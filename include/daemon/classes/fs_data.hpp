@@ -96,7 +96,7 @@ private:
     std::string stats_file_;
 
     // Prometheus
-    std::string prometheus_gateway_ = "127.0.0.1:9091";
+    std::string prometheus_gateway_ = gkfs::config::stats::prometheus_gateway;
 
 public:
     static FsData*
@@ -238,17 +238,17 @@ public:
     void
     output_stats(bool output_stats);
 
-    std::string
+    const std::string&
     stats_file() const;
 
     void
-    stats_file(std::string stats_file);
+    stats_file(const std::string& stats_file);
 
-    std::string
+    const std::string&
     prometheus_gateway() const;
 
     void
-    prometheus_gateway(std::string prometheus_gateway_);
+    prometheus_gateway(const std::string& prometheus_gateway_);
 };
 
 

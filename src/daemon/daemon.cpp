@@ -39,6 +39,7 @@
 #include <common/env_util.hpp>
 #include <common/rpc/rpc_types.hpp>
 #include <common/rpc/rpc_util.hpp>
+#include <common/statistics/stats.hpp>
 
 #include <daemon/env.hpp>
 #include <daemon/handler/rpc_defs.hpp>
@@ -52,7 +53,6 @@
 #include <daemon/scheduler/agios.hpp>
 #endif
 
-#include <common/statistics/stats.hpp>
 
 #include <filesystem>
 #include <iostream>

@@ -50,6 +50,7 @@ target_sources(statistics
 
 
 if(GKFS_ENABLE_PROMETHEUS)
+    find_package(CURL REQUIRED)
     find_package(prometheus-cpp REQUIRED)
     set(PROMETHEUS_LIB
     prometheus-cpp-pull
@@ -65,9 +66,6 @@ endif()
 
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)
-endif()
-
-if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(statistics AUTO)
 endif()
 

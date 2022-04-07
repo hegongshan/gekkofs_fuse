@@ -103,6 +103,11 @@ namespace rocksdb {
 constexpr auto use_write_ahead_log = false;
 } // namespace rocksdb
 
+namespace stats {
+constexpr auto max_stats = 1000000; ///< How many stats will be stored
+constexpr auto prometheus_gateway = "127.0.0.1:9091";
+} // namespace stats
+
 } // namespace gkfs::config
 
 #endif // GEKKOFS_CONFIG_HPP

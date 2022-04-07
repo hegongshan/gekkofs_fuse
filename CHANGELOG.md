@@ -10,7 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### New
 
-- Added Stats ([!128](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/128)) gathering in servers
+- Added Stats ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)) gathering in servers
   - GKFS_CHUNK_STATS enables chunk usage output
   - Stats output can be enabled with --output-stats <filename>
 - Added new experimental metadata backend:

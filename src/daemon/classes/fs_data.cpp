@@ -247,23 +247,23 @@ FsData::output_stats(bool output_stats) {
     FsData::output_stats_ = output_stats;
 }
 
-std::string
+const std::string&
 FsData::stats_file() const {
     return stats_file_;
 }
 
 void
-FsData::stats_file(std::string stats_file) {
+FsData::stats_file(const std::string& stats_file) {
     FsData::stats_file_ = stats_file;
 }
 
-std::string
+const std::string&
 FsData::prometheus_gateway() const {
     return prometheus_gateway_;
 }
 
 void
-FsData::prometheus_gateway(std::string prometheus_gateway) {
+FsData::prometheus_gateway(const std::string& prometheus_gateway) {
     FsData::prometheus_gateway_ = prometheus_gateway;
 }
 
