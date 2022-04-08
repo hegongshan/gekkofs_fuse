@@ -296,8 +296,8 @@ init_environment() {
 
     // Initialize Stats
     GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(
-            GKFS_DATA->output_stats(), GKFS_DATA->stats_file(),
-            GKFS_DATA->prometheus_gateway()));
+            GKFS_DATA->enable_chunkstats(), GKFS_DATA->enable_prometheus(),
+            GKFS_DATA->stats_file(), GKFS_DATA->prometheus_gateway()));
 
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
@@ -653,15 +653,34 @@ parse_input(const cli_options& opts, const CLI::App& desc) {
     if(desc.count("--parallaxsize")) { // Size in GB
         GKFS_DATA->parallax_size_md(stoi(opts.parallax_size));
     }
+
     if(desc.count("--output-stats")) {
         auto stats_file = opts.stats_file;
         GKFS_DATA->stats_file(stats_file);
-        GKFS_DATA->output_stats(true);
         GKFS_DATA->spdlogger()->debug("{}() Stats Enabled: '{}'", __func__,
                                       stats_file);
+    } else {
+        GKFS_DATA->stats_file("");
+        GKFS_DATA->spdlogger()->debug("{}() Stats Output Disabled", __func__);
+    }
+
+    if(desc.count("--enable-collection")) {
+        GKFS_DATA->enable_stats(true);
+        GKFS_DATA->spdlogger()->debug("{}() Collection Enabled", __func__);
+    }
+
+    if(desc.count("--enable-chunkstats")) {
+        GKFS_DATA->enable_chunkstats(true);
+        GKFS_DATA->spdlogger()->debug("{}() ChunkStats Enabled", __func__);
     }
 
 #ifdef GKFS_ENABLE_PROMETHEUS
+    if(desc.count("--enable-prometheus")) {
+        GKFS_DATA->enable_prometheus(true);
+        GKFS_DATA->spdlogger()->debug("{}() Prometheus Enabled", __func__);
+    }
+
+
     if(desc.count("--prometheus-gateway")) {
         auto gateway = opts.prometheus_gateway;
         GKFS_DATA->prometheus_gateway(gateway);
@@ -739,10 +758,22 @@ main(int argc, const char* argv[]) {
     desc.add_option(
                 "--output-stats", opts.stats_file,
                 "Creates a thread that outputs the server stats each 10s, to the file specified");
+    desc.add_flag(
+                "--enable-collection",
+                "Enables collection of normal stats, independent of the output-stats option");
+    desc.add_flag(
+                "--enable-chunkstats",
+                "Enables collection of chunkstats stats, independent of the output-stats option")
+                ;
+    #ifdef GKFS_ENABLE_PROMETHEUS
+    desc.add_flag(
+                "--enable-prometheus",
+                "Enables prometheus output, enables thread");
 
     desc.add_option(
                 "--prometheus-gateway", opts.prometheus_gateway,
-                "Defines the prometheus gateway, default is 127.0.0.1:9091, experimental enable at compilation");
+                "Defines the prometheus gateway, default is 127.0.0.1:9091");
+    #endif
 
     desc.add_flag("--version", "Print version and exit.");
     // clang-format on

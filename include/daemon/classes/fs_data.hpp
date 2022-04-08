@@ -92,7 +92,9 @@ private:
 
     // Statistics
     std::shared_ptr<gkfs::utils::Stats> stats_;
-    bool output_stats_ = false;
+    bool enable_stats_ = false;
+    bool enable_chunkstats_ = false;
+    bool enable_prometheus_ = false;
     std::string stats_file_;
 
     // Prometheus
@@ -233,10 +235,22 @@ public:
     close_stats();
 
     bool
-    output_stats() const;
+    enable_stats() const;
 
     void
-    output_stats(bool output_stats);
+    enable_stats(bool enable_stats);
+
+    bool
+    enable_chunkstats() const;
+
+    void
+    enable_chunkstats(bool enable_chunkstats);
+
+    bool
+    enable_prometheus() const;
+
+    void
+    enable_prometheus(bool enable_prometheus);
 
     const std::string&
     stats_file() const;

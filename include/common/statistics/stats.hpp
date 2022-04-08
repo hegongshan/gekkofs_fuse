@@ -37,6 +37,7 @@
 #include <vector>
 #include <deque>
 #include <chrono>
+#include <optional>
 #include <initializer_list>
 #include <thread>
 #include <iostream>
@@ -133,8 +134,11 @@ private:
                       ///< and the size
 
 
-    std::thread t_output; ///< Thread that outputs stats info
-    bool output_thread_;  ///< Enables or disables the output thread
+    std::thread t_output;    ///< Thread that outputs stats info
+    bool output_thread_;     ///< Enables or disables the output thread
+    bool enable_prometheus_; ///< Enables or disables the prometheus output
+    bool enable_chunkstats_; ///< Enables or disables the chunk stats output
+
 
     bool running =
             true; ///< Controls the destruction of the class/stops the thread
@@ -185,12 +189,13 @@ private:
 public:
     /**
      * @brief Starts the Stats module and initializes structures
-     * @param output_thread creates an aditional thread that outputs the stats
+     * @param enable_chunkstats Enables or disables the chunk stats
+     * @param enable_prometheus Enables or disables the prometheus output
      * @param filename file where to write the output
      * @param prometheus_gateway ip:port to expose the metrics
      */
-    Stats(bool output_thread, const std::string& filename,
-          const std::string& prometheus_gateway);
+    Stats(bool enable_chunkstats, bool enable_prometheus,
+          const std::string& filename, const std::string& prometheus_gateway);
 
     /**
      * @brief Destroys the class, and any associated thread

@@ -78,8 +78,6 @@ rpc_srv_create(hg_handle_t handle) {
         // create metadentry
         gkfs::metadata::create(in.path, md);
         out.err = 0;
-        GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IopsOp::iops_create);
     } catch(const gkfs::metadata::ExistsException& e) {
         out.err = EEXIST;
     } catch(const std::exception& e) {
@@ -98,6 +96,10 @@ rpc_srv_create(hg_handle_t handle) {
     // Destroy handle when finished
     margo_free_input(handle, &in);
     margo_destroy(handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IopsOp::iops_create);
+    }
     return HG_SUCCESS;
 }
 
@@ -126,8 +128,6 @@ rpc_srv_stat(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug("{}() path: '{}'", __func__, in.path);
     std::string val;
 
-    GKFS_DATA->stats()->add_value_iops(gkfs::utils::Stats::IopsOp::iops_stats);
-
     try {
         // get the metadata
         val = gkfs::metadata::get_str(in.path);
@@ -154,6 +154,11 @@ rpc_srv_stat(hg_handle_t handle) {
     // Destroy handle when finished
     margo_free_input(handle, &in);
     margo_destroy(handle);
+
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IopsOp::iops_stats);
+    }
     return HG_SUCCESS;
 }
 
@@ -247,8 +252,7 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
             if(S_ISREG(md.mode()) && (md.size() != 0))
                 GKFS_DATA->storage()->destroy_chunk_space(in.path);
         }
-        GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IopsOp::iops_remove);
+
     } catch(const gkfs::metadata::DBException& e) {
         GKFS_DATA->spdlogger()->error("{}(): path '{}' message '{}'", __func__,
                                       in.path, e.what());
@@ -273,6 +277,10 @@ rpc_srv_remove_metadata(hg_handle_t handle) {
     // Destroy handle when finished
     margo_free_input(handle, &in);
     margo_destroy(handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IopsOp::iops_remove);
+    }
     return HG_SUCCESS;
 }
 
@@ -543,8 +551,6 @@ rpc_srv_get_dirents(hg_handle_t handle) {
     vector<pair<string, bool>> entries{};
     try {
         entries = gkfs::metadata::get_dirents(in.path);
-        GKFS_DATA->stats()->add_value_iops(
-                gkfs::utils::Stats::IopsOp::iops_dirent);
     } catch(const ::exception& e) {
         GKFS_DATA->spdlogger()->error("{}() Error during get_dirents(): '{}'",
                                       __func__, e.what());
@@ -645,6 +651,10 @@ rpc_srv_get_dirents(hg_handle_t handle) {
     GKFS_DATA->spdlogger()->debug(
             "{}() Sending output response err '{}' dirents_size '{}'. DONE",
             __func__, out.err, out.dirents_size);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_iops(
+                gkfs::utils::Stats::IopsOp::iops_dirent);
+    }
     return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
 }
 

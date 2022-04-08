@@ -236,15 +236,34 @@ FsData::close_stats() {
     stats_.reset();
 }
 
-
 bool
-FsData::output_stats() const {
-    return output_stats_;
+FsData::enable_stats() const {
+    return enable_stats_;
 }
 
 void
-FsData::output_stats(bool output_stats) {
-    FsData::output_stats_ = output_stats;
+FsData::enable_stats(bool enable_stats) {
+    FsData::enable_stats_ = enable_stats;
+}
+
+bool
+FsData::enable_chunkstats() const {
+    return enable_chunkstats_;
+}
+
+void
+FsData::enable_chunkstats(bool enable_chunkstats) {
+    FsData::enable_chunkstats_ = enable_chunkstats;
+}
+
+bool
+FsData::enable_prometheus() const {
+    return enable_prometheus_;
+}
+
+void
+FsData::enable_prometheus(bool enable_prometheus) {
+    FsData::enable_prometheus_ = enable_prometheus;
 }
 
 const std::string&

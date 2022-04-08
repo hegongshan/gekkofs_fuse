@@ -195,12 +195,6 @@ if(GKFS_USE_GUIDED_DISTRIBUTION)
     message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
 endif()
 
-option(GKFS_CHUNK_STATS "Gather Chunk Stats " OFF)
-if (GKFS_CHUNK_STATS)
-    add_definitions(-DGKFS_CHUNK_STATS)
-endif ()
-message(STATUS "[gekkofs] Gather Chunk Stats: ${GKFS_CHUNK_STATS}")
-
 option(GKFS_ENABLE_PROMETHEUS "Enable Prometheus Push " OFF)
 if(GKFS_ENABLE_PROMETHEUS)
     add_definitions(-DGKFS_ENABLE_PROMETHEUS)

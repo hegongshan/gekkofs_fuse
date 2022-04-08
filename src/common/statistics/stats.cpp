@@ -80,7 +80,8 @@ Stats::setup_Prometheus(const std::string& gateway_ip,
 #endif /// GKFS_ENABLE_PROMETHEUS
 }
 
-Stats::Stats(bool output_thread, const std::string& stats_file,
+Stats::Stats(bool enable_chunkstats, bool enable_prometheus,
+             const std::string& stats_file,
              const std::string& prometheus_gateway) {
 
     // Init clocks
@@ -104,10 +105,11 @@ Stats::Stats(bool output_thread, const std::string& stats_file,
     setup_Prometheus(prometheus_gateway.substr(0, pos_separator),
                      prometheus_gateway.substr(pos_separator + 1));
 #endif
+    enable_chunkstats_ = enable_chunkstats;
+    enable_prometheus_ = enable_prometheus;
 
-    output_thread_ = output_thread;
-
-    if(output_thread_) {
+    if(!stats_file.empty() || enable_prometheus_) {
+        output_thread_ = true;
         t_output = std::thread([this, stats_file] {
             output(std::chrono::duration(10s), stats_file);
         });
@@ -115,7 +117,6 @@ Stats::Stats(bool output_thread, const std::string& stats_file,
 }
 
 Stats::~Stats() {
-    // We do not need a mutex for that
     if(output_thread_) {
         running = false;
         t_output.join();
@@ -181,7 +182,9 @@ Stats::add_value_iops(enum IopsOp iop) {
 
     TimeIops[iop].push_back(std::chrono::steady_clock::now());
 #ifdef GKFS_ENABLE_PROMETHEUS
-    iops_Prometheus[iop]->Increment();
+    if(enable_prometheus_) {
+        iops_Prometheus[iop]->Increment();
+    }
 #endif
 }
 
@@ -196,7 +199,9 @@ Stats::add_value_size(enum SizeOp iop, unsigned long long value) {
 
     TimeSize[iop].push_back(pair(std::chrono::steady_clock::now(), value));
 #ifdef GKFS_ENABLE_PROMETHEUS
-    size_Prometheus[iop]->Observe(value);
+    if(enable_prometheus_) {
+        size_Prometheus[iop]->Observe(value);
+    }
 #endif
     if(iop == SizeOp::read_size)
         add_value_iops(IopsOp::iops_read);
@@ -312,20 +317,25 @@ Stats::dump(std::ofstream& of) {
 void
 Stats::output(std::chrono::seconds d, std::string file_output) {
     int times = 0;
-    std::ofstream of(file_output, std::ios_base::openmode::_S_trunc);
+    std::optional<std::ofstream> of;
+    if(!file_output.empty())
+        of = std::ofstream(file_output, std::ios_base::openmode::_S_trunc);
 
     while(running) {
-        dump(of);
+        if(of)
+            dump(of.value());
         std::chrono::seconds a = 0s;
 
         times++;
-#ifdef GKFS_CHUNK_STATS
-        if(times % 4 == 0)
-            output_map(of);
-#endif
+
+        if(enable_chunkstats_ and of) {
+            if(times % 4 == 0)
+                output_map(of.value());
+        }
 #ifdef GKFS_ENABLE_PROMETHEUS
-        // Prometheus Output
-        gateway->Push();
+        if(enable_prometheus_) {
+            gateway->Push();
+        }
 #endif
         while(running and a < d) {
             a += 1s;
