@@ -43,6 +43,8 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <atomic>
+#include <mutex>
 #include <config.hpp>
 
 
@@ -115,10 +117,13 @@ private:
             start; ///< When we started the server
 
 
-    std::map<IopsOp, unsigned long>
+    std::map<IopsOp, std::atomic<unsigned long>>
             IOPS; ///< Stores total value for global mean
-    std::map<SizeOp, unsigned long>
+    std::map<SizeOp, std::atomic<unsigned long>>
             SIZE; ///< Stores total value for global mean
+
+    std::mutex time_iops_mutex;
+    std::mutex size_iops_mutex;
 
     std::map<IopsOp,
              std::deque<std::chrono::time_point<std::chrono::steady_clock>>>
@@ -152,9 +157,11 @@ private:
     void
     output(std::chrono::seconds d, std::string file_output);
 
-    std::map<std::pair<std::string, unsigned long long>, unsigned int>
+    std::map<std::pair<std::string, unsigned long long>,
+             std::atomic<unsigned int>>
             chunkRead; ///< Stores the number of times a chunk/file is read
-    std::map<std::pair<std::string, unsigned long long>, unsigned int>
+    std::map<std::pair<std::string, unsigned long long>,
+             std::atomic<unsigned int>>
             chunkWrite; ///< Stores the number of times a chunk/file is write
 
     /**

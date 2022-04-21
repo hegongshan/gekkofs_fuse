@@ -143,11 +143,11 @@ Stats::output_map(std::ofstream& output) {
     map<unsigned int, std::set<pair<std::string, unsigned long long>>>
             orderRead;
 
-    for(auto i : chunkRead) {
+    for(const auto& i : chunkRead) {
         orderRead[i.second].insert(i.first);
     }
 
-    for(auto i : chunkWrite) {
+    for(const auto& i : chunkWrite) {
         orderWrite[i.second].insert(i.first);
     }
 
@@ -174,7 +174,7 @@ Stats::add_value_iops(enum IopsOp iop) {
     IOPS[iop]++;
     auto now = std::chrono::steady_clock::now();
 
-
+    const std::lock_guard<std::mutex> lock(time_iops_mutex);
     if((now - TimeIops[iop].front()) > std::chrono::duration(10s)) {
         TimeIops[iop].pop_front();
     } else if(TimeIops[iop].size() >= gkfs::config::stats::max_stats)
@@ -192,6 +192,7 @@ void
 Stats::add_value_size(enum SizeOp iop, unsigned long long value) {
     auto now = std::chrono::steady_clock::now();
     SIZE[iop] += value;
+    const std::lock_guard<std::mutex> lock(size_iops_mutex);
     if((now - TimeSize[iop].front().first) > std::chrono::duration(10s)) {
         TimeSize[iop].pop_front();
     } else if(TimeSize[iop].size() >= gkfs::config::stats::max_stats)
@@ -237,6 +238,7 @@ std::vector<double>
 Stats::get_four_means(enum SizeOp sop) {
     std::vector<double> results = {0, 0, 0, 0};
     auto now = std::chrono::steady_clock::now();
+    const std::lock_guard<std::mutex> lock(size_iops_mutex);
     for(auto e : TimeSize[sop]) {
         auto duration =
                 std::chrono::duration_cast<std::chrono::minutes>(now - e.first)
@@ -266,6 +268,7 @@ std::vector<double>
 Stats::get_four_means(enum IopsOp iop) {
     std::vector<double> results = {0, 0, 0, 0};
     auto now = std::chrono::steady_clock::now();
+    const std::lock_guard<std::mutex> lock(time_iops_mutex);
     for(auto e : TimeIops[iop]) {
         auto duration =
                 std::chrono::duration_cast<std::chrono::minutes>(now - e)
