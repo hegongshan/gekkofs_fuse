@@ -295,9 +295,10 @@ init_environment() {
 #endif
 
     // Initialize Stats
-    GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(
-            GKFS_DATA->enable_chunkstats(), GKFS_DATA->enable_prometheus(),
-            GKFS_DATA->stats_file(), GKFS_DATA->prometheus_gateway()));
+    if(GKFS_DATA->enable_stats() || GKFS_DATA->enable_chunkstats())
+        GKFS_DATA->stats(std::make_shared<gkfs::utils::Stats>(
+                GKFS_DATA->enable_chunkstats(), GKFS_DATA->enable_prometheus(),
+                GKFS_DATA->stats_file(), GKFS_DATA->prometheus_gateway()));
 
     // Initialize data backend
     auto chunk_storage_path = fmt::format("{}/{}", GKFS_DATA->rootdir(),
