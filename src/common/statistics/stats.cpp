@@ -119,7 +119,8 @@ Stats::Stats(bool enable_chunkstats, bool enable_prometheus,
 Stats::~Stats() {
     if(output_thread_) {
         running = false;
-        t_output.join();
+        if(t_output.joinable())
+            t_output.join();
     }
 }
 
