@@ -61,7 +61,7 @@ Stats::setup_Prometheus(const std::string& gateway_ip,
                               .Register(*registry);
 
     for(auto e : all_IopsOp) {
-        iops_Prometheus[e] = &family_counter->Add(
+        iops_prometheus[e] = &family_counter->Add(
                 {{"operation", IopsOp_s[static_cast<int>(e)]}});
     }
 
@@ -71,7 +71,7 @@ Stats::setup_Prometheus(const std::string& gateway_ip,
                               .Register(*registry);
 
     for(auto e : all_SizeOp) {
-        size_Prometheus[e] = &family_summary->Add(
+        size_prometheus[e] = &family_summary->Add(
                 {{"operation", SizeOp_s[static_cast<int>(e)]}},
                 Summary::Quantiles{});
     }
@@ -93,17 +93,17 @@ Stats::Stats(bool enable_chunkstats, bool enable_prometheus,
     // Statistaclly will be negligible... and we get a faster flow
 
     for(auto e : all_IopsOp) {
-        IOPS[e] = 0;
-        TimeIops[e].push_back(std::chrono::steady_clock::now());
+        iops_mean[e] = 0;
+        time_iops[e].push_back(std::chrono::steady_clock::now());
     }
 
     for(auto e : all_SizeOp) {
-        SIZE[e] = 0;
-        TimeSize[e].push_back(pair(std::chrono::steady_clock::now(), 0.0));
+        size_mean[e] = 0;
+        time_size[e].push_back(pair(std::chrono::steady_clock::now(), 0.0));
     }
 
 #ifdef GKFS_ENABLE_PROMETHEUS
-    auto pos_separator = prometheus_gateway.find(":");
+    auto pos_separator = prometheus_gateway.find(':');
     setup_Prometheus(prometheus_gateway.substr(0, pos_separator),
                      prometheus_gateway.substr(pos_separator + 1));
 #endif
@@ -125,12 +125,12 @@ Stats::~Stats() {
 
 void
 Stats::add_read(const std::string& path, unsigned long long chunk) {
-    chunkRead[pair(path, chunk)]++;
+    chunk_reads[pair(path, chunk)]++;
 }
 
 void
 Stats::add_write(const std::string& path, unsigned long long chunk) {
-    chunkWrite[pair(path, chunk)]++;
+    chunk_writes[pair(path, chunk)]++;
 }
 
 
@@ -138,17 +138,17 @@ void
 Stats::output_map(std::ofstream& output) {
     // Ordering
     map<unsigned int, std::set<pair<std::string, unsigned long long>>>
-            orderWrite;
+            order_write;
 
     map<unsigned int, std::set<pair<std::string, unsigned long long>>>
-            orderRead;
+            order_read;
 
-    for(const auto& i : chunkRead) {
-        orderRead[i.second].insert(i.first);
+    for(const auto& i : chunk_reads) {
+        order_read[i.second].insert(i.first);
     }
 
-    for(const auto& i : chunkWrite) {
-        orderWrite[i.second].insert(i.first);
+    for(const auto& i : chunk_writes) {
+        order_write[i.second].insert(i.first);
     }
 
     auto chunkMap =
@@ -165,25 +165,25 @@ Stats::output_map(std::ofstream& output) {
                 }
             };
 
-    chunkMap("READ CHUNK MAP", orderRead, output);
-    chunkMap("WRITE CHUNK MAP", orderWrite, output);
+    chunkMap("READ CHUNK MAP", order_read, output);
+    chunkMap("WRITE CHUNK MAP", order_write, output);
 }
 
 void
 Stats::add_value_iops(enum IopsOp iop) {
-    IOPS[iop]++;
+    iops_mean[iop]++;
     auto now = std::chrono::steady_clock::now();
 
     const std::lock_guard<std::mutex> lock(time_iops_mutex);
-    if((now - TimeIops[iop].front()) > std::chrono::duration(10s)) {
-        TimeIops[iop].pop_front();
-    } else if(TimeIops[iop].size() >= gkfs::config::stats::max_stats)
-        TimeIops[iop].pop_front();
+    if((now - time_iops[iop].front()) > std::chrono::duration(10s)) {
+        time_iops[iop].pop_front();
+    } else if(time_iops[iop].size() >= gkfs::config::stats::max_stats)
+        time_iops[iop].pop_front();
 
-    TimeIops[iop].push_back(std::chrono::steady_clock::now());
+    time_iops[iop].push_back(std::chrono::steady_clock::now());
 #ifdef GKFS_ENABLE_PROMETHEUS
     if(enable_prometheus_) {
-        iops_Prometheus[iop]->Increment();
+        iops_prometheus[iop]->Increment();
     }
 #endif
 }
@@ -191,17 +191,17 @@ Stats::add_value_iops(enum IopsOp iop) {
 void
 Stats::add_value_size(enum SizeOp iop, unsigned long long value) {
     auto now = std::chrono::steady_clock::now();
-    SIZE[iop] += value;
+    size_mean[iop] += value;
     const std::lock_guard<std::mutex> lock(size_iops_mutex);
-    if((now - TimeSize[iop].front().first) > std::chrono::duration(10s)) {
-        TimeSize[iop].pop_front();
-    } else if(TimeSize[iop].size() >= gkfs::config::stats::max_stats)
-        TimeSize[iop].pop_front();
+    if((now - time_size[iop].front().first) > std::chrono::duration(10s)) {
+        time_size[iop].pop_front();
+    } else if(time_size[iop].size() >= gkfs::config::stats::max_stats)
+        time_size[iop].pop_front();
 
-    TimeSize[iop].push_back(pair(std::chrono::steady_clock::now(), value));
+    time_size[iop].push_back(pair(std::chrono::steady_clock::now(), value));
 #ifdef GKFS_ENABLE_PROMETHEUS
     if(enable_prometheus_) {
-        size_Prometheus[iop]->Observe(value);
+        size_prometheus[iop]->Observe(value);
     }
 #endif
     if(iop == SizeOp::read_size)
@@ -220,7 +220,8 @@ Stats::get_mean(enum SizeOp sop) {
     auto now = std::chrono::steady_clock::now();
     auto duration =
             std::chrono::duration_cast<std::chrono::seconds>(now - start);
-    double value = (double) SIZE[sop] / (double) duration.count();
+    double value = static_cast<double>(size_mean[sop]) /
+                   static_cast<double>(duration.count());
     return value;
 }
 
@@ -229,7 +230,8 @@ Stats::get_mean(enum IopsOp iop) {
     auto now = std::chrono::steady_clock::now();
     auto duration =
             std::chrono::duration_cast<std::chrono::seconds>(now - start);
-    double value = (double) IOPS[iop] / (double) duration.count();
+    double value = static_cast<double>(iops_mean[iop]) /
+                   static_cast<double>(duration.count());
     return value;
 }
 
@@ -239,7 +241,7 @@ Stats::get_four_means(enum SizeOp sop) {
     std::vector<double> results = {0, 0, 0, 0};
     auto now = std::chrono::steady_clock::now();
     const std::lock_guard<std::mutex> lock(size_iops_mutex);
-    for(auto e : TimeSize[sop]) {
+    for(auto e : time_size[sop]) {
         auto duration =
                 std::chrono::duration_cast<std::chrono::minutes>(now - e.first)
                         .count();
@@ -269,7 +271,7 @@ Stats::get_four_means(enum IopsOp iop) {
     std::vector<double> results = {0, 0, 0, 0};
     auto now = std::chrono::steady_clock::now();
     const std::lock_guard<std::mutex> lock(time_iops_mutex);
-    for(auto e : TimeIops[iop]) {
+    for(auto e : time_iops[iop]) {
         auto duration =
                 std::chrono::duration_cast<std::chrono::minutes>(now - e)
                         .count();
