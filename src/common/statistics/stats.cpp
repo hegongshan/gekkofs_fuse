@@ -82,7 +82,9 @@ Stats::setup_Prometheus(const std::string& gateway_ip,
 
 Stats::Stats(bool enable_chunkstats, bool enable_prometheus,
              const std::string& stats_file,
-             const std::string& prometheus_gateway) {
+             const std::string& prometheus_gateway)
+    : enable_prometheus_(enable_prometheus),
+      enable_chunkstats_(enable_chunkstats) {
 
     // Init clocks
     start = std::chrono::steady_clock::now();
@@ -105,8 +107,6 @@ Stats::Stats(bool enable_chunkstats, bool enable_prometheus,
     setup_Prometheus(prometheus_gateway.substr(0, pos_separator),
                      prometheus_gateway.substr(pos_separator + 1));
 #endif
-    enable_chunkstats_ = enable_chunkstats;
-    enable_prometheus_ = enable_prometheus;
 
     if(!stats_file.empty() || enable_prometheus_) {
         output_thread_ = true;
@@ -331,7 +331,7 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
 
         times++;
 
-        if(enable_chunkstats_ and of) {
+        if(enable_chunkstats_ && of) {
             if(times % 4 == 0)
                 output_map(of.value());
         }
@@ -340,7 +340,7 @@ Stats::output(std::chrono::seconds d, std::string file_output) {
             gateway->Push();
         }
 #endif
-        while(running and a < d) {
+        while(running && a < d) {
             a += 1s;
             std::this_thread::sleep_for(1s);
         }

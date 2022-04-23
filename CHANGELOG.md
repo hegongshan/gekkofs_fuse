@@ -10,18 +10,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### New
 
-- Added Stats ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)) gathering in servers
-  - Stats output can be enabled with --output-stats <filename>
-  - --enable-collection collects normal stats
-  - --enable-chunkstats collects extended chunk stats
+- Added statistics gathering on daemons ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)).
+    - Stats output can be enabled with:
+    - `--enable-collection` collects normal statistics.
+    - `--enable-chunkstats` collects extended chunk statistics.
+- Statistics output to file is controlled by `--output-stats <filename>`
+- Added Prometheus support for outputting
+  statistics ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)):
+    - Prometheus dependency optional and enabled at compile time with the CMake argument `GKFS_ENABLE_PROMETHEUS`.
+    - `--enable-prometheus` enables statistics pushing to Prometheus if statistics are enabled.
+    - `--prometheus-gateway` sets an IP and port for the Prometheus connection.
 - Added new experimental metadata backend:
   Parallax ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
     - Added support to use multiple metadata backends.
     - Added `--clean-rootdir-finish` argument to remove rootdir/metadir at the end when the daemon finishes.
-- Added Prometheus Output ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132))
-  - New option to define gateway --prometheus-gateway <gateway:port>
-  - Prometheus output is optional with "GKFS_ENABLE_PROMETHEUS"
-  - --enable-prometheus creates a thread to push the metrics.
 
 ### Changed
 
