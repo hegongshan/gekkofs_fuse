@@ -109,8 +109,11 @@ Options:
                               RocksDB is default if not set. Parallax support is experimental.
                               Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
   --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
-  --output-stats TEXT         Enables the output of the stats on the FILE (each 10s) for debug
-  --prometheus-gateway TEXT   Defines the ip:port of the Prometheus Push gateway
+  --enable-collection         Enables collection of general statistics. Output requires either the --output-stats or --enable-prometheus argument.
+  --enable-chunkstats         Enables collection of data chunk statistics in I/O operations.Output requires either the --output-stats or --enable-prometheus argument.
+  --output-stats TEXT         Creates a thread that outputs the server stats each 10s to the specified file.
+  --enable-prometheus         Enables prometheus output and a corresponding thread.
+  --prometheus-gateway TEXT   Defines the prometheus gateway <ip:port> (Default 127.0.0.1:9091).
   --version                   Print version and exit.
 ```
 
@@ -233,22 +236,30 @@ Then, the `examples/distributors/guided/generate.py` scrpt is used to create the
 Finally, modify `guided_config.txt` to your distribution requirements.
 
 ### Metadata Backends
-There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based on `PARALLAX` from `FORTH` 
-is available.
-To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb` with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
+
+There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based
+on `PARALLAX` from `FORTH`
+is available. To enable it use the `-DGKFS_ENABLE_PARALLAX:BOOL=ON` option, you can also disable `rocksdb`
+with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
 
 Once it is enabled, `--dbbackend` option will be functional.
 
-### Stats
-Stats from each server are written to the file specified with `--output-stats <FILE>`. Collection is done with two separate flags `--enable-collection` and `--enable-chunkstats`. For normal and extended chunk stats. The extended chunk stats stores each chunk acccess. 
-Pushing stats to Prometheus is enabled with the `-DGKFS_ENABLE_PROMETHEUS` and the flag `--enable-prometheus`. We are using a push model.
+### Statistics
+
+GekkoFS daemons are able to output general operations (`--enable-collection`) and data chunk
+statistics (`--enable-chunkstats`) to a specified output file via `--output-stats <FILE>`. Prometheus can also be used
+instead or in addition to the output file. It must be enabled at compile time via the CMake
+argument `-DGKFS_ENABLE_PROMETHEUS` and the daemon argument `--enable-prometheus`. The corresponding statistics are then
+pushed to the Prometheus instance.
 
 ### Acknowledgment
 
 This software was partially supported by the EC H2020 funded NEXTGenIO project (Project ID: 671951, www.nextgenio.eu).
 
-This software was partially supported by the ADA-FS project under the SPPEXA project (http://www.sppexa.de/) funded by the DFG.
+This software was partially supported by the ADA-FS project under the SPPEXA project (http://www.sppexa.de/) funded by
+the DFG.
 
 This software is partially supported by the FIDIUM project funded by the DFG.
 
-This software is partially supported by the ADMIRE project (https://www.admire-eurohpc.eu/) funded by the European Union’s Horizon 2020 JTI-EuroHPC Research and Innovation Programme (Grant 956748).
+This software is partially supported by the ADMIRE project (https://www.admire-eurohpc.eu/) funded by the European
+Union’s Horizon 2020 JTI-EuroHPC Research and Innovation Programme (Grant 956748).
