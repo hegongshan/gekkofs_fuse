@@ -79,8 +79,11 @@ Options:
                               RocksDB is default if not set. Parallax support is experimental.
                               Note, parallaxdb creates a file called rocksdbx with 8GB created in metadir.
   --parallaxsize TEXT         parallaxdb - metadata file size in GB (default 8GB), used only with new files
-  --output-stats TEXT         Outputs the stats to the file each 10s.
-  --prometheus-gateway TEXT   Defines the ip:port of the Prometheus Push gateway
+  --enable-collection         Enables collection of general statistics. Output requires either the --output-stats or --enable-prometheus argument.
+  --enable-chunkstats         Enables collection of data chunk statistics in I/O operations.Output requires either the --output-stats or --enable-prometheus argument.
+  --output-stats TEXT         Creates a thread that outputs the server stats each 10s to the specified file.
+  --enable-prometheus         Enables prometheus output and a corresponding thread.
+  --prometheus-gateway TEXT   Defines the prometheus gateway <ip:port> (Default 127.0.0.1:9091).
   --version                   Print version and exit.
 ````
 

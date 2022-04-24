@@ -118,25 +118,25 @@ private:
 
 
     std::map<IopsOp, std::atomic<unsigned long>>
-            IOPS; ///< Stores total value for global mean
+            iops_mean; ///< Stores total value for global mean
     std::map<SizeOp, std::atomic<unsigned long>>
-            SIZE; ///< Stores total value for global mean
+            size_mean; ///< Stores total value for global mean
 
     std::mutex time_iops_mutex;
     std::mutex size_iops_mutex;
 
     std::map<IopsOp,
              std::deque<std::chrono::time_point<std::chrono::steady_clock>>>
-            TimeIops; ///< Stores timestamp when an operation comes removes if
-                      ///< first operation if > 10 minutes Different means will
-                      ///< be stored and cached 1 minuted
+            time_iops; ///< Stores timestamp when an operation comes removes if
+                       ///< first operation if > 10 minutes Different means will
+                       ///< be stored and cached 1 minuted
 
 
     std::map<SizeOp, std::deque<std::pair<
                              std::chrono::time_point<std::chrono::steady_clock>,
                              unsigned long long>>>
-            TimeSize; ///< For size operations we need to store the timestamp
-                      ///< and the size
+            time_size; ///< For size operations we need to store the timestamp
+                       ///< and the size
 
 
     std::thread t_output;    ///< Thread that outputs stats info
@@ -159,10 +159,10 @@ private:
 
     std::map<std::pair<std::string, unsigned long long>,
              std::atomic<unsigned int>>
-            chunkRead; ///< Stores the number of times a chunk/file is read
+            chunk_reads; ///< Stores the number of times a chunk/file is read
     std::map<std::pair<std::string, unsigned long long>,
              std::atomic<unsigned int>>
-            chunkWrite; ///< Stores the number of times a chunk/file is write
+            chunk_writes; ///< Stores the number of times a chunk/file is write
 
     /**
      * @brief Called by output to generate CHUNK map
@@ -189,8 +189,8 @@ private:
                                         ///< Prometheus cpp)
     Family<Summary>* family_summary;    ///< Prometheus SIZE counter (managed by
                                         ///< Prometheus cpp)
-    std::map<IopsOp, Counter*> iops_Prometheus; ///< Prometheus IOPS metrics
-    std::map<SizeOp, Summary*> size_Prometheus; ///< Prometheus SIZE metrics
+    std::map<IopsOp, Counter*> iops_prometheus; ///< Prometheus IOPS metrics
+    std::map<SizeOp, Summary*> size_prometheus; ///< Prometheus SIZE metrics
 #endif
 
 public:

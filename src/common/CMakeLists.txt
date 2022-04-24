@@ -52,17 +52,19 @@ target_sources(statistics
 if(GKFS_ENABLE_PROMETHEUS)
     find_package(CURL REQUIRED)
     find_package(prometheus-cpp REQUIRED)
-    set(PROMETHEUS_LIB
-    prometheus-cpp-pull
-    prometheus-cpp-push
-    prometheus-cpp-core
-    curl)
+    set(PROMETHEUS_LINK_LIBRARIES
+        prometheus-cpp::pull
+        prometheus-cpp::push
+        prometheus-cpp::core
+        curl)
+    target_include_directories(statistics PRIVATE ${prometheus-cpp_INCLUDE_DIR})
 endif()
 
   target_link_libraries(statistics
-  PRIVATE
-  ${PROMETHEUS_LIB}
+      PRIVATE
+      ${PROMETHEUS_LINK_LIBRARIES}
   )
+
 
 if(GKFS_ENABLE_CODE_COVERAGE)
   target_code_coverage(distributor AUTO)

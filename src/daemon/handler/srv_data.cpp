@@ -114,10 +114,7 @@ rpc_srv_write(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
-    if(GKFS_DATA->enable_stats()) {
-        GKFS_DATA->stats()->add_value_size(
-                gkfs::utils::Stats::SizeOp::write_size, bulk_size);
-    }
+
 
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
@@ -352,7 +349,13 @@ rpc_srv_write(hg_handle_t handle) {
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response {}", __func__,
                                   out.err);
-    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    auto handler_ret =
+            gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_size(
+                gkfs::utils::Stats::SizeOp::write_size, bulk_size);
+    }
+    return handler_ret;
 }
 
 /**
@@ -414,10 +417,6 @@ rpc_srv_read(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
-    if(GKFS_DATA->enable_stats()) {
-        GKFS_DATA->stats()->add_value_size(
-                gkfs::utils::Stats::SizeOp::read_size, bulk_size);
-    }
 
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
@@ -619,7 +618,13 @@ rpc_srv_read(hg_handle_t handle) {
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response, err: {}",
                                   __func__, out.err);
-    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    auto handler_ret =
+            gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_size(
+                gkfs::utils::Stats::SizeOp::read_size, bulk_size);
+    }
+    return handler_ret;
 }
 
 
