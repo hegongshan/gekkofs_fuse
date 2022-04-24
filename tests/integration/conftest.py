@@ -118,7 +118,7 @@ def gkfs_daemon_parallaxdb(test_workspace, request):
     yield daemon.run()
     daemon.shutdown()
 
-@pytest.fixture(params=['gkfs_daemon_rocksdb', 'gkfs_daemon_parallaxdb'])
+@pytest.fixture(params=['gkfs_daemon_rocksdb'])
 def gkfs_daemon(request):
     return request.getfixturevalue(request.param)
 

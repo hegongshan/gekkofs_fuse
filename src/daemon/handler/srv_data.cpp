@@ -42,6 +42,7 @@
 #include <common/rpc/rpc_types.hpp>
 #include <common/rpc/distributor.hpp>
 #include <common/arithmetic/arithmetic.hpp>
+#include <common/statistics/stats.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>
@@ -113,6 +114,8 @@ rpc_srv_write(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
+
+
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
@@ -233,6 +236,10 @@ rpc_srv_write(hg_handle_t handle) {
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
+
+        if(GKFS_DATA->enable_chunkstats()) {
+            GKFS_DATA->stats()->add_write(in.path, chnk_id_file);
+        }
 #endif
 
         chnk_ids_host[chnk_id_curr] =
@@ -342,7 +349,13 @@ rpc_srv_write(hg_handle_t handle) {
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response {}", __func__,
                                   out.err);
-    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    auto handler_ret =
+            gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_size(
+                gkfs::utils::Stats::SizeOp::write_size, bulk_size);
+    }
+    return handler_ret;
 }
 
 /**
@@ -404,6 +417,7 @@ rpc_srv_read(hg_handle_t handle) {
             "{}() path: '{}' chunk_start '{}' chunk_end '{}' chunk_n '{}' total_chunk_size '{}' bulk_size: '{}' offset: '{}'",
             __func__, in.path, in.chunk_start, in.chunk_end, in.chunk_n,
             in.total_chunk_size, bulk_size, in.offset);
+
 #ifdef GKFS_ENABLE_AGIOS
     int* data;
     ABT_eventual eventual = ABT_EVENTUAL_NULL;
@@ -513,6 +527,9 @@ rpc_srv_read(hg_handle_t handle) {
                     __func__, chnk_id_file, host_id, chnk_id_curr);
             continue;
         }
+        if(GKFS_DATA->enable_chunkstats()) {
+            GKFS_DATA->stats()->add_read(in.path, chnk_id_file);
+        }
 #endif
 
         chnk_ids_host[chnk_id_curr] =
@@ -601,7 +618,13 @@ rpc_srv_read(hg_handle_t handle) {
      */
     GKFS_DATA->spdlogger()->debug("{}() Sending output response, err: {}",
                                   __func__, out.err);
-    return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    auto handler_ret =
+            gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
+    if(GKFS_DATA->enable_stats()) {
+        GKFS_DATA->stats()->add_value_size(
+                gkfs::utils::Stats::SizeOp::read_size, bulk_size);
+    }
+    return handler_ret;
 }
 
 

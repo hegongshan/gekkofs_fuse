@@ -61,6 +61,8 @@ gkfs:
       -DGKFS_USE_GUIDED_DISTRIBUTION:BOOL=ON
       -DGKFS_ENABLE_PARALLAX:BOOL=ON
       -DGKFS_ENABLE_ROCKSDB:BOOL=ON
+      -DGKFS_CHUNK_STATS:BOOL=ON
+      -DGKFS_ENABLE_PROMETHEUS:BOOL=ON
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
     # reduce artifacts size

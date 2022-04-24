@@ -46,6 +46,11 @@ namespace data {
 class ChunkStorage;
 }
 
+/* Forward declarations */
+namespace utils {
+class Stats;
+}
+
 namespace daemon {
 
 class FsData {
@@ -84,6 +89,16 @@ private:
     bool ctime_state_;
     bool link_cnt_state_;
     bool blocks_state_;
+
+    // Statistics
+    std::shared_ptr<gkfs::utils::Stats> stats_;
+    bool enable_stats_ = false;
+    bool enable_chunkstats_ = false;
+    bool enable_prometheus_ = false;
+    std::string stats_file_;
+
+    // Prometheus
+    std::string prometheus_gateway_ = gkfs::config::stats::prometheus_gateway;
 
 public:
     static FsData*
@@ -209,7 +224,47 @@ public:
 
     void
     parallax_size_md(unsigned int size_md);
+
+    const std::shared_ptr<gkfs::utils::Stats>&
+    stats() const;
+
+    void
+    stats(const std::shared_ptr<gkfs::utils::Stats>& stats);
+
+    void
+    close_stats();
+
+    bool
+    enable_stats() const;
+
+    void
+    enable_stats(bool enable_stats);
+
+    bool
+    enable_chunkstats() const;
+
+    void
+    enable_chunkstats(bool enable_chunkstats);
+
+    bool
+    enable_prometheus() const;
+
+    void
+    enable_prometheus(bool enable_prometheus);
+
+    const std::string&
+    stats_file() const;
+
+    void
+    stats_file(const std::string& stats_file);
+
+    const std::string&
+    prometheus_gateway() const;
+
+    void
+    prometheus_gateway(const std::string& prometheus_gateway_);
 };
+
 
 } // namespace daemon
 } // namespace gkfs

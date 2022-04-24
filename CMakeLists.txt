@@ -195,6 +195,12 @@ if(GKFS_USE_GUIDED_DISTRIBUTION)
     message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
 endif()
 
+option(GKFS_ENABLE_PROMETHEUS "Enable Prometheus Push " OFF)
+if(GKFS_ENABLE_PROMETHEUS)
+    add_definitions(-DGKFS_ENABLE_PROMETHEUS)
+endif ()
+message(STATUS "[gekkofs] Prometheus Output: ${GKFS_ENABLE_PROMETHEUS}")
+
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
 

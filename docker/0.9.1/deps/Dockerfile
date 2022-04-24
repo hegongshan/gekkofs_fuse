@@ -21,7 +21,7 @@ RUN apt-get update && \
 		python3-dev \
 		python3-venv \
 		python3-setuptools \
-    libnuma-dev libyaml-dev \
+    libnuma-dev libyaml-dev libcurl4-openssl-dev \
     procps && \
     python3 -m pip install --upgrade pip && \
     rm -rf /var/lib/apt/lists/* && \
