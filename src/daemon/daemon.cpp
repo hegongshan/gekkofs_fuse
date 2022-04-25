@@ -459,7 +459,7 @@ initialize_loggers() {
     std::string path = gkfs::config::log::daemon_log_path;
     // Try to get log path from env variable
     std::string env_path_key = DAEMON_ENV_PREFIX;
-    env_path_key += "DAEMON_LOG_PATH";
+    env_path_key += "LOG_PATH";
     char* env_path = getenv(env_path_key.c_str());
     if(env_path != nullptr) {
         path = env_path;

@@ -178,5 +178,5 @@ the logging subsystem to truncate the file used for logging, rather than append 
 #### Daemon logging
 
 For the daemon, the `GKFS_DAEMON_LOG_PATH=<path/to/file>` environment variable can be provided to set the path to the
-log file, and the log module can be selected with the `GKFS_LOG_LEVEL={off,critical,err,warn,info,debug,trace}`
+log file, and the log module can be selected with the `GKFS_DAEMON_LOG_LEVEL={off,critical,err,warn,info,debug,trace}`
 environment variable whereas `trace` produces the most trace records while `info` is the default value.
