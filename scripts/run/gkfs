@@ -1,22 +1,15 @@
 #!/bin/bash
-
-# global variables
-export FI_PSM2_DISCONNECT=1
-export PSM2_MULTI_EP=1
-SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-CONFIGPATH="${SCRIPTDIR}/gkfs.conf"
-source "$CONFIGPATH"
-
-VERBOSE=false
-NODE_NUM=1
-MOUNTDIR=${DAEMON_MOUNTDIR}
-ROOTDIR=${DAEMON_ROOTDIR}
-HOSTSFILE=${LIBGKFS_HOSTS_FILE}
-CPUS_PER_TASK=$(grep -c ^processor /proc/cpuinfo)
-ARGS=${DAEMON_ARGS}
-USE_SRUN=false
-RUN_FOREGROUND=false
-
+#######################################
+# Poll GekkoFS hostsfile until all daemons are started. 
+# Exits with 1 if daemons cannot be started.
+# Globals:
+#   HOSTSFILE
+#   NODE_NUM
+# Arguments:
+#   None
+# Outputs:
+#   Writes error to stdout
+#######################################
 wait_for_gkfs_daemons() {
 	  sleep 2
     local server_wait_cnt=0
@@ -35,11 +28,21 @@ wait_for_gkfs_daemons() {
         fi
     done
 }
-
+#######################################
+# Creates a pid file for a given pid. If pid file exists, we check if its pids are still valid.
+# If valid, an additional line is added. Otherwise, the pid in the file is deleted.
+# Globals:
+#   DAEMON_PID_FILE
+#   VERBOSE
+# Arguments:
+#   pid to write to pid file
+# Outputs:
+#   Writes status to stdout if VERBOSE is true
+#######################################
 create_pid_file() {
     local pid_file=${DAEMON_PID_FILE}
     local pid=${1}
-    if [[ $VERBOSE == true ]]; then
+    if [[ ${VERBOSE} == true ]]; then
         echo "Creating pid file at ${pid_file} with pid ${pid} ..."
     fi
     # if PID file exists another daemon could run
@@ -59,7 +62,25 @@ create_pid_file() {
     fi
     echo "${pid}" >> "${pid_file}"
 }
-
+#######################################
+# Starts GekkoFS daemons.
+# Globals:
+#   SLURM_JOB_ID
+#   NODE_NUM
+#   MOUNTDIR
+#   ROOTDIR
+#   ARGS
+#   CPUS_PER_TASK
+#   VERBOSE
+#   USE_NUMACTL
+#   DAEMON_CPUNODEBIND
+#   DAEMON_MEMBIND
+#   GKFS_DAEMON_LOG_PATH
+#   GKFS_DAEMON_LOG_LEVEL
+#   RUN_FOREGROUND
+# Outputs:
+#   Writes status to stdout
+#######################################
 start_daemon() {
     local node_list
     local srun_cmd
@@ -74,21 +95,21 @@ start_daemon() {
         srun_cmd="srun --disable-status -N ${NODE_NUM} --ntasks=${NODE_NUM} --ntasks-per-node=1 --overcommit --contiguous --cpus-per-task=${CPUS_PER_TASK} --oversubscribe --mem=0 "
     fi
 
-    if [[ $VERBOSE == true ]]; then
+    if [[ ${VERBOSE} == true ]]; then
         echo "### mountdir: ${MOUNTDIR}"
         echo "### rootdir: ${ROOTDIR}"
         echo "### node_num: ${NODE_NUM}"
         echo "### args: ${ARGS}"
         echo "### cpus_per_task: ${CPUS_PER_TASK}"
     fi
-    if [[ $VERBOSE == true ]]; then
+    if [[ ${VERBOSE} == true ]]; then
         echo "# Cleaning host file ..."
     fi
     rm "${HOSTSFILE}" 2> /dev/null
     # Setting up base daemon cmd
     local daemon_cmd="${DAEMON_BIN} -r ${ROOTDIR} -m ${MOUNTDIR} -H ${HOSTSFILE} ${ARGS}"
     # Setting up numactl
-    if [[ ${DAEMON_NUMACTL} == true ]]; then
+    if [[ ${USE_NUMACTL} == true ]]; then
         daemon_cmd="numactl --cpunodebind=${DAEMON_CPUNODEBIND} --membind=${DAEMON_MEMBIND} ${daemon_cmd}"
     fi
     # final daemon execute command
@@ -128,19 +149,26 @@ start_daemon() {
         create_pid_file ${daemon_pid}
     fi
 }
-
+#######################################
+# Stops GekkoFS daemons for the configured pid file
+# Globals:
+#   DAEMON_PID_FILE
+#   VERBOSE
+# Outputs:
+#   Writes status to stdout
+#######################################
 stop_daemons() {
     local pid_file=${DAEMON_PID_FILE}
     if [[ -e ${pid_file} ]]; then
         while IFS= read -r line
         do
             if ps -p "${line}" > /dev/null; then
-                if [[ $VERBOSE == true ]]; then
+                if [[ ${VERBOSE} == true ]]; then
                     echo "Stopping daemon with pid ${line}"
                 fi
                 kill -s SIGINT "${line}" &
                 # poll pid until it stopped
-                if [[ $VERBOSE == true ]]; then
+                if [[ ${VERBOSE} == true ]]; then
                     echo "Waiting for daemons to exit ..."
                 fi
                 timeout 1 tail --pid=${line} -f /dev/null
@@ -151,19 +179,68 @@ stop_daemons() {
         echo "No pid file found -> no daemon running. Exiting ..."
     fi
 }
-
+#######################################
+# Print short usage information
+# Outputs:
+#   Writes help to stdout
+#######################################
 usage_short() {
     echo "
-usage: gkfs.sh [-h] [-r/--rootdir <config>] [-m/--mountdir <config>] [-n/--numnodes <jobsize>] [-f/--foreground <false>]
-        [-a/--args <daemon_args>] [--srun <false>] [-c/--cpuspertask <64>] [-v/--verbose <false>]
+usage: gkfs [-h/--help] [-r/--rootdir <path>] [-m/--mountdir <path>] [-a/--args <daemon_args>] [-f/--foreground <false>]
+        [--srun <false>] [-n/--numnodes <jobsize>] [--cpuspertask <64>] [--numactl <false>] [-v/--verbose <false>]
         {start,stop}
     "
 }
-
+#######################################
+# Print detailed usage information
+# Outputs:
+#   Writes help to stdout
+#######################################
 help_msg() {
-
     usage_short
+    echo "
+    This script simplifies the starting and stopping GekkoFS daemons. If daemons are started on multiple nodes,
+    a Slurm environment is required. The script looks for the 'gkfs.conf' file in the same directory where
+    additional permanent configurations can be set.
+
+    positional arguments:
+            command                 Command to execute: 'start' and 'stop'
+
+    optional arguments:
+            -h, --help              Shows this help message and exits
+            -r, --rootdir <path>    Providing the rootdir path for GekkoFS daemons.
+            -m, --mountdir <path>   Providing the mountdir path for GekkoFS daemons.
+            -a, --args <daemon_arguments>
+                                    Add various additional daemon arguments, e.g., \"-l ib0 -P ofi+psm2\".
+            -f, --foreground        Starts the script in the foreground. Daemons are stopped by pressing 'q'.
+            --srun                  Use srun to start daemons on multiple nodes.
+            -n, --numnodes <n>      GekkoFS daemons are started on n nodes.
+                                    Nodelist is extracted from Slurm via the SLURM_JOB_ID env variable.
+            --cpuspertask <#cores>  Set the number of cores the daemons can use. Must use '--srun'.
+            --numactl               Use numactl for the daemon. Modify gkfs.conf for further numactl configurations.
+            -v, --verbose           Increase verbosity
+            "
 }
+
+# global variables
+export FI_PSM2_DISCONNECT=1
+export PSM2_MULTI_EP=1
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+CONFIGPATH="${SCRIPTDIR}/gkfs.conf"
+source "$CONFIGPATH"
+
+# more global variables which may be overwritten by user input
+VERBOSE=false
+NODE_NUM=1
+MOUNTDIR=${DAEMON_MOUNTDIR}
+ROOTDIR=${DAEMON_ROOTDIR}
+HOSTSFILE=${LIBGKFS_HOSTS_FILE}
+CPUS_PER_TASK=$(grep -c ^processor /proc/cpuinfo)
+ARGS=${DAEMON_ARGS}
+USE_SRUN=${USE_SRUN}
+RUN_FOREGROUND=false
+USE_NUMACTL=${DAEMON_NUMACTL}
+
 # parse input
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -186,7 +263,7 @@ while [[ $# -gt 0 ]]; do
         shift # past value
         ;;
     -a | --args)
-        ARGS=$2
+        ARGS="${ARGS} $2"
         shift # past argument
         shift # past value
         ;;
@@ -198,7 +275,11 @@ while [[ $# -gt 0 ]]; do
         RUN_FOREGROUND=true
         shift # past argument
         ;;
-    -c | --cpuspertask)
+    --numactl)
+        USE_NUMACTL=true
+        shift # past argument
+        ;;
+    --cpuspertask)
         CPUS_PER_TASK=$2
         shift # past argument
         shift # past value
@@ -226,18 +307,18 @@ if [[ -z ${1+x} ]]; then
     exit 1
 fi
 command="${1}"
-
+# checking input
 if [[ ${command} != *"start"* ]] && [[ ${command} != *"stop"* ]]; then
     echo "ERROR: command ${command} not supported"
     usage_short
     exit 1
 fi
-
+# Run script
 if [[ ${command} == "start" ]]; then
     start_daemon
 elif [[ ${command} == "stop" ]]; then
     stop_daemons
 fi
-if [[ $VERBOSE == true ]]; then
+if [[ ${VERBOSE} == true ]]; then
     echo "Nothing left to do. Exiting :)"
 fi

@@ -136,6 +136,42 @@ to be empty.
 For MPI applications, the `LD_PRELOAD` and `LIBGKFS_HOSTS_FILE` variables can be passed with the `-x` argument
 for `mpirun/mpiexec`.
 
+## Run GekkoFS daemons on multiple nodes (beta version!)
+
+The `scripts/run/gkfs` script can be used to simplify starting the GekkoFS daemon on one or multiple nodes. To start
+GekkoFS on multiple nodes, a Slurm environment that can execute `srun` is required. Users can further
+modify `scripts/run/gkfs.conf` to mold default configurations to their environment.
+
+The following options are available for `scripts/run/gkfs`:
+
+```bash
+usage: gkfs [-h/--help] [-r/--rootdir <path>] [-m/--mountdir <path>] [-a/--args <daemon_args>] [-f/--foreground <false>]
+        [--srun <false>] [-n/--numnodes <jobsize>] [--cpuspertask <64>] [--numactl <false>] [-v/--verbose <false>]
+        {start,stop}
+
+
+    This script simplifies the starting and stopping GekkoFS daemons. If daemons are started on multiple nodes,
+    a Slurm environment is required. The script looks for the 'gkfs.conf' file in the same directory where
+    additional permanent configurations can be set.
+
+    positional arguments:
+            command                 Command to execute: 'start' and 'stop'
+
+    optional arguments:
+            -h, --help              Shows this help message and exits
+            -r, --rootdir <path>    Providing the rootdir path for GekkoFS daemons.
+            -m, --mountdir <path>   Providing the mountdir path for GekkoFS daemons.
+            -a, --args <daemon_arguments>
+                                    Add various additional daemon arguments, e.g., "-l ib0 -P ofi+psm2".
+            -f, --foreground        Starts the script in the foreground. Daemons are stopped by pressing 'q'.
+            --srun                  Use srun to start daemons on multiple nodes.
+            -n, --numnodes <n>      GekkoFS daemons are started on n nodes.
+                                    Nodelist is extracted from Slurm via the SLURM_JOB_ID env variable.
+            --cpuspertask <#cores>  Set the number of cores the daemons can use. Must use '--srun'.
+            --numactl               Use numactl for the daemon. Modify gkfs.conf for further numactl configurations.
+            -v, --verbose           Increase verbosity
+```
+
 ### Logging
 
 #### Client logging
