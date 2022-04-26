@@ -31,6 +31,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   shutdown ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
 
 ### Removed
+- Removed old initialization code in the GekkoFS
+  client ([!136](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/136)).
 
 ### Fixed
 
