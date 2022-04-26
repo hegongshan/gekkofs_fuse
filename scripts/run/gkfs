@@ -1,0 +1,243 @@
+#!/bin/bash
+
+# global variables
+export FI_PSM2_DISCONNECT=1
+export PSM2_MULTI_EP=1
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+CONFIGPATH="${SCRIPTDIR}/gkfs.conf"
+source "$CONFIGPATH"
+
+VERBOSE=false
+NODE_NUM=1
+MOUNTDIR=${DAEMON_MOUNTDIR}
+ROOTDIR=${DAEMON_ROOTDIR}
+HOSTSFILE=${LIBGKFS_HOSTS_FILE}
+CPUS_PER_TASK=$(grep -c ^processor /proc/cpuinfo)
+ARGS=${DAEMON_ARGS}
+USE_SRUN=false
+RUN_FOREGROUND=false
+
+wait_for_gkfs_daemons() {
+	  sleep 2
+    local server_wait_cnt=0
+    local nodes=1
+    if [[ -n ${NODE_NUM} ]]; then
+        nodes=${NODE_NUM}
+    fi
+    until [ $(($(wc -l "${HOSTSFILE}"  2> /dev/null | awk '{print $1}') + 0)) -eq "${nodes}" ]
+    do
+		    #echo "Waiting for all servers to report connection. Try $server_wait_cnt"
+        sleep 2
+        server_wait_cnt=$((server_wait_cnt+1))
+        if [ ${server_wait_cnt} -gt 600 ]; then
+            echo "Server failed to start. Exiting ..."
+            exit 1
+        fi
+    done
+}
+
+create_pid_file() {
+    local pid_file=${DAEMON_PID_FILE}
+    local pid=${1}
+    if [[ $VERBOSE == true ]]; then
+        echo "Creating pid file at ${pid_file} with pid ${pid} ..."
+    fi
+    # if PID file exists another daemon could run
+    if [[ -e ${pid_file} ]]; then
+        local pid_file_tmp=${DAEMON_PID_FILE}.swp
+        # create empty tmp file
+        truncate -s 0 "${pid_file_tmp}"
+        while IFS= read -r line
+        do
+            if ps -p "${line}" > /dev/null; then
+                # process with pid still running
+                echo "${line}" >> "${pid_file_tmp}"
+            fi
+        done < "${pid_file}"
+        # create pid file with only valid pids
+        mv "${pid_file_tmp}" "${pid_file}"
+    fi
+    echo "${pid}" >> "${pid_file}"
+}
+
+start_daemon() {
+    local node_list
+    local srun_cmd
+    local daemon_execute
+    # setup
+    if [[ ${USE_SRUN} == true ]]; then
+        node_list=$(scontrol show job "${SLURM_JOB_ID}" | grep " NodeList=" | cut -d "=" -f2)
+        if [[ -z ${NODE_NUM} ]]; then
+            NODE_NUM=$(scontrol show hostname "${node_list}" | wc -l)
+        fi
+        # Setting up base srun cmd
+        srun_cmd="srun --disable-status -N ${NODE_NUM} --ntasks=${NODE_NUM} --ntasks-per-node=1 --overcommit --contiguous --cpus-per-task=${CPUS_PER_TASK} --oversubscribe --mem=0 "
+    fi
+
+    if [[ $VERBOSE == true ]]; then
+        echo "### mountdir: ${MOUNTDIR}"
+        echo "### rootdir: ${ROOTDIR}"
+        echo "### node_num: ${NODE_NUM}"
+        echo "### args: ${ARGS}"
+        echo "### cpus_per_task: ${CPUS_PER_TASK}"
+    fi
+    if [[ $VERBOSE == true ]]; then
+        echo "# Cleaning host file ..."
+    fi
+    rm "${HOSTSFILE}" 2> /dev/null
+    # Setting up base daemon cmd
+    local daemon_cmd="${DAEMON_BIN} -r ${ROOTDIR} -m ${MOUNTDIR} -H ${HOSTSFILE} ${ARGS}"
+    # Setting up numactl
+    if [[ ${DAEMON_NUMACTL} == true ]]; then
+        daemon_cmd="numactl --cpunodebind=${DAEMON_CPUNODEBIND} --membind=${DAEMON_MEMBIND} ${daemon_cmd}"
+    fi
+    # final daemon execute command
+    daemon_execute="${srun_cmd}${daemon_cmd}"
+
+    if [[ ${VERBOSE} == true ]]; then
+        echo "### Full execute DAEMON command:"
+        echo "##### $daemon_execute"
+    fi
+    # setup environment variables
+    export GKFS_DAEMON_LOG_PATH=$GKFS_DAEMON_LOG_PATH
+    export GKFS_DAEMON_LOG_LEVEL=$GKFS_DAEMON_LOG_LEVEL
+
+    echo "Starting daemons ..."
+    ${daemon_execute} &
+    local daemon_pid=$!
+    wait_for_gkfs_daemons
+    echo "Running ..."
+
+    if [[ ${RUN_FOREGROUND} == true ]]; then
+        echo "Press 'q' to exit"
+        while : ; do
+            read -n 1 k <&1
+            if [[ $k = q ]] ; then
+                echo
+                echo "Shutting down ..."
+                if [[ -n ${daemon_pid} ]]; then
+                    kill -s SIGINT ${daemon_pid} &
+                    wait ${daemon_pid}
+                fi
+                break
+            else
+                echo "Press 'q' to exit"
+            fi
+        done
+    else
+        create_pid_file ${daemon_pid}
+    fi
+}
+
+stop_daemons() {
+    local pid_file=${DAEMON_PID_FILE}
+    if [[ -e ${pid_file} ]]; then
+        while IFS= read -r line
+        do
+            if ps -p "${line}" > /dev/null; then
+                if [[ $VERBOSE == true ]]; then
+                    echo "Stopping daemon with pid ${line}"
+                fi
+                kill -s SIGINT "${line}" &
+                # poll pid until it stopped
+                if [[ $VERBOSE == true ]]; then
+                    echo "Waiting for daemons to exit ..."
+                fi
+                timeout 1 tail --pid=${line} -f /dev/null
+            fi
+        done < "${pid_file}"
+        rm "${pid_file}"
+    else
+        echo "No pid file found -> no daemon running. Exiting ..."
+    fi
+}
+
+usage_short() {
+    echo "
+usage: gkfs.sh [-h] [-r/--rootdir <config>] [-m/--mountdir <config>] [-n/--numnodes <jobsize>] [-f/--foreground <false>]
+        [-a/--args <daemon_args>] [--srun <false>] [-c/--cpuspertask <64>] [-v/--verbose <false>]
+        {start,stop}
+    "
+}
+
+help_msg() {
+
+    usage_short
+}
+# parse input
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+    key="$1"
+
+    case ${key} in
+    -r | --rootdir)
+        ROOTDIR=$2
+        shift # past argument
+        shift # past value
+        ;;
+    -m | --mountdir)
+        MOUNTDIR=$2
+        shift # past argument
+        shift # past value
+        ;;
+    -n | --numnodes)
+        NODE_NUM=$2
+        shift # past argument
+        shift # past value
+        ;;
+    -a | --args)
+        ARGS=$2
+        shift # past argument
+        shift # past value
+        ;;
+    --srun)
+        USE_SRUN=true
+        shift # past argument
+        ;;
+    -f | --foreground)
+        RUN_FOREGROUND=true
+        shift # past argument
+        ;;
+    -c | --cpuspertask)
+        CPUS_PER_TASK=$2
+        shift # past argument
+        shift # past value
+        ;;
+    -h | --help)
+        help_msg
+        exit
+        ;;
+    -v | --verbose)
+        VERBOSE=true
+        shift # past argument
+        ;;
+    *) # unknown option
+        POSITIONAL+=("$1") # save it in an array for later
+        shift              # past argument
+        ;;
+    esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+# positional arguments
+if [[ -z ${1+x} ]]; then
+    echo "ERROR: Positional arguments missing."
+    usage_short
+    exit 1
+fi
+command="${1}"
+
+if [[ ${command} != *"start"* ]] && [[ ${command} != *"stop"* ]]; then
+    echo "ERROR: command ${command} not supported"
+    usage_short
+    exit 1
+fi
+
+if [[ ${command} == "start" ]]; then
+    start_daemon
+elif [[ ${command} == "stop" ]]; then
+    stop_daemons
+fi
+if [[ $VERBOSE == true ]]; then
+    echo "Nothing left to do. Exiting :)"
+fi
