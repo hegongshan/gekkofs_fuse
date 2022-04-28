@@ -35,7 +35,7 @@
 
 #include <config.hpp>
 
-#define ADD_PREFIX(str) DAEMON_ENV_PREFIX str
+#define ADD_PREFIX(str) COMMON_ENV_PREFIX str
 
 /* Environment variables for the GekkoFS daemon */
 namespace gkfs::env {

@@ -33,7 +33,8 @@
 
 // environment prefixes (are concatenated in env module at compile time)
 #define CLIENT_ENV_PREFIX "LIBGKFS_"
-#define DAEMON_ENV_PREFIX "GKFS_"
+#define DAEMON_ENV_PREFIX "GKFS_DAEMON_"
+#define COMMON_ENV_PREFIX "GKFS_"
 
 namespace gkfs::config {
 

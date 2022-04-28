@@ -7,16 +7,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-
 ### New
 
+- Added a new script for starting and stopping daemons on multiple
+  nodes ([!135](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/135)).
 - Added statistics gathering on daemons ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)).
     - Stats output can be enabled with:
     - `--enable-collection` collects normal statistics.
     - `--enable-chunkstats` collects extended chunk statistics.
 - Statistics output to file is controlled by `--output-stats <filename>`
-- Added Prometheus support for outputting
-  statistics ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)):
+- Added Prometheus support for outputting statistics ([!132](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/132)):
     - Prometheus dependency optional and enabled at compile time with the CMake argument `GKFS_ENABLE_PROMETHEUS`.
     - `--enable-prometheus` enables statistics pushing to Prometheus if statistics are enabled.
     - `--prometheus-gateway` sets an IP and port for the Prometheus connection.
@@ -29,6 +29,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `-c` argument has been moved to `--clean-rootdir-finish` and is now used to clean rootdir/metadir on daemon
   shutdown ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
+- Environment variable to change Daemon log levels was changed from `GKFS_LOG_LEVEL`
+  to `GKFS_DAEMON_LOG_LEVEL` ([!135](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/135)).
 
 ### Removed
 - Removed old initialization code in the GekkoFS
