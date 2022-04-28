@@ -92,7 +92,7 @@ start_daemon() {
             NODE_NUM=$(scontrol show hostname "${node_list}" | wc -l)
         fi
         # Setting up base srun cmd
-        srun_cmd="srun --disable-status -N ${NODE_NUM} --ntasks=${NODE_NUM} --ntasks-per-node=1 --overcommit --contiguous --cpus-per-task=${CPUS_PER_TASK} --oversubscribe --mem=0 "
+        srun_cmd="srun --disable-status -N ${NODE_NUM} --ntasks=${NODE_NUM} --cpus-per-task=${CPUS_PER_TASK} ${SRUN_ARGS} "
     fi
 
     if [[ ${VERBOSE} == true ]]; then
