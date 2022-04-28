@@ -169,6 +169,7 @@ usage: gkfs [-h/--help] [-r/--rootdir <path>] [-m/--mountdir <path>] [-a/--args 
                                     Nodelist is extracted from Slurm via the SLURM_JOB_ID env variable.
             --cpuspertask <#cores>  Set the number of cores the daemons can use. Must use '--srun'.
             --numactl               Use numactl for the daemon. Modify gkfs.conf for further numactl configurations.
+            -c, --config            Path to configuration file. By defaults looks for a 'gkfs.conf' in this directory.
             -v, --verbose           Increase verbosity
 ```
 
