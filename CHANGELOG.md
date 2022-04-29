@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.9.1] - 2022-04-29
+
 ### New
 
 - Added a new script for starting and stopping daemons on multiple
@@ -31,12 +33,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   shutdown ([!110](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/110)).
 - Environment variable to change Daemon log levels was changed from `GKFS_LOG_LEVEL`
   to `GKFS_DAEMON_LOG_LEVEL` ([!135](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/135)).
+- Update Catch2 to support newer glibc library ([!131](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/131)).
+- Adding support for `faccessat2()` and `getxattr()` system calls ([!209](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/209)).
 
 ### Removed
 - Removed old initialization code in the GekkoFS
   client ([!136](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/136)).
+- Removed boost interval dependencies from guided distributor ([!122](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/122)).
 
 ### Fixed
+- Documentation: Doxygen now includes private struct and class members ([!125](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/125)).
+- Guided distributor tests are no longer run when they are turned off ([!129](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/129)).
 
 ## [0.9.0] - 2022-02-22
 
