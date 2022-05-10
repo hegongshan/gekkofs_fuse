@@ -241,7 +241,7 @@ class Daemon:
             'LD_LIBRARY_PATH'      : libdirs,
             'GKFS_HOSTS_FILE'      : self.cwd / gkfs_hosts_file,
             'GKFS_DAEMON_LOG_PATH' : self.logdir / gkfs_daemon_log_file,
-            'GKFS_LOG_LEVEL'       : gkfs_daemon_log_level,
+            'GKFS_DAEMON_LOG_LEVEL': gkfs_daemon_log_level,
         }
         self._env.update(self._patched_env)
 
@@ -717,7 +717,7 @@ class FwdDaemon:
             'LD_LIBRARY_PATH'      : libdirs,
             'GKFS_HOSTS_FILE'      : self.cwd / gkfwd_hosts_file,
             'GKFS_DAEMON_LOG_PATH' : self.logdir / gkfwd_daemon_log_file,
-            'GKFS_LOG_LEVEL'       : gkfwd_daemon_log_level
+            'GKFS_DAEMON_LOG_LEVEL': gkfwd_daemon_log_level
         }
         self._env.update(self._patched_env)
 
