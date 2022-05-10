@@ -224,6 +224,39 @@ gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
         LOG(DEBUG, "File '{}' is renamed __", path);
         errno = ENOENT;
         return -1;
+    } else {
+        if(md.target_path() != "") {
+            auto md_ = gkfs::utils::get_metadata(md.target_path());
+            new_path = md.target_path();
+            while(md_.value().target_path() != "") {
+                new_path = md_.value().target_path();
+                md_ = gkfs::utils::get_metadata(md_.value().target_path(),
+                                                false);
+                if(!md_) {
+                    return -1;
+                }
+            }
+            md = *md_;
+            // Code is replicated, to avoid changing the const std::string path
+            // to a non-const
+            if(S_ISDIR(md.mode())) {
+                return gkfs_opendir(new_path);
+            }
+
+
+            /*** Regular file exists ***/
+            assert(S_ISREG(md.mode()));
+
+            if((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
+                if(gkfs_truncate(new_path, md.size(), 0)) {
+                    LOG(ERROR, "Error truncating file");
+                    return -1;
+                }
+            }
+
+            return CTX->file_map()->add(
+                    std::make_shared<gkfs::filemap::OpenFile>(new_path, flags));
+        }
     }
 #endif
     if(S_ISDIR(md.mode())) {
@@ -306,6 +339,30 @@ gkfs_remove(const std::string& path) {
         return -1;
     }
 
+#ifdef HAS_RENAME
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        if(md.value().target_path() != "") {
+            auto md_ = gkfs::utils::get_metadata(md.value().target_path());
+            std::string new_path = md.value().target_path();
+            while(md.value().target_path() != "") {
+                new_path = md.value().target_path();
+                md = gkfs::utils::get_metadata(md.value().target_path(), false);
+                if(!md) {
+                    return -1;
+                }
+            }
+            auto err = gkfs::rpc::forward_remove(new_path);
+            if(err) {
+                errno = err;
+                return -1;
+            }
+            return 0;
+        }
+    }
+#endif
     auto err = gkfs::rpc::forward_remove(path);
     if(err) {
         errno = err;

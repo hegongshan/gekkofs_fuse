@@ -68,6 +68,7 @@ add_executable(gkfs.io
     gkfs.io/dup_validate.cpp
     gkfs.io/syscall_coverage.cpp
     gkfs.io/rename.cpp
+    gkfs.io/unlink.cpp
 )
 
 include(FetchContent)
