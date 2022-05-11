@@ -890,12 +890,12 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-        #ifdef HAS_RENAME
+#ifdef HAS_RENAME
             return with_errno(gkfs::syscall::gkfs_rename(oldpath_resolved,
                                                          newpath_resolved));
-        #else
+#else
             return -ENOTSUP;
-        #endif
+#endif
         default:
             LOG(ERROR, "{}() relativize status unknown", __func__);
             return -EINVAL;
