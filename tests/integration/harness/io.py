@@ -383,6 +383,15 @@ class SymlinkOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('SymlinkReturn', ['retval', 'errno'])(**data)
 
+class UnlinkOutputSchema(Schema):
+    """Schema to deserialize the results of an unlink() execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('UnlinkReturn', ['retval', 'errno'])(**data)
+
 
 # UTIL
 class FileCompareOutputSchema(Schema):
@@ -419,6 +428,7 @@ class IOParser:
         'write_validate' : WriteValidateOutputSchema(),
         'truncate': TruncateOutputSchema(),
         'directory_validate' : DirectoryValidateOutputSchema(),
+        'unlink'  : UnlinkOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
         'chdir'   : ChdirOutputSchema(),

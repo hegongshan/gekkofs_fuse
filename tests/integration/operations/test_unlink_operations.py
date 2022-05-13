@@ -26,87 +26,62 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-cmake_minimum_required(VERSION 3.11)
+import harness
+from pathlib import Path
+import errno
+import stat
+import os
+import ctypes
+import sys
+import pytest
+from harness.logger import logger
 
-project(gkfs.io
-    VERSION 0.1
-    LANGUAGES CXX
-)
+nonexisting = "nonexisting"
 
-add_executable(gkfs.io
-    gkfs.io/main.cpp
-    gkfs.io/commands.hpp
-    gkfs.io/mkdir.cpp
-    gkfs.io/open.cpp
-    gkfs.io/opendir.cpp
-    gkfs.io/read.cpp
-    gkfs.io/readv.cpp
-    gkfs.io/pread.cpp
-    gkfs.io/preadv.cpp
-    gkfs.io/readdir.cpp
-    gkfs.io/reflection.hpp
-    gkfs.io/rmdir.cpp
-    gkfs.io/serialize.hpp
-    gkfs.io/stat.cpp
-    gkfs.io/write.cpp
-    gkfs.io/pwrite.cpp
-    gkfs.io/writev.cpp
-    gkfs.io/pwritev.cpp
-    gkfs.io/statx.cpp
-    gkfs.io/lseek.cpp
-    gkfs.io/write_validate.cpp
-    gkfs.io/write_random.cpp
-    gkfs.io/truncate.cpp
-    gkfs.io/util/file_compare.cpp
-    gkfs.io/chdir.cpp
-    gkfs.io/getcwd_validate.cpp
-    gkfs.io/symlink.cpp
-    gkfs.io/directory_validate.cpp
-    gkfs.io/unlink.cpp
-)
 
-include(FetchContent)
 
-set(FETCHCONTENT_QUIET OFF)
+def test_unlink(gkfs_daemon, gkfs_client):
 
-FetchContent_Declare(nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json
-    GIT_TAG e7b3b40b5a95bc74b9a7f662830a27c49ffc01b4 # v3.7.3
-    GIT_SHALLOW ON
-    GIT_PROGRESS ON
-)
+    file = gkfs_daemon.mountdir / "file"
+    dir = gkfs_daemon.mountdir / "dir"
+    
 
-FetchContent_GetProperties(nlohmann_json)
+    # Delete an unexistent file
+    ret = gkfs_client.unlink(file)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOENT
 
-if(NOT nlohmann_json_POPULATED)
-    FetchContent_Populate(nlohmann_json)
-    message(STATUS "[gkfs.io] Nlohmann JSON source dir: ${nlohmann_json_SOURCE_DIR}")
-    message(STATUS "[gkfs.io] Nlohmann JSON binary dir: ${nlohmann_json_BINARY_DIR}")
 
-    # we don't really care so much about a third party library's tests to be
-    # run from our own project's code
-    set(JSON_BuildTests OFF CACHE INTERNAL "")
 
-    # we also don't need to install it when our main project gets installed
-    set(JSON_Install OFF CACHE INTERNAL "")
 
-    add_subdirectory(${nlohmann_json_SOURCE_DIR} ${nlohmann_json_BINARY_DIR})
-endif()
 
-target_include_directories(gkfs.io PRIVATE
-    ${BOOST_PREPROCESSOR_INCLUDE_DIRS}
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/gkfs.io>
-)
-target_link_libraries(gkfs.io
-    nlohmann_json::nlohmann_json
-    fmt::fmt
-    CLI11
-    # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
-    stdc++fs
-    )
+    # create a file in gekkofs
+    ret = gkfs_client.open(file,
+                           os.O_CREAT | os.O_WRONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
-if(GKFS_INSTALL_TESTS)
-    install(TARGETS gkfs.io
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-endif()
+    assert ret.retval == 10000
+
+    # write a buffer we know
+    buf = b'42'
+    ret = gkfs_client.write(file, buf, len(buf))
+    assert ret.retval == len(buf) # Return the number of written bytes
+
+  
+
+    ret = gkfs_client.unlink(file) # Remove renamed file (success)
+    assert ret.retval == 0        
+
+    ret = gkfs_client.stat(file) # file does not exist
+    assert ret.retval != 0 
+    assert ret.errno == errno.ENOENT  
+
+    ret = gkfs_client.mkdir(dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO) # Create a directory
+    assert ret.retval == 0
+
+    ret = gkfs_client.unlink(dir)
+    assert ret.retval == -1
+    assert ret.errno == errno.EISDIR
+    
+
+
