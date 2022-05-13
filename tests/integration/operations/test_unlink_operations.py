@@ -84,4 +84,16 @@ def test_unlink(gkfs_daemon, gkfs_client):
     assert ret.errno == errno.EISDIR
     
 
+    # create a file in gekkofs
+    ret = gkfs_client.open(file,
+                           os.O_CREAT | os.O_WRONLY,
+                           stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
+    assert ret.retval == 10000
+
+    # > 4 chunks
+    ret = gkfs_client.write_validate(file, 2097153) 
+    assert ret.retval == 1
+
+    ret = gkfs_client.unlink(file) # Remove renamed file (extra chunks, success)
+    assert ret.retval == 0
