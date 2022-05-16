@@ -76,8 +76,52 @@ def test_open_error(gkfs_daemon, gkfs_client):
    
 
     # Open unexistent file
-    ret =  ret = gkfs_client.open(file3, os.O_WRONLY)
+    ret = gkfs_client.open(file3, os.O_WRONLY)
     assert ret.retval == -1
     assert ret.errno == errno.ENOENT
 
-    
+def test_access_error(gkfs_daemon, gkfs_client):
+
+    file = gkfs_daemon.mountdir / "file"
+    file2 = gkfs_daemon.mountdir / "file2"
+
+    ret = gkfs_client.open(file, os.O_CREAT | os.O_WRONLY)
+    assert ret.retval == 10000
+
+    # Access, flags are not being used
+    ret = gkfs_client.access(file2, os.R_OK)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOENT
+
+    ret = gkfs_client.access(file, os.R_OK)
+    assert ret.retval != -1
+
+def test_stat_error(gkfs_daemon, gkfs_client):
+    # Stat non existing file
+    file = gkfs_daemon.mountdir / "file"
+
+    ret = gkfs_client.stat(file)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOENT
+
+      # test statx on existing file
+    ret = gkfs_client.statx(0, file, 0, 0)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOENT
+
+def test_statfs(gkfs_daemon, gkfs_client):
+    # Statfs check most of the outputs
+
+    ret = gkfs_client.statfs(gkfs_daemon.mountdir)  
+    assert ret.retval == 0
+    assert ret.statfsbuf.f_type == 0
+    assert ret.statfsbuf.f_bsize != 0
+    assert ret.statfsbuf.f_blocks != 0
+    assert ret.statfsbuf.f_bfree != 0
+    assert ret.statfsbuf.f_bavail != 0
+    assert ret.statfsbuf.f_files == 0
+    assert ret.statfsbuf.f_ffree == 0
+
+
+
+ 

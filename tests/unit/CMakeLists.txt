@@ -62,8 +62,6 @@ target_link_libraries(catch2_main
 add_executable(tests)
 target_sources(tests
     PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/test_example_00.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/test_example_01.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test_utils_arithmetic.cpp
     ${CMAKE_CURRENT_LIST_DIR}/test_helpers.cpp)
 

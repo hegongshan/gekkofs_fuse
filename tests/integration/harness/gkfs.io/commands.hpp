@@ -96,6 +96,12 @@ write_random_init(CLI::App& app);
 void
 truncate_init(CLI::App& app);
 
+void
+access_init(CLI::App& app);
+
+void
+statfs_init(CLI::App& app);
+
 // UTIL
 void
 file_compare_init(CLI::App& app);
