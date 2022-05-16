@@ -131,7 +131,7 @@ gkfs:integration:
   needs: ['gkfs']
   parallel:
     matrix:
-      - SUBTEST: [ data, directories, operations, position, shell, status ]
+      - SUBTEST: [ data, directories, operations, position, shell, status, coverage ]
 
   script:
     ## run tests
