@@ -276,6 +276,13 @@ gkfs_remove(const std::string& path) {
     if(!md) {
         return -1;
     }
+
+    if(S_ISDIR(md->mode())) {
+        LOG(ERROR, "Cannot remove directory '{}'", path);
+        errno = EISDIR;
+        return -1;
+    }
+
     auto err = gkfs::rpc::forward_remove(path);
     if(err) {
         errno = err;

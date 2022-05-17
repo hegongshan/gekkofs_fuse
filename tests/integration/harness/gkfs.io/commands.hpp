@@ -108,4 +108,7 @@ getcwd_validate_init(CLI::App& app);
 void
 symlink_init(CLI::App& app);
 
+void
+unlink_init(CLI::App& app);
+
 #endif // IO_COMMANDS_HPP

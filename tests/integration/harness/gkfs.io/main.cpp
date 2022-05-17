@@ -62,6 +62,7 @@ init_commands(CLI::App& app) {
     chdir_init(app);
     getcwd_validate_init(app);
     symlink_init(app);
+    unlink_init(app);
 }
 
 
