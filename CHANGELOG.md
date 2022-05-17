@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### New
+### Changed
+### Removed
+### Fixed
+- Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
 
 ## [0.9.1] - 2022-04-29
 
