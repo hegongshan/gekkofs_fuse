@@ -483,7 +483,7 @@ forward_get_dirents(const string& path) {
         }
     }
 
-    LOG(INFO,
+    LOG(DEBUG,
         "{}() path '{}' send rpc_srv_get_dirents() rpc to '{}' targets. per_host_buff_size '{}' Waiting on reply next and deserialize",
         __func__, path, targets.size(), per_host_buff_size);
 
