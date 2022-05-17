@@ -104,6 +104,28 @@ class StructStatfsSchema(Schema):
                 ['f_type', 'f_bsize', 'f_blocks', 'f_bfree',
                 'f_bavail', 'f_files', 'f_ffree'])(**data)
 
+
+class StructStatvfsSchema(Schema):
+    """Schema that deserializes a struct statvfs"""
+
+    f_bsize = fields.Integer(required=True)
+    f_blocks = fields.Integer(required=True)
+    f_bfree = fields.Integer(required=True)
+    f_bavail = fields.Integer(required=True)
+    f_files = fields.Integer(required=True)
+    f_ffree = fields.Integer(required=True)
+    f_favail = fields.Integer(required=True)
+ #   f_fsid = fields.Integer(required=True)
+ #   f_namelen = fields.Integer(required=True)
+ #   f_frsize = fields.Integer(required=True)
+ #   f_flags = fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StructStatfs',
+                ['f_bsize', 'f_blocks', 'f_bfree',
+                'f_bavail', 'f_files', 'f_ffree', 'f_favail'])(**data)
+
 class StructStatxTimestampSchema(Schema):
     """Schema that deserializes a struct timespec"""
     tv_sec = fields.Integer(required=True)
@@ -330,6 +352,17 @@ class StatfsOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('StatfsReturn', ['retval', 'statfsbuf', 'errno'])(**data)
 
+class StatvfsOutputSchema(Schema):
+    """Schema to deserialize the results of a statfs() execution"""
+
+    retval = fields.Integer(required=True)
+    statvfsbuf = fields.Nested(StructStatvfsSchema, required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StatvfsReturn', ['retval', 'statvfsbuf', 'errno'])(**data)
+
 class LseekOutputSchema(Schema):
     """Schema to deserialize the results of an lseek() execution"""
     retval = fields.Integer(required=True)
@@ -472,6 +505,7 @@ class IOParser:
         'unlink'  : UnlinkOutputSchema(),
         'access' : AccessOutputSchema(),
         'statfs' : StatfsOutputSchema(),
+        'statvfs' : StatvfsOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
         'chdir'   : ChdirOutputSchema(),

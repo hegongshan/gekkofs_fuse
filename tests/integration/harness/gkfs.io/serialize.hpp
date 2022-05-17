@@ -35,6 +35,7 @@
 extern "C" {
 #include <sys/stat.h>
 #include <sys/vfs.h>
+#include <sys/statvfs.h>
 }
 
 template <typename T>
@@ -184,6 +185,22 @@ struct adl_serializer<struct ::statfs> {
         {"f_bavail", opt.f_bavail},
         {"f_files", opt.f_files},
         {"f_ffree", opt.f_ffree}};
+    }
+};
+
+// ADL specialization for struct ::statvfs (not exhaustive) type
+template <>
+struct adl_serializer<struct ::statvfs> {
+    static void
+    to_json(json& j, const struct ::statvfs opt) {
+        j = json{
+        {"f_bsize", opt.f_bsize},
+        {"f_blocks", opt.f_blocks},
+        {"f_bfree", opt.f_bfree},
+        {"f_bavail", opt.f_bavail},
+        {"f_files", opt.f_files},
+        {"f_ffree", opt.f_ffree},
+        {"f_favail", opt.f_favail}};
     }
 };
 

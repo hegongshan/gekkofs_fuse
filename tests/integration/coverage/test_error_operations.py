@@ -26,6 +26,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
+from sre_parse import State
 import harness
 from pathlib import Path
 import errno
@@ -80,6 +81,9 @@ def test_open_error(gkfs_daemon, gkfs_client):
     assert ret.retval == -1
     assert ret.errno == errno.ENOENT
 
+    ret = gkfs_client.open(file3, os.O_CREAT | stat.S_IFSOCK | os.O_EXCL | os.O_WRONLY)
+    assert ret.retval == 10000
+
 def test_access_error(gkfs_daemon, gkfs_client):
 
     file = gkfs_daemon.mountdir / "file"
@@ -123,5 +127,16 @@ def test_statfs(gkfs_daemon, gkfs_client):
     assert ret.statfsbuf.f_ffree == 0
 
 
+def test_statvfs(gkfs_daemon, gkfs_client):
+    # Statfs check most of the outputs
+
+    ret = gkfs_client.statvfs(gkfs_daemon.mountdir)  
+    assert ret.retval == 0
+    assert ret.statvfsbuf.f_bsize != 0
+    assert ret.statvfsbuf.f_blocks != 0
+    assert ret.statvfsbuf.f_bfree != 0
+    assert ret.statvfsbuf.f_bavail != 0
+    assert ret.statvfsbuf.f_files == 0
+    assert ret.statvfsbuf.f_ffree == 0
 
  
