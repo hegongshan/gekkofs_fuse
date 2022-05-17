@@ -30,6 +30,7 @@
 # from pathlib import Path
 import os
 import stat
+import errno
 
 
 # @pytest.mark.xfail(reason="invalid errno returned on success")
@@ -121,3 +122,35 @@ def test_truncate(gkfs_daemon, gkfs_client):
     ret = gkfs_client.file_compare(truncfile, truncfile_verify_2, trunc_size)
 
     assert ret.retval == 0
+
+
+# Tests failure cases
+def test_fail_truncate(gkfs_daemon, gkfs_client):
+    truncfile = gkfs_daemon.mountdir / "trunc_file2"
+    # open and create test file
+    ret = gkfs_client.open(truncfile, os.O_CREAT | os.O_WRONLY, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+
+    assert ret.retval != -1
+
+    buf_length = 256
+    ret = gkfs_client.write_random(truncfile, buf_length)
+    assert ret.retval == buf_length
+
+    ret = gkfs_client.truncate(truncfile, buf_length)
+    assert ret.retval == 0
+
+    # Size should not change
+    ret = gkfs_client.stat(truncfile)
+    assert ret.statbuf.st_size == buf_length
+
+    # Truncate to a negative size
+    ret = gkfs_client.truncate(truncfile, -1)
+    assert ret.retval == -1
+    assert ret.errno == errno.EINVAL
+
+    # Truncate to a size greater than the file size
+    ret = gkfs_client.truncate(truncfile, buf_length + 1)
+    assert ret.retval == -1
+    assert ret.errno == errno.EINVAL
+
+
