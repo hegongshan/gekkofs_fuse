@@ -129,7 +129,17 @@ def test_lseek(gkfs_daemon, gkfs_client):
     assert ret.retval == -1                     #FAILS
     assert ret.errno == 22 
 
+    ret = gkfs_client.lseek(file_a, 0, os.SEEK_DATA)
+    assert ret.retval == -1
+    assert ret.errno == errno.EINVAL
 
+    ret = gkfs_client.lseek(file_a, 0, os.SEEK_HOLE)
+    assert ret.retval == -1
+    assert ret.errno == errno.EINVAL
+
+    ret = gkfs_client.lseek(file_a, 0, 666)
+    assert ret.retval == -1
+    assert ret.errno == errno.EINVAL
 
 
 
