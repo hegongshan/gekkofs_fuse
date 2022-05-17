@@ -474,15 +474,6 @@ class RenameOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('RenameReturn', ['retval', 'errno'])(**data)
 
-class UnlinkOutputSchema(Schema):
-    """Schema to deserialize the results of an unlink() execution"""
-    retval = fields.Integer(required=True)
-    errno = Errno(data_key='errnum', required=True)
-
-    @post_load
-    def make_object(self, data, **kwargs):
-        return namedtuple('UnlinkReturn', ['retval', 'errno'])(**data)
-
 class IOParser:
 
     OutputSchemas = {
@@ -509,6 +500,7 @@ class IOParser:
         'unlink'  : UnlinkOutputSchema(),
         'access' : AccessOutputSchema(),
         'statfs' : StatfsOutputSchema(),
+        'rename' : RenameOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
         'chdir'   : ChdirOutputSchema(),
@@ -516,8 +508,7 @@ class IOParser:
         'symlink' : SymlinkOutputSchema(),
         'dup_validate' : DupValidateOutputSchema(),
         'syscall_coverage' : SyscallCoverageOutputSchema(),
-        'rename' : RenameOutputSchema(),
-        'unlink' : UnlinkOutputSchema(),
+        
     }
 
     def parse(self, command, output):
