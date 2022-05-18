@@ -414,7 +414,25 @@ class GetcwdvalidateOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('GetcwdvalidateReturn', ['retval', 'path', 'errno'])(**data)
 
+class DupValidateOutputSchema(Schema):
+    """Schema to deserialize the results of an dup, dup2, dup3 execution"""
 
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('DupValidateReturn', ['retval', 'errno'])(**data)
+
+class SyscallCoverageOutputSchema(Schema):
+    """Schema to deserialize the results of a syscall coverage execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('SyscallCoverageReturn', ['retval', 'errno'])(**data)
 
 class SymlinkOutputSchema(Schema):
     """Schema to deserialize the results of an symlink execution"""
@@ -479,6 +497,8 @@ class IOParser:
         'chdir'   : ChdirOutputSchema(),
         'getcwd_validate'  : GetcwdvalidateOutputSchema(),
         'symlink' : SymlinkOutputSchema(),
+        'dup_validate' : DupValidateOutputSchema(),
+        'syscall_coverage' : SyscallCoverageOutputSchema(),
     }
 
     def parse(self, command, output):

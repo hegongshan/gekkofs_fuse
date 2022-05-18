@@ -65,6 +65,8 @@ init_commands(CLI::App& app) {
     getcwd_validate_init(app);
     symlink_init(app);
     unlink_init(app);
+    dup_validate_init(app);
+    syscall_coverage_init(app);
 }
 
 

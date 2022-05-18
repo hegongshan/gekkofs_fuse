@@ -254,7 +254,8 @@ class Daemon:
                  '--dbbackend', self._database, 
                  '--output-stats', self.logdir / 'stats.log',
                  '--enable-collection',
-                 '--enable-chunkstats' ]
+                 '--enable-chunkstats',
+                 '--enable-prometheus' ]
         if self._database == "parallaxdb" :
             args.append('--clean-rootdir-finish')
 

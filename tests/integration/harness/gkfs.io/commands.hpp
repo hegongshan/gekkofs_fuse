@@ -117,4 +117,10 @@ symlink_init(CLI::App& app);
 void
 unlink_init(CLI::App& app);
 
+void
+dup_validate_init(CLI::App& app);
+
+void
+syscall_coverage_init(CLI::App& app);
+
 #endif // IO_COMMANDS_HPP

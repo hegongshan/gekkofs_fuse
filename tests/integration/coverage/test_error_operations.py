@@ -74,11 +74,18 @@ def test_open_error(gkfs_daemon, gkfs_client):
     # Undefined in man 
     ret = gkfs_client.open(file2, os.O_CREAT | os.O_WRONLY)
     assert ret.retval == 10000
+   
+    # RDWR
+    ret = gkfs_client.open(file2, os.O_RDWR)
+    assert ret.retval == 10000
 
+    # RD
+    ret = gkfs_client.open(file2, os.O_RDONLY)
+    assert ret.retval == 10000
+   
     # Truncate the file
     ret = gkfs_client.open(file2, os.O_TRUNC | os.O_WRONLY)
     assert ret.retval == 10000
-   
 
     # Open unexistent file
     ret = gkfs_client.open(file3, os.O_WRONLY)
@@ -149,4 +156,15 @@ def test_check_parents(gkfs_daemon, gkfs_client):
     ret = gkfs_client.open(file3, os.O_CREAT | os.O_WRONLY)
     assert ret.retval == -1
     assert ret.errno == errno.ENOTDIR
+
+
+def test_dup(gkfs_daemon, gkfs_client):
+    file = gkfs_daemon.mountdir / "file"
+
+    ret = gkfs_client.open(file, os.O_CREAT | os.O_WRONLY)
+    assert ret.retval == 10000
+
+    ret = gkfs_client.dup_validate(file)
+    assert ret.retval == 0
+    assert ret.errno == 0
 

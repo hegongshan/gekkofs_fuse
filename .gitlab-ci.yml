@@ -233,6 +233,7 @@ gkfs:unit:
     - ctest -j $(nproc) -L unit::all --output-junit report.xml
 
     ## capture coverage information
+    - cd ${BUILD_PATH}
     - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --capture unit
