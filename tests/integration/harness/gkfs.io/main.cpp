@@ -59,7 +59,6 @@ init_commands(CLI::App& app) {
     truncate_init(app);
     access_init(app);
     statfs_init(app);
-    statvfs_init(app);
     // utils
     file_compare_init(app);
     chdir_init(app);

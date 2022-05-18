@@ -65,7 +65,6 @@ add_executable(gkfs.io
     gkfs.io/unlink.cpp
     gkfs.io/access.cpp
     gkfs.io/statfs.cpp
-    gkfs.io/statvfs.cpp
 )
 
 include(FetchContent)

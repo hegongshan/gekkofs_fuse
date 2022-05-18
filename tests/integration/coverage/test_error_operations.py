@@ -74,6 +74,10 @@ def test_open_error(gkfs_daemon, gkfs_client):
     # Undefined in man 
     ret = gkfs_client.open(file2, os.O_CREAT | os.O_WRONLY)
     assert ret.retval == 10000
+
+    # Truncate the file
+    ret = gkfs_client.open(file2, os.O_TRUNC | os.O_WRONLY)
+    assert ret.retval == 10000
    
 
     # Open unexistent file
@@ -125,18 +129,24 @@ def test_statfs(gkfs_daemon, gkfs_client):
     assert ret.statfsbuf.f_bavail != 0
     assert ret.statfsbuf.f_files == 0
     assert ret.statfsbuf.f_ffree == 0
-
-
-def test_statvfs(gkfs_daemon, gkfs_client):
-    # Statfs check most of the outputs
-
-    ret = gkfs_client.statvfs(gkfs_daemon.mountdir)  
-    assert ret.retval == 0
-    assert ret.statvfsbuf.f_bsize != 0
-    assert ret.statvfsbuf.f_blocks != 0
-    assert ret.statvfsbuf.f_bfree != 0
-    assert ret.statvfsbuf.f_bavail != 0
-    assert ret.statvfsbuf.f_files == 0
-    assert ret.statvfsbuf.f_ffree == 0
-
  
+
+def test_check_parents(gkfs_daemon, gkfs_client):
+    file = gkfs_daemon.mountdir / "dir" / "file"
+    file2 = gkfs_daemon.mountdir / "file2"
+    file3 = gkfs_daemon.mountdir / "file2" / "file3"
+
+    # Parent directory does not exist
+    ret = gkfs_client.open(file, os.O_CREAT | os.O_WRONLY)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOENT
+
+    # Create file
+    ret = gkfs_client.open(file2, os.O_CREAT | os.O_WRONLY)
+    assert ret.retval == 10000
+
+    # Create file over a file
+    ret = gkfs_client.open(file3, os.O_CREAT | os.O_WRONLY)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOTDIR
+

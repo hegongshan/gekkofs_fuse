@@ -102,9 +102,6 @@ access_init(CLI::App& app);
 void
 statfs_init(CLI::App& app);
 
-void
-statvfs_init(CLI::App& app);
-
 // UTIL
 void
 file_compare_init(CLI::App& app);
