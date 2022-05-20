@@ -49,8 +49,10 @@ def test_syscalls(gkfs_daemon, gkfs_client):
 
 
     ret = gkfs_client.syscall_coverage(file)
+    assert ret.syscall == "ALLOK"
     assert ret.retval == 0
     assert ret.errno == 0
+    
 
     
 

@@ -429,10 +429,11 @@ class SyscallCoverageOutputSchema(Schema):
 
     retval = fields.Integer(required=True)
     errno = Errno(data_key='errnum', required=True)
+    syscall = fields.String(required=True)
 
     @post_load
     def make_object(self, data, **kwargs):
-        return namedtuple('SyscallCoverageReturn', ['retval', 'errno'])(**data)
+        return namedtuple('SyscallCoverageReturn', ['retval', 'errno', 'syscall'])(**data)
 
 class SymlinkOutputSchema(Schema):
     """Schema to deserialize the results of an symlink execution"""
