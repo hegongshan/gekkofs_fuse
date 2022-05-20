@@ -36,11 +36,13 @@
 #include <serialize.hpp>
 #include <binary_buffer.hpp>
 
+
 /* C includes */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/xattr.h>
 
 using json = nlohmann::json;
 
@@ -76,6 +78,11 @@ void output (const std::string syscall, const int ret, const syscall_coverage_op
     json out = syscall_coverage_output{ret, errno};
     fmt::print("{}\n", out.dump(2));
 }
+
+/*
+ *  system calls
+ *  that are being tested.
+ */
 void
 syscall_coverage_exec(const syscall_coverage_options& opts) {
 
@@ -164,7 +171,91 @@ syscall_coverage_exec(const syscall_coverage_options& opts) {
         return;
     }
 
+    rv = ::fcntl(fd, F_DUPFD, 0);
+    if (rv < 0) {
+        output ("fcntl, F_DUPFD", rv, opts);
+        return;
+    }
 
+    rv = ::fcntl(fd, F_DUPFD_CLOEXEC, 0);
+    if (rv < 0) {
+        output ("fcntl, F_DUPFD_CLOEXEC", rv, opts);
+        return;
+    }
+
+    // Fstatfs
+
+    struct statfs stfs;
+    rv = ::fstatfs(fd, &stfs);
+    if (rv < 0) {
+        output ("fstatfs", rv, opts);
+        return;
+    }
+
+    // fsync
+
+    rv = ::fsync(fd);
+    if (rv < 0) {
+        output ("fsync", rv, opts);
+        return;
+    }
+
+    // getxattr
+
+    char buf[1024];
+    rv = ::getxattr(opts.pathname.c_str(), "user.test", buf, sizeof(buf));
+    if (errno != ENOTSUP) {
+        output ("getxattr", rv, opts);
+        return;
+    }
+
+    // readlinkat
+    rv = ::readlinkat(AT_FDCWD, opts.pathname.c_str(), buf, sizeof(buf));
+    if (errno != ENOTSUP) {
+        output ("readlinkat", rv, opts);
+        return;
+    }
+
+    // fchdir
+    auto fddir = ::open(".", O_RDONLY);
+    if (fddir < 0) {
+        output ("fchdir", fddir, opts);
+        return;
+    }
+
+    rv = ::fchdir(fddir);
+    if (rv < 0) {
+        output ("fchdir", rv, opts);
+        return;
+    }
+
+    // ftruncate
+    rv = ::ftruncate(fd, 0);
+    if (rv < 0) {
+        output ("ftruncate", rv, opts);
+        return;
+    }
+
+    // fchdir internal file
+    rv = ::fchdir(fd);
+    if (errno != EBADF) {
+        output ("fchdir", rv, opts);
+        return;
+    }
+    
+
+    // fchdir directory from opts.pathname
+    auto fd2 = ::open(opts.pathname.substr(0,opts.pathname.find_last_of("/")).c_str(), O_RDONLY);
+    if (fd2 < 0) {
+        output ("fchdir", fd2, opts);
+        return;
+    }
+    rv = ::fchdir(fd2);
+    if (rv < 0) {
+        output ("fchdir", rv, opts);
+        return;
+    }
+   
     rv = 0;
     errno = 0;
     json out = syscall_coverage_output{(int) rv, errno};
