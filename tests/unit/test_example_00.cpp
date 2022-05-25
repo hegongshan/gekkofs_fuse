@@ -26,29 +26,20 @@
   SPDX-License-Identifier: GPL-3.0-or-later
 */
 
-#ifndef GEKKOFS_COMMON_RPC_UTILS_HPP
-#define GEKKOFS_COMMON_RPC_UTILS_HPP
+#include <catch2/catch.hpp>
+#include <fmt/format.h>
 
-extern "C" {
-#include <mercury_types.h>
-#include <mercury_proc_string.h>
+unsigned int Factorial( unsigned int number ) {
+    return number <= 1 ? number : Factorial(number-1)*number;
 }
 
-#include <string>
+TEST_CASE( "Factorials are computed", "[factorial]" ) {
+    REQUIRE( Factorial(1) == 1 );
+    REQUIRE( Factorial(2) == 2 );
+    REQUIRE( Factorial(3) == 6 );
+    REQUIRE( Factorial(10) == 3628800 );
+}
 
-namespace gkfs::rpc {
-
-hg_bool_t
-bool_to_merc_bool(bool state);
-
-std::string
-get_my_hostname(bool short_hostname = false);
-
-#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
-std::string
-get_host_by_name(const std::string& hostname);
-#endif
-
-} // namespace gkfs::rpc
-
-#endif // GEKKOFS_COMMON_RPC_UTILS_HPP
+TEST_CASE( "Two and Two is Four", "[2+2=4]" ) {
+    REQUIRE( 2+2 == 4 );
+}

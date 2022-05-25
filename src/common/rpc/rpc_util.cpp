@@ -73,7 +73,7 @@ get_my_hostname(bool short_hostname) {
         return ""s;
 }
 
-#ifdef ENABLE_UNUSED_FUNCTIONS
+#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
 string
 get_host_by_name(const string& hostname) {
     int err = 0;

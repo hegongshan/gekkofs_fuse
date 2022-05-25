@@ -178,6 +178,8 @@ if (GKFS_ENABLE_AGIOS)
     find_package(AGIOS REQUIRED)
 endif ()
 
+option(GKFS_ENABLE_UNUSED_FUNCTIONS "Enable unused functions compilation" OFF)
+
 option(GKFS_ENABLE_PARALLAX "Enable Parallax db backend" OFF)
 option(GKFS_ENABLE_ROCKSDB "Enable ROCKSDB backend" ON)
 

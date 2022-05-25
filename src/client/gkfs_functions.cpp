@@ -411,7 +411,7 @@ gkfs_statfs(struct statfs* buf) {
     return 0;
 }
 
-#ifdef ENABLE_UNUSED_FUNCTIONS
+#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
 /**
  * gkfs wrapper for statvfs() system calls
  * errno may be set
@@ -1096,7 +1096,7 @@ gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp,
 
 
 #ifdef HAS_SYMLINKS
-#ifdef ENABLE_UNUSED_FUNCTIONS
+#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
 /**
  * gkfs wrapper for make symlink() system calls
  * errno may be set
