@@ -146,3 +146,92 @@ function(mark_variables_as_advanced)
     mark_as_advanced(${_var})
   endforeach()
 endfunction()
+
+
+#[=======================================================================[.rst:
+
+  include_from_source(contentName <options>...)
+
+The ``include_from_source()`` function ensures that ``contentName`` is
+populated and potentially added to the build by the time it returns.
+
+**Options:**
+
+  ``SOURCE_DIR <dir>``: Source directory into which downloaded contents reside.
+    This must point to an existing directory where the external project has
+    already been unpacked or cloned/checked out. If ``<dir>`` doesn't exist,
+    the source code will be retrieved.
+
+  ``GIT_REPOSITORY <url>``
+    URL of the git repository. Any URL understood by the ``git`` command
+    may be used.
+
+  ``GIT_TAG <tag>``
+    Git branch name, tag or commit hash. Note that branch names and tags should
+    generally be specified as remote names (i.e. origin/myBranch rather than
+    simply myBranch). This ensures that if the remote end has its tag moved or
+    branch rebased or history rewritten, the local clone will still be updated
+    correctly. In general, however, specifying a commit hash should be
+    preferred for a number of reasons:
+
+    If the local clone already has the commit corresponding to the hash, no git
+    fetch needs to be performed to check for changes each time CMake is re-run.
+    This can result in a significant speed up if many external projects are
+    being used.
+
+    Using a specific git hash ensures that the main project's own history is
+    fully traceable to a specific point in the external project's evolution.
+    If a branch or tag name is used instead, then checking out a specific
+    commit of the main project doesn't necessarily pin the whole build to a
+    specific point in the life of the external project. The lack of such
+    deterministic behavior makes the main project lose traceability and
+    repeatability.
+
+  NOTE: If both ``SOURCE_DIR`` and ``GIT_REPOSITORY`` are specified,
+  ``SOURCE_DIR`` will be the preferred location to populate ``contentName``
+  from. If ``SOURCE_DIR`` doesn't exist, the function will fall back to the
+  location defined by ``GIT_REPOSITORY``.
+
+#]=======================================================================]
+function(include_from_source contentName)
+
+  set(OPTIONS)
+  set(SINGLE_VALUE MESSAGE SOURCE_DIR GIT_REPOSITORY GIT_TAG)
+  set(MULTI_VALUE)
+
+  cmake_parse_arguments(ARGS "${OPTIONS}" "${SINGLE_VALUE}" "${MULTI_VALUE}" ${ARGN})
+
+  if(ARGS_MESSAGE)
+    message(STATUS ${ARGS_MESSAGE})
+  endif()
+
+  include(FetchContent)
+
+  if (EXISTS ${ARGS_SOURCE_DIR})
+    message(STATUS "Found Git submodule for \"${contentName}\": building it.")
+    FetchContent_Declare(
+      ${contentName}
+      SOURCE_DIR ${ARGS_SOURCE_DIR}
+    )
+  else()
+    message(STATUS "Git submodule for \"${contentName}\" not found. Downloading and building from Git repository.")
+
+    if(NOT ARGS_GIT_REPOSITORY)
+      message(FATAL_ERROR "GIT_REPOSITORY for \"${contentName}\" not defined")
+    endif()
+
+    if(NOT ARGS_GIT_TAG)
+      message(FATAL_ERROR "GIT_TAG for \"${contentName}\" not defined")
+    endif()
+
+    FetchContent_Declare(
+      ${contentName}
+      GIT_REPOSITORY ${ARGS_GIT_REPOSITORY}
+      GIT_TAG ${ARGS_GIT_TAG}
+      GIT_SHALLOW ON
+      GIT_PROGRESS ON
+    )
+  endif()
+
+  FetchContent_MakeAvailable(${contentName})
+endfunction()

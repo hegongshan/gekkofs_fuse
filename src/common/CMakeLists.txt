@@ -50,35 +50,14 @@ target_sources(statistics
 
 
 if(GKFS_ENABLE_PROMETHEUS)
-    find_package(CURL REQUIRED)
-    find_package(prometheus-cpp REQUIRED)
-    target_link_libraries(statistics
-      PRIVATE
-        prometheus-cpp::pull
-        prometheus-cpp::push
-        prometheus-cpp::core
-        curl)
-    target_include_directories(statistics PRIVATE ${prometheus-cpp_INCLUDE_DIR})
+  target_link_libraries(statistics
+    PRIVATE
+    prometheus-cpp::pull
+    prometheus-cpp::push
+    prometheus-cpp::core
+    curl
+    )
 endif()
-
-# get spdlog
-set(FETCHCONTENT_QUIET ON)
-
-if (EXISTS ${CMAKE_SOURCE_DIR}/external/spdlog)
-  message(STATUS "[gkfs] Using git submodule spdlog...")
-  FetchContent_Declare(spdlog
-      SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog
-      )
-else()
-  message(STATUS "[gkfs] git submodule spdlog not found. Downloading...")
-  FetchContent_Declare(spdlog
-      GIT_REPOSITORY https://github.com/gabime/spdlog.git
-      GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 # v1.9.2
-      GIT_SHALLOW ON
-      GIT_PROGRESS ON
-      )
-endif()
-FetchContent_MakeAvailable(spdlog)
 
 add_library(log_util STATIC)
 set_property(TARGET log_util PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -89,8 +68,8 @@ target_sources(log_util
     ${CMAKE_CURRENT_LIST_DIR}/log_util.cpp
     )
 target_link_libraries(log_util
-  PRIVATE
-    spdlog
+  PUBLIC
+    spdlog::spdlog
     )
 
 add_library(env_util STATIC)

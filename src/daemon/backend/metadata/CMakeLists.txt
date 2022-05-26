@@ -36,8 +36,8 @@ target_sources(metadata_module
     ${CMAKE_CURRENT_LIST_DIR}/metadata_module.cpp
     )
 target_link_libraries(metadata_module
-    PUBLIC
-    spdlog
+    PRIVATE
+    log_util
     )
 
 # Define metadata_db and its common dependencies and sources
@@ -59,7 +59,7 @@ set(DB_LINK_LIBRARIES
     metadata_module
     -ldl
     metadata
-    spdlog
+    log_util
     path_util
     )
 

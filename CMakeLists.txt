@@ -107,24 +107,106 @@ configure_file(include/version.hpp.in include/version.hpp)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
+# Import some convenience functions
+include(gkfs-utils)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
 
-# margo dependencies
-find_package(Mercury REQUIRED)
-find_package(Abt REQUIRED)
-find_package(Margo REQUIRED)
+# ##############################################################################
+# Check for and/or download dependencies:
+#
+# GekkoFS has two types of dependencies:
+# 1. Dependencies that are installed as system-wide packages and provide
+#    a FindXXX.cmake file to find them. These are handled using
+#    `find_package()`.
+# 2. Depedencies that are used directly from source code (e.g. header-only
+#    libraries). The source code for these can be found locally or
+#    remotely in a GIT repository. These are handled using our custom
+#    `include_from_source()` function defined in `gkfs-utils.cmake`
+# ##############################################################################
+
+# Search for dependencies that should already be installed in the system
+###############################################################################
+
+### some dependencies don't provide CMake modules, but rely on pkg-config
+### instead, make sure that pkg-config is available
+find_package(PkgConfig REQUIRED)
+
+### Mercury
+message(STATUS "[${PROJECT_NAME}] Checking for Mercury")
+find_package(Mercury 2.0.1 REQUIRED)
+
+### Argobots
+message(STATUS "[${PROJECT_NAME}] Checking for Argobots")
+find_package(Argobots 1.1 REQUIRED)
+
+### Margo
+message(STATUS "[${PROJECT_NAME}] Checking for Margo")
+find_package(Margo 0.9.6 REQUIRED)
+
+### syscall-intercept
 find_package(Syscall_intercept REQUIRED)
+
+### Date (required by the libgkfs_intercept.so)
+find_package(Date REQUIRED)
+
+### AGIOS: required for scheduling I/O requests
+if (GKFS_ENABLE_AGIOS)
+    find_package(AGIOS REQUIRED)
+endif ()
+
+### Prometheus-cpp: required for the collection of GekkoFS stats
+### (these expose the prometheus-cpp::pull, prometheus-cpp::push,
+### prometheus-cpp::core, and curl imported targets
+if(GKFS_ENABLE_PROMETHEUS)
+    find_package(CURL 7.68.0 REQUIRED)
+    find_package(prometheus-cpp REQUIRED) # >= 1.0.0
+endif()
+
+### Other stuff that can be found out using find_package:
+
+# determine the thread library of the system
 find_package(Threads REQUIRED)
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
 # produces a std::filesystem imported target that takes care of all these
 # details transparently
 find_package(Filesystem REQUIRED)
 
-find_package(Date REQUIRED)
 
-# Import some convenience functions
-include(gkfs-utils)
+# Search for 'source-only' dependencies
+###############################################################################
+
+set(GIT_SUBMODULES_PATH ${CMAKE_SOURCE_DIR}/external)
+
+### {fmt}: required for sensible output formatting
+include_from_source(fmt
+  MESSAGE "[${PROJECT_NAME}] Searching for {fmt}"
+  SOURCE_DIR ${GIT_SUBMODULES_PATH}/fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG f94b7364b9409f05207c3af3fa4666730e11a854 # v6.1.2
+)
+
+# ensure that fmt is linked as PIC
+set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+### spdlog: required for logging
+include_from_source(spdlog
+  MESSAGE "[${PROJECT_NAME}] Searching for spdlog"
+  SOURCE_DIR ${GIT_SUBMODULES_PATH}/spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 # v1.9.2
+  )
+
+### CLI11: used for parsing command-line options
+include_from_source(cli11
+  MESSAGE "[${PROJECT_NAME}] Searching for CLI11"
+  SOURCE_DIR ${GIT_SUBMODULES_PATH}/CLI11
+  GIT_REPOSITORY https://github.com/CLIUtils/CLI11
+  GIT_TAG v2.2.0
+  )
+FetchContent_MakeAvailable(cli11)
+
 
 ################################################################################
 ## Build GekkoFS documentation
@@ -172,9 +254,6 @@ message(STATUS "[gekkofs] Client logging output: ${ENABLE_CLIENT_LOG}")
 
 option(GKFS_ENABLE_FORWARDING "Enable forwarding mode" OFF)
 option(GKFS_ENABLE_AGIOS "Enable AGIOS scheduling library" OFF)
-if (GKFS_ENABLE_AGIOS)
-    find_package(AGIOS REQUIRED)
-endif ()
 
 option(GKFS_ENABLE_UNUSED_FUNCTIONS "Enable unused functions compilation" OFF)
 
@@ -205,15 +284,12 @@ configure_file(include/common/cmake_configure.hpp.in include/common/cmake_config
 
 
 
-add_library(CLI11 INTERFACE)
-# we cannot use target_include_directories with CMake < 3.11
-set_target_properties(CLI11
-    PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
-    )
-
-add_subdirectory(external/fmt)
-set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+# add_library(CLI11 INTERFACE)
+# # we cannot use target_include_directories with CMake < 3.11
+# set_target_properties(CLI11
+#     PROPERTIES
+#     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
+#     )
 
 if (ENABLE_CLIENT_LOG)
     option(HERMES_LOGGING "" ON)

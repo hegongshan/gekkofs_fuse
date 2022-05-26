@@ -84,7 +84,7 @@ set(PRELOAD_LINK_LIBRARIES
     # external
     Syscall_intercept::Syscall_intercept
     dl
-    mercury
+    Mercury::Mercury
     hermes
     fmt::fmt
     Threads::Threads

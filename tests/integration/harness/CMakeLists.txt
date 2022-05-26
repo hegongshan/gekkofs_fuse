@@ -102,9 +102,8 @@ target_include_directories(gkfs.io PRIVATE
 target_link_libraries(gkfs.io
     nlohmann_json::nlohmann_json
     fmt::fmt
-    CLI11
-    # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834
-    stdc++fs
+    CLI11::CLI11
+    std::filesystem
     )
 
 if(GKFS_INSTALL_TESTS)

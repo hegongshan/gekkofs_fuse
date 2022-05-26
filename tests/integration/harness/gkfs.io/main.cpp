@@ -30,7 +30,7 @@
 
 #include <cstdlib>
 #include <string>
-#include <CLI11/CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include <commands.hpp>
 
 void
