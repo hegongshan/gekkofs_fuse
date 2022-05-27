@@ -299,7 +299,7 @@ endif ()
 
 option(HERMES_MARGO_COMPATIBLE_RPCS "" ON)
 add_subdirectory(external/hermes)
-target_compile_definitions(hermes INTERFACE)
+target_include_directories(hermes INTERFACE external/hermes/include)
 
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 

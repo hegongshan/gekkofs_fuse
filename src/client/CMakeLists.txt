@@ -26,112 +26,121 @@
 #                                                                              #
 # SPDX-License-Identifier: LGPL-3.0-or-later                                   #
 ################################################################################
-set(PRELOAD_SOURCES
-    PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/gkfs_functions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/hooks.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/intercept.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/logging.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/open_file_map.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/open_dir.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/path.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/preload.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/preload_context.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/preload_util.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../common/rpc/rpc_util.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rpc/rpc_types.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_data.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_management.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/rpc/forward_metadata.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/syscalls/detail/syscall_info.c
-    PUBLIC
-    ${INCLUDE_DIR}/client/gkfs_functions.hpp
-    ${INCLUDE_DIR}/config.hpp
-    ${INCLUDE_DIR}/client/env.hpp
-    ${INCLUDE_DIR}/client/hooks.hpp
-    ${INCLUDE_DIR}/client/intercept.hpp
-    ${INCLUDE_DIR}/client/logging.hpp
-    ${INCLUDE_DIR}/client/make_array.hpp
-    ${INCLUDE_DIR}/client/open_file_map.hpp
-    ${INCLUDE_DIR}/client/open_dir.hpp
-    ${INCLUDE_DIR}/client/path.hpp
-    ${INCLUDE_DIR}/client/preload.hpp
-    ${INCLUDE_DIR}/client/preload_context.hpp
-    ${INCLUDE_DIR}/client/preload_util.hpp
-    ${INCLUDE_DIR}/client/rpc/rpc_types.hpp
-    ${INCLUDE_DIR}/client/rpc/forward_management.hpp
-    ${INCLUDE_DIR}/client/rpc/forward_metadata.hpp
-    ${INCLUDE_DIR}/client/rpc/forward_data.hpp
-    ${INCLUDE_DIR}/client/syscalls/args.hpp
-    ${INCLUDE_DIR}/client/syscalls/decoder.hpp
-    ${INCLUDE_DIR}/client/syscalls/errno.hpp
-    ${INCLUDE_DIR}/client/syscalls/rets.hpp
-    ${INCLUDE_DIR}/client/syscalls/syscall.hpp
-    ${INCLUDE_DIR}/client/syscalls/detail/syscall_info.h
-    ${INCLUDE_DIR}/common/cmake_configure.hpp.in
-    ${INCLUDE_DIR}/common/common_defs.hpp
-    ${INCLUDE_DIR}/common/rpc/rpc_types.hpp
-    ${INCLUDE_DIR}/common/rpc/rpc_util.hpp
-    )
-set(PRELOAD_LINK_LIBRARIES
-    PRIVATE
-    # internal
-    metadata
-    distributor
-    env_util
-    arithmetic
-    path_util
-    # external
-    Syscall_intercept::Syscall_intercept
-    dl
-    Mercury::Mercury
-    hermes
-    fmt::fmt
-    Threads::Threads
-    Date::TZ
-    )
-set(PRELOAD_INCLUDE_DIRS
-    PRIVATE
-    ${ABT_INCLUDE_DIRS}
-    ${MARGO_INCLUDE_DIRS}
-    )
 
+# Since we need to generate several libraries that share a lot of code, we
+# create a `gkfs_intercept_common` utility target for that we can use as a
+# direct dependency for each library.
+#
+# IMPORTANT: since the targets differ basically in their compile definitions, we
+# need to keep any source files affected by such definitions (e.g.
+# GFS_ENABLE_FORWARDING) in their own specific targets. Otherwise, they will not
+# be build with the correct defines.
+add_library(gkfs_intercept_common STATIC)
+set_property(TARGET gkfs_intercept_common PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+target_sources(
+  gkfs_intercept_common
+  PRIVATE gkfs_functions.cpp
+          hooks.cpp
+          intercept.cpp
+          logging.cpp
+          open_file_map.cpp
+          open_dir.cpp
+          path.cpp
+          preload_context.cpp
+          ../common/rpc/rpc_util.cpp
+          rpc/rpc_types.cpp
+          rpc/forward_data.cpp
+          rpc/forward_management.cpp
+          rpc/forward_metadata.cpp
+          syscalls/detail/syscall_info.c
+  PUBLIC ${CMAKE_SOURCE_DIR}/include/client/gkfs_functions.hpp
+         ${CMAKE_SOURCE_DIR}/include/config.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/env.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/hooks.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/intercept.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/logging.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/make_array.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/open_file_map.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/open_dir.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/path.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/preload.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/preload_context.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/preload_util.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/rpc/rpc_types.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/rpc/forward_management.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/rpc/forward_metadata.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/rpc/forward_data.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/args.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/decoder.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/errno.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/rets.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/syscall.hpp
+         ${CMAKE_SOURCE_DIR}/include/client/syscalls/detail/syscall_info.h
+         ${CMAKE_SOURCE_DIR}/include/common/cmake_configure.hpp.in
+         ${CMAKE_SOURCE_DIR}/include/common/common_defs.hpp
+         ${CMAKE_SOURCE_DIR}/include/common/rpc/rpc_types.hpp
+         ${CMAKE_SOURCE_DIR}/include/common/rpc/rpc_util.hpp
+)
+
+target_link_libraries(
+  gkfs_intercept_common
+  PRIVATE # internal
+          metadata
+          distributor
+          env_util
+          arithmetic
+          path_util
+          # external
+  PUBLIC # internal
+          Syscall_intercept::Syscall_intercept
+          dl
+          Mercury::Mercury
+          hermes
+          fmt::fmt
+          Threads::Threads
+          Date::TZ
+)
+
+# ##############################################################################
+# This builds the `libgkfs_intercept.so` library: the primary GekkoFS client
+# based on syscall interception.
+# ##############################################################################
 add_library(gkfs_intercept SHARED)
-target_sources(gkfs_intercept ${PRELOAD_SOURCES})
-target_link_libraries(gkfs_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
-target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
 
-install(TARGETS gkfs_intercept
+# We need to add here any files that may have different compile definitions
+target_sources(gkfs_intercept PRIVATE preload.cpp preload_util.cpp)
+target_link_libraries(gkfs_intercept PRIVATE gkfs_intercept_common)
+
+install(
+  TARGETS gkfs_intercept
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
+)
+
+# ##############################################################################
+# This builds the `libgkfwd_intercept.so` library: the client for GekkoFS'
+# forwarding mode based on syscall interception.
+# ##############################################################################
+
+if(GKFS_ENABLE_FORWARDING)
+  add_library(gkfwd_intercept SHARED)
+
+  # We need to add here any files that may have different compile definitions
+  target_sources(gkfwd_intercept PRIVATE preload.cpp preload_util.cpp)
+  target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_FORWARDING)
+
+  if(GKFS_ENABLE_AGIOS)
+    target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_AGIOS)
+  endif()
+
+  target_link_libraries(gkfwd_intercept PRIVATE gkfs_intercept_common)
+
+  install(
+    TARGETS gkfwd_intercept
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
-    )
-################### Forwarding client ###################
-if (GKFS_ENABLE_FORWARDING)
-    add_library(gkfwd_intercept SHARED)
-    target_sources(gkfwd_intercept ${PRELOAD_SOURCES})
-    if (GKFS_ENABLE_AGIOS)
-        target_compile_definitions(gkfwd_daemon
-            PUBLIC
-            GKFS_ENABLE_FORWARDING
-            GKFS_ENABLE_AGIOS
-            )
-    else ()
-        target_compile_definitions(gkfwd_daemon
-            PUBLIC
-            GKFS_ENABLE_FORWARDING
-            )
-    endif ()
-
-    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
-    message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
-
-    target_link_libraries(gkfwd_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
-    target_include_directories(gkfwd_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
-
-    install(TARGETS gkfwd_intercept
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
-        )
-endif ()
+  )
+endif()
