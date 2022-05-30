@@ -146,18 +146,22 @@ message(STATUS "[${PROJECT_NAME}] Checking for Margo")
 find_package(Margo 0.9.6 REQUIRED)
 
 ### syscall-intercept
+message(STATUS "[${PROJECT_NAME}] Checking for syscall_intercept")
 find_package(Syscall_intercept REQUIRED)
 
 ### Date (required by the libgkfs_intercept.so)
+message(STATUS "[${PROJECT_NAME}] Checking for Date")
 find_package(Date REQUIRED)
 
 ### AGIOS: required for scheduling I/O requests
 if (GKFS_ENABLE_AGIOS)
+    message(STATUS "[${PROJECT_NAME}] Checking for Agios")
     find_package(AGIOS REQUIRED)
 endif()
 
 ### Metadata backends
 if(GKFS_ENABLE_ROCKSDB)
+    message(STATUS "[${PROJECT_NAME}] Checking for RocksDB")
     add_compile_definitions(GKFS_ENABLE_ROCKSDB)
     find_package(RocksDB 6.26.1 REQUIRED)
 endif()
@@ -166,8 +170,14 @@ if(GKFS_ENABLE_PARALLAX)
     add_compile_definitions(GKFS_ENABLE_PARALLAX)
     # The current version of Parallax has a direct dependency on libyaml and librt.
     # Make sure that we find them and add them as link dependencies..
+
+    message(STATUS "[${PROJECT_NAME}] Checking for yaml")
     find_package(yaml REQUIRED)
+
+    message(STATUS "[${PROJECT_NAME}] Checking for libaio")
     find_package(AIO REQUIRED)
+
+    message(STATUS "[${PROJECT_NAME}] Checking for RocksDB")
     find_package(Parallax REQUIRED)
     target_link_libraries(Parallax::parallax INTERFACE yaml AIO::AIO)
 endif()
