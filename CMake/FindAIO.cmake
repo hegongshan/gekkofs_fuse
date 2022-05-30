@@ -1,3 +1,4 @@
+
 ################################################################################
 # Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
 # Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
@@ -25,37 +26,33 @@
 #                                                                              #
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
-
-# Try to find RocksDB headers and library.
-#
-# Usage of this module as follows:
-#
-#     find_package(RocksDB)
-#
-# Variables defined by this module:
-#
-#  ROCKSDB_FOUND               System has RocksDB library/headers.
-#  ROCKSDB_LIBRARIES           The RocksDB library.
-#  ROCKSDB_INCLUDE_DIRS        The location of RocksDB headers.
-
-find_library(ROCKSDB_LIBRARY
-    NAMES rocksdb
+find_path(
+  AIO_INCLUDE_DIR
+  NAMES aio.h
+  PATH_SUFFIXES include
 )
 
-find_path(ROCKSDB_INCLUDE_DIR
-    NAMES rocksdb/db.h
+find_library(AIO_LIBRARY NAMES rt)
+
+mark_as_advanced(AIO_INCLUDE_DIR AIO_LIBRARY)
+
+find_package_handle_standard_args(
+  AIO
+  FOUND_VAR AIO_FOUND
+  REQUIRED_VARS AIO_INCLUDE_DIR AIO_LIBRARY
 )
 
-set(ROCKSDB_LIBRARIES ${ROCKSDB_LIBRARY})
-set(ROCKSDB_INCLUDE_DIRS ${ROCKSDB_INCLUDE_DIR})
+if(AIO_FOUND AND NOT TARGET AIO::AIO)
+  add_library(AIO::AIO UNKNOWN IMPORTED)
+  if(AIO_INCLUDE_DIR)
+    set_target_properties(
+      AIO::AIO PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${AIO_INCLUDE_DIR}"
+    )
+  endif()
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(RocksDB DEFAULT_MSG
-    ROCKSDB_LIBRARY
-    ROCKSDB_INCLUDE_DIR
-)
+  set_target_properties(
+    AIO::AIO PROPERTIES IMPORTED_LOCATION "${AIO_LIBRARY}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+  )
+endif()
 
-mark_as_advanced(
-    ROCKSDB_LIBRARY
-    ROCKSDB_INCLUDE_DIR
-)

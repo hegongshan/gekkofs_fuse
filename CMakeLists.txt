@@ -154,7 +154,23 @@ find_package(Date REQUIRED)
 ### AGIOS: required for scheduling I/O requests
 if (GKFS_ENABLE_AGIOS)
     find_package(AGIOS REQUIRED)
-endif ()
+endif()
+
+### Metadata backends
+if(GKFS_ENABLE_ROCKSDB)
+    add_compile_definitions(GKFS_ENABLE_ROCKSDB)
+    find_package(RocksDB 6.26.1 REQUIRED)
+endif()
+
+if(GKFS_ENABLE_PARALLAX)
+    add_compile_definitions(GKFS_ENABLE_PARALLAX)
+    # The current version of Parallax has a direct dependency on libyaml and librt.
+    # Make sure that we find them and add them as link dependencies..
+    find_package(yaml REQUIRED)
+    find_package(AIO REQUIRED)
+    find_package(Parallax REQUIRED)
+    target_link_libraries(Parallax::parallax INTERFACE yaml AIO::AIO)
+endif()
 
 ### Prometheus-cpp: required for the collection of GekkoFS stats
 ### (these expose the prometheus-cpp::pull, prometheus-cpp::push,
@@ -281,15 +297,6 @@ endif ()
 message(STATUS "[gekkofs] Prometheus Output: ${GKFS_ENABLE_PROMETHEUS}")
 
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
-
-
-
-# add_library(CLI11 INTERFACE)
-# # we cannot use target_include_directories with CMake < 3.11
-# set_target_properties(CLI11
-#     PROPERTIES
-#     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/external"
-#     )
 
 if (ENABLE_CLIENT_LOG)
     option(HERMES_LOGGING "" ON)

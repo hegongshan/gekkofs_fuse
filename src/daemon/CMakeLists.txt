@@ -63,11 +63,12 @@ target_sources(
          ${CMAKE_SOURCE_DIR}/include/daemon/handler/rpc_defs.hpp
          ${CMAKE_SOURCE_DIR}/include/daemon/handler/rpc_util.hpp
 )
+
 target_link_libraries(
   gkfs_daemon_common
   PUBLIC # internal libs
           metadata
-          metadata_db
+          metadata_backend
           storage
           distributor
           statistics
@@ -88,6 +89,9 @@ target_link_libraries(
 # This builds the `gkfs_daemon` executable: the primary GekkoFS daemon.
 # ##############################################################################
 add_executable(gkfs_daemon)
+
+
+pkg_check_modules(URING IMPORTED_TARGET liburing)
 
 # We need to add here any files that may have different compile definitions
 target_sources(
