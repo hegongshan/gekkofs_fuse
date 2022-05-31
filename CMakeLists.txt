@@ -69,6 +69,7 @@ mark_as_advanced(CMAKE_CXX_FLAGS_MAINTAINER)
 include(CheckCXXSourceCompiles)
 include(CMakeDependentOption)
 include(GNUInstallDirs)
+include(FeatureSummary)
 
 # Project version
 set(GIT_VERSION_FOUND FALSE)
@@ -109,6 +110,15 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 
 # Import some convenience functions
 include(gkfs-utils)
+
+################################################################################
+## Configuration option definitions:
+## =================================
+##
+## The `gkfs-options` module imports definitions for all the available GekkoFS
+## features
+################################################################################
+include(gkfs-options)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 
@@ -194,6 +204,7 @@ endif()
 
 # determine the thread library of the system
 find_package(Threads REQUIRED)
+
 # some compilers need extra flags for std::filesystem, such as -lstdc++fs, this
 # produces a std::filesystem imported target that takes care of all these
 # details transparently
@@ -235,80 +246,47 @@ FetchContent_MakeAvailable(cli11)
 
 
 ################################################################################
-## Build GekkoFS documentation
+## Check configured variables/options and act accordingly
 ################################################################################
-option(GKFS_BUILD_DOCUMENTATION "Build documentation" OFF)
 if(GKFS_BUILD_DOCUMENTATION)
-  add_subdirectory(docs)
+    add_subdirectory(docs)
 endif()
 
-option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
-message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
-
-option(GKFS_SYMLINK_SUPPORT "Compile with support for symlinks" OFF)
 if (GKFS_SYMLINK_SUPPORT)
     add_definitions(-DHAS_SYMLINKS)
 endif ()
-option(GKFS_RENAME_SUPPORT "Compile with support for rename ops" OFF)
+
 if (GKFS_RENAME_SUPPORT)
     # Rename depends on symlink support
     add_definitions(-DHAS_SYMLINKS)
     set(GKFS_SYMLINK_SUPPORT ON)
     add_definitions(-DHAS_RENAME)
 endif ()
-message(STATUS "[gekkofs] Symlink support: ${GKFS_SYMLINK_SUPPORT}")
-message(STATUS "[gekkofs] Rename support: ${GKFS_RENAME_SUPPORT}")
 
-set(MAX_INTERNAL_FDS 256 CACHE STRING "Number of file descriptors reserved for internal use")
-add_definitions(-DMAX_INTERNAL_FDS=${MAX_INTERNAL_FDS})
-message(STATUS "[gekkofs] File descriptors reserved for internal use: ${MAX_INTERNAL_FDS}")
-
-execute_process(COMMAND getconf OPEN_MAX
-    OUTPUT_VARIABLE GETCONF_MAX_FDS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET)
-if (NOT GETCONF_MAX_FDS)
-    set(GETCONF_MAX_FDS=512)
-endif ()
-add_definitions(-DMAX_OPEN_FDS=${GETCONF_MAX_FDS})
-
-option(ENABLE_CLIENT_LOG "Enable logging messages" ON)
-if (ENABLE_CLIENT_LOG)
-    add_definitions(-DGKFS_ENABLE_LOGGING)
-endif ()
-message(STATUS "[gekkofs] Client logging output: ${ENABLE_CLIENT_LOG}")
-
-option(GKFS_ENABLE_FORWARDING "Enable forwarding mode" OFF)
-option(GKFS_ENABLE_AGIOS "Enable AGIOS scheduling library" OFF)
-
-option(GKFS_ENABLE_UNUSED_FUNCTIONS "Enable unused functions compilation" OFF)
-
-option(GKFS_ENABLE_PARALLAX "Enable Parallax db backend" OFF)
-option(GKFS_ENABLE_ROCKSDB "Enable ROCKSDB backend" ON)
-
-set(CLIENT_LOG_MESSAGE_SIZE 1024 CACHE STRING "Maximum size of a log message in the client library")
-add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
-message(STATUS "[gekkofs] Maximum log message size in the client library: ${CLIENT_LOG_MESSAGE_SIZE}")
-mark_as_advanced(CLIENT_LOG_MESSAGE_SIZE)
-
-option(GKFS_USE_GUIDED_DISTRIBUTION "Use guided data distributor " OFF)
-message(STATUS "[gekkofs] Guided data distributor: ${GKFS_USE_GUIDED_DISTRIBUTION}")
-
-if(GKFS_USE_GUIDED_DISTRIBUTION)
-    set(GKFS_USE_GUIDED_DISTRIBUTION_PATH "/tmp/guided.txt" CACHE STRING "File Path for guided distributor")
-    set_property(CACHE GKFS_USE_GUIDED_DISTRIBUTION_PATH PROPERTY STRINGS)
-    message(STATUS "[gekkofs] Guided data distributor input file path: ${GKFS_USE_GUIDED_DISTRIBUTION_PATH}")
+if(MAX_INTERNAL_FDS)
+    add_definitions(-DMAX_INTERNAL_FDS=${MAX_INTERNAL_FDS})
 endif()
 
-option(GKFS_ENABLE_PROMETHEUS "Enable Prometheus Push " OFF)
+if(MAX_OPEN_FDS)
+    add_definitions(-DMAX_OPEN_FDS=${MAX_OPEN_FDS})
+endif()
+
+if(ENABLE_CLIENT_LOG)
+    add_definitions(-DGKFS_ENABLE_LOGGING)
+    add_definitions(-DLIBGKFS_LOG_MESSAGE_SIZE=${CLIENT_LOG_MESSAGE_SIZE})
+endif ()
+
+if(GKFS_ENABLE_UNUSED_FUNCTIONS)
+    add_definitions(-DGKFS_ENABLE_UNUSED_FUNCTIONS)
+endif ()
+
 if(GKFS_ENABLE_PROMETHEUS)
     add_definitions(-DGKFS_ENABLE_PROMETHEUS)
 endif ()
-message(STATUS "[gekkofs] Prometheus Output: ${GKFS_ENABLE_PROMETHEUS}")
 
 configure_file(include/common/cmake_configure.hpp.in include/common/cmake_configure.hpp)
 
-if (ENABLE_CLIENT_LOG)
+if(ENABLE_CLIENT_LOG)
     option(HERMES_LOGGING "" ON)
     option(HERMES_LOGGING_FMT_USE_BUNDLED "" OFF)
     option(HERMES_LOGGING_FMT_HEADER_ONLY "" OFF)
@@ -337,10 +315,6 @@ add_subdirectory(src/client)
 ### that they don't appear in cmake-gui or ccmake. Similarly for FETCHCONTENT
 ### variables.
 mark_variables_as_advanced(REGEX "^(FETCHCONTENT|fmt|FMT|spdlog|SPDLOG)_.*$")
-
-option(GKFS_BUILD_TESTS "Build GekkoFS self tests" OFF)
-
-cmake_dependent_option(GKFS_INSTALL_TESTS "Install GekkoFS self tests" OFF "GKFS_BUILD_TESTS" OFF)
 
 if (GKFS_BUILD_TESTS)
     # Boost preprocessor header-only is supplied by the Mercury installation
