@@ -1,4 +1,4 @@
-################################################################################
+###############################################################################
 # Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
 # Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
