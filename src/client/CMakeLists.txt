@@ -102,6 +102,10 @@ target_link_libraries(
           Date::TZ
 )
 
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(gkfs_intercept_common PUBLIC)
+endif()
+
 # ##############################################################################
 # This builds the `libgkfs_intercept.so` library: the primary GekkoFS client
 # based on syscall interception.

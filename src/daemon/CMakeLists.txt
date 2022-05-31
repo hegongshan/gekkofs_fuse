@@ -85,6 +85,10 @@ target_link_libraries(
           Threads::Threads
 )
 
+if(GKFS_ENABLE_CODE_COVERAGE)
+  target_code_coverage(gkfs_daemon_common PUBLIC)
+endif()
+
 # ##############################################################################
 # This builds the `gkfs_daemon` executable: the primary GekkoFS daemon.
 # ##############################################################################
