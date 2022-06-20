@@ -9,6 +9,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### New
 ### Changed
 - Support parallelism for path resolution tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
+- Support parallelism for symlink tests ([!147](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/147)).
 ### Removed
 ### Fixed
 - Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
