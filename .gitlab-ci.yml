@@ -138,7 +138,7 @@ gkfs:integration:
     - export PATH=${PATH}:/usr/local/bin
     - mkdir -p ${BUILD_PATH}/tests/run
     - cd ${BUILD_PATH}/tests/integration
-    - ${PYTEST} -v -n 1
+    - ${PYTEST} -v -n $(nproc)
           ${INTEGRATION_TESTS_BIN_PATH}/${SUBTEST}
           --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml

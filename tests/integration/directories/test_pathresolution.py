@@ -42,11 +42,11 @@ nonexisting = "nonexisting"
 #@pytest.mark.xfail(reason="invalid errno returned on success")
 def test_pathresolution(gkfs_daemon, gkfs_client):
     """Testing different path resolution capabilities"""
-
+    pid = os.getpid().__str__()
     mountdir = gkfs_daemon.mountdir
-    extdir = "/tmp/ext.tmp"
-    ext_linkdir = "/tmp/link.tmp"
-    nodir = "/tmp/notexistent"
+    extdir = "/tmp/" + pid + "ext.tmp"
+    ext_linkdir = "/tmp/" + pid + "link.tmp"
+    nodir = "/tmp/" + pid + "notexistent"
     intdir = mountdir / "int"
 
     # Just clean if it exists, due to a failed test
