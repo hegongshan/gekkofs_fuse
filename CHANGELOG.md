@@ -12,6 +12,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 ### Fixed
 - Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
+- Support glibc-2.34 or newer with syscall_intercept [!146](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/146)).
 
 ## [0.9.1] - 2022-04-29
 

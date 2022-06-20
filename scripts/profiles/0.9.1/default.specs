@@ -60,7 +60,7 @@ clonedeps_args=(
 
 # Patches that should be applied post-clone
 clonedeps_patches=(
-    ["syscall_intercept"]="syscall_intercept.patch"
+    ["syscall_intercept"]="syscall_intercept.patch syscall_intercept_clone3.patch"
 )
 
 # Ordering that MUST be followed when downloading
