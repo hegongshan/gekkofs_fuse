@@ -42,11 +42,10 @@ nonexisting = "nonexisting"
 #@pytest.mark.xfail(reason="invalid errno returned on success")
 def test_symlink(gkfs_daemon, gkfs_client):
     """Testing different path resolution capabilities: symlinks"""
-
+    pid = os.getpid().__str__()
     mountdir = gkfs_daemon.mountdir
-    extdir = "/tmp/ext.tmp"
-    ext_linkdir = "/tmp/link.tmp"
-    nodir = "/tmp/notexistent"
+    extdir = "/tmp/" + pid + "ext.tmp"
+    ext_linkdir = "/tmp/" + pid + "link.tmp"
     intdir = mountdir / "int"
 
     # Just clean if it exists, due to a failed test
@@ -74,11 +73,11 @@ def test_symlink(gkfs_daemon, gkfs_client):
     ret = gkfs_client.symlink(extdir, ext_linkdir)
     assert ret.retval == 0
 
-    ret = gkfs_client.getcwd_validate(str(extdir) + "/../link.tmp")
+    ret = gkfs_client.getcwd_validate(str(extdir) + "/../"+pid+"link.tmp")
     assert ret.path == str(extdir)
     assert ret.retval == 0
 
-    ret = gkfs_client.getcwd_validate(str(intdir) + "/../../../../../../../../../../../../../../../../../../../.."+str(extdir) + "/../link.tmp/../link.tmp/../../../../../../../../../../../../../../../../../../../../.."  + str(intdir))
+    ret = gkfs_client.getcwd_validate(str(intdir) + "/../../../../../../../../../../../../../../../../../../../.."+str(extdir) + "/../"+ pid +"link.tmp/../"+ pid +"link.tmp/../../../../../../../../../../../../../../../../../../../../.."  + str(intdir))
     assert ret.path == str(intdir)
     assert ret.retval == 0
 
