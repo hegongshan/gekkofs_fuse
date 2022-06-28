@@ -170,7 +170,7 @@ public:
 
     RelativizeStatus
     relativize_fd_path(int dirfd, const char* raw_path,
-                       std::string& relative_path,
+                       std::string& relative_path, int flags = 0,
                        bool resolve_last_link = true) const;
 
     bool

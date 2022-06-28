@@ -203,7 +203,7 @@ hook_fstatat(int dirfd, const char* cpath, struct stat* buf, int flags) {
         __func__, cpath, dirfd, fmt::ptr(buf), flags);
 
     std::string resolved;
-    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
+    auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved, flags);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
             return syscall_no_intercept_wrapper(SYS_newfstatat, dirfd, cpath,

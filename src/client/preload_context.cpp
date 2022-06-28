@@ -185,7 +185,7 @@ PreloadContext::auto_sm(bool auto_sm) {
 
 RelativizeStatus
 PreloadContext::relativize_fd_path(int dirfd, const char* raw_path,
-                                   std::string& relative_path,
+                                   std::string& relative_path, int flags,
                                    bool resolve_last_link) const {
 
     // Relativize path should be called only after the library constructor has
@@ -207,6 +207,13 @@ PreloadContext::relativize_fd_path(int dirfd, const char* raw_path,
         } else {
             if(!ofm_->exist(dirfd)) {
                 return RelativizeStatus::fd_unknown;
+            } else {
+                // check if we have the AT_EMPTY_PATH flag
+                // for fstatat.
+                if(flags & AT_EMPTY_PATH) {
+                    relative_path = ofm_->get(dirfd)->path();
+                    return RelativizeStatus::internal;
+                }
             }
             // path is relative to fd
             auto dir = ofm_->get_dir(dirfd);
