@@ -891,8 +891,12 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
 
         case gkfs::preload::RelativizeStatus::internal:
 #ifdef HAS_RENAME
-            return with_errno(gkfs::syscall::gkfs_rename(oldpath_resolved,
-                                                         newpath_resolved));
+            if(oldpath_status == gkfs::preload::RelativizeStatus::internal) {
+                return with_errno(gkfs::syscall::gkfs_rename(oldpath_resolved,
+                                                             newpath_resolved));
+            } else {
+                return -ENOTSUP;
+            }
 #else
             return -ENOTSUP;
 #endif
