@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 ### New
+- Additional tests to increase code coverage ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141)).
+- GKFS_ENABLE_UNUSED_FUNCTIONS added to disable code to increase code coverage.
 ### Changed
 - Support parallelism for path resolution tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
 - Support parallelism for symlink tests ([!147](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/147)).
@@ -14,7 +16,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
 - Support glibc-2.34 or newer with syscall_intercept [!146](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/146)).
-
+- Additional `#ifdef` to remove unused code ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141))
+### Removed
+### Fixed
+- Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
+- fchdir generate a SIGSEV in debug mode (due to log) ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141))
 ## [0.9.1] - 2022-04-29
 
 ### New

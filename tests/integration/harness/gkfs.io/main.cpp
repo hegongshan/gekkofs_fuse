@@ -57,12 +57,16 @@ init_commands(CLI::App& app) {
     directory_validate_init(app);
     write_random_init(app);
     truncate_init(app);
+    access_init(app);
+    statfs_init(app);
     // utils
     file_compare_init(app);
     chdir_init(app);
     getcwd_validate_init(app);
     symlink_init(app);
     unlink_init(app);
+    dup_validate_init(app);
+    syscall_coverage_init(app);
 }
 
 

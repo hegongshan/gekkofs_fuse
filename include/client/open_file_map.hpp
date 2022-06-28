@@ -34,6 +34,7 @@
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <array>
 
 namespace gkfs::filemap {
 

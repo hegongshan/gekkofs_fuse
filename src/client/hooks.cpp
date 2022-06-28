@@ -712,8 +712,8 @@ hook_fchdir(unsigned int fd) {
         auto open_dir = CTX->file_map()->get_dir(fd);
         if(open_dir == nullptr) {
             // Cast did not succeeded: open_file is a regular file
-            LOG(ERROR, "{}() file descriptor refers to a normal file: '{}'",
-                __func__, open_dir->path());
+            LOG(ERROR, "{}() file descriptor refers to a normal file",
+                __func__);
             return -EBADF;
         }
 

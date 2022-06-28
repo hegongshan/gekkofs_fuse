@@ -411,6 +411,7 @@ gkfs_statfs(struct statfs* buf) {
     return 0;
 }
 
+#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
 /**
  * gkfs wrapper for statvfs() system calls
  * errno may be set
@@ -444,6 +445,7 @@ gkfs_statvfs(struct statvfs* buf) {
             ST_NOATIME | ST_NODIRATIME | ST_NOSUID | ST_NODEV | ST_SYNCHRONOUS;
     return 0;
 }
+#endif
 
 /**
  * gkfs wrapper for lseek() system calls with available file descriptor
@@ -1094,7 +1096,7 @@ gkfs_getdents64(unsigned int fd, struct linux_dirent64* dirp,
 
 
 #ifdef HAS_SYMLINKS
-
+#ifdef GKFS_ENABLE_UNUSED_FUNCTIONS
 /**
  * gkfs wrapper for make symlink() system calls
  * errno may be set
@@ -1177,7 +1179,7 @@ gkfs_readlink(const std::string& path, char* buf, int bufsize) {
     std::strcpy(buf + CTX->mountdir().size(), md->target_path().c_str());
     return path_size;
 }
-
+#endif
 #endif
 
 } // namespace gkfs::syscall

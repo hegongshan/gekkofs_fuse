@@ -189,6 +189,15 @@ def test_mkdir(gkfs_daemon, gkfs_client):
         assert d.d_name == e[0]
         assert d.d_type == e[1]
 
+    # Try to open a file as a dir
+    ret = gkfs_client.opendir(file_a)
+    assert ret.dirp is None
+    assert ret.errno == errno.ENOTDIR
+
+    # Try to remove a non empty dir
+    ret = gkfs_client.rmdir(topdir)
+    assert ret.retval == -1
+    assert ret.errno == errno.ENOTEMPTY
 
     return
 

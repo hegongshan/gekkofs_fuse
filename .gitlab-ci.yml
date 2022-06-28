@@ -49,6 +49,12 @@ gkfs:
   interruptible: true
   needs: []
   script:
+    # Change config.hpp with sed to enable extra features
+    - sed -i 's/constexpr auto use_atime = false;/constexpr auto use_atime = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
+    - sed -i 's/constexpr auto use_ctime = false;/constexpr auto use_ctime = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
+    - sed -i 's/constexpr auto use_mtime = false;/constexpr auto use_mtime = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
+    - sed -i 's/constexpr auto use_link_cnt = false;/constexpr auto use_link_cnt = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
+    - sed -i 's/constexpr auto use_blocks = false;/constexpr auto use_blocks = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
     - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
     - cmake
       -Wdev
@@ -131,7 +137,7 @@ gkfs:integration:
   needs: ['gkfs']
   parallel:
     matrix:
-      - SUBTEST: [ data, directories, operations, position, shell, status ]
+      - SUBTEST: [ data, status, syscalls, directories, operations, position, shell ]
 
   script:
     ## run tests
@@ -227,6 +233,7 @@ gkfs:unit:
     - ctest -j $(nproc) -L unit::all --output-junit report.xml
 
     ## capture coverage information
+    - cd ${BUILD_PATH}
     - ${CI_SCRIPTS_DIR}/coverage.sh
           --verbose
           --capture unit

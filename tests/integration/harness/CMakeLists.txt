@@ -63,6 +63,10 @@ add_executable(gkfs.io
     gkfs.io/symlink.cpp
     gkfs.io/directory_validate.cpp
     gkfs.io/unlink.cpp
+    gkfs.io/access.cpp
+    gkfs.io/statfs.cpp
+    gkfs.io/dup_validate.cpp
+    gkfs.io/syscall_coverage.cpp
 )
 
 include(FetchContent)

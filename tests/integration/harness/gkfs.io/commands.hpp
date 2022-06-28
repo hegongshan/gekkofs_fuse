@@ -96,6 +96,12 @@ write_random_init(CLI::App& app);
 void
 truncate_init(CLI::App& app);
 
+void
+access_init(CLI::App& app);
+
+void
+statfs_init(CLI::App& app);
+
 // UTIL
 void
 file_compare_init(CLI::App& app);
@@ -110,5 +116,11 @@ symlink_init(CLI::App& app);
 
 void
 unlink_init(CLI::App& app);
+
+void
+dup_validate_init(CLI::App& app);
+
+void
+syscall_coverage_init(CLI::App& app);
 
 #endif // IO_COMMANDS_HPP

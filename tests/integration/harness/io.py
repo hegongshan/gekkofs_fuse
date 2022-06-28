@@ -83,6 +83,29 @@ class StructStatSchema(Schema):
                  'st_atim', 'st_mtim', 'st_ctim'])(**data)
 
 
+class StructStatfsSchema(Schema):
+    """Schema that deserializes a struct statfs"""
+
+    f_type = fields.Integer(required=True)
+    f_bsize = fields.Integer(required=True)
+    f_blocks = fields.Integer(required=True)
+    f_bfree = fields.Integer(required=True)
+    f_bavail = fields.Integer(required=True)
+    f_files = fields.Integer(required=True)
+    f_ffree = fields.Integer(required=True)
+ #   f_fsid = fields.Integer(required=True)
+ #   f_namelen = fields.Integer(required=True)
+ #   f_frsize = fields.Integer(required=True)
+ #   f_flags = fields.Integer(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StructStatfs',
+                ['f_type', 'f_bsize', 'f_blocks', 'f_bfree',
+                'f_bavail', 'f_files', 'f_ffree'])(**data)
+
+
+
 class StructStatxTimestampSchema(Schema):
     """Schema that deserializes a struct timespec"""
     tv_sec = fields.Integer(required=True)
@@ -298,6 +321,16 @@ class StatxOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('StatxReturn', ['retval', 'statbuf', 'errno'])(**data)
 
+class StatfsOutputSchema(Schema):
+    """Schema to deserialize the results of a statfs() execution"""
+
+    retval = fields.Integer(required=True)
+    statfsbuf = fields.Nested(StructStatfsSchema, required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('StatfsReturn', ['retval', 'statfsbuf', 'errno'])(**data)
 
 class LseekOutputSchema(Schema):
     """Schema to deserialize the results of an lseek() execution"""
@@ -349,6 +382,16 @@ class TruncateOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('TruncateReturn', ['retval', 'errno'])(**data)
 
+class AccessOutputSchema(Schema):
+    """Schema to deserialize the results of an access() execution"""
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('AccessReturn', ['retval', 'errno'])(**data)
+
+
 class ChdirOutputSchema(Schema):
     """Schema to deserialize the results of an chdir() execution"""
 
@@ -371,7 +414,26 @@ class GetcwdvalidateOutputSchema(Schema):
     def make_object(self, data, **kwargs):
         return namedtuple('GetcwdvalidateReturn', ['retval', 'path', 'errno'])(**data)
 
+class DupValidateOutputSchema(Schema):
+    """Schema to deserialize the results of an dup, dup2, dup3 execution"""
 
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('DupValidateReturn', ['retval', 'errno'])(**data)
+
+class SyscallCoverageOutputSchema(Schema):
+    """Schema to deserialize the results of a syscall coverage execution"""
+
+    retval = fields.Integer(required=True)
+    errno = Errno(data_key='errnum', required=True)
+    syscall = fields.String(required=True)
+
+    @post_load
+    def make_object(self, data, **kwargs):
+        return namedtuple('SyscallCoverageReturn', ['retval', 'errno', 'syscall'])(**data)
 
 class SymlinkOutputSchema(Schema):
     """Schema to deserialize the results of an symlink execution"""
@@ -429,11 +491,15 @@ class IOParser:
         'truncate': TruncateOutputSchema(),
         'directory_validate' : DirectoryValidateOutputSchema(),
         'unlink'  : UnlinkOutputSchema(),
+        'access' : AccessOutputSchema(),
+        'statfs' : StatfsOutputSchema(),
         # UTIL
         'file_compare': FileCompareOutputSchema(),
         'chdir'   : ChdirOutputSchema(),
         'getcwd_validate'  : GetcwdvalidateOutputSchema(),
         'symlink' : SymlinkOutputSchema(),
+        'dup_validate' : DupValidateOutputSchema(),
+        'syscall_coverage' : SyscallCoverageOutputSchema(),
     }
 
     def parse(self, command, output):
