@@ -302,7 +302,9 @@ coverage:
           --build-dir ${BUILD_PATH}
   artifacts:
     reports:
-      cobertura: ${BUILD_PATH}/.coverage/coverage-cobertura.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: ${BUILD_PATH}/.coverage/coverage-cobertura.xml
     paths:
       - ${BUILD_PATH}/.coverage
     expire_in: 2 weeks
