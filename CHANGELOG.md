@@ -22,6 +22,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Using `unlink` now fails if it is a directory unless the `AT_REMOVEDIR` flag is used (POSIX compliance) ([!139](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/139)).
 - fchdir generate a SIGSEV in debug mode (due to log) ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141))
 - Fix fstatat to be able to understand `AT_EMPTY_PATH` flag used in coreutils (`cat` ...) ([!149](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/149)).
+- Fix segfault in sfind/gfind ([!227](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/227)
 
 ## [0.9.1] - 2022-04-29
 
