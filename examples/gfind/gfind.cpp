@@ -1,6 +1,6 @@
 /*
-  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
-  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
+  Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain
+  Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany
 
   This software was partially supported by the
   EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
@@ -65,7 +65,7 @@ extern "C" int gkfs_getsingleserverdir(const char *path,
 /* PFIND OPTIONS EXTENDED We need to add the GekkoFS mount dir and the number of
  * servers */
 typedef struct {
-  std::string workdir{};
+  char * workdir;
   int just_count;
   int print_by_process;
   char *results_dir;
@@ -134,7 +134,7 @@ pfind_options_t *pfind_parse_args(int argc, char **argv, int force_print_help,
   memset(res, 0, sizeof(pfind_options_t));
   int print_help = force_print_help;
 
-  res->workdir = "./";
+  res->workdir = nullptr;
   res->results_dir = nullptr;
   res->verbosity = 0;
   res->timestamp_file = nullptr;

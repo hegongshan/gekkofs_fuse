@@ -1,6 +1,6 @@
 /*
-  Copyright 2018-2021, Barcelona Supercomputing Center (BSC), Spain
-  Copyright 2015-2021, Johannes Gutenberg Universitaet Mainz, Germany
+  Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain
+  Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany
 
   This software was partially supported by the
   EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).
@@ -64,7 +64,7 @@ extern "C" int gkfs_getsingleserverdir(const char *path,
 /* PFIND OPTIONS EXTENDED We need to add the GekkoFS mount dir and the number of
  * servers */
 typedef struct {
-  std::string workdir{};
+  char* workdir;
   int just_count;
   int print_by_process;
   char *results_dir;
@@ -117,7 +117,7 @@ static void pfind_print_help(pfind_options_t *res) {
          "\t-M: mountdir = \"%s\"\n"
          "Optional flags\n"
          "\t-h: prints the help\n"
-         "\t--help: prints the help without initializing MPI\n",res->workdir.c_str(),
+         "\t--help: prints the help without initializing MPI\n",res->workdir,
          res->timestamp_file, res->name_pattern, res->num_servers,
          res->mountdir );
 }
@@ -128,19 +128,31 @@ pfind_options_t *pfind_parse_args(int argc, char **argv, int force_print_help){
   pfind_size = 1;
 
   pfind_options_t *res = (pfind_options_t *)malloc(sizeof(pfind_options_t));
-  memset(res, 0, sizeof(pfind_options_t));
-  auto print_help = force_print_help;
+  // Init Values
+  res->just_count = 0;
+  res->print_by_process = 0;
+  res->stonewall_timer = 0;
+  res->print_rates = 0;
+  res->name_regex = {};
+  res->num_servers = 0;
+  res->mountdir = nullptr;
+  res->queue_length = 0;
+  res->max_entries_per_iter = 0;
+  res->steal_from_next = 0;
+  res->parallel_single_dir_access = 0;
 
-  res->workdir = "./";
+  auto print_help = force_print_help;
+  res->workdir = nullptr;
   res->results_dir = nullptr;
   res->verbosity = 0;
   res->timestamp_file = nullptr;
   res->name_pattern = nullptr;
+ 
   res->size = std::numeric_limits<uint64_t>::max();
   res->queue_length = 100000;
   res->max_entries_per_iter = 1000;
   char *firstarg = nullptr;
-
+  
   // when we find special args, we process them
   // but we need to replace them with 0 so that getopt will ignore them
   // and getopt will continue to process beyond them
@@ -168,7 +180,7 @@ pfind_options_t *pfind_parse_args(int argc, char **argv, int force_print_help){
       char *str = argv[i + 1];
       char *out = res->name_pattern;
       auto pos = 0;
-      for (auto i = 0; i < strlen(str); i++) {
+      for (long unsigned int i = 0; i < strlen(str); i++) {
         if (str[i] == '*') {
           pos += sprintf(out + pos, ".*");
         } else if (str[i] == '.') {
@@ -300,7 +312,7 @@ void dirProcess(const string path, unsigned long long &checked,
 
   for (auto server = 0; server < opt->num_servers; server++) {
     unsigned long long total_size = 0;
-    auto n = gkfs_getsingleserverdir(
+    long unsigned int n = gkfs_getsingleserverdir(
         path.c_str(), getdir,
         (sizeof(struct dirent_extended) + 255) * 1024 * 100, server);
     struct dirent_extended *temp = getdir;
@@ -343,7 +355,7 @@ int process(pfind_options_t *opt) {
   found = 0;
   checked = 0;
   memset(&runtime, 0, sizeof(pfind_runtime_options_t));
-  auto ret = 0;
+  
   /* Get timestamp file */
   if (opt->timestamp_file) {
     if (pfind_rank == 0) {
@@ -357,7 +369,6 @@ int process(pfind_options_t *opt) {
     }
   }
 
-  auto iterations = 0;
   queue<string> dirs;
   string workdir = opt->workdir;
   workdir = workdir.substr(strlen(opt->mountdir), workdir.size());
