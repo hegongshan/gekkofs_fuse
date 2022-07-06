@@ -55,7 +55,7 @@ with_errno(int ret) {
 }
 
 } // namespace
-
+#ifndef _ARCH_PPC64
 template <class... Args>
 inline long
 syscall_no_intercept_wrapper(long syscall_number, Args... args) {
@@ -68,6 +68,7 @@ syscall_no_intercept_wrapper(long syscall_number, Args... args) {
     }
     return result;
 }
+#endif
 
 namespace gkfs::hook {
 

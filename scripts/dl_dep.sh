@@ -28,7 +28,7 @@
 ################################################################################
 
 COMMON_CURL_FLAGS="--silent --fail --show-error --location -O"
-COMMON_GIT_FLAGS="--quiet --single-branch -c advice.detachedHead=false"
+COMMON_GIT_FLAGS="--quiet -c advice.detachedHead=false"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCH_DIR="${SCRIPT_DIR}/patches"
 DEPENDENCY=""
