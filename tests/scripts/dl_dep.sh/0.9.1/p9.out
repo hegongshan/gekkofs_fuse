@@ -1,0 +1,12 @@
+Downloaded 'https://github.com/lz4/lz4/archive/v1.9.3.tar.gz' to 'lz4'
+Downloaded 'https://github.com/aquynh/capstone/archive/4.0.2.tar.gz' to 'capstone'
+Downloaded 'https://github.com/json-c/json-c/archive/json-c-0.15-20200726.tar.gz' to 'json-c'
+Downloaded 'https://github.com/intel/opa-psm2/archive/PSM2_11.2.185.tar.gz' to 'psm2'
+Cloned 'https://github.com/ofiwg/libfabric.git' to 'libfabric' with commit '[HEAD]' and flags '--branch=v1.13.2'
+Cloned 'https://github.com/mercury-hpc/mercury' to 'mercury' with commit '[v2.1.0]' and flags '--recurse-submodules'
+Downloaded 'https://github.com/pmodels/argobots/archive/v1.1.tar.gz' to 'argobots'
+Cloned 'https://github.com/mochi-hpc/mochi-margo' to 'margo' with commit '[v0.9.6]' and flags ''
+Downloaded 'https://github.com/facebook/rocksdb/archive/v6.26.1.tar.gz' to 'rocksdb'
+Cloned 'https://github.com/GekkoFS/syscall_intercept.git' to 'syscall_intercept' with commit '[6eb27a9d2053bb2ac3bb9ce30e13b64ce055c19f]' and flags ''
+Cloned 'https://github.com/HowardHinnant/date.git' to 'date' with commit '[e7e1482087f58913b80a20b04d5c58d9d6d90155]' and flags ''
+Done
