@@ -13,11 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GKFS_ENABLE_UNUSED_FUNCTIONS added to disable code to increase code coverage.
 - Updated Parallax version to new API (parallax option needs kv_format.parallax in the path, and the database in a device with O_DIRECT)
 - Support for increasing file size via `truncate()` added ([!159](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/159)
-
+- Added PowerPC support ([!151](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/151)).
 ### Changed
 
-- Support parallelism for path resolution tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145))
-  .
+- Support parallelism for path resolution tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
 - Support parallelism for symlink tests ([!147](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/147)).
 - Updatd Parallax release (PARALLAX-exp)
 
