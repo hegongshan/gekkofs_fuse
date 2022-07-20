@@ -34,7 +34,7 @@ add_subdirectory(backend)
 #
 # IMPORTANT: since the targets differ basically in their compile definitions, we
 # need to keep any source files affected by such definitions (e.g.
-# GFS_ENABLE_FORWARDING) in their own specific targets. Otherwise, they will not
+# GKFS_ENABLE_FORWARDING) in their own specific targets. Otherwise, they will not
 # be build with the correct defines.
 add_library(gkfs_daemon_common STATIC)
 

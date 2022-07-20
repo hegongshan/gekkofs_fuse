@@ -214,6 +214,14 @@ gkfs_define_option(
 
 # build tests
 gkfs_define_option(
+    GKFS_ENABLE_UNUSED_FUNCTIONS
+    HELP_TEXT "Enable unused functions compilation"
+    DEFAULT_VALUE OFF
+)
+
+
+# build tests
+gkfs_define_option(
   GKFS_BUILD_TESTS
   HELP_TEXT "Build ${PROJECT_NAME} self tests"
   DEFAULT_VALUE OFF
