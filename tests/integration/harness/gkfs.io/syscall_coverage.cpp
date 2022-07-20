@@ -367,7 +367,7 @@ syscall_coverage_exec(const syscall_coverage_options& opts) {
     }
 
     // renameat external
-    auto fdtmp = ::open("/tmp/test_rename", O_CREAT | O_WRONLY);
+    auto fdtmp = ::open("/tmp/test_rename", O_CREAT | O_WRONLY, 0644);
     ::close(fdtmp);
 
     rv = ::renameat(AT_FDCWD, "/tmp/test_rename", AT_FDCWD,
