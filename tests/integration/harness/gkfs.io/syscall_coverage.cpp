@@ -371,7 +371,7 @@ syscall_coverage_exec(const syscall_coverage_options& opts) {
     std::string path2 = "/tmp/"+pid+"test_rename2";
 
     // renameat external
-    auto fdtmp = ::open("/tmp/test_rename", O_CREAT | O_WRONLY, 0644);
+    auto fdtmp = ::open(path1.c_str(), O_CREAT | O_WRONLY, 0644);
     ::close(fdtmp);
 
     rv = ::renameat(AT_FDCWD, path1.c_str(), AT_FDCWD,
