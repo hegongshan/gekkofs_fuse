@@ -247,15 +247,14 @@ class Daemon:
 
     def run(self):
 
-        args = [ '--mountdir', self.mountdir,
-                 '--rootdir', self.rootdir,
-                 '-l', self._address,
-                 '--metadir', self._metadir,
-                 '--dbbackend', self._database, 
-                 '--output-stats', self.logdir / 'stats.log',
-                 '--enable-collection',
-                 '--enable-chunkstats',
-                 '--enable-prometheus' ]
+        args = ['--mountdir', self.mountdir,
+                '--rootdir', self.rootdir,
+                '-l', self._address,
+                '--metadir', self._metadir,
+                '--dbbackend', self._database,
+                '--output-stats', self.logdir / 'stats.log',
+                '--enable-collection',
+                '--enable-chunkstats']
         if self._database == "parallaxdb" :
             args.append('--clean-rootdir-finish')
 
