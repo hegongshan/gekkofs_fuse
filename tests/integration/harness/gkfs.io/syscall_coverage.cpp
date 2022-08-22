@@ -399,7 +399,7 @@ syscall_coverage_exec(const syscall_coverage_options& opts) {
 
     // sys_unlinkat
     rv = ::syscall(SYS_unlinkat, AT_FDCWD, opts.pathname.c_str(), 0);
-    if(errno != ENOTSUP) {
+    if(rv < 0) {
         output("sys_unlinkat", rv, opts);
         return;
     }
