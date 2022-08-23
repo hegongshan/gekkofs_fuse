@@ -40,7 +40,6 @@
 #include <memory>
 
 extern "C" {
-#include <libsyscall_intercept_hook_point.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
@@ -55,20 +54,6 @@ with_errno(int ret) {
 }
 
 } // namespace
-#ifndef _ARCH_PPC64
-template <class... Args>
-inline long
-syscall_no_intercept_wrapper(long syscall_number, Args... args) {
-    long result;
-    int error;
-    result = syscall_no_intercept(syscall_number, args...);
-    error = syscall_error_code(result);
-    if(error != 0) {
-        return -error;
-    }
-    return result;
-}
-#endif
 
 namespace gkfs::hook {
 
@@ -82,11 +67,12 @@ hook_openat(int dirfd, const char* cpath, int flags, mode_t mode) {
     auto rstatus = CTX->relativize_fd_path(dirfd, cpath, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_openat, dirfd, cpath, flags, mode);
+            return syscall_no_intercept_wrapper(SYS_openat, dirfd, cpath, flags,
+                                                mode);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_openat, dirfd, resolved.c_str(),
-                                        flags, mode);
+            return syscall_no_intercept_wrapper(SYS_openat, dirfd,
+                                                resolved.c_str(), flags, mode);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
@@ -148,12 +134,12 @@ hook_statx(int dirfd, const char* path, int flags, unsigned int mask,
     auto rstatus = CTX->relativize_fd_path(dirfd, path, resolved);
     switch(rstatus) {
         case gkfs::preload::RelativizeStatus::fd_unknown:
-            return syscall_no_intercept(SYS_statx, dirfd, path, flags, mask,
-                                        buf);
+            return syscall_no_intercept_wrapper(SYS_statx, dirfd, path, flags,
+                                                mask, buf);
 
         case gkfs::preload::RelativizeStatus::external:
-            return syscall_no_intercept(SYS_statx, dirfd, resolved.c_str(),
-                                        flags, mask, buf);
+            return syscall_no_intercept_wrapper(
+                    SYS_statx, dirfd, resolved.c_str(), flags, mask, buf);
 
         case gkfs::preload::RelativizeStatus::fd_not_a_dir:
             return -ENOTDIR;
