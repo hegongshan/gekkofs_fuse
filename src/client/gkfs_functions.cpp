@@ -210,7 +210,6 @@ gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
         }
         return gkfs_open(md.target_path(), mode, flags, true);
     }
-#endif
 #ifdef HAS_RENAME
     std::string new_path = path;
     if(md.blocks() == -1) {
@@ -248,6 +247,7 @@ gkfs_open(const std::string& path, mode_t mode, int flags, bool rename) {
                     std::make_shared<gkfs::filemap::OpenFile>(new_path, flags));
         }
     }
+#endif
 #endif
     if(S_ISDIR(md.mode())) {
         return gkfs_opendir(path);
@@ -328,7 +328,7 @@ gkfs_remove(const std::string& path) {
         errno = EISDIR;
         return -1;
     }
-
+#ifdef HAS_SYMLINKS
 #ifdef HAS_RENAME
     if(md.value().blocks() == -1) {
         errno = ENOENT;
@@ -352,6 +352,7 @@ gkfs_remove(const std::string& path) {
             return 0;
         }
     }
+#endif
 #endif
 
     auto err = gkfs::rpc::forward_remove(path);
@@ -379,6 +380,7 @@ gkfs_access(const std::string& path, const int mask, bool follow_links) {
     return 0;
 }
 
+#ifdef HAS_SYMLINKS
 #ifdef HAS_RENAME
 /**
  * gkfs wrapper for rename() system calls
@@ -448,6 +450,7 @@ gkfs_rename(const string& old_path, const string& new_path) {
     return 0;
 }
 #endif
+#endif
 
 /**
  * gkfs wrapper for stat() system calls
@@ -501,6 +504,7 @@ gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
     if(!md) {
         return -1;
     }
+#ifdef HAS_SYMLINKS
 #ifdef HAS_RENAME
     if(md.value().blocks() == -1) {
         errno = ENOENT;
@@ -513,6 +517,7 @@ gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
             }
         }
     }
+#endif
 #endif
     struct stat tmp {};
 
@@ -744,6 +749,7 @@ gkfs_truncate(const std::string& path, off_t length) {
     }
 
     // If we have rename enabled we need to check if the file is renamed
+#ifdef HAS_SYMLINKS
 #ifdef HAS_RENAME
     if(md.value().blocks() == -1) {
         errno = ENOENT;
@@ -764,6 +770,7 @@ gkfs_truncate(const std::string& path, off_t length) {
         }
         return gkfs_truncate(new_path, size, length);
     }
+#endif
 #endif
 
     auto size = md->size();
