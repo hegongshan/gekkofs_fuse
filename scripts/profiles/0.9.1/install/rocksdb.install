@@ -48,7 +48,7 @@ pkg_install() {
     # gcc 9 and clang 8 need -Wno-error=deprecated-copy -Wno-error=pessimizing-move
     if [[ ("${COMPILER_NAME}" == "g++" && "${COMPILER_MAJOR_VERSION}" -ge 9) ||
           ("${COMPILER_NAME}" == "clang" && "${COMPILER_MAJOR_VERSION}" -ge 8) ]]; then
-        CXXFLAGS='-Wno-error=deprecated-copy -Wno-error=pessimizing-move'
+        CXXFLAGS='-Wno-error=deprecated-copy -Wno-error=pessimizing-move -Wno-error=maybe-uninitialized'
     fi
 
     # TODO use SSE?
