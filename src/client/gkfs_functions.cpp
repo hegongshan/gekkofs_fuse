@@ -373,10 +373,36 @@ gkfs_remove(const std::string& path) {
  */
 int
 gkfs_access(const std::string& path, const int mask, bool follow_links) {
+    LOG(DEBUG, "Checking '{}'", path);
     auto md = gkfs::utils::get_metadata(path, follow_links);
+    LOG(DEBUG, "Checked '{}'", path);
     if(!md) {
+        LOG(DEBUG, "File does not exist '{}'", path);
         return -1;
     }
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    LOG(DEBUG, "Checking for renamed file '{}'", path);
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        LOG(DEBUG, "File exist but it is renamed '{}'", path);
+        return -1;
+
+    } else {
+        while(md.value().target_path() != "") {
+            LOG(DEBUG, "File exist but it is renamed '{} -> {}'", path,
+                md.value().target_path());
+            md = gkfs::utils::get_metadata(md.value().target_path(), false);
+            if(!md) {
+                LOG(DEBUG,
+                    "File does not al all exist but it is renamed '{} -> {}'",
+                    path, md.value().target_path());
+                return -1;
+            }
+        }
+    }
+#endif
+#endif
     return 0;
 }
 
@@ -466,6 +492,7 @@ gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     if(!md) {
         return -1;
     }
+#ifdef HAS_SYMLINKS
 #ifdef HAS_RENAME
     if(md.value().blocks() == -1) {
         errno = ENOENT;
@@ -478,6 +505,7 @@ gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
             }
         }
     }
+#endif
 #endif
     gkfs::utils::metadata_to_stat(path, *md, *buf);
     return 0;

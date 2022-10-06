@@ -50,6 +50,9 @@ def test_rename(gkfs_daemon, gkfs_client):
                            stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
 
     assert ret.retval == 10000
+    
+    ret = gkfs_client.access(file, os.R_OK)
+    assert ret.retval == 0
 
     # write a buffer we know
     buf = b'42'
@@ -64,7 +67,12 @@ def test_rename(gkfs_daemon, gkfs_client):
     assert ret.retval == -1
 
     ret = gkfs_client.rename(file, file2)
+    assert ret.retval == 0
 
+    ret = gkfs_client.access(file,  os.R_OK)
+    assert ret.retval == -1
+
+    ret = gkfs_client.access(file2, os.R_OK)
     assert ret.retval == 0
 
     ret = gkfs_client.stat(file)
