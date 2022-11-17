@@ -25,55 +25,37 @@
 #                                                                              #
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
-
 # vi: ft=bash
 
-declare -A sources
+################################################################################
+## The installation script must define both a pkg_install function and
+## pkg_check function that, as their name implies, must specify how
+## a dependency package should be installed and tested.  ## ## The following
+## variables can be used in the installation script:
+## - CMAKE: a variable that expands to the cmake binary
+## - SOURCE_DIR: the directory where the sources for the package were
+##               downloaded
+## - INSTALL_DIR: the directory where the package should be installed
+## - CORES: the number of cores to use when building
+## - PERFORM_TEST: whether tests for the package should be executed
+################################################################################
 
-sources=(
-    ["bzip2"]="https://sourceforge.net/projects/bzip2/files/bzip2-{{VERSION}}.tar.gz"
-    ["zstd"]="https://github.com/facebook/zstd/archive/v{{VERSION}}.tar.gz"
-    ["lz4"]="https://github.com/lz4/lz4/archive/v{{VERSION}}.tar.gz"
-    ["snappy"]="https://github.com/google/snappy/archive/{{VERSION}}.tar.gz"
-    ["capstone"]="https://github.com/aquynh/capstone/archive/{{VERSION}}.tar.gz"
-    ["argobots"]="https://github.com/pmodels/argobots/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["rocksdb%experimental"]="https://github.com/facebook/rocksdb/archive/v{{VERSION}}.tar.gz"
-    ["psm2"]="https://github.com/intel/opa-psm2/archive/PSM2_{{VERSION}}.tar.gz"
-    ["bmi"]="https://github.com/radix-io/bmi/"
-    ["libfabric"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%experimental"]="https://github.com/ofiwg/libfabric.git"
-    ["libfabric%verbs"]="https://github.com/ofiwg/libfabric.git"
-    ["mercury"]="https://github.com/mercury-hpc/mercury"
-    ["margo"]="https://github.com/mochi-hpc/mochi-margo"
-    ["syscall_intercept"]="https://github.com/pmem/syscall_intercept.git"
-    ["date"]="https://github.com/HowardHinnant/date.git"
-    ["agios"]="https://github.com/francielizanon/agios.git"
-    ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
-    ["parallax"]="https://github.com/CARV-ICS-FORTH/parallax.git"
-    ["parallax-exp"]="https://github.com/gesalous/parallax-1.git"
-    ["prometheus-cpp"]="https://github.com/jupp0r/prometheus-cpp/releases/download/{{VERSION}}/prometheus-cpp-with-submodules.tar.gz"
-    ["curl"]="https://curl.se/download/curl-{{VERSION}}.tar.gz"
-)
+pkg_install() {
 
+    CURR="${SOURCE_DIR}/parallax-exp"
+    # sed -i -e 's/KEY_SIZE (256)/KEY_SIZE (4096)/g' ${CURR}/lib/btree/conf.h
+    prepare_build_dir "${CURR}"
+    cd "${CURR}/build"
+    PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig" $CMAKE \
+        -DBUILD_SHARED_LIBS:BOOL=OFF \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+        -DCMAKE_BUILD_TYPE="Release" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-Wno-error=unused-result" \
+        ..
+    make -j"${CORES}"
+    make install
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+pkg_check() {
+    :
+}

@@ -24,14 +24,14 @@ variables:
   GIT_SUBMODULE_STRATEGY:       recursive
 
 # base image
-image: gekkofs/core:0.9.1
+image: gekkofs/core:0.9.2
 
 ################################################################################
 ## Validating
 ################################################################################
 check format:
   stage: lint
-  image: gekkofs/linter:0.9.1
+  image: gekkofs/linter:0.9.2
   needs: []
   script:
     - ${SCRIPTS_DIR}/check_format.sh
@@ -45,7 +45,7 @@ check format:
 ################################################################################
 gkfs:
   stage: build
-  image: gekkofs/deps:0.9.1
+  image: gekkofs/deps:0.9.2
   interruptible: true
   needs: []
   script:
@@ -81,7 +81,7 @@ gkfs:
 
 gkfwd:
   stage: build
-  image: gekkofs/deps:0.9.1
+  image: gekkofs/deps:0.9.2
   interruptible: true
   needs: []
   script:
@@ -116,7 +116,7 @@ gkfwd:
 ## == tests for scripts ====================
 scripts:
   stage: test
-  image: gekkofs/testing:0.9.1
+  image: gekkofs/testing:0.9.2
   needs: []
   script:
     - mkdir -p ${BUILD_PATH}/tests/scripts
@@ -132,7 +132,7 @@ scripts:
 ## == integration tests for gkfs ===========
 gkfs:integration:
   stage: test
-  image: gekkofs/testing:0.9.1
+  image: gekkofs/testing:0.9.2
   interruptible: true
   needs: ['gkfs']
   parallel:
@@ -178,7 +178,7 @@ gkfs:integration:
 ## == integration tests for gkfwd ==========
 gkfwd:integration:
   stage: test
-  image: gekkofs/testing:0.9.1
+  image: gekkofs/testing:0.9.2
   interruptible: true
   needs: ['gkfwd']
   parallel:
@@ -223,7 +223,7 @@ gkfwd:integration:
 ## == unit tests for gkfs ==================
 gkfs:unit:
   stage: test
-  image: gekkofs/testing:0.9.1
+  image: gekkofs/testing:0.9.2
   needs: ['gkfs']
   script:
     ## Add path to mkfs.kreon
@@ -254,7 +254,7 @@ gkfs:unit:
 ################################################################################
 documentation:
   stage: docs
-  image: gekkofs/docs:0.9.1
+  image: gekkofs/docs:0.9.2
   needs: []
   rules:
     # we only build the documentation automatically if we are on the
@@ -290,7 +290,7 @@ documentation:
 ################################################################################
 coverage:
   stage: report
-  image: gekkofs/coverage:0.9.1
+  image: gekkofs/coverage:0.9.2
   needs: [ 'gkfs:integration', 'gkfwd:integration', 'gkfs:unit' ]
   script:
     - cd ${BUILD_PATH}
