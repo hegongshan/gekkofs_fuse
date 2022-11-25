@@ -193,7 +193,6 @@ ParallaxBackend::get_impl(const std::string& key) const {
     par_get(par_db_, &K, &V, &error);
     if(V.val_buffer == NULL) {
         throw_status_excpt("Not Found");
-        free((void *)error);
     } else {
         val = V.val_buffer;
         free(V.val_buffer);
@@ -217,7 +216,7 @@ ParallaxBackend::put_impl(const std::string& key, const std::string& val) {
     const char *error;
     par_put(par_db_, &key_value, &error);
     if (error) {
-        free ((void *)  error);
+        //free ((void *)  error);
     }
 }
 
@@ -240,8 +239,8 @@ ParallaxBackend::put_no_exist_impl(const std::string& key,
     if(ret == PAR_KEY_NOT_FOUND) {
         const char *error;
         par_put(par_db_, &key_value, &error);
-        if (!error) {
-            free ((void*)error);
+        if (error) {
+           // free ((void*)error);
         }
     } else
         throw ExistsException(key);
@@ -258,12 +257,12 @@ ParallaxBackend::remove_impl(const std::string& key) {
     struct par_key k;
 
     str2par(key, k);
-    const char * error;
+    const char * error = NULL;
     par_delete(par_db_, &k, &error);
 
     if(error) {
-        free((void *) error);
-        throw_status_excpt("Not Found");
+      //  free((void *) error);
+      //  throw_status_excpt("Not Found");
     }
 }
 
@@ -307,13 +306,21 @@ ParallaxBackend::update_impl(const std::string& old_key,
 
     str2par(new_key, n_key_value.k);
     str2par(val, n_key_value.v);
-
     str2par(old_key, o_key);
-    const char * error;
+    
+    const char * error = NULL;
+    if (new_key != old_key) {
+        par_delete(par_db_, &o_key, &error);
+        if (error) {
+         //   free ((void *)error);
+         //   throw_status_excpt("update error");
+        }
+    }
+    
     par_put(par_db_, &n_key_value, &error);
     if(error) {
-        free((void*) error);
-        throw_status_excpt("update error");
+      //  free((void*) error);
+      //  throw_status_excpt("update error");
     }
 }
 
@@ -370,11 +377,11 @@ ParallaxBackend::get_dirents_impl(const std::string& dir) const {
     struct par_key K;
 
     str2par(root_path, K);
-    const char* error;
+    const char* error = NULL;
     par_scanner S = par_init_scanner(par_db_, &K, PAR_GREATER_OR_EQUAL, &error);
     if (error) {
-        free((void*) error);
-        throw_status_excpt("Scan error");
+      //  free((void*) error);
+      //  throw_status_excpt("Scan error");
     }
     std::vector<std::pair<std::string, bool>> entries;
 
@@ -444,8 +451,8 @@ ParallaxBackend::get_dirents_extended_impl(const std::string& dir) const {
     const char* error;
     par_scanner S = par_init_scanner(par_db_, &K, PAR_GREATER_OR_EQUAL, &error);
     if (error) {
-        free((void*) error);
-        throw_status_excpt("Scan error");
+    //    free((void*) error);
+    //    throw_status_excpt("Scan error");
     }
     
     std::vector<std::tuple<std::string, bool, size_t, time_t>> entries;

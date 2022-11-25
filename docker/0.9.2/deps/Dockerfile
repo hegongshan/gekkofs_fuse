@@ -31,6 +31,7 @@ RUN apt-get update && \
 RUN cd ${SCRIPTS_PATH} && \
     /bin/bash ./dl_dep.sh -p ci:${GKFS_VERSION} ${DEPS_SRC_PATH} && \
     /bin/bash ./compile_dep.sh -j 8 -p ci:${GKFS_VERSION} ${DEPS_SRC_PATH} ${INSTALL_PATH} && \
+    cp ${DEPS_SRC_PATH}/parallax/lib/include/parallax/structures.h ${INSTALL_PATH}/include/ &&\
     rm -rf ${DEPS_SRC_PATH} && \
     rm -rf ${SCRIPTS_PATH} && \
     rmdir ${GKFS_PATH} && \
