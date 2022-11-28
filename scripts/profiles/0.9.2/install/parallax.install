@@ -51,10 +51,12 @@ pkg_install() {
         -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
         -DCMAKE_BUILD_TYPE="Release" \
         -DCMAKE_CXX_FLAGS_RELEASE="-Wno-error=unused-result" \
-	-DDISABLE_LOGGING:BOOL=ON \
+	    -DDISABLE_LOGGING:BOOL=ON \
         ..
     make -j"${CORES}"
     make install
+    # We need to copy this file as it is not installed 
+    cp ${CURR}/lib/include/parallax/structures.h ${INSTALL_DIR}/include/ 
 }
 
 pkg_check() {
