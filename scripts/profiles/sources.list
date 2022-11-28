@@ -51,7 +51,6 @@ sources=(
     ["agios"]="https://github.com/francielizanon/agios.git"
     ["json-c"]="https://github.com/json-c/json-c/archive/json-c-{{VERSION}}.tar.gz"
     ["parallax"]="https://github.com/CARV-ICS-FORTH/parallax.git"
-    ["parallax-exp"]="https://github.com/gesalous/parallax-1.git"
     ["prometheus-cpp"]="https://github.com/jupp0r/prometheus-cpp/releases/download/{{VERSION}}/prometheus-cpp-with-submodules.tar.gz"
     ["curl"]="https://curl.se/download/curl-{{VERSION}}.tar.gz"
 )

@@ -52,10 +52,8 @@ namespace gkfs::metadata {
  */
 ParallaxBackend::~ParallaxBackend() {
     auto ret = par_close(par_db_);
-    if (ret) {
-        std::runtime_error(fmt::format(
-                    "Failed to close parallax {}", ret));
-        
+    if(ret) {
+        std::runtime_error(fmt::format("Failed to close parallax {}", ret));
     }
 }
 
@@ -128,13 +126,13 @@ ParallaxBackend::ParallaxBackend(const std::string& path)
     par_options_.db_name = "test";
     par_options_.volume_name = (char*) malloc(par_path_.size() + 1);
     strcpy(par_options_.volume_name, par_path_.c_str());
-    const char *error = NULL;
+    const char* error = NULL;
     par_options_.options = par_get_default_options();
     par_db_ = par_open(&par_options_, &error);
-    if (par_db_ == nullptr) {
-        throw std::runtime_error(fmt::format("Failed to open database: err {}", *error));
+    if(par_db_ == nullptr) {
+        throw std::runtime_error(
+                fmt::format("Failed to open database: err {}", *error));
     }
-    free((void*)error);
 }
 
 
@@ -189,7 +187,7 @@ ParallaxBackend::get_impl(const std::string& key) const {
     struct par_value V;
     V.val_buffer = NULL;
     str2par(key, K);
-    const char *error;
+    const char* error = NULL;
     par_get(par_db_, &K, &V, &error);
     if(V.val_buffer == NULL) {
         throw_status_excpt("Not Found");
@@ -213,10 +211,10 @@ ParallaxBackend::put_impl(const std::string& key, const std::string& val) {
 
     str2par(key, key_value.k);
     str2par(val, key_value.v);
-    const char *error;
+    const char* error = NULL;
     par_put(par_db_, &key_value, &error);
-    if (error) {
-        //free ((void *)  error);
+    if(error) {
+        throw_status_excpt(fmt::format("Failed to put_impl: err {}", *error));
     }
 }
 
@@ -237,10 +235,11 @@ ParallaxBackend::put_no_exist_impl(const std::string& key,
 
     par_ret_code ret = par_exists(par_db_, &key_value.k);
     if(ret == PAR_KEY_NOT_FOUND) {
-        const char *error;
+        const char* error = NULL;
         par_put(par_db_, &key_value, &error);
-        if (error) {
-           // free ((void*)error);
+        if(error) {
+            throw_status_excpt(
+                    fmt::format("Failed to put_no_exist_impl: err {}", *error));
         }
     } else
         throw ExistsException(key);
@@ -257,12 +256,12 @@ ParallaxBackend::remove_impl(const std::string& key) {
     struct par_key k;
 
     str2par(key, k);
-    const char * error = NULL;
+    const char* error = NULL;
     par_delete(par_db_, &k, &error);
 
     if(error) {
-      //  free((void *) error);
-      //  throw_status_excpt("Not Found");
+        throw_status_excpt(
+                fmt::format("Failed to remove_impl: err {}", *error));
     }
 }
 
@@ -307,20 +306,20 @@ ParallaxBackend::update_impl(const std::string& old_key,
     str2par(new_key, n_key_value.k);
     str2par(val, n_key_value.v);
     str2par(old_key, o_key);
-    
-    const char * error = NULL;
-    if (new_key != old_key) {
+
+    const char* error = NULL;
+    if(new_key != old_key) {
         par_delete(par_db_, &o_key, &error);
-        if (error) {
-         //   free ((void *)error);
-         //   throw_status_excpt("update error");
+        if(error) {
+            throw_status_excpt(
+                    fmt::format("Failed to delete (update): err {}", *error));
         }
     }
-    
+
     par_put(par_db_, &n_key_value, &error);
     if(error) {
-      //  free((void*) error);
-      //  throw_status_excpt("update error");
+        throw_status_excpt(
+                fmt::format("Failed to update/put_impl: err {}", *error));
     }
 }
 
@@ -379,9 +378,9 @@ ParallaxBackend::get_dirents_impl(const std::string& dir) const {
     str2par(root_path, K);
     const char* error = NULL;
     par_scanner S = par_init_scanner(par_db_, &K, PAR_GREATER_OR_EQUAL, &error);
-    if (error) {
-      //  free((void*) error);
-      //  throw_status_excpt("Scan error");
+    if(error) {
+        throw_status_excpt(
+                fmt::format("Failed get_dirents_imp: err {}", *error));
     }
     std::vector<std::pair<std::string, bool>> entries;
 
@@ -448,13 +447,13 @@ ParallaxBackend::get_dirents_extended_impl(const std::string& dir) const {
     struct par_key K;
 
     str2par(root_path, K);
-    const char* error;
+    const char* error = NULL;
     par_scanner S = par_init_scanner(par_db_, &K, PAR_GREATER_OR_EQUAL, &error);
-    if (error) {
-    //    free((void*) error);
-    //    throw_status_excpt("Scan error");
+    if(error) {
+        throw_status_excpt(fmt::format(
+                "Failed to get_dirents_extended_impl: err {}", *error));
     }
-    
+
     std::vector<std::tuple<std::string, bool, size_t, time_t>> entries;
 
     while(par_is_valid(S)) {
