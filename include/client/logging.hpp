@@ -485,6 +485,9 @@ static_buffer::grow(std::size_t size) {
 #define LOG_DEBUG(...)                                                         \
     do {                                                                       \
     } while(0);
+#define LOG_TRACE_READS(...)                                                   \
+    do {                                                                       \
+    } while(0);
 
 #else // !GKFS_ENABLE_LOGGING
 
