@@ -349,7 +349,6 @@ gkfs_remove(const std::string& path) {
                 errno = err;
                 return -1;
             }
-            return 0;
         }
     }
 #endif
