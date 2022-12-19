@@ -265,6 +265,12 @@ RocksDBBackend::get_dirents_impl(const std::string& dir) const {
         assert(!name.empty());
 
         Metadata md(it->value().ToString());
+#ifdef HAS_RENAME
+        // Remove entries with negative blocks (rename)
+        if(md.blocks() == -1) {
+            continue;
+        }
+#endif // HAS_RENAME
         auto is_dir = S_ISDIR(md.mode());
 
         entries.emplace_back(std::move(name), is_dir);
@@ -309,6 +315,12 @@ RocksDBBackend::get_dirents_extended_impl(const std::string& dir) const {
         assert(!name.empty());
 
         Metadata md(it->value().ToString());
+#ifdef HAS_RENAME
+        // Remove entries with negative blocks (rename)
+        if(md.blocks() == -1) {
+            continue;
+        }
+#endif // HAS_RENAME
         auto is_dir = S_ISDIR(md.mode());
 
         entries.emplace_back(std::forward_as_tuple(std::move(name), is_dir,

@@ -378,6 +378,9 @@ def test_rename_delete(gkfs_daemon, gkfs_client):
     assert ret.retval != -1
     assert ret.statbuf.st_size == len(buf)
 
+    ret = gkfs_client.readdir(gkfs_daemon.mountdir)
+    assert len(ret.dirents) == 1
+
     ret = gkfs_client.unlink(fileold) # Remove original file (error)
     assert ret.retval != 0
 
@@ -386,6 +389,9 @@ def test_rename_delete(gkfs_daemon, gkfs_client):
 
     ret = gkfs_client.stat(filenew)
     assert ret.retval == -1
+
+    ret = gkfs_client.readdir(gkfs_daemon.mountdir)
+    assert len(ret.dirents) == 0
     
 
 
