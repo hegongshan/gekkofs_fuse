@@ -1,0 +1,64 @@
+################################################################################
+# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+#                                                                              #
+# This software was partially supported by the                                 #
+# EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
+#                                                                              #
+# This software was partially supported by the                                 #
+# ADA-FS project under the SPPEXA project funded by the DFG.                   #
+#                                                                              #
+# This file is part of GekkoFS.                                                #
+#                                                                              #
+# GekkoFS is free software: you can redistribute it and/or modify              #
+# it under the terms of the GNU General Public License as published by         #
+# the Free Software Foundation, either version 3 of the License, or            #
+# (at your option) any later version.                                          #
+#                                                                              #
+# GekkoFS is distributed in the hope that it will be useful,                   #
+# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
+# GNU General Public License for more details.                                 #
+#                                                                              #
+# You should have received a copy of the GNU General Public License            #
+# along with GekkoFS.  If not, see <https://www.gnu.org/licenses/>.            #
+#                                                                              #
+# SPDX-License-Identifier: GPL-3.0-or-later                                    #
+################################################################################
+# vi: ft=bash
+
+################################################################################
+## The installation script must define both a pkg_install function and
+## pkg_check function that, as their name implies, must specify how
+## a dependency package should be installed and tested.  ## ## The following
+## variables can be used in the installation script:
+## - CMAKE: a variable that expands to the cmake binary
+## - SOURCE_DIR: the directory where the sources for the package were
+##               downloaded
+## - INSTALL_DIR: the directory where the package should be installed
+## - CORES: the number of cores to use when building
+## - PERFORM_TEST: whether tests for the package should be executed
+################################################################################
+
+pkg_install() {
+
+    CURR="${SOURCE_DIR}/parallax"
+    # sed -i -e 's/KEY_SIZE (256)/KEY_SIZE (4096)/g' ${CURR}/lib/btree/conf.h
+    prepare_build_dir "${CURR}"
+    cd "${CURR}/build"
+    PKG_CONFIG_PATH="${INSTALL_DIR}/lib/pkgconfig" $CMAKE \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} \
+        -DCMAKE_BUILD_TYPE="Release" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-Wno-error=unused-result" \
+	    -DDISABLE_LOGGING:BOOL=ON \
+        ..
+    make -j"${CORES}"
+    make install
+    # We need to copy this file as it is not installed 
+    cp ${CURR}/lib/include/parallax/structures.h ${INSTALL_DIR}/include/ 
+}
+
+pkg_check() {
+    :
+}

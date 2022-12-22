@@ -37,7 +37,6 @@ extern "C" {
 #include <parallax.h>
 }
 
-namespace rdb = rocksdb;
 namespace gkfs::metadata {
 
 class ParallaxBackend : public MetadataBackend<ParallaxBackend> {
