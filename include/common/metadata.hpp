@@ -53,6 +53,10 @@ private:
     blkcnt_t blocks_{}; // allocated file system blocks_
 #ifdef HAS_SYMLINKS
     std::string target_path_; // For links this is the path of the target file
+#ifdef HAS_RENAME
+    std::string rename_path_; // In some cases fd is maintained so we need the
+                              // renamed path
+#endif
 #endif
 
 
@@ -132,6 +136,14 @@ public:
 
     bool
     is_link() const;
+
+#ifdef HAS_RENAME
+    std::string
+    rename_path() const;
+
+    void
+    rename_path(const std::string& rename_path);
+#endif
 
 #endif
 };

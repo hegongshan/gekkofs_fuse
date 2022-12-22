@@ -348,17 +348,18 @@ forward_update_metadentry(
  * This marks that this file doesn't have to be accessed directly
  * Create a new md with the new name, which should have as value the old name
  * All operations should check blockcnt and extract a NOTEXISTS
- * @param path
- * @param path2
+ * @param oldpath
+ * @param newpath
  * @param md
  *
  * @return error code
  */
 int
-forward_rename(const string& path, const string& path2,
+forward_rename(const string& oldpath, const string& newpath,
                const gkfs::metadata::Metadata& md) {
 
-    auto endp = CTX->hosts().at(CTX->distributor()->locate_file_metadata(path));
+    auto endp =
+            CTX->hosts().at(CTX->distributor()->locate_file_metadata(oldpath));
 
     try {
         LOG(DEBUG, "Sending RPC ...");
@@ -369,7 +370,7 @@ forward_rename(const string& path, const string& path2,
         // result_set. When that happens we can remove the .at(0) :/
         auto out = ld_network_service
                            ->post<gkfs::rpc::update_metadentry>(
-                                   endp, path, (md.link_count()),
+                                   endp, oldpath, (md.link_count()),
                                    /* mode */ 0,
                                    /* uid */ 0,
                                    /* gid */ 0, md.size(),
@@ -395,7 +396,7 @@ forward_rename(const string& path, const string& path2,
 
     auto md2 = md;
 
-    md2.target_path(path);
+    md2.target_path(oldpath);
     /*
      * Now create the new file
      */
@@ -405,7 +406,7 @@ forward_rename(const string& path, const string& path2,
     // returning one result and a broadcast(endpoint_set) returning a
     // result_set. When that happens we can remove the .at(0) :/
     auto endp2 =
-            CTX->hosts().at(CTX->distributor()->locate_file_metadata(path2));
+            CTX->hosts().at(CTX->distributor()->locate_file_metadata(newpath));
 
     try {
         LOG(DEBUG, "Sending RPC ...");
@@ -415,13 +416,11 @@ forward_rename(const string& path, const string& path2,
         // returning one result and a broadcast(endpoint_set) returning a
         // result_set. When that happens we can remove the .at(0) :/
 
-
         auto out = ld_network_service
-                           ->post<gkfs::rpc::create>(endp2, path2, md2.mode())
+                           ->post<gkfs::rpc::create>(endp2, newpath, md2.mode())
                            .get()
                            .at(0);
         LOG(DEBUG, "Got response success: {}", out.err());
-
 
     } catch(const std::exception& ex) {
         LOG(ERROR, "while getting rpc output");
@@ -436,8 +435,32 @@ forward_rename(const string& path, const string& path2,
         // TODO(amiranda): hermes will eventually provide a post(endpoint)
         // returning one result and a broadcast(endpoint_set) returning a
         // result_set. When that happens we can remove the .at(0) :/
+        // Update new file with target link = oldpath
+        auto out =
+                ld_network_service
+                        ->post<gkfs::rpc::mk_symlink>(endp2, newpath, oldpath)
+                        .get()
+                        .at(0);
+
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+        // return out.err() ? out.err() : 0;
+
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
+    }
+
+    // Update the renamed path to solve the issue with fstat with fd)
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
         auto out = ld_network_service
-                           ->post<gkfs::rpc::mk_symlink>(endp, path2, path)
+                           ->post<gkfs::rpc::mk_symlink>(endp, oldpath, newpath)
                            .get()
                            .at(0);
 

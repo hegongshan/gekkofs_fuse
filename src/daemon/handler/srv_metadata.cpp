@@ -855,7 +855,17 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
     // do update
     try {
         gkfs::metadata::Metadata md = gkfs::metadata::get(in.path);
-        md.target_path(in.target_path);
+#ifdef HAS_RENAME
+        if(md.blocks() == -1) {
+            // We need to fill the rename path as this is an inverse path
+            // old -> new
+            md.rename_path(in.target_path);
+        } else {
+#endif
+            md.target_path(in.target_path);
+#ifdef HAS_RENAME
+        }
+#endif
         gkfs::metadata::update(in.path, md);
         out.err = 0;
     } catch(const std::exception& e) {

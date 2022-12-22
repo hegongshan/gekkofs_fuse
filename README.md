@@ -287,6 +287,9 @@ instead or in addition to the output file. It must be enabled at compile time vi
 argument `-DGKFS_ENABLE_PROMETHEUS` and the daemon argument `--enable-prometheus`. The corresponding statistics are then
 pushed to the Prometheus instance.
 
+### Rename
+`-DRENAME_SUPPORT` allows the application to rename files. This is an experimental feature, and some scenarios may not
+work properly. Support for fstat in renamed files is included. 
 ### Acknowledgment
 
 This software was partially supported by the EC H2020 funded NEXTGenIO project (Project ID: 671951, www.nextgenio.eu).
