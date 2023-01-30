@@ -143,6 +143,7 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         errno = ENOTSUP;
         return -1;
     }
+
     // metadata object filled during create or stat
     gkfs::metadata::Metadata md{};
     if(flags & O_CREAT) {
@@ -578,9 +579,27 @@ gkfs_truncate(const std::string& path, off_t length) {
 
     auto size = md->size();
     if(static_cast<unsigned long>(length) > size) {
-        LOG(DEBUG, "Length is greater then file size: {} > {}", length, size);
-        errno = EINVAL;
-        return -1;
+        LOG(DEBUG, "Length is greater then file size: '{}' > '{}'", length,
+            size);
+        auto output_fd = gkfs_open(path, md->mode(), O_WRONLY);
+        if(output_fd == -1) {
+            errno = EINVAL;
+            return -1;
+        }
+        gkfs_lseek(output_fd, 0, SEEK_END);
+        ssize_t n = static_cast<unsigned long>(length) - size;
+        // Zeroes the buffer. All make_* are value initialized
+        auto buf = std::make_unique<char[]>(n);
+        if(!buf) {
+            errno = ENOMEM;
+            return -1;
+        }
+        if(gkfs_write(output_fd, buf.get(), (size_t) n) != n) {
+            errno = EINVAL;
+            return -1;
+        }
+        CTX->file_map()->remove(output_fd);
+        return 0;
     }
     return gkfs_truncate(path, size, length);
 }
@@ -677,8 +696,10 @@ ssize_t
 gkfs_write(int fd, const void* buf, size_t count) {
     auto gkfs_fd = CTX->file_map()->get(fd);
     auto pos = gkfs_fd->pos(); // retrieve the current offset
-    if(gkfs_fd->get_flag(gkfs::filemap::OpenFile_flags::append))
+    if(gkfs_fd->get_flag(gkfs::filemap::OpenFile_flags::append)) {
         gkfs_lseek(gkfs_fd, 0, SEEK_END);
+        pos = gkfs_fd->pos(); // Pos should be updated with append
+    }
     auto ret = gkfs_pwrite(gkfs_fd, reinterpret_cast<const char*>(buf), count,
                            pos);
     // Update offset in file descriptor in the file map
