@@ -150,7 +150,11 @@ def test_fail_truncate(gkfs_daemon, gkfs_client):
 
     # Truncate to a size greater than the file size
     ret = gkfs_client.truncate(truncfile, buf_length + 1)
-    assert ret.retval == -1
-    assert ret.errno == errno.EINVAL
+    assert ret.retval == 0
+
+    
+    # Size should increase
+    ret = gkfs_client.stat(truncfile)
+    assert ret.statbuf.st_size == buf_length+1
 
 
