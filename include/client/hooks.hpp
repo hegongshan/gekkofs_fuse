@@ -38,6 +38,11 @@ extern "C" {
 }
 #include <libsyscall_intercept_hook_point.h>
 
+/*
+ * For PowerPC, syscall_no_intercept_wrapper() is defined in the
+ * syscall intercept branch `powerpc` and file
+ * `include/libsyscall_intercept_hook_point.h`
+ */
 #ifndef _ARCH_PPC64
 template <class... Args>
 inline long
