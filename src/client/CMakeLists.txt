@@ -133,10 +133,10 @@ if(GKFS_ENABLE_FORWARDING)
 
   # We need to add here any files that may have different compile definitions
   target_sources(gkfwd_intercept PRIVATE preload.cpp preload_util.cpp)
-  target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_FORWARDING)
+  target_compile_definitions(gkfwd_intercept PUBLIC GKFS_ENABLE_FORWARDING)
 
   if(GKFS_ENABLE_AGIOS)
-    target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_AGIOS)
+    target_compile_definitions(gkfwd_intercept PUBLIC GKFS_ENABLE_AGIOS)
   endif()
 
   target_link_libraries(gkfwd_intercept PRIVATE gkfs_intercept_common)
