@@ -21,6 +21,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - FLOCK and fcntl functions for locks, are not supported, but they are available.
 - Added support for [CMake presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify build 
   configurations ([!163](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/163#note_8179)).
+- Dependency management is now handled more consistently: system
+  dependencies are found using `find_package()`, whereas source-only
+  dependencies are found using `include_from_source()`. This new function
+  integrates a dependency provided its source code is available at
+  `{PROJECT_ROOT}/external`. If it's not, it will try to
+  automatically download it from its git repository using CMake's
+  `FetchContent()`.
+- More consistent use of targets (we are closer to 100% modern CMake).
+- Adds the `gkfs_feature_summary()` to allow printing a summary of all
+  GekkoFS configuration options and their values. This should help users
+  when building to precisely see how a GekkoFS instance has been configured.
 
 ### Changed
 
