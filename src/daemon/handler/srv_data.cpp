@@ -184,7 +184,7 @@ rpc_srv_write(hg_handle_t handle) {
         return gkfs::rpc::cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto const host_id = in.host_id;
-    auto const host_size = in.host_size;
+    [[maybe_unused]] auto const host_size = in.host_size;
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host

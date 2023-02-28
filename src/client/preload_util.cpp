@@ -336,7 +336,7 @@ load_forwarding_map() {
     //    forwarding_map_file));
     //}
 
-    auto local_hostname = get_my_hostname(true);
+    auto local_hostname = gkfs::rpc::get_my_hostname(true);
 
     if(forwarding_map.find(local_hostname) == forwarding_map.end()) {
         throw runtime_error(
