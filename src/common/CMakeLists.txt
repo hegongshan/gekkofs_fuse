@@ -28,6 +28,14 @@
 
 include(FetchContent)
 
+add_library(rpc_utils OBJECT)
+target_sources(rpc_utils
+  PRIVATE
+    rpc/rpc_util.cpp
+)
+
+target_link_libraries(rpc_utils PUBLIC Mercury::Mercury)
+
 add_subdirectory(arithmetic)
 
 add_library(distributor STATIC)

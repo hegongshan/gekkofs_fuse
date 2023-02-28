@@ -26,7 +26,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-cmake_minimum_required(VERSION 3.6)
+# 3.13+ so that we have a sensible handling of relative paths
+cmake_minimum_required(VERSION 3.13)
 
 project(
     GekkoFS
@@ -306,12 +307,8 @@ include_directories(
     ${CMAKE_BINARY_DIR}/include
 )
 
-# Common components
-add_subdirectory(src/common)
-# Daemon
-add_subdirectory(src/daemon)
-# Client library
-add_subdirectory(src/client)
+add_subdirectory(src)
+add_subdirectory(include)
 
 ### Mark any CMake variables imported from {fmt} and spdlog as advanced, so
 ### that they don't appear in cmake-gui or ccmake. Similarly for FETCHCONTENT
@@ -361,3 +358,7 @@ else()
     unset(GKFS_TESTS_INTERFACE CACHE)
 endif()
 
+################################################################################
+## Print GekkoFS configuration summary
+################################################################################
+gkfs_feature_summary(DESCRIPTION "${PROJECT_NAME} configuration summary:")
