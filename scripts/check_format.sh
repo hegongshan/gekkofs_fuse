@@ -32,6 +32,13 @@ PROJECT_INCLUDE="$(pwd)/include"
 RUN_FORMAT=false
 CLANG_FORMAT_BIN=""
 VERBOSE=false
+# Mac special treatment for readlink. greadlink must be installed...
+READLINK_BIN=$(which readlink)
+case "$(uname -s)" in
+    Linux*)     READLINK_BIN=$(which readlink);;
+    Darwin*)    READLINK_BIN=$(which greadlink);;
+    *)          READLINK_BIN="readlink"
+esac
 
 usage_short() {
     echo "
@@ -68,17 +75,17 @@ while [[ $# -gt 0 ]]; do
 
     case ${key} in
     -s | --src)
-        PROJECT_SRC="$(readlink -mn "${2}")"
+        PROJECT_SRC="$($READLINK_BIN -mn "${2}")"
         shift # past argument
         shift # past value
         ;;
     -i | --include)
-        PROJECT_INCLUDE="$(readlink -mn "${2}")"
+        PROJECT_INCLUDE="$($READLINK_BIN -mn "${2}")"
         shift # past argument
         shift # past value
         ;;
     -c | --clang_format_path)
-        CLANG_FORMAT_BIN="$(readlink -mn "${2}")"
+        CLANG_FORMAT_BIN="$($READLINK_BIN -mn "${2}")"
         if [[ ! -x $CLANG_FORMAT_BIN ]]; then
             echo "*** ERR: clang-format path $CLANG_FORMAT_BIN is not an executable! Exiting ..."
             exit 1
@@ -110,7 +117,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [[ -z $CLANG_FORMAT_BIN ]]; then
     CLANG_FORMAT_BIN=$(command -v clang-format)
     if [[ -z $CLANG_FORMAT_BIN ]]; then
-        CLANG_FORMAT_BIN=$(command -v clang-format-11)
+        CLANG_FORMAT_BIN=$(command -v clang-format-15)
         # if it still doesn't exist exit
         if [[ -z $CLANG_FORMAT_BIN ]]; then
             echo "*** ERR: clang-format not found! Exiting ..."
@@ -118,6 +125,8 @@ if [[ -z $CLANG_FORMAT_BIN ]]; then
         fi
     fi
 fi
+echo "* Using clang-format binary: $CLANG_FORMAT_BIN"
+echo "* Using version: $($CLANG_FORMAT_BIN --version)"
 
 FAIL=false
 
