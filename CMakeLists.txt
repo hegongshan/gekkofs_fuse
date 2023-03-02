@@ -147,16 +147,18 @@ endif()
 option(CREATE_CHECK_PARENTS "Check parent directory existance before creating child node" ON)
 message(STATUS "[gekkofs] Create checks parents: ${CREATE_CHECK_PARENTS}")
 
-option(SYMLINK_SUPPORT "Compile with support for symlinks" ON)
+option(SYMLINK_SUPPORT "Compile with support for symlinks" OFF)
 if (SYMLINK_SUPPORT)
     add_definitions(-DHAS_SYMLINKS)
 endif ()
-message(STATUS "[gekkofs] Symlink support: ${SYMLINK_SUPPORT}")
-
-option(RENAME_SUPPORT "Compile with support for rename ops" ON)
+option(RENAME_SUPPORT "Compile with support for rename ops" OFF)
 if (RENAME_SUPPORT)
+    # Rename depends on symlink support
+    add_definitions(-DHAS_SYMLINKS)
+    set(SYMLINK_SUPPORT ON)
     add_definitions(-DHAS_RENAME)
 endif ()
+message(STATUS "[gekkofs] Symlink support: ${SYMLINK_SUPPORT}")
 message(STATUS "[gekkofs] Rename support: ${RENAME_SUPPORT}")
 
 set(MAX_INTERNAL_FDS 256 CACHE STRING "Number of file descriptors reserved for internal use")

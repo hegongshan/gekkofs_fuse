@@ -270,7 +270,7 @@ Then, the `examples/distributors/guided/generate.py` scrpt is used to create the
 
 Finally, modify `guided_config.txt` to your distribution requirements.
 
-### Metadata Backends
+## Metadata Backends
 
 There are two different metadata backends in GekkoFS. The default one uses `rocksdb`, however an alternative based
 on `PARALLAX` from `FORTH`
@@ -279,7 +279,7 @@ with `-DGKFS_ENABLE_ROCKSDB:BOOL=OFF`.
 
 Once it is enabled, `--dbbackend` option will be functional.
 
-### Statistics
+## Statistics
 
 GekkoFS daemons are able to output general operations (`--enable-collection`) and data chunk
 statistics (`--enable-chunkstats`) to a specified output file via `--output-stats <FILE>`. Prometheus can also be used
@@ -287,12 +287,17 @@ instead or in addition to the output file. It must be enabled at compile time vi
 argument `-DGKFS_ENABLE_PROMETHEUS` and the daemon argument `--enable-prometheus`. The corresponding statistics are then
 pushed to the Prometheus instance.
 
-### Rename
-`-DRENAME_SUPPORT` allows the application to rename files. 
-This is an experimental feature, and some scenarios may not work properly. 
-Support for fstat in renamed files is included. 
+## Advanced experimental features
 
-### Acknowledgment
+### Rename
+
+`-DRENAME_SUPPORT` allows the application to rename files.
+This is an experimental feature, and some scenarios may not work properly.
+Support for fstat in renamed files is included.
+
+This is disabled by default.
+
+## Acknowledgment
 
 This software was partially supported by the EC H2020 funded NEXTGenIO project (Project ID: 671951, www.nextgenio.eu).
 
