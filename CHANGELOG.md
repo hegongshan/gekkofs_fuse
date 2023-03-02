@@ -10,15 +10,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### New
 
 - Additional tests to increase code coverage ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141)).
-- GKFS_ENABLE_UNUSED_FUNCTIONS added to disable code to increase code coverage.
-- Updated Parallax version to new API (parallax option needs kv_format.parallax in the path, and the database in a device with O_DIRECT)
-- Support for increasing file size via `truncate()` added ([!159](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/159)
+- GKFS_ENABLE_UNUSED_FUNCTIONS added to disable code to increase code
+  coverage. ([!141](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/141)).
+- Updated Parallax version to new API (parallax option needs kv_format.parallax in the path, and the database in a
+  device with O_DIRECT) ([!158](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/158)
+- Support for increasing file size via `truncate()`
+  added ([!159](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/159)
 - Added PowerPC support ([!151](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/151)).
+
 ### Changed
 
-- Support parallelism for path resolution tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
+- Support parallelism for path resolution
+  tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
 - Support parallelism for symlink tests ([!147](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/147)).
-- Updatd Parallax release (PARALLAX-exp)
+- Update Parallax release (PARALLAX-exp) ([!158](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/158)
 
 ### Removed
 
@@ -45,6 +50,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   pthread_create ([!156](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/156)
 - Fixed an issue where compilation of syscall_intercept would fail for newer kernels using the `clone3()` system
   call ([!157](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/157)
+- Updated code formatter to support the most recent clang-format-15
+  version ([!162](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/162)).
 
 ## [0.9.1] - 2022-04-29
 

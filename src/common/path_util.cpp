@@ -133,7 +133,8 @@ absolute_to_relative(const string& root_path, const string& absolute_path) {
     auto rel_it_end = absolute_path.cend();
 
     // relative path start exactly after the root_path prefix
-    assert((size_t)(rel_it_begin - absolute_path.cbegin()) == root_path.size());
+    assert((size_t) (rel_it_begin - absolute_path.cbegin()) ==
+           root_path.size());
 
     if(rel_it_begin == rel_it_end) {
         // relative path is empty, @absolute_path was equal to @root_path
