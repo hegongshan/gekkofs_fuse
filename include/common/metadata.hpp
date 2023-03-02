@@ -143,9 +143,9 @@ public:
 
     void
     rename_path(const std::string& rename_path);
-#endif
+#endif // HAS_RENAME
 
-#endif
+#endif // HAS_SYMLINKS
 };
 
 } // namespace gkfs::metadata

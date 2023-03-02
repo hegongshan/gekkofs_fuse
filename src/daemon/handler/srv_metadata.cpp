@@ -830,7 +830,7 @@ rpc_srv_get_dirents_extended(hg_handle_t handle) {
 
 #if defined(HAS_SYMLINKS) || defined(HAS_RENAME)
 /**
- * @brief Serves a request create a symbolic link. This function is UNUSED.
+ * @brief Serves a request create a symbolic link and supports rename
  * @internal
  * The state of this function is unclear and requires a complete refactor.
  *
@@ -850,8 +850,9 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
         GKFS_DATA->spdlogger()->error(
                 "{}() Failed to retrieve input from handle", __func__);
     }
-    GKFS_DATA->spdlogger()->debug("{}() Got RPC with path '{}'", __func__,
-                                  in.path);
+    GKFS_DATA->spdlogger()->debug(
+            "{}() Got RPC with path '{}' and target path '{}'", __func__,
+            in.path, in.target_path);
     // do update
     try {
         gkfs::metadata::Metadata md = gkfs::metadata::get(in.path);
@@ -861,11 +862,14 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
             // old -> new
             md.rename_path(in.target_path);
         } else {
-#endif
+#endif // HAS_RENAME
             md.target_path(in.target_path);
 #ifdef HAS_RENAME
         }
-#endif
+#endif // HAS_RENAME
+        GKFS_DATA->spdlogger()->debug(
+                "{}() Updating path '{}' with metadata '{}'", __func__, in.path,
+                md.serialize());
         gkfs::metadata::update(in.path, md);
         out.err = 0;
     } catch(const std::exception& e) {
@@ -873,7 +877,6 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
         GKFS_DATA->spdlogger()->error("{}() Failed to update entry", __func__);
         out.err = 1;
     }
-
 
     GKFS_DATA->spdlogger()->debug("{}() Sending output err '{}'", __func__,
                                   out.err);
@@ -888,7 +891,7 @@ rpc_srv_mk_symlink(hg_handle_t handle) {
     return HG_SUCCESS;
 }
 
-#endif
+#endif // HAS_SYMLINKS || HAS_RENAME
 
 } // namespace
 

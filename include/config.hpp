@@ -71,7 +71,7 @@ constexpr auto use_link_cnt = false;
 constexpr auto use_blocks = true;
 #else
 constexpr auto use_blocks = false;
-#endif
+#endif // HAS_RENAME
 /*
  * If true, all chunks on the same host are removed during a metadata remove
  * rpc. This is a technical optimization that reduces the number of RPCs for

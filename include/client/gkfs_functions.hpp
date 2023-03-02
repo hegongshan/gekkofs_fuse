@@ -41,7 +41,7 @@ struct linux_dirent64;
 namespace gkfs::syscall {
 
 int
-gkfs_open(const std::string& path, mode_t mode, int flags, bool rename = false);
+gkfs_open(const std::string& path, mode_t mode, int flags);
 
 int
 gkfs_create(const std::string& path, mode_t mode);
@@ -151,9 +151,8 @@ gkfs_rmdir(const std::string& path);
 
 #ifdef HAS_RENAME
 int
-gkfs_rename(const std::string& old_path_resolved,
-            const std::string& new_path_resolved);
-#endif
+gkfs_rename(const std::string& old_path, const std::string& new_path);
+#endif // HAS_RENAME
 } // namespace gkfs::syscall
 
 // gkfs_getsingleserverdir is using extern "C" to demangle it for C usage

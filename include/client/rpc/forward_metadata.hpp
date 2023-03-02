@@ -57,9 +57,9 @@ forward_stat(const std::string& path, std::string& attr);
 
 #ifdef HAS_RENAME
 int
-forward_rename(const std::string& path, const std::string& path2,
+forward_rename(const std::string& oldpath, const std::string& newpath,
                const gkfs::metadata::Metadata& md);
-#endif
+#endif // HAS_RENAME
 
 int
 forward_remove(const std::string& path);

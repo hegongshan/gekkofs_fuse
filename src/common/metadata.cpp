@@ -119,7 +119,6 @@ Metadata::Metadata(const std::string& binary_str) {
     assert(*ptr == MSP);
     target_path_ = ++ptr;
     // target_path should be there only if this is a link
-    //   assert(target_path_.empty() || S_ISLNK(mode_));
     ptr += target_path_.size();
 #ifdef HAS_RENAME
     // Read rename target, we had captured '|' so we need to recover it
@@ -132,8 +131,8 @@ Metadata::Metadata(const std::string& binary_str) {
     assert(*ptr == MSP);
     rename_path_ = ++ptr;
     ptr += rename_path_.size();
-#endif
-#endif
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
 
     // we consumed all the binary string
     assert(*ptr == '\0');
@@ -173,8 +172,8 @@ Metadata::serialize() const {
 #ifdef HAS_RENAME
     s += MSP;
     s += rename_path_;
-#endif
-#endif
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
 
     return s;
 }
@@ -276,16 +275,11 @@ Metadata::blocks(blkcnt_t blocks) {
 
 std::string
 Metadata::target_path() const {
-    //    assert(!target_path_.empty());
     return target_path_;
 }
 
 void
 Metadata::target_path(const std::string& target_path) {
-    // target_path should be there only if this is a link
-    // assert(target_path.empty() || S_ISLNK(mode_));
-    // target_path should be absolute
-    // assert(target_path.empty() || target_path[0] == '/');
     target_path_ = target_path;
 }
 
@@ -305,7 +299,7 @@ Metadata::rename_path(const std::string& rename_path) {
     rename_path_ = rename_path;
 }
 
-#endif
-#endif
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
 
 } // namespace gkfs::metadata

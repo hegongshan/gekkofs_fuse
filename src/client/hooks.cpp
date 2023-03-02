@@ -179,13 +179,11 @@ hook_fstat(unsigned int fd, struct stat* buf) {
     if(CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
 #ifdef HAS_RENAME
-        // Special case for fstat and rename, fd points new file...
-        //  We can change file_map and recall
-
+        // Special case for fstat and rename, fd points to new file...
+        // We can change file_map and recall
         auto md = gkfs::utils::get_metadata(path, false);
-        if(md.has_value() and md.value().blocks() == -1) {
+        if(md.has_value() && md.value().blocks() == -1) {
             path = md.value().rename_path();
-            std::cout << " Fstat " << path << std::endl;
         }
 #endif
         return with_errno(gkfs::syscall::gkfs_stat(path, buf));
@@ -407,7 +405,7 @@ hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
 
 int
 hook_flock(unsigned long fd, int flags) {
-    LOG(ERROR, "{}() called flock (Not Supported) with fd: {}, flags: {}",
+    LOG(ERROR, "{}() called flock (Not Supported) with fd '{}' flags '{}'",
         __func__, fd, flags);
 
     if(CTX->file_map()->exist(fd)) {
@@ -892,7 +890,6 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            // LOG(WARNING, "{}() not supported", __func__);
             break;
 
         default:
