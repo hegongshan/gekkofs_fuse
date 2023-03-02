@@ -55,23 +55,8 @@ gkfs:
     - sed -i 's/constexpr auto use_mtime = false;/constexpr auto use_mtime = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
     - sed -i 's/constexpr auto use_link_cnt = false;/constexpr auto use_link_cnt = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
     - sed -i 's/constexpr auto use_blocks = false;/constexpr auto use_blocks = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
-    - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
-    - cmake
-      -Wdev
-      -Wdeprecate
-      -DCMAKE_BUILD_TYPE=Debug
-      -DGKFS_ENABLE_CODE_COVERAGE:BOOL=ON
-      -DGKFS_BUILD_TESTS:BOOL=ON
-      -DGKFS_INSTALL_TESTS:BOOL=ON
-      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
-      -DGKFS_USE_GUIDED_DISTRIBUTION:BOOL=ON
-      -DGKFS_ENABLE_PARALLAX:BOOL=ON
-      -DGKFS_ENABLE_ROCKSDB:BOOL=ON
-      -DGKFS_CHUNK_STATS:BOOL=ON
-      -DGKFS_ENABLE_PROMETHEUS:BOOL=ON
-      -DGKFS_RENAME_SUPPORT:BOOL=ON
-      ${CI_PROJECT_DIR}
-    - make -j$(nproc) install
+    - cmake --preset ci-coverage
+    - cmake --build ${BUILD_PATH} -j $(nproc) --target install
     # reduce artifacts size
     - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
   artifacts:
@@ -86,21 +71,8 @@ gkfwd:
   interruptible: true
   needs: []
   script:
-    - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
-    - cmake
-      -Wdev
-      -Wdeprecate
-      -DCMAKE_BUILD_TYPE=Debug
-      -DGKFS_ENABLE_CODE_COVERAGE:BOOL=ON
-      -DGKFS_BUILD_TESTS:BOOL=ON
-      -DGKFS_INSTALL_TESTS:BOOL=ON
-      -DGKFS_ENABLE_FORWARDING:BOOL=ON
-      -DGKFS_ENABLE_AGIOS:BOOL=ON
-      -DGKFS_ENABLE_PARALLAX:BOOL=OFF
-      -DGKFS_ENABLE_ROCKSDB:BOOL=ON
-      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
-      ${CI_PROJECT_DIR}
-    - make -j$(nproc) install
+    - cmake --preset ci-forwarding-debug
+    - cmake --build ${BUILD_PATH} -j $(nproc) --target install
     # reduce artifacts size
     - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
   artifacts:
@@ -270,16 +242,8 @@ documentation:
       when: always
 
   script:
-    - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
-    - cmake
-      -Wdev
-      -Wdeprecate
-      -DCMAKE_BUILD_TYPE=Debug
-      -DGKFS_BUILD_DOCUMENTATION:BOOL=ON
-      -DCMAKE_PREFIX_PATH=${DEPS_INSTALL_PATH}
-      -DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}
-      ${CI_PROJECT_DIR}
-    - make docs
+    - cmake --preset ci-docs
+    - cmake --build ${BUILD_PATH} --target docs
   artifacts:
     paths:
       - ${BUILD_PATH}/docs
