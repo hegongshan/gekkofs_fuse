@@ -291,7 +291,7 @@ pushed to the Prometheus instance.
 
 ### Rename
 
-`-DRENAME_SUPPORT` allows the application to rename files.
+`-DGKFS_RENAME_SUPPORT` allows the application to rename files.
 This is an experimental feature, and some scenarios may not work properly.
 Support for fstat in renamed files is included.
 
