@@ -172,6 +172,15 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
                     return -1;
                 }
                 md = *md_;
+#ifdef HAS_RENAME
+                // This is an old file that was renamed which we do not open
+                if(md.blocks() == -1) {
+                    LOG(DEBUG,
+                        "This file was renamed and we do not open. path '{}'",
+                        path);
+                    return -1;
+                }
+#endif // HAS_RENAME
             } else {
                 LOG(ERROR, "Error creating file: '{}'", strerror(errno));
                 return -1;
@@ -187,11 +196,12 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
             if(errno != ENOENT) {
                 LOG(ERROR, "Error stating existing file '{}'", path);
             }
-            // file doesn't exists and O_CREAT was not set
+            // file doesn't exist and O_CREAT was not set
             return -1;
         }
         md = *md_;
     }
+
 
 #ifdef HAS_SYMLINKS
     if(md.is_link()) {
@@ -202,12 +212,49 @@ gkfs_open(const std::string& path, mode_t mode, int flags) {
         }
         return gkfs_open(md.target_path(), mode, flags);
     }
-#endif
+#ifdef HAS_RENAME
+    auto new_path = path;
+    if(md.blocks() == -1) {
+        // This is an old file that was renamed and essentially no longer exists
+        errno = ENOENT;
+        return -1;
+    } else {
+        if(!md.target_path().empty()) {
+            // get renamed path from target and retrieve metadata from it
+            auto md_ = gkfs::utils::get_metadata(md.target_path());
+            new_path = md.target_path();
+            while(!md_.value().target_path().empty()) {
+                new_path = md_.value().target_path();
+                md_ = gkfs::utils::get_metadata(md_.value().target_path(),
+                                                false);
+                if(!md_) {
+                    return -1;
+                }
+            }
+            md = *md_;
+            if(S_ISDIR(md.mode())) {
+                return gkfs_opendir(new_path);
+            }
 
+            /*** Regular file exists ***/
+            assert(S_ISREG(md.mode()));
+
+            if((flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY))) {
+                if(gkfs_truncate(new_path, md.size(), 0)) {
+                    LOG(ERROR, "Error truncating file");
+                    return -1;
+                }
+            }
+
+            return CTX->file_map()->add(
+                    std::make_shared<gkfs::filemap::OpenFile>(new_path, flags));
+        }
+    }
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
     if(S_ISDIR(md.mode())) {
         return gkfs_opendir(path);
     }
-
 
     /*** Regular file exists ***/
     assert(S_ISREG(md.mode()));
@@ -283,6 +330,31 @@ gkfs_remove(const std::string& path) {
         errno = EISDIR;
         return -1;
     }
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        if(!md.value().target_path().empty()) {
+            auto md_ = gkfs::utils::get_metadata(md.value().target_path());
+            std::string new_path = md.value().target_path();
+            while(!md.value().target_path().empty()) {
+                new_path = md.value().target_path();
+                md = gkfs::utils::get_metadata(md.value().target_path(), false);
+                if(!md) {
+                    return -1;
+                }
+            }
+            auto err = gkfs::rpc::forward_remove(new_path);
+            if(err) {
+                errno = err;
+                return -1;
+            }
+        }
+    }
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
 
     auto err = gkfs::rpc::forward_remove(path);
     if(err) {
@@ -304,10 +376,104 @@ int
 gkfs_access(const std::string& path, const int mask, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
     if(!md) {
+        LOG(DEBUG, "File does not exist '{}'", path);
         return -1;
     }
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    LOG(DEBUG, "Checking for renamed file '{}'", path);
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        LOG(DEBUG, "File exist but it is renamed '{}'", path);
+        return -1;
+
+    } else {
+        while(!md.value().target_path().empty()) {
+            LOG(DEBUG, "File exist but it is renamed '{} -> {}'", path,
+                md.value().target_path());
+            md = gkfs::utils::get_metadata(md.value().target_path(), false);
+            if(!md) {
+                LOG(DEBUG, "File does not exist but it is renamed '{} -> {}'",
+                    path, md.value().target_path());
+                return -1;
+            }
+        }
+    }
+#endif // HAS_RENAME
+#endif // HAS_SYMLINKS
     return 0;
 }
+
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+/**
+ * gkfs wrapper for rename() system calls
+ * errno may be set
+ * We use blocks to determine if the file is a renamed file.
+ * If the file is re-renamed (a->b->a) a recovers the block of b
+ * and we delete b.
+ * @param old_path
+ * @param new_path
+ * @return 0 on success, -1 on failure
+ */
+int
+gkfs_rename(const string& old_path, const string& new_path) {
+    auto md_old = gkfs::utils::get_metadata(old_path, false);
+
+    // if the file is not found, or it is a renamed one cancel.
+    if(!md_old || md_old.value().blocks() == -1) {
+        return -1;
+    }
+    auto md_new = gkfs::utils::get_metadata(new_path, false);
+    if(md_new) {
+        // the new file exists... check for circular...
+        if(md_new.value().blocks() == -1 &&
+           md_old.value().target_path() == new_path) {
+            // the new file is a renamed file, so we need to get the metadata of
+            // the original file.
+            LOG(DEBUG, "Destroying Circular Rename '{}' --> '{}'", old_path,
+                new_path);
+            gkfs::metadata::MetadentryUpdateFlags flags{};
+            flags.atime = false;
+            flags.mtime = false;
+            flags.ctime = false;
+            flags.blocks = true;
+            flags.mode = false;
+            flags.size = false;
+            flags.uid = false;
+            flags.gid = false;
+            flags.link_count = false;
+            md_old.value().blocks(0);
+            md_old.value().target_path("");
+
+            auto err = gkfs::rpc::forward_update_metadentry(
+                    new_path, md_old.value(), flags);
+
+            if(err) {
+                errno = err;
+                return -1;
+            }
+            // Delete old file
+            err = gkfs::rpc::forward_remove(old_path);
+            if(err) {
+                errno = err;
+                return -1;
+            }
+            return 0;
+        }
+        return -1;
+    }
+
+    auto err = gkfs::rpc::forward_rename(old_path, new_path, md_old.value());
+    if(err) {
+        errno = err;
+        return -1;
+    }
+
+    return 0;
+}
+#endif
+#endif
 
 /**
  * gkfs wrapper for stat() system calls
@@ -323,6 +489,21 @@ gkfs_stat(const string& path, struct stat* buf, bool follow_links) {
     if(!md) {
         return -1;
     }
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        while(!md.value().target_path().empty()) {
+            md = gkfs::utils::get_metadata(md.value().target_path(), false);
+            if(!md) {
+                return -1;
+            }
+        }
+    }
+#endif
+#endif
     gkfs::utils::metadata_to_stat(path, *md, *buf);
     return 0;
 }
@@ -344,10 +525,25 @@ int
 gkfs_statx(int dirfs, const std::string& path, int flags, unsigned int mask,
            struct statx* buf, bool follow_links) {
     auto md = gkfs::utils::get_metadata(path, follow_links);
+
     if(!md) {
         return -1;
     }
-
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        while(!md.value().target_path().empty()) {
+            md = gkfs::utils::get_metadata(md.value().target_path(), false);
+            if(!md) {
+                return -1;
+            }
+        }
+    }
+#endif
+#endif
     struct stat tmp {};
 
     gkfs::utils::metadata_to_stat(path, *md, tmp);
@@ -576,6 +772,31 @@ gkfs_truncate(const std::string& path, off_t length) {
     if(!md) {
         return -1;
     }
+
+    // If rename is enabled we need to check if the file is renamed
+#ifdef HAS_SYMLINKS
+#ifdef HAS_RENAME
+    if(md.value().blocks() == -1) {
+        errno = ENOENT;
+        return -1;
+    } else if(!md.value().target_path().empty()) {
+        std::string new_path;
+        while(!md.value().target_path().empty()) {
+            new_path = md.value().target_path();
+            md = gkfs::utils::get_metadata(md.value().target_path());
+        }
+        // This could be optimized
+        auto size = md->size();
+        if(static_cast<unsigned long>(length) > size) {
+            LOG(DEBUG, "Length is greater then file size: {} > {}", length,
+                size);
+            errno = EINVAL;
+            return -1;
+        }
+        return gkfs_truncate(new_path, size, length);
+    }
+#endif
+#endif
 
     auto size = md->size();
     if(static_cast<unsigned long>(length) > size) {

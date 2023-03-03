@@ -69,6 +69,7 @@ gkfs:
       -DGKFS_ENABLE_ROCKSDB:BOOL=ON
       -DGKFS_CHUNK_STATS:BOOL=ON
       -DGKFS_ENABLE_PROMETHEUS:BOOL=ON
+      -DGKFS_RENAME_SUPPORT:BOOL=ON
       ${CI_PROJECT_DIR}
     - make -j$(nproc) install
     # reduce artifacts size
@@ -137,7 +138,7 @@ gkfs:integration:
   needs: ['gkfs']
   parallel:
     matrix:
-      - SUBTEST: [ data, status, syscalls, directories, operations, position, shell ]
+      - SUBTEST: [ data, status, syscalls, directories, operations, position, shell, rename ]
 
   script:
     ## run tests

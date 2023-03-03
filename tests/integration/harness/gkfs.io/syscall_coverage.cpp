@@ -366,21 +366,25 @@ syscall_coverage_exec(const syscall_coverage_options& opts) {
         return;
     }
 
+    std::string pid = std::to_string(getpid());
+    std::string path1 = "/tmp/"+pid+"test_rename";
+    std::string path2 = "/tmp/"+pid+"test_rename2";
+
     // renameat external
-    auto fdtmp = ::open("/tmp/test_rename", O_CREAT | O_WRONLY, 0644);
+    auto fdtmp = ::open(path1.c_str(), O_CREAT | O_WRONLY, 0644);
     ::close(fdtmp);
 
-    rv = ::renameat(AT_FDCWD, "/tmp/test_rename", AT_FDCWD,
+    rv = ::renameat(AT_FDCWD, path1.c_str(), AT_FDCWD,
                     opts.pathname.c_str());
     if(errno != ENOTSUP) {
-        output("renameat", rv, opts);
+        output("renameat_ext_to_int", rv, opts);
         return;
     }
 
-    rv = ::renameat(AT_FDCWD, "/tmp/test_rename", AT_FDCWD,
-                    "/tmp/test_rename2");
+    rv = ::renameat(AT_FDCWD, path1.c_str(), AT_FDCWD,
+                    path2.c_str());
     if(rv < 0) {
-        output("renameat", rv, opts);
+        output("renameat_ext_to_ext", rv, opts);
         return;
     }
     // sys_open

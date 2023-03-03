@@ -178,6 +178,14 @@ hook_fstat(unsigned int fd, struct stat* buf) {
 
     if(CTX->file_map()->exist(fd)) {
         auto path = CTX->file_map()->get(fd)->path();
+#ifdef HAS_RENAME
+        // Special case for fstat and rename, fd points to new file...
+        // We can change file_map and recall
+        auto md = gkfs::utils::get_metadata(path, false);
+        if(md.has_value() && md.value().blocks() == -1) {
+            path = md.value().rename_path();
+        }
+#endif
         return with_errno(gkfs::syscall::gkfs_stat(path, buf));
     }
     return syscall_no_intercept_wrapper(SYS_fstat, fd, buf);
@@ -395,6 +403,16 @@ hook_symlinkat(const char* oldname, int newdfd, const char* newname) {
     }
 }
 
+int
+hook_flock(unsigned long fd, int flags) {
+    LOG(ERROR, "{}() called flock (Not Supported) with fd '{}' flags '{}'",
+        __func__, fd, flags);
+
+    if(CTX->file_map()->exist(fd)) {
+        return 0;
+    } else
+        return -EBADF;
+}
 
 int
 hook_access(const char* path, int mask) {
@@ -831,6 +849,13 @@ hook_fcntl(unsigned int fd, unsigned int cmd, unsigned long arg) {
                     gkfs::filemap::OpenFile_flags::cloexec, (arg & FD_CLOEXEC));
             return 0;
 
+        case F_GETLK:
+            LOG(ERROR, "{}() F_GETLK on fd (Not Supported) {}", __func__, fd);
+            return 0;
+
+        case F_SETLK:
+            LOG(ERROR, "{}() F_SETLK on fd (Not Supported) {}", __func__, fd);
+            return 0;
 
         default:
             LOG(ERROR, "{}() unrecognized command {} on fd {}", __func__, cmd,
@@ -865,8 +890,7 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            LOG(WARNING, "{}() not supported", __func__);
-            return -ENOTSUP;
+            break;
 
         default:
             LOG(ERROR, "{}() relativize status unknown", __func__);
@@ -890,9 +914,16 @@ hook_renameat(int olddfd, const char* oldname, int newdfd, const char* newname,
             return -ENOTDIR;
 
         case gkfs::preload::RelativizeStatus::internal:
-            LOG(WARNING, "{}() not supported", __func__);
+#ifdef HAS_RENAME
+            if(oldpath_status == gkfs::preload::RelativizeStatus::internal) {
+                return with_errno(gkfs::syscall::gkfs_rename(oldpath_resolved,
+                                                             newpath_resolved));
+            } else {
+                return -ENOTSUP;
+            }
+#else
             return -ENOTSUP;
-
+#endif
         default:
             LOG(ERROR, "{}() relativize status unknown", __func__);
             return -EINVAL;

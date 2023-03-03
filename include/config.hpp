@@ -62,11 +62,16 @@ namespace metadata {
 constexpr auto dir = "metadata";
 
 // which metadata should be considered apart from size and mode
+// Blocks are used to store the rename status (-1 is a renamed file)
 constexpr auto use_atime = false;
 constexpr auto use_ctime = false;
 constexpr auto use_mtime = false;
 constexpr auto use_link_cnt = false;
+#ifdef HAS_RENAME
+constexpr auto use_blocks = true;
+#else
 constexpr auto use_blocks = false;
+#endif // HAS_RENAME
 /*
  * If true, all chunks on the same host are removed during a metadata remove
  * rpc. This is a technical optimization that reduces the number of RPCs for

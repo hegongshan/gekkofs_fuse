@@ -123,4 +123,8 @@ dup_validate_init(CLI::App& app);
 void
 syscall_coverage_init(CLI::App& app);
 
+void
+rename_init(CLI::App& app);
+
+
 #endif // IO_COMMANDS_HPP

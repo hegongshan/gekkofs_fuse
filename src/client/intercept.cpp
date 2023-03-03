@@ -683,6 +683,10 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
                                                 static_cast<mode_t>(arg2));
             break;
 
+        case SYS_flock:
+            *result = gkfs::hook::hook_flock(static_cast<unsigned int>(arg0),
+                                             static_cast<unsigned int>(arg1));
+            break;
         case SYS_chdir:
             *result =
                     gkfs::hook::hook_chdir(reinterpret_cast<const char*>(arg0));
@@ -747,6 +751,7 @@ hook(long syscall_number, long arg0, long arg1, long arg2, long arg3, long arg4,
                     reinterpret_cast<struct statfs*>(arg1));
             break;
 
+        case SYS_fdatasync:
         case SYS_fsync:
             *result = gkfs::hook::hook_fsync(static_cast<unsigned int>(arg0));
             break;

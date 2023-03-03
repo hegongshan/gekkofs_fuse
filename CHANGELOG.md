@@ -17,6 +17,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Support for increasing file size via `truncate()`
   added ([!159](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/159)
 - Added PowerPC support ([!151](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/151)).
+- GKFS_RENAME_SUPPORT adds support for renaming files. It includes the use case of renaming opened files using the fd
+- FLOCK and fcntl functions for locks, are not supported, but they are available.
 
 ### Changed
 

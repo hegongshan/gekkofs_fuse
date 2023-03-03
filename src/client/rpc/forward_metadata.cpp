@@ -341,6 +341,141 @@ forward_update_metadentry(
     }
 }
 
+#ifdef HAS_RENAME
+/**
+ * Send an RPC for a rename metadentry request.
+ * Steps.. SetUp a blkcnt of -1
+ * This marks that this file doesn't have to be accessed directly
+ * Create a new md with the new name, which should have as value the old name
+ * All operations should check blockcnt and extract a NOTEXISTS
+ * @param oldpath
+ * @param newpath
+ * @param md
+ *
+ * @return error code
+ */
+int
+forward_rename(const string& oldpath, const string& newpath,
+               const gkfs::metadata::Metadata& md) {
+
+    auto endp =
+            CTX->hosts().at(CTX->distributor()->locate_file_metadata(oldpath));
+
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = ld_network_service
+                           ->post<gkfs::rpc::update_metadentry>(
+                                   endp, oldpath, (md.link_count()),
+                                   /* mode */ 0,
+                                   /* uid */ 0,
+                                   /* gid */ 0, md.size(),
+                                   /*  blockcnt  */ -1, (md.atime()),
+                                   (md.mtime()), (md.ctime()),
+                                   bool_to_merc_bool(md.link_count()),
+                                   /* mode_flag */ false,
+                                   bool_to_merc_bool(md.size()), 1,
+                                   bool_to_merc_bool(md.atime()),
+                                   bool_to_merc_bool(md.mtime()),
+                                   bool_to_merc_bool(md.ctime()))
+                           .get()
+                           .at(0);
+
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+        // Now create the new file
+
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
+    }
+
+    auto md2 = md;
+
+    md2.target_path(oldpath);
+    /*
+     * Now create the new file
+     */
+    // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+    // can retry for RPC_TRIES (see old commits with margo)
+    // TODO(amiranda): hermes will eventually provide a post(endpoint)
+    // returning one result and a broadcast(endpoint_set) returning a
+    // result_set. When that happens we can remove the .at(0) :/
+    auto endp2 =
+            CTX->hosts().at(CTX->distributor()->locate_file_metadata(newpath));
+
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+
+        auto out = ld_network_service
+                           ->post<gkfs::rpc::create>(endp2, newpath, md2.mode())
+                           .get()
+                           .at(0);
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
+    }
+
+
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+        // Update new file with target link = oldpath
+        auto out =
+                ld_network_service
+                        ->post<gkfs::rpc::mk_symlink>(endp2, newpath, oldpath)
+                        .get()
+                        .at(0);
+
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+        // return out.err() ? out.err() : 0;
+
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
+    }
+
+    // Update the renamed path to solve the issue with fstat with fd)
+    try {
+        LOG(DEBUG, "Sending RPC ...");
+        // TODO(amiranda): add a post() with RPC_TIMEOUT to hermes so that we
+        // can retry for RPC_TRIES (see old commits with margo)
+        // TODO(amiranda): hermes will eventually provide a post(endpoint)
+        // returning one result and a broadcast(endpoint_set) returning a
+        // result_set. When that happens we can remove the .at(0) :/
+        auto out = ld_network_service
+                           ->post<gkfs::rpc::mk_symlink>(endp, oldpath, newpath)
+                           .get()
+                           .at(0);
+
+        LOG(DEBUG, "Got response success: {}", out.err());
+
+        // return out.err() ? out.err() : 0;
+        return 0;
+    } catch(const std::exception& ex) {
+        LOG(ERROR, "while getting rpc output");
+        return EBUSY;
+    }
+}
+
+#endif
+
 /**
  * Send an RPC request for an update to the file size.
  * This is called during a write() call or similar

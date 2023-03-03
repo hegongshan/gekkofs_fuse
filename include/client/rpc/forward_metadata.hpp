@@ -55,6 +55,12 @@ forward_create(const std::string& path, mode_t mode);
 int
 forward_stat(const std::string& path, std::string& attr);
 
+#ifdef HAS_RENAME
+int
+forward_rename(const std::string& oldpath, const std::string& newpath,
+               const gkfs::metadata::Metadata& md);
+#endif // HAS_RENAME
+
 int
 forward_remove(const std::string& path);
 

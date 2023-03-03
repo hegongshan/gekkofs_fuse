@@ -121,6 +121,9 @@ int
 hook_symlinkat(const char* oldname, int newdfd, const char* newname);
 
 int
+hook_flock(unsigned long fd, int flags);
+
+int
 hook_access(const char* path, int mask);
 
 int

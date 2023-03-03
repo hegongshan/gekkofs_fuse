@@ -415,6 +415,15 @@ ParallaxBackend::get_dirents_impl(const std::string& dir) const {
         assert(!name.empty());
 
         Metadata md(v);
+#ifdef HAS_RENAME
+        // Remove entries with negative blocks (rename)
+        if(md.blocks() == -1) {
+            if(par_get_next(S) && !par_is_valid(S))
+                break;
+            else
+                continue;
+        }
+#endif // HAS_RENAME
         auto is_dir = S_ISDIR(md.mode());
 
         entries.emplace_back(std::move(name), is_dir);
@@ -489,6 +498,15 @@ ParallaxBackend::get_dirents_extended_impl(const std::string& dir) const {
         assert(!name.empty());
 
         Metadata md(v);
+#ifdef HAS_RENAME
+        // Remove entries with negative blocks (rename)
+        if(md.blocks() == -1) {
+            if(par_get_next(S) && !par_is_valid(S))
+                break;
+            else
+                continue;
+        }
+#endif // HAS_RENAME
         auto is_dir = S_ISDIR(md.mode());
 
         entries.emplace_back(std::forward_as_tuple(std::move(name), is_dir,
