@@ -27,4 +27,4 @@
 ################################################################################
 
 include(gkfs-code-coverage)
-include(GkfsPythonTesting)
+include(gkfs-python-testing)
