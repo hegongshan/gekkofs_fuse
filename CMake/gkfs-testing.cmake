@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2023, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2023, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -26,13 +26,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-add_library(arithmetic INTERFACE)
-target_sources(arithmetic
-  INTERFACE
-    ${INCLUDE_DIR}/common/arithmetic/arithmetic.hpp
-  )
-
-target_include_directories(arithmetic
-  INTERFACE
-    ${INCLUDE_DIR}/common/arithmetic/
-  )
+include(gkfs-code-coverage)
+include(GkfsPythonTesting)

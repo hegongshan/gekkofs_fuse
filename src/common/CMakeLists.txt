@@ -65,12 +65,6 @@ endif()
       ${PROMETHEUS_LINK_LIBRARIES}
   )
 
-
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(distributor AUTO)
-  target_code_coverage(statistics AUTO)
-endif()
-
 # get spdlog
 set(FETCHCONTENT_QUIET ON)
 
@@ -103,10 +97,6 @@ target_link_libraries(log_util
     spdlog
     )
 
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(log_util AUTO)
-endif()
-
 add_library(env_util STATIC)
 set_property(TARGET env_util PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(env_util
@@ -116,10 +106,6 @@ target_sources(env_util
     ${INCLUDE_DIR}/config.hpp
     ${CMAKE_CURRENT_LIST_DIR}/env_util.cpp
     )
-
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(env_util AUTO)
-endif()
 
 add_library(metadata STATIC)
 set_property(TARGET metadata PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -133,10 +119,6 @@ target_link_libraries(metadata
   PRIVATE
     fmt::fmt
     )
-
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(metadata AUTO)
-endif()
 
 add_library(path_util
   STATIC
