@@ -12,7 +12,7 @@ variables:
   BUILD_PATH:                   "${CI_PROJECT_DIR}/gkfs/build"
   INSTALL_PATH:                 "${CI_PROJECT_DIR}/gkfs/install"
   INTEGRATION_TESTS_BIN_PATH:   "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration"
-  COVERAGE_PATH:                "${CI_PROJECT_DIR}/gkfs/build/.coverage"
+  COVERAGE_PATH:                "${CI_PROJECT_DIR}/gkfs/build/coverage"
   PYTEST:                       "${CI_PROJECT_DIR}/gkfs/install/share/gkfs/tests/integration/pytest-venv/bin/py.test"
   BATS:                         "${CI_PROJECT_DIR}/tests/scripts/bats/bin/bats"
   LD_LIBRARY_PATH:              "${CI_PROJECT_DIR}/deps/install/lib:${CI_PROJECT_DIR}/deps/install/lib64"
@@ -55,7 +55,7 @@ gkfs:
     - sed -i 's/constexpr auto use_mtime = false;/constexpr auto use_mtime = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
     - sed -i 's/constexpr auto use_link_cnt = false;/constexpr auto use_link_cnt = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
     - sed -i 's/constexpr auto use_blocks = false;/constexpr auto use_blocks = true;/g' "${CI_PROJECT_DIR}/include/config.hpp"
-    - cmake --preset ci-coverage
+    - cmake --preset ci-coverage -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
     - cmake --build ${BUILD_PATH} -j $(nproc) --target install
     # reduce artifacts size
     - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
@@ -71,7 +71,7 @@ gkfwd:
   interruptible: true
   needs: []
   script:
-    - cmake --preset ci-forwarding-debug
+    - cmake --preset ci-forwarding-coverage
     - cmake --build ${BUILD_PATH} -j $(nproc) --target install
     # reduce artifacts size
     - ${CI_SCRIPTS_DIR}/trim_build_artifacts.sh ${BUILD_PATH}
@@ -102,6 +102,33 @@ scripts:
       junit: ${BUILD_PATH}/tests/scripts/report.xml
 
 
+## == coverage baseline ====================
+coverage:zerocount:
+  stage: test
+  image: gekkofs/testing:0.9.2
+  interruptible: true
+  needs: ['gkfs', 'gkfwd']
+
+  script:
+    ## capture initial coverage information to establish a baseline
+    ## and write it to $COVERAGE_PATH/zerocount.info
+    - cd ${CI_PROJECT_DIR}
+    - cmake --preset ci-coverage
+      -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+      -DCOVERAGE_ZEROCOUNT_TRACEFILE=${COVERAGE_PATH}/zerocount.info
+    ## Since the pipeline recreates the source tree, the access times for .gcno
+    ## files are newer than those of .gcda files. This makes gcov emit a
+    ## warning for each file which slows it down. Updating the timestamps
+    ## avoids this
+    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
+    - cmake --build ${BUILD_PATH} --target coverage-zerocount
+
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - ${COVERAGE_PATH}/zerocount.info
+
 ## == integration tests for gkfs ===========
 gkfs:integration:
   stage: test
@@ -122,15 +149,18 @@ gkfs:integration:
           --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml
 
-    ## capture coverage information
-    - cd ${BUILD_PATH}
-    - ${CI_SCRIPTS_DIR}/coverage.sh
-          --verbose
-          --capture integration_${SUBTEST}
-          --root-dir ${CI_PROJECT_DIR}
-          --build-dir ${BUILD_PATH}
-          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
-          --log-file "${COVERAGE_PATH}/partial/integration_${SUBTEST}/capture.log"
+    ## capture coverage information for this test and write it to
+    ## $COVERAGE_PATH/$SUBTEST.info
+    - cd ${CI_PROJECT_DIR}
+    - cmake --preset ci-coverage
+          -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+          -DCOVERAGE_CAPTURE_TRACEFILE=${COVERAGE_PATH}/${SUBTEST}.info
+    ## Since the pipeline recreates the source tree, the access times for .gcno
+    ## files are newer than those of .gcda files. This makes gcov emit a
+    ## warning for each file which slows it down. Updating the timestamps
+    ## avoids this
+    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
+    - cmake --build ${BUILD_PATH} --target coverage-capture
 
   # fix relative paths so that GitLab can find the correct files
   after_script:
@@ -167,15 +197,18 @@ gkfwd:integration:
           --basetemp=${BUILD_PATH}/tests/run/${SUBTEST}
           --junit-xml=report.xml
 
-    ## capture coverage information
-    - cd ${BUILD_PATH}
-    - ${CI_SCRIPTS_DIR}/coverage.sh
-          --verbose
-          --capture integration_${SUBTEST}
-          --root-dir ${CI_PROJECT_DIR}
-          --build-dir ${BUILD_PATH}
-          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
-          --log-file "${COVERAGE_PATH}/partial/integration_${SUBTEST}/capture.log"
+    ## capture coverage information for this test and write it to
+    ## $COVERAGE_PATH/$SUBTEST.info
+    - cd ${CI_PROJECT_DIR}
+    - cmake --preset ci-coverage
+          -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+          -DCOVERAGE_CAPTURE_TRACEFILE=${COVERAGE_PATH}/${SUBTEST}.info
+    ## Since the pipeline recreates the source tree, the access times for .gcno
+    ## files are newer than those of .gcda files. This makes gcov emit a
+    ## warning for each file which slows it down. Updating the timestamps
+    ## avoids this
+    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
+    - cmake --build ${BUILD_PATH} --target coverage-capture
 
   # fix relative paths so that GitLab can find the correct files
   after_script:
@@ -202,18 +235,25 @@ gkfs:unit:
     ## Add path to mkfs.kreon
     - export PATH=${PATH}:/usr/local/bin
     ## run actual tests
-    - cd ${BUILD_PATH}/tests/unit
-    - ctest -j $(nproc) -L unit::all --output-junit report.xml
+    - cd ${CI_PROJECT_DIR}
+    - ctest --test-dir ${BUILD_PATH}
+          -j $(nproc)
+          -L unit::all
+          --output-junit ${BUILD_PATH}/tests/unit/report.xml
 
-    ## capture coverage information
-    - cd ${BUILD_PATH}
-    - ${CI_SCRIPTS_DIR}/coverage.sh
-          --verbose
-          --capture unit
-          --root-dir ${CI_PROJECT_DIR}
-          --build-dir ${BUILD_PATH}
-          --exclusions "${CI_SCRIPTS_DIR}/.coverage-exclusions"
-          --log-file "${COVERAGE_PATH}/partial/unit/capture.log"
+    ## capture coverage information for this test and write it to
+    ## $COVERAGE_PATH/unit.info
+    - cd ${CI_PROJECT_DIR}
+    - cmake --preset ci-coverage
+          -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+          -DCOVERAGE_CAPTURE_TRACEFILE=${COVERAGE_PATH}/unit.info
+    ## Since the pipeline recreates the source tree, the access times for .gcno
+    ## files are newer than those of .gcda files. This makes gcov emit a
+    ## warning for each file which slows it down. Updating the timestamps
+    ## avoids this
+    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
+    - cmake --build ${BUILD_PATH} --target coverage-capture
+
   artifacts:
     expire_in: 1 week
     paths:
@@ -255,23 +295,30 @@ documentation:
 ################################################################################
 coverage:
   stage: report
-  image: gekkofs/coverage:0.9.2
-  needs: [ 'gkfs:integration', 'gkfwd:integration', 'gkfs:unit' ]
+  image: gekkofs/testing:0.9.2
+  needs: [ 'coverage:zerocount', 'gkfs:integration', 'gkfwd:integration',
+           'gkfs:unit' ]
   script:
-    - cd ${BUILD_PATH}
-    ## merge the partial coverage files from each test in the pipeline
-    - ${CI_SCRIPTS_DIR}/coverage.sh
-          --verbose
-          --merge
-          --root-dir ${CI_PROJECT_DIR}
-          --build-dir ${BUILD_PATH}
+    - cd ${CI_PROJECT_DIR}
+    - cmake
+          --preset ci-coverage
+          -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+          -DCOVERAGE_UNIFIED_TRACEFILE=${COVERAGE_PATH}/coverage.info
+          -DCOVERAGE_HTML_REPORT_DIRECTORY=${COVERAGE_PATH}/coverage_html
+          -DCOVERAGE_XML_REPORT=${COVERAGE_PATH}/coverage-cobertura.xml
+    - cmake
+          --build ${BUILD_PATH}
+          --target coverage-html
+          --target coverage-cobertura
+          --target coverage-summary
+  coverage: '/lines[\.]+\: (\d+\.\d+)\%/'
   artifacts:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: ${BUILD_PATH}/.coverage/coverage-cobertura.xml
+        path: ${COVERAGE_PATH}/coverage-cobertura.xml
     paths:
-      - ${BUILD_PATH}/.coverage
+      - ${COVERAGE_PATH}
     expire_in: 2 weeks
 
 
