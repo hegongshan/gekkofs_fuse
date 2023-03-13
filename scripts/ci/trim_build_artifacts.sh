@@ -40,8 +40,7 @@ if [[ -z "${BUILDDIR}" ]]; then
     usage
 fi
 
-echo "Cleaning up ${BUILDDIR}:"
-
+echo "Cleaning up ${BUILDDIR} (size: $(du -sh ${BUILDDIR} | cut -d '	' -f 1)):"
 echo "  * Removing object files"
 
 find ${BUILDDIR} \
@@ -61,6 +60,4 @@ find ${BUILDDIR} \
     \) \
     -delete
 
-echo "  * Removing sources automatically-downloaded by CMake"
-
-find ${BUILDDIR}/_deps -type d -name "*-src" -prune -exec rm -rf {} \;
+echo "Finished (${BUILDDIR} size: $(du -sh ${BUILDDIR} | cut -d '	' -f 1))"
