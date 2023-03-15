@@ -19,8 +19,8 @@
         "GKFS_BUILD_TESTS": true,
         "GKFS_INSTALL_TESTS": true,
         "ENABLE_CLIENT_LOG": true,
-        "CLIENT_LOG_MESSAGE_SIZE": "512",
-        "SYMLINK_SUPPORT": false
+        "CLIENT_LOG_MESSAGE_SIZE": "1024",
+        "GKFS_SYMLINK_SUPPORT": false
       },
       "warnings": {
         "dev": true,
