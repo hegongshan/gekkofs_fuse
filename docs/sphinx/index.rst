@@ -56,6 +56,7 @@ Architecture
    :caption: Developer documentation
 
    devs/testing
+   devs/coverage
    api/reference
 
 Indices and tables
