@@ -16,8 +16,8 @@
       "cacheVariables": {
         "GKFS_ENABLE_ROCKSDB": true,
         "GKFS_ENABLE_PARALLAX": false,
-        "GKFS_BUILD_TESTS": true,
-        "GKFS_INSTALL_TESTS": true,
+        "GKFS_BUILD_TESTS": false,
+        "GKFS_INSTALL_TESTS": false,
         "ENABLE_CLIENT_LOG": true,
         "CLIENT_LOG_MESSAGE_SIZE": "1024",
         "GKFS_SYMLINK_SUPPORT": false
@@ -80,6 +80,8 @@
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/gkfs/install",
         "GKFS_USE_GUIDED_DISTRIBUTION": true,
         "GKFS_ENABLE_PARALLAX": true,
+        "GKFS_BUILD_TESTS": true,
+        "GKFS_INSTALL_TESTS": true,
         "GKFS_CHUNK_STATS": true,
         "GKFS_ENABLE_PROMETHEUS": true,
         "GKFS_RENAME_SUPPORT": true
