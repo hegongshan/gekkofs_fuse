@@ -1,0 +1,201 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "default",
+      "description": "Sets prefix, build, and install directories as well as common options",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "cacheVariables": {
+        "GKFS_ENABLE_ROCKSDB": true,
+        "GKFS_ENABLE_PARALLAX": false,
+        "GKFS_BUILD_TESTS": false,
+        "GKFS_INSTALL_TESTS": false,
+        "ENABLE_CLIENT_LOG": true,
+        "CLIENT_LOG_MESSAGE_SIZE": "1024",
+        "GKFS_SYMLINK_SUPPORT": false
+      },
+      "warnings": {
+        "dev": true,
+        "deprecated": true
+      }
+    },
+    {
+      "name": "forwarding",
+      "inherits": "default",
+      "hidden": true,
+      "cacheVariables": {
+        "GKFS_ENABLE_FORWARDING": true
+      }
+    },
+    {
+      "name": "release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-DNDEBUG -O3"
+      }
+    },
+    {
+      "name": "debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-Wall -Wextra -fdiagnostics-color=always --pedantic -Wno-unused-parameter -Wno-missing-field-initializers -DGKFS_DEBUG_BUILD -DHERMES_DEBUG_BUILD"
+      }
+    },
+    {
+      "name": "coverage",
+      "hidden": true,
+      "inherits": "debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Coverage",
+        "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-static-functions",
+        "CMAKE_C_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-static-functions",
+        "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "--coverage",
+        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage",
+        "CMAKE_MAP_IMPORTED_CONFIG_COVERAGE": "Coverage;RelWithDebInfo;Release;Debug;",
+        "GKFS_GENERATE_COVERAGE_REPORTS": true
+      }
+    },
+    {
+      "name": "docs",
+      "inherits": "debug",
+      "cacheVariables": {
+        "GKFS_BUILD_DOCUMENTATION": true
+      }
+    },
+    {
+      "name": "ci",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/gkfs/build",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/gkfs/install",
+        "GKFS_USE_GUIDED_DISTRIBUTION": true,
+        "GKFS_ENABLE_PARALLAX": true,
+        "GKFS_BUILD_TESTS": true,
+        "GKFS_INSTALL_TESTS": true,
+        "GKFS_CHUNK_STATS": true,
+        "GKFS_ENABLE_PROMETHEUS": true,
+        "GKFS_RENAME_SUPPORT": true
+      }
+    },
+    {
+      "name": "default-debug",
+      "displayName": "Default gekkofs (debug)",
+      "inherits": [
+        "default",
+        "debug"
+      ]
+    },
+    {
+      "name": "default-coverage",
+      "displayName": "Default gekkofs (coverage)",
+      "inherits": [
+        "default",
+        "coverage"
+      ]
+    },
+    {
+      "name": "default-release",
+      "displayName": "Default gekkofs (release)",
+      "inherits": [
+        "default",
+        "release"
+      ]
+    },
+    {
+      "name": "forwarding-debug",
+      "displayName": "Forwarding gekkofs (debug)",
+      "inherits": [
+        "forwarding",
+        "debug"
+      ]
+    },
+    {
+      "name": "forwarding-coverage",
+      "displayName": "Forwarding gekkofs (coverage)",
+      "inherits": [
+        "forwarding",
+        "coverage"
+      ]
+    },
+    {
+      "name": "forwarding-release",
+      "displayName": "Forwarding gekkofs (release)",
+      "inherits": [
+        "forwarding",
+        "release"
+      ]
+    },
+    {
+      "name": "ci-debug",
+      "displayName": "Default gekkofs (debug, CI flags)",
+      "inherits": [
+        "ci",
+        "default",
+        "debug"
+      ]
+    },
+    {
+      "name": "ci-coverage",
+      "displayName": "Default gekkofs (coverage, CI flags)",
+      "inherits": [
+        "ci",
+        "default",
+        "coverage"
+      ]
+    },
+    {
+      "name": "ci-docs",
+      "displayName": "Documentation (CI flags)",
+      "inherits": "ci-debug",
+      "cacheVariables": {
+        "GKFS_BUILD_DOCUMENTATION": true
+      }
+    },
+    {
+      "name": "ci-release",
+      "displayName": "Default gekkofs (release, CI flags)",
+      "inherits": [
+        "ci",
+        "default",
+        "release"
+      ]
+    },
+    {
+      "name": "ci-forwarding-debug",
+      "displayName": "Forwarding gekkofs (debug, CI flags)",
+      "inherits": [
+        "ci",
+        "forwarding",
+        "debug"
+      ]
+    },
+    {
+      "name": "ci-forwarding-coverage",
+      "displayName": "Forwarding gekkofs (coverage, CI flags)",
+      "inherits": [
+        "ci",
+        "forwarding",
+        "coverage"
+      ]
+    },
+    {
+      "name": "ci-forwarding-release",
+      "displayName": "Forwarding gekkofs (release, CI flags)",
+      "inherits": [
+        "ci",
+        "forwarding",
+        "release"
+      ]
+    }
+  ]
+}

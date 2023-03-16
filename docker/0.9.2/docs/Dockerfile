@@ -24,7 +24,8 @@ RUN apt-get update && \
         'exhale==0.3.1' \
         'sphinx-copybutton==0.5.0' \
         'sphinx-multiversion==0.2.4' \
-        'myst_parser==0.17.0' && \
+        'myst_parser==0.17.0'  \
+        attrs && \
     # Clean apt cache to reduce image layer size
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/doxygen-1.9.2 && \

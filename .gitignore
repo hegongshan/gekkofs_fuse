@@ -86,4 +86,8 @@ playground
 .hidden_playground/
 test/build/
 build/
+builds/
 .run/
+
+# Allow users to provide their own CMake presets
+CMakeUserPresets.json

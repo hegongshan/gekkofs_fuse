@@ -75,11 +75,8 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
 FetchContent_Declare(nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json
-    GIT_TAG e7b3b40b5a95bc74b9a7f662830a27c49ffc01b4 # v3.7.3
-    GIT_SHALLOW ON
-    GIT_PROGRESS ON
-)
+  URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz
+  DOWNLOAD_EXTRACT_TIMESTAMP ON)
 
 FetchContent_GetProperties(nlohmann_json)
 

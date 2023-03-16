@@ -36,8 +36,6 @@ target_sources(helpers
     temporary_file.cpp
   )
 
-target_code_coverage(helpers AUTO)
-
 target_link_libraries(helpers
   PUBLIC
     fmt::fmt

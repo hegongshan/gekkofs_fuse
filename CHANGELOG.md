@@ -19,6 +19,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Added PowerPC support ([!151](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/151)).
 - GKFS_RENAME_SUPPORT adds support for renaming files. It includes the use case of renaming opened files using the fd
 - FLOCK and fcntl functions for locks, are not supported, but they are available.
+- Added support for [CMake presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html) to simplify build 
+  configurations ([!163](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/163#note_8179)).
 
 ### Changed
 
@@ -26,6 +28,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tests ([!145](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/145)).
 - Support parallelism for symlink tests ([!147](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/147)).
 - Update Parallax release (PARALLAX-exp) ([!158](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/158)
+- Improved and simplified coverage generation procedures for developers with
+  specific CMake targets ([!163](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/163#note_8179)).
 
 ### Removed
 

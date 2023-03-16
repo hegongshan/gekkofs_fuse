@@ -88,10 +88,6 @@ target_sources(gkfs_daemon ${DAEMON_SOURCES})
 target_link_libraries(gkfs_daemon ${DAEMON_LINK_LIBRARIES})
 target_include_directories(gkfs_daemon ${DAEMON_INCLUDE_DIRS})
 
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(gkfs_daemon AUTO)
-endif()
-
 install(TARGETS gkfs_daemon
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
@@ -133,10 +129,6 @@ if (GKFS_ENABLE_FORWARDING)
         ${DAEMON_INCLUDE_DIRS}
         ${AGIOS_INCLUDE_DIRS}
         )
-
-    if(GKFS_ENABLE_CODE_COVERAGE)
-      target_code_coverage(gkfwd_daemon AUTO)
-    endif()
 
     install(TARGETS gkfwd_daemon
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

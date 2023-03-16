@@ -101,10 +101,6 @@ target_sources(gkfs_intercept ${PRELOAD_SOURCES})
 target_link_libraries(gkfs_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
 target_include_directories(gkfs_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
 
-if(GKFS_ENABLE_CODE_COVERAGE)
-  target_code_coverage(gkfs_intercept AUTO)
-endif()
-
 install(TARGETS gkfs_intercept
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -132,10 +128,6 @@ if (GKFS_ENABLE_FORWARDING)
 
     target_link_libraries(gkfwd_intercept PRIVATE ${PRELOAD_LINK_LIBRARIES})
     target_include_directories(gkfwd_intercept PRIVATE ${PRELOAD_INCLUDE_DIRS})
-
-    if(GKFS_ENABLE_CODE_COVERAGE)
-      target_code_coverage(gkfwd_intercept AUTO)
-    endif()
 
     install(TARGETS gkfwd_intercept
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

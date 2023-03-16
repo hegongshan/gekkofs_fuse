@@ -36,5 +36,3 @@ target_include_directories(arithmetic
   INTERFACE
     ${INCLUDE_DIR}/common/arithmetic/
   )
-
-target_code_coverage(arithmetic INTERFACE)

@@ -26,7 +26,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-include(GkfsPythonTesting)
+include(gkfs-testing)
+
+if(GKFS_GENERATE_COVERAGE_REPORTS)
+  gkfs_enable_coverage_reports(EXCLUDE_DIRECTORIES
+    "${FETCHCONTENT_BASE_DIR}/*" "${CMAKE_SOURCE_DIR}/external/*" )
+endif()
 
 add_custom_target(check
     COMMAND ${CMAKE_CTEST_COMMAND}

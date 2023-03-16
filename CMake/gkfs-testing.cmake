@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2023, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2023, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -27,37 +26,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-## Reduce the size of CI artifacts
-BUILDDIR=$1
-
-usage() {
-    echo -e "ERROR: Missing build directory\n"
-    echo "  Usage: $(basename $0) BUILD_DIR"
-    exit 1
-}
-
-if [[ -z "${BUILDDIR}" ]]; then
-    usage
-fi
-
-echo "Cleaning up ${BUILDDIR} (size: $(du -sh ${BUILDDIR} | cut -d '	' -f 1)):"
-echo "  * Removing object files"
-
-find ${BUILDDIR} \
-    \( \
-        -name "*.a" -or \
-        -name "*.o" -or \
-        -name "*.pdb" \
-    \) \
-    -delete
-
-echo "  * Removing already-installed binaries:"
-
-find ${BUILDDIR} \
-    \( \
-        -name "libgkfs_intercept.so" -or \
-        -name "gkfs_daemon" \
-    \) \
-    -delete
-
-echo "Finished (${BUILDDIR} size: $(du -sh ${BUILDDIR} | cut -d '	' -f 1))"
+include(gkfs-code-coverage)
+include(gkfs-python-testing)
