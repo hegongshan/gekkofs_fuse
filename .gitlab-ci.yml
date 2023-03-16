@@ -102,33 +102,6 @@ scripts:
       junit: ${BUILD_PATH}/tests/scripts/report.xml
 
 
-## == coverage baseline ====================
-coverage:zerocount:
-  stage: test
-  image: gekkofs/testing:0.9.2
-  interruptible: true
-  needs: ['gkfs', 'gkfwd']
-
-  script:
-    ## capture initial coverage information to establish a baseline
-    ## and write it to $COVERAGE_PATH/zerocount.info
-    - cd ${CI_PROJECT_DIR}
-    - cmake --preset ci-coverage
-      -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
-      -DCOVERAGE_ZEROCOUNT_TRACEFILE=${COVERAGE_PATH}/zerocount.info
-    ## Since the pipeline recreates the source tree, the access times for .gcno
-    ## files are newer than those of .gcda files. This makes gcov emit a
-    ## warning for each file which slows it down. Updating the timestamps
-    ## avoids this
-    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
-    - cmake --build ${BUILD_PATH} --target coverage-zerocount
-
-  artifacts:
-    expire_in: 1 week
-    when: always
-    paths:
-      - ${COVERAGE_PATH}/zerocount.info
-
 ## == integration tests for gkfs ===========
 gkfs:integration:
   stage: test
@@ -293,10 +266,38 @@ documentation:
 ################################################################################
 ## Generation of code coverage reports
 ################################################################################
+
+## == coverage baseline ====================
+coverage:baseline:
+  stage: report
+  image: gekkofs/testing:0.9.2
+  interruptible: true
+  needs: ['gkfs', 'gkfwd']
+
+  script:
+    ## capture initial coverage information to establish a baseline
+    ## and write it to $COVERAGE_PATH/zerocount.info
+    - cd ${CI_PROJECT_DIR}
+    - cmake --preset ci-coverage
+      -DCOVERAGE_OUTPUT_DIR=${COVERAGE_PATH}
+      -DCOVERAGE_ZEROCOUNT_TRACEFILE=${COVERAGE_PATH}/zerocount.info
+    ## Since the pipeline recreates the source tree, the access times for .gcno
+    ## files are newer than those of .gcda files. This makes gcov emit a
+    ## warning for each file which slows it down. Updating the timestamps
+    ## avoids this
+    - find ${BUILD_PATH} -name "*.gcno" -exec touch {} \;
+    - cmake --build ${BUILD_PATH} --target coverage-zerocount
+
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - ${COVERAGE_PATH}/zerocount.info
+
 coverage:
   stage: report
   image: gekkofs/testing:0.9.2
-  needs: [ 'coverage:zerocount', 'gkfs:integration', 'gkfwd:integration',
+  needs: [ 'coverage:baseline', 'gkfs:integration', 'gkfwd:integration',
            'gkfs:unit' ]
   script:
     - cd ${CI_PROJECT_DIR}
