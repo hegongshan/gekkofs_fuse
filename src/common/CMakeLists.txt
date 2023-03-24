@@ -29,6 +29,7 @@
 include(FetchContent)
 
 add_library(rpc_utils OBJECT)
+set_property(TARGET rpc_utils PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_sources(rpc_utils
   PRIVATE
     rpc/rpc_util.cpp
