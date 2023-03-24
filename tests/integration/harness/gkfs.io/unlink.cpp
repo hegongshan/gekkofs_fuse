@@ -27,7 +27,7 @@
 */
 
 /* C++ includes */
-#include <CLI11/CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include <nlohmann/json.hpp>
 #include <memory>
 #include <fmt/format.h>

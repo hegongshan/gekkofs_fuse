@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2023, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2023, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -26,21 +26,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-find_path(ABT_INCLUDE_DIR
-    NAMES abt.h
-)
+# Common components
+add_subdirectory(common)
+# Daemon
+add_subdirectory(daemon)
+# Client library
+add_subdirectory(client)
 
-find_library(ABT_LIBRARY
-    NAMES abt
-)
+target_sources(gkfs_daemon PUBLIC config.hpp version.hpp.in)
 
-set(ABT_INCLUDE_DIRS ${ABT_INCLUDE_DIR})
-set(ABT_LIBRARIES ${ABT_LIBRARY})
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Abt DEFAULT_MSG ABT_LIBRARIES ABT_INCLUDE_DIRS)
-
-mark_as_advanced(
-        ABT_LIBRARY
-        ABT_INCLUDE_DIR
-)
+if(GKFS_ENABLE_FORWARDING)
+  target_sources(gkfwd_daemon PUBLIC config.hpp version.hpp.in)
+endif()

@@ -132,6 +132,10 @@ public:
                 const chunkid_t& chnk_id) const override final;
 
     host_t
+    locate_data(const std::string& path, const chunkid_t& chnk_id,
+                unsigned int host_size) override final;
+
+    host_t
     locate_file_metadata(const std::string& path) const override;
 
     std::vector<host_t>

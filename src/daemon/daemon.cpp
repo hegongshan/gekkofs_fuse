@@ -47,7 +47,7 @@
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <daemon/util.hpp>
-#include <CLI11/CLI11.hpp>
+#include <CLI/CLI.hpp>
 
 #ifdef GKFS_ENABLE_AGIOS
 #include <daemon/scheduler/agios.hpp>

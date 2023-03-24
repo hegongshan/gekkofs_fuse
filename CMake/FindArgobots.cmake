@@ -27,16 +27,16 @@
 ################################################################################
 
 #[=======================================================================[.rst:
-FindMargo
+FindArgobots
 ---------
 
-Find Margo include dirs and libraries.
+Find Argobots include dirs and libraries.
 
 Use this module by invoking find_package with the form::
 
-  find_package(Margo
+  find_package(Argobots
     [version] [EXACT]     # Minimum or EXACT version e.g. 0.6.2
-    [REQUIRED]            # Fail with error if Margo is not found
+    [REQUIRED]            # Fail with error if Argobots is not found
     )
 
 Imported Targets
@@ -44,32 +44,32 @@ Imported Targets
 
 This module provides the following imported targets, if found:
 
-``Margo::Margo``
-  The Margo library
+``Argobots::Argobots``
+  The Argobots library
 
 Result Variables
 ^^^^^^^^^^^^^^^^
 
 This will define the following variables:
 
-``Margo_FOUND``
-  True if the system has the Margo library.
-``Margo_VERSION``
-  The version of the Margo library which was found.
-``Margo_INCLUDE_DIRS``
-  Include directories needed to use Margo.
-``Margo_LIBRARIES``
-  Libraries needed to link to Margo.
+``Argobots_FOUND``
+  True if the system has the Argobots library.
+``Argobots_VERSION``
+  The version of the Argobots library which was found.
+``Argobots_INCLUDE_DIRS``
+  Include directories needed to use Argobots.
+``Argobots_LIBRARIES``
+  Libraries needed to link to Argobots.
 
 Cache Variables
 ^^^^^^^^^^^^^^^
 
 The following cache variables may also be set:
 
-``MARGO_INCLUDE_DIR``
-  The directory containing ``margo.h``.
-``MARGO_LIBRARY``
-  The path to the Margo library.
+``ARGOBOTS_INCLUDE_DIR``
+  The directory containing ``abt.h``.
+``ARGOBOTS_LIBRARY``
+  The path to the Argobots library.
 
 #]=======================================================================]
 
@@ -134,76 +134,80 @@ if(NOT PKG_CONFIG_FOUND)
 endif()
 
 if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_MARGO QUIET margo)
+  pkg_check_modules(PC_ARGOBOTS QUIET argobots)
 
   find_path(
-    MARGO_INCLUDE_DIR
-    NAMES margo.h
-    PATHS ${PC_MARGO_INCLUDE_DIRS}
+    ARGOBOTS_INCLUDE_DIR
+    NAMES abt.h
+    PATHS ${PC_ARGOBOTS_INCLUDE_DIRS}
     PATH_SUFFIXES include
   )
 
   find_library(
-    MARGO_LIBRARY
-    NAMES margo
-    PATHS ${PC_MARGO_LIBRARY_DIRS}
+    ARGOBOTS_LIBRARY
+    NAMES abt
+    PATHS ${PC_ARGOBOTS_LIBRARY_DIRS}
   )
 
-  set(Margo_VERSION ${PC_MARGO_VERSION})
+  set(Argobots_VERSION ${PC_ARGOBOTS_VERSION})
 else()
   find_path(
-    MARGO_INCLUDE_DIR
-    NAMES margo.h
+    ARGOBOTS_INCLUDE_DIR
+    NAMES abt.h
     PATH_SUFFIXES include
   )
 
-  find_library(MARGO_LIBRARY NAMES margo)
+  find_library(ARGOBOTS_LIBRARY NAMES abt)
 
-  # even if pkg-config is not available, but Margo still installs a .pc file
+  # even if pkg-config is not available, but Argobots still installs a .pc file
   # that we can use to retrieve library information from. Try to find it at all
   # possible pkgconfig subfolders (depending on the system).
   _get_pkgconfig_paths(_pkgconfig_paths)
 
-  find_file(_margo_pc_file margo.pc PATHS "${_pkgconfig_paths}")
+  find_file(_argobots_pc_file argobots.pc PATHS "${_pkgconfig_paths}")
 
-  if(NOT _margo_pc_file)
+  if(NOT _argobots_pc_file)
     message(
       FATAL_ERROR
-        "ERROR: Could not find 'margo.pc' file. Unable to determine library version"
+        "ERROR: Could not find 'argobots.pc' file. Unable to determine library version"
     )
   endif()
 
-  file(STRINGS "${_margo_pc_file}" _margo_pc_file_contents REGEX "Version: ")
+  file(STRINGS "${_argobots_pc_file}" _argobots_pc_file_contents
+       REGEX "Version: "
+  )
 
-  if("${_margo_pc_file_contents}" MATCHES "Version: ([0-9]+\\.[0-9]+\\.[0-9])")
-    set(Margo_VERSION ${CMAKE_MATCH_1})
+  if("${_argobots_pc_file_contents}" MATCHES
+     "Version: ([0-9]+\\.[0-9]+\\.[0-9])"
+  )
+    set(Argobots_VERSION ${CMAKE_MATCH_1})
   else()
     message(FATAL_ERROR "ERROR: Failed to determine library version")
   endif()
 
   unset(_pkg_config_paths)
-  unset(_margo_pc_file_contents)
+  unset(_argobots_pc_file_contents)
 endif()
 
-mark_as_advanced(MARGO_INCLUDE_DIR MARGO_LIBRARY)
+mark_as_advanced(ARGOBOTS_INCLUDE_DIR ARGOBOTS_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  Margo
-  FOUND_VAR Margo_FOUND
-  REQUIRED_VARS MARGO_LIBRARY MARGO_INCLUDE_DIR
-  VERSION_VAR Margo_VERSION
+  Argobots
+  FOUND_VAR Argobots_FOUND
+  REQUIRED_VARS ARGOBOTS_LIBRARY ARGOBOTS_INCLUDE_DIR
+  VERSION_VAR Argobots_VERSION
 )
 
-if(Margo_FOUND)
-  set(Margo_INCLUDE_DIRS ${MARGO_INCLUDE_DIR})
-  set(Margo_LIBRARIES ${MARGO_LIBRARY})
-  if(NOT TARGET Margo::Margo)
-    add_library(Margo::Margo UNKNOWN IMPORTED)
+if(Argobots_FOUND)
+  set(Argobots_INCLUDE_DIRS ${ARGOBOTS_INCLUDE_DIR})
+  set(Argobots_LIBRARIES ${ARGOBOTS_LIBRARY})
+  if(NOT TARGET Argobots::Argobots)
+    add_library(Argobots::Argobots UNKNOWN IMPORTED)
     set_target_properties(
-      Margo::Margo
-      PROPERTIES IMPORTED_LOCATION "${MARGO_LIBRARY}"
-                 INTERFACE_INCLUDE_DIRECTORIES "${MARGO_INCLUDE_DIR}"
+      Argobots::Argobots
+      PROPERTIES IMPORTED_LOCATION "${ARGOBOTS_LIBRARY}"
+                 INTERFACE_INCLUDE_DIRECTORIES "${ARGOBOTS_INCLUDE_DIR}"
     )
   endif()
 endif()

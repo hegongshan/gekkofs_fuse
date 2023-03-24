@@ -28,109 +28,107 @@
 
 add_subdirectory(backend)
 
-set(DAEMON_SOURCES
-    PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/../common/rpc/rpc_util.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/daemon.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/util.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ops/metadentry.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/ops/data.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/classes/fs_data.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/classes/rpc_data.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/handler/srv_data.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/handler/srv_metadata.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/handler/srv_management.cpp
-    PUBLIC
-    ${INCLUDE_DIR}/config.hpp
-    ${INCLUDE_DIR}/version.hpp.in
-    ${INCLUDE_DIR}/common/cmake_configure.hpp.in
-    ${INCLUDE_DIR}/common/common_defs.hpp
-    ${INCLUDE_DIR}/common/rpc/rpc_types.hpp
-    ${INCLUDE_DIR}/common/rpc/rpc_util.hpp
-    ${INCLUDE_DIR}/daemon/daemon.hpp
-    ${INCLUDE_DIR}/daemon/util.hpp
-    ${INCLUDE_DIR}/daemon/ops/data.hpp
-    ${INCLUDE_DIR}/daemon/ops/metadentry.hpp
-    ${INCLUDE_DIR}/daemon/classes/fs_data.hpp
-    ${INCLUDE_DIR}/daemon/classes/rpc_data.hpp
-    ${INCLUDE_DIR}/daemon/handler/rpc_defs.hpp
-    ${INCLUDE_DIR}/daemon/handler/rpc_util.hpp
-    )
-set(DAEMON_LINK_LIBRARIES
-    PRIVATE
-    # internal libs
-    metadata
-    metadata_db
-    storage
-    distributor
-    statistics
-    log_util
-    env_util
-    spdlog
-    CLI11
-    fmt::fmt
-    path_util
-    # margo libs
-    ${ABT_LIBRARIES}
-    mercury
-    ${MARGO_LIBRARIES}
-    # others
-    Threads::Threads
-    )
-set(DAEMON_INCLUDE_DIRS
-    PRIVATE
-    ${ABT_INCLUDE_DIRS}
-    ${MARGO_INCLUDE_DIRS}
-    )
-
+# ##############################################################################
+# This builds the `gkfs_daemon` executable: the primary GekkoFS daemon.
+# ##############################################################################
 add_executable(gkfs_daemon)
-target_sources(gkfs_daemon ${DAEMON_SOURCES})
-target_link_libraries(gkfs_daemon ${DAEMON_LINK_LIBRARIES})
-target_include_directories(gkfs_daemon ${DAEMON_INCLUDE_DIRS})
 
-install(TARGETS gkfs_daemon
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-################### Forwarding daemon ###################
-if (GKFS_ENABLE_FORWARDING)
-    if (GKFS_ENABLE_AGIOS)
-        set(FWD_DAEMON_SOURCES
-            PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/scheduler/agios.cpp
-            PUBLIC
-            ${INCLUDE_DIR}/daemon/scheduler/agios.hpp
-            )
-        add_executable(gkfwd_daemon)
-        target_sources(gkfwd_daemon ${DAEMON_SOURCES} ${FWD_DAEMON_SOURCES})
-        target_compile_definitions(gkfwd_daemon
-            PUBLIC
-            GKFS_ENABLE_FORWARDING
-            GKFS_ENABLE_AGIOS
-            )
-    else ()
-        add_executable(gkfwd_daemon)
-        target_sources(gkfwd_daemon ${DAEMON_SOURCES})
-        target_compile_definitions(gkfwd_daemon
-            PUBLIC
-            GKFS_ENABLE_FORWARDING
-            )
-    endif ()
+pkg_check_modules(URING IMPORTED_TARGET liburing)
 
-    message(STATUS "[gekkofs] Forwarding mode: ${GKFS_ENABLE_FORWARDING}")
-    message(STATUS "[gekkofs] AGIOS scheduling: ${GKFS_ENABLE_AGIOS}")
+# We need to add here any files that may have different compile definitions
+target_sources(
+  gkfs_daemon
+  PRIVATE daemon.cpp
+          handler/srv_data.cpp
+          ../common/rpc/rpc_util.cpp
+          util.cpp
+          ops/metadentry.cpp
+          ops/data.cpp
+          classes/fs_data.cpp
+          classes/rpc_data.cpp
+          handler/srv_metadata.cpp
+          handler/srv_management.cpp
+  PUBLIC ${CMAKE_SOURCE_DIR}/include/config.hpp
+         ${CMAKE_SOURCE_DIR}/include/version.hpp.in
+)
+target_link_libraries(
+  gkfs_daemon
+  PUBLIC # internal libs
+         metadata
+         metadata_backend
+         storage
+         distributor
+         statistics
+         log_util
+         env_util
+         path_util
+         # external libs
+         CLI11::CLI11
+         fmt::fmt
+         Mercury::Mercury
+         Argobots::Argobots
+         Margo::Margo
+         # others
+         Threads::Threads
+)
 
-    target_link_libraries(gkfwd_daemon
-        PRIVATE
-        ${DAEMON_LINK_LIBRARIES}
-        ${AGIOS_LIBRARIES}
-        )
-    target_include_directories(gkfwd_daemon
-        PRIVATE
-        ${DAEMON_INCLUDE_DIRS}
-        ${AGIOS_INCLUDE_DIRS}
-        )
+if(GKFS_ENABLE_CODE_COVERAGE)
+    target_code_coverage(gkfs_daemon AUTO)
+endif()
 
-    install(TARGETS gkfwd_daemon
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
+install(TARGETS gkfs_daemon RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# ##############################################################################
+# This builds the `gkfwd_daemon` executable: the daemon for GekkoFS data
+# forwarding mode.
+# ##############################################################################
+
+if(GKFS_ENABLE_FORWARDING)
+
+  add_executable(gkfwd_daemon)
+
+  # We need to add here any files that may have different compile definitions
+  target_sources(
+    gkfwd_daemon
+    PRIVATE ../common/rpc/rpc_util.cpp
+            daemon.cpp
+            util.cpp
+            ops/metadentry.cpp
+            ops/data.cpp
+            classes/fs_data.cpp
+            classes/rpc_data.cpp
+            handler/srv_metadata.cpp
+            handler/srv_management.cpp
+            handler/srv_data.cpp
+  )
+
+  target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_FORWARDING)
+  target_link_libraries(
+    gkfwd_daemon
+    PUBLIC # internal libs
+           metadata
+           metadata_backend
+           storage
+           distributor
+           statistics
+           log_util
+           env_util
+           path_util
+           # external libs
+           CLI11::CLI11
+           fmt::fmt
+           Mercury::Mercury
+           Argobots::Argobots
+           Margo::Margo
+           # others
+           Threads::Threads
+  )
+
+  if(GKFS_ENABLE_AGIOS)
+    target_sources(gkfwd_daemon PRIVATE scheduler/agios.cpp)
+    target_compile_definitions(gkfwd_daemon PUBLIC GKFS_ENABLE_AGIOS)
+    target_link_libraries(gkfwd_daemon PRIVATE AGIOS::AGIOS)
+  endif()
+
+  install(TARGETS gkfwd_daemon RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif ()

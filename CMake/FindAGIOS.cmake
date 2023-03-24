@@ -26,21 +26,36 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-find_path(AGIOS_INCLUDE_DIR
-    NAMES agios.h
+find_path(
+  AGIOS_INCLUDE_DIR
+  NAMES agios.h
+  PATH_SUFFIXES include
 )
 
-find_library(AGIOS_LIBRARY
-    NAMES agios
-)
+find_library(AGIOS_LIBRARY NAMES agios)
 
 set(AGIOS_INCLUDE_DIRS ${AGIOS_INCLUDE_DIR})
 set(AGIOS_LIBRARIES ${AGIOS_LIBRARY})
 
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(AGIOS DEFAULT_MSG AGIOS_LIBRARIES AGIOS_INCLUDE_DIRS)
+mark_as_advanced(AGIOS_LIBRARY AGIOS_INCLUDE_DIR)
 
-mark_as_advanced(
-    AGIOS_LIBRARY
-    AGIOS_INCLUDE_DIR
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  AGIOS
+  FOUND_VAR AGIOS_FOUND
+  REQUIRED_VARS AGIOS_LIBRARY AGIOS_INCLUDE_DIR
 )
+
+if(AGIOS_FOUND)
+  set(AGIOS_INCLUDE_DIRS ${AGIOS_INCLUDE_DIR})
+  set(AGIOS_LIBRARIES ${AGIOS_LIBRARY})
+  if(NOT TARGET AGIOS::AGIOS)
+    add_library(AGIOS::AGIOS UNKNOWN IMPORTED)
+    set_target_properties(
+      AGIOS::AGIOS
+      PROPERTIES IMPORTED_LOCATION "${AGIOS_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${AGIOS_INCLUDE_DIR}"
+    )
+  endif()
+endif( )
+

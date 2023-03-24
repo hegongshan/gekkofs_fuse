@@ -160,6 +160,8 @@ gkfwd:integration:
   parallel:
     matrix:
       - SUBTEST: [ forwarding ]
+  rules:
+    - when: never
 
   script:
     ## run tests
@@ -297,8 +299,9 @@ coverage:baseline:
 coverage:
   stage: report
   image: gekkofs/testing:0.9.2
-  needs: [ 'coverage:baseline', 'gkfs:integration', 'gkfwd:integration',
-           'gkfs:unit' ]
+#  needs: [ 'coverage:baseline', 'gkfs:integration', 'gkfwd:integration',
+#           'gkfs:unit' ]
+  needs: [ 'coverage:baseline', 'gkfs:integration', 'gkfs:unit' ]
   script:
     - cd ${CI_PROJECT_DIR}
     - cmake

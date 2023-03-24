@@ -38,8 +38,8 @@ target_sources(data_module
 )
 
 target_link_libraries(data_module
-  PUBLIC
-    spdlog
+  PRIVATE
+    log_util
 )
 
 add_library(storage STATIC)
@@ -55,7 +55,7 @@ target_sources(storage
 
 target_link_libraries(storage
     PRIVATE
-    spdlog
+    log_util
     data_module
     path_util
     # open issue for std::filesystem https://gitlab.kitware.com/cmake/cmake/-/issues/17834

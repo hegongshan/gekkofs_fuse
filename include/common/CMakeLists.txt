@@ -1,6 +1,6 @@
 ################################################################################
-# Copyright 2018-2022, Barcelona Supercomputing Center (BSC), Spain            #
-# Copyright 2015-2022, Johannes Gutenberg Universitaet Mainz, Germany          #
+# Copyright 2018-2023, Barcelona Supercomputing Center (BSC), Spain            #
+# Copyright 2015-2023, Johannes Gutenberg Universitaet Mainz, Germany          #
 #                                                                              #
 # This software was partially supported by the                                 #
 # EC H2020 funded project NEXTGenIO (Project ID: 671951, www.nextgenio.eu).    #
@@ -26,57 +26,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later                                    #
 ################################################################################
 
-# Define metadata module library first
-add_library(metadata_module STATIC)
 target_sources(
-  metadata_module
-  PUBLIC ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/metadata_module.hpp
-  PRIVATE metadata_module.cpp
-)
-target_link_libraries(metadata_module PRIVATE log_util)
-
-# Define metadata_backend and its common dependencies and sources
-add_library(metadata_backend STATIC)
-target_sources(
-  metadata_backend
-  PUBLIC
-    ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/db.hpp
-    ${CMAKE_SOURCE_DIR}/include/daemon/backend/exceptions.hpp
-    ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/metadata_backend.hpp
-  PRIVATE ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/merge.hpp
-          merge.cpp db.cpp
+  gkfs_daemon PUBLIC cmake_configure.hpp.in common_defs.hpp rpc/rpc_types.hpp
+                     rpc/rpc_util.hpp
 )
 
-target_link_libraries(
-  metadata_backend
-  PRIVATE metadata_module dl log_util path_util
-)
-
-if(GKFS_ENABLE_ROCKSDB)
+if(GKFS_ENABLE_FORWARDING)
   target_sources(
-    metadata_backend
-    PUBLIC ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/rocksdb_backend.hpp
-    PRIVATE rocksdb_backend.cpp
+    gkfwd_daemon PUBLIC cmake_configure.hpp.in common_defs.hpp
+                        rpc/rpc_types.hpp rpc/rpc_util.hpp
   )
-
-  # If liburing is available in the system, RocksDB will have been built
-  # with liburing support. If so, we need to propagate the dependency to
-  # the daemon. Since liburing exports a pkg-config .pc file, we can use it
-  # to retrieve its details.
-  pkg_check_modules(URING IMPORTED_TARGET liburing)
-
-  if(URING_FOUND)
-    target_link_libraries(metadata_backend PUBLIC PkgConfig::URING)
-  endif()
-
-  target_link_libraries(metadata_backend PUBLIC RocksDB::rocksdb)
-endif()
-
-if(GKFS_ENABLE_PARALLAX)
-  target_sources(metadata_backend
-    PUBLIC ${CMAKE_SOURCE_DIR}/include/daemon/backend/metadata/parallax_backend.hpp
-    PRIVATE parallax_backend.cpp
-    )
-  target_link_libraries(metadata_backend PUBLIC Parallax::parallax
-    Parallax::log)
 endif()

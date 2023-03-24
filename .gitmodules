@@ -1,9 +1,6 @@
 [submodule "external/hermes"]
 	path = external/hermes
 	url = https://github.com/bsc-ssrg/hermes.git
-[submodule "external/fmt"]
-	path = external/fmt
-	url = https://github.com/fmtlib/fmt
 [submodule "tests/scripts/bats"]
 	path = tests/scripts/bats
 	url = https://github.com/bats-core/bats-core.git
@@ -19,3 +16,9 @@
 [submodule "external/spdlog"]
 	path = external/spdlog
 	url = https://github.com/gabime/spdlog
+[submodule "external/fmt"]
+	path = external/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "external/CLI11"]
+	path = external/CLI11
+	url = https://github.com/CLIUtils/CLI11.git

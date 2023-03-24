@@ -117,6 +117,13 @@ ForwarderDistributor::locate_data(const std::string& path,
 }
 
 host_t
+ForwarderDistributor::locate_data(const std::string& path,
+                                  const chunkid_t& chnk_id,
+                                  unsigned int host_size) {
+    return fwd_host_;
+}
+
+host_t
 ForwarderDistributor::locate_file_metadata(const std::string& path) const {
     return str_hash(path) % hosts_size_;
 }
