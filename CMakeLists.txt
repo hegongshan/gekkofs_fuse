@@ -217,12 +217,13 @@ find_package(Filesystem REQUIRED)
 # Search for 'source-only' dependencies
 ###############################################################################
 
-set(GIT_SUBMODULES_PATH ${CMAKE_SOURCE_DIR}/external)
+# the directory where external dependencies should be searched for
+set(GKFS_DEPENDENCIES_PATH ${CMAKE_SOURCE_DIR}/external)
 
 ### {fmt}: required for sensible output formatting
 include_from_source(fmt
   MESSAGE "[${PROJECT_NAME}] Searching for {fmt}"
-  SOURCE_DIR ${GIT_SUBMODULES_PATH}/fmt
+  SOURCE_DIR ${GKFS_DEPENDENCIES_PATH}/fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
   GIT_TAG f94b7364b9409f05207c3af3fa4666730e11a854 # v6.1.2
 )
@@ -233,7 +234,7 @@ set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
 ### spdlog: required for logging
 include_from_source(spdlog
   MESSAGE "[${PROJECT_NAME}] Searching for spdlog"
-  SOURCE_DIR ${GIT_SUBMODULES_PATH}/spdlog
+  SOURCE_DIR ${GKFS_DEPENDENCIES_PATH}/spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog.git
   GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 # v1.9.2
   )
@@ -241,7 +242,7 @@ include_from_source(spdlog
 ### CLI11: used for parsing command-line options
 include_from_source(cli11
   MESSAGE "[${PROJECT_NAME}] Searching for CLI11"
-  SOURCE_DIR ${GIT_SUBMODULES_PATH}/CLI11
+  SOURCE_DIR ${GKFS_DEPENDENCIES_PATH}/CLI11
   GIT_REPOSITORY https://github.com/CLIUtils/CLI11
   GIT_TAG v2.2.0
   )

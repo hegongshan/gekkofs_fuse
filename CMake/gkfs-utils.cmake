@@ -208,13 +208,26 @@ function(include_from_source contentName)
   include(FetchContent)
 
   if (EXISTS ${ARGS_SOURCE_DIR})
-    message(STATUS "Found Git submodule for \"${contentName}\": building it.")
+    file(GLOB_RECURSE SOURCE_FILES "${ARGS_SOURCE_DIR}/*")
+    if(SOURCE_FILES STREQUAL "")
+      message(FATAL_ERROR
+        "The '${ARGS_SOURCE_DIR}' source directory appears "
+        "to be empty. If it corresponds to a git submodule it may not have "
+        "been properly initialized. Running:\n"
+        "  'git submodule update --init --recursive'\n"
+        "may fix the issue. If the directory corresponds to a manually "
+        "downloaded dependency, please download it again.")
+    endif()
+
+    message(STATUS "Found source directory for '${contentName}'. Building.")
     FetchContent_Declare(
       ${contentName}
       SOURCE_DIR ${ARGS_SOURCE_DIR}
     )
   else()
-    message(STATUS "Git submodule for \"${contentName}\" not found. Downloading and building from Git repository.")
+    message(STATUS
+      "Source directory for '${contentName}' not found.\n"
+      "Downloading and building from remote Git repository.")
 
     if(NOT ARGS_GIT_REPOSITORY)
       message(FATAL_ERROR "GIT_REPOSITORY for \"${contentName}\" not defined")
