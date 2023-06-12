@@ -69,7 +69,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Fixed an issue where compilation of syscall_intercept would fail for newer kernels using the `clone3()` system
   call ([!157](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/157)
 - Updated code formatter to support the most recent clang-format-15
-  version ([!162](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/162)).
+  version ([!162](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/162))
+- Fixed an issue where nlohmann json failed to download in
+  CMake ([!167](https://storage.bsc.es/gitlab/hpc/gekkofs/-/merge_requests/167)).
 
 ## [0.9.1] - 2022-04-29
 
