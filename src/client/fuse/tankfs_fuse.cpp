@@ -1,16 +1,10 @@
 #define FUSE_USE_VERSION 26
 extern "C" {
-#include <stdio.h>
-#include <stddef.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <errno.h>
 #include <fuse.h>
 }
 
 #include "client/logging.hpp"
 #include "client/preload.hpp"
-#include "client/hooks.hpp"
 #include "client/open_dir.hpp"
 #include "client/gkfs_functions.hpp"
 
