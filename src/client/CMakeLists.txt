@@ -51,6 +51,7 @@ target_sources(
           rpc/forward_metadata.cpp
           syscalls/detail/syscall_info.c
 )
+target_compile_options(gkfs_intercept PRIVATE -DNO_INTERCEPT=0)
 
 target_link_libraries(
   gkfs_intercept
@@ -69,6 +70,54 @@ install(
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gkfs
+)
+
+add_executable(tankfs_fuse)
+
+target_sources(
+  tankfs_fuse
+  PRIVATE 
+          gkfs_functions.cpp
+          hooks.cpp
+          intercept.cpp
+          logging.cpp
+          open_file_map.cpp
+          open_dir.cpp
+          path.cpp
+          preload.cpp
+          preload_context.cpp
+          preload_util.cpp
+          fuse/tankfs_fuse.cpp
+          rpc/rpc_types.cpp
+          rpc/forward_data.cpp
+          rpc/forward_management.cpp
+          rpc/forward_metadata.cpp
+          syscalls/detail/syscall_info.c
+)
+target_compile_options(tankfs_fuse 
+          PRIVATE -DNO_INTERCEPT=1
+          PUBLIC -D_FILE_OFFSET_BITS=64
+          )
+
+target_link_libraries(
+  tankfs_fuse
+  PRIVATE metadata distributor env_util arithmetic path_util rpc_utils
+  PUBLIC fuse
+         Syscall_intercept::Syscall_intercept
+         dl
+         Mercury::Mercury
+         Mercury::mercury_util
+         hermes
+         fmt::fmt
+         Threads::Threads
+         Date::TZ
+)
+
+install(
+  TARGETS tankfs_fuse
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tankfs
 )
 
 # ##############################################################################

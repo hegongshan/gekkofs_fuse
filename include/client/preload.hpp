@@ -40,11 +40,15 @@ void
 init_ld_env_if_needed();
 } // namespace gkfs::preload
 
+#if NO_INTERCEPT == 1
+void init_preload();
+void destroy_preload();
+#else
 void
 init_preload() __attribute__((constructor));
 
 void
 destroy_preload() __attribute__((destructor));
-
+#endif
 
 #endif // IOINTERCEPT_PRELOAD_HPP

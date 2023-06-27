@@ -91,3 +91,5 @@ builds/
 
 # Allow users to provide their own CMake presets
 CMakeUserPresets.json
+
+.vscode

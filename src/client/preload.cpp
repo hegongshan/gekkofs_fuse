@@ -65,8 +65,10 @@ exit_error_msg(int errcode, const string& msg) {
     // if we don't disable interception before calling ::exit()
     // syscall hooks may find an inconsistent in shared state
     // (e.g. the logger) and thus, crash
+#if NO_INTERCEPT == 0
     gkfs::preload::stop_interception();
     CTX->disable_interception();
+#endif
     ::exit(errcode);
 }
 
@@ -254,9 +256,10 @@ init_preload() {
     // leak internal error codes
     auto oerrno = errno;
 
+#if NO_INTERCEPT == 0
     CTX->enable_interception();
     gkfs::preload::start_self_interception();
-
+#endif
     CTX->init_logging();
     // from here ownwards it is safe to print messages
     LOG(DEBUG, "Logging subsystem initialized");
@@ -276,15 +279,17 @@ init_preload() {
 
     LOG(DEBUG, "Current working directory: '{}'", CTX->cwd());
     gkfs::preload::init_environment();
+#if NO_INTERCEPT == 0
     CTX->enable_interception();
-
+#endif
     CTX->unprotect_user_fds();
 
 #ifdef GKFS_ENABLE_FORWARDING
     init_forwarding_mapper();
 #endif
-
+#if NO_INTERCEPT == 0
     gkfs::preload::start_interception();
+#endif
     errno = oerrno;
 }
 
@@ -303,9 +308,10 @@ destroy_preload() {
 
     ld_network_service.reset();
     LOG(DEBUG, "RPC subsystem shut down");
-
+#if NO_INTERCEPT == 0
     gkfs::preload::stop_interception();
     CTX->disable_interception();
+#endif
     LOG(DEBUG, "Syscall interception stopped");
 
     LOG(INFO, "All subsystems shut down. Client shutdown complete.");

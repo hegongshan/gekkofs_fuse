@@ -54,6 +54,32 @@ target_sources(
          syscalls/detail/syscall_info.h
 )
 
+target_sources(
+  tankfs_fuse
+  PUBLIC gkfs_functions.hpp
+         env.hpp
+         hooks.hpp
+         intercept.hpp
+         logging.hpp
+         make_array.hpp
+         open_file_map.hpp
+         open_dir.hpp
+         path.hpp
+         preload.hpp
+         preload_context.hpp
+         preload_util.hpp
+         rpc/rpc_types.hpp
+         rpc/forward_management.hpp
+         rpc/forward_metadata.hpp
+         rpc/forward_data.hpp
+         syscalls/args.hpp
+         syscalls/decoder.hpp
+         syscalls/errno.hpp
+         syscalls/rets.hpp
+         syscalls/syscall.hpp
+         syscalls/detail/syscall_info.h
+)
+
 if(GKFS_ENABLE_FORWARDING)
   target_sources(
     gkfwd_intercept
