@@ -55,7 +55,7 @@ target_sources(
 )
 
 target_sources(
-  tankfs_fuse
+  gkfs_fuse
   PUBLIC gkfs_functions.hpp
          env.hpp
          hooks.hpp
